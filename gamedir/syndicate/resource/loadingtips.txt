@@ -1,0 +1,8 @@
+// Joining screen tips: one tip per line; one is shown at random on each join.
+// Lines starting with // are skipped. The file is UTF-8.
+The circle at the left of the chat line opens a color wheel: Chat sets your chat color, Name your name color.
+Up and Down in the chat line bring back the lines you sent before.
+Find server remembers your filters and where you put its window.
+On a dedicated server, Discord friends can join you from your profile while Discord shows what you are playing.
+A double click on a server in Find server joins it; Enter does the same.
+Find server shows each server's mode, human players and bots, and a picture of its map.

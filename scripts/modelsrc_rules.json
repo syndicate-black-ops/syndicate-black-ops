@@ -1,0 +1,117 @@
+{
+  "_comment": [
+    "Rules table for scripts/modelsrc.py (model source tree in sdk/modelsrc/).",
+    "Everything the pipeline does that is not a plain decompile is driven from here or",
+    "derived from the shipped MDL itself, so that no source file is edited by hand.",
+    "Keys of 'models' are paths under gamedir/syndicate/models without the .mdl extension."
+  ],
+
+  "models_dir": "gamedir/syndicate/models",
+  "output_dir": "sdk/modelsrc",
+
+  "_comment_layout": [
+    "Folder layout. v_/w_/p_ models go to weapons/<weapon>/<prefix>/ and player/<x>/<x>.mdl to",
+    "players/<x>/ automatically. Everything else needs an entry in 'folders'."
+  ],
+  "folders": {
+    "apache": "monsters/apache",
+    "barney": "monsters/barney",
+    "cyberimp": "monsters/cyberimp",
+    "dark": "monsters/dark",
+    "dgrunt": "monsters/dgrunt",
+    "hgrunt": "monsters/hgrunt",
+    "imp": "monsters/imp",
+    "islave": "monsters/islave",
+    "minos": "monsters/minos",
+    "robot": "monsters/robot",
+    "werewolf": "monsters/werewolf",
+    "zgrunt": "monsters/zgrunt",
+    "zombie": "monsters/zombie",
+    "ammobox": "props/ammobox",
+    "artefact": "props/artefact",
+    "crate_steps": "props/crate_steps",
+    "hunted": "misc/hunted"
+  },
+
+  "_comment_textures": [
+    "Texture names. Every name is lower-cased and accents are removed (cote, poignee).",
+    "'generic_texture_names' are placeholder names that different models use for different",
+    "images; they become <model>-<name> (precedent: chainsawsword-null.bmp in the owner's",
+    "rotating-weapons sources). 'texture_renames' is for one-off cases: {model: {old: new}},",
+    "old name as stored in the MDL."
+  ],
+  "generic_texture_names": ["null.bmp"],
+  "texture_renames": {},
+
+  "_comment_install": [
+    "scripts/modelsrc.py install. 'install_skip': models that are never put into gamedir/",
+    "(model -> reason); models with stand-in textures are skipped as well. 'install_delete':",
+    "files under models_dir that no model uses and that go when the models are installed",
+    "(only deleted if no remaining model header names them). 'install_stand_ins': the only",
+    "models with stand-in textures that install may put into gamedir/ (model -> note; every",
+    "other check still applies to them). 'install_keep': model files in the folder that are",
+    "not built from sources (model -> why); package refuses any other unbuilt model."
+  ],
+  "install_skip": {},
+  "install_stand_ins": {},
+  "install_keep": {
+    "p_wong": "intentionally empty model (bare hands) that the game code precaches; shipped as is",
+    "gmmode": "new model (Game Master mode display), not a decompile: compile sdk/modelsrc/misc/gmmode/gmmode.qc by hand (cd there; studiomdlplusplus gmmode.qc -o <dir>) and copy gmmode.mdl here"
+  },
+  "install_delete": [
+    "dgrunt01.mdl", "dgrunt02.mdl", "dgrunt03.mdl",
+    "hgrunt01.mdl", "hgrunt02.mdl", "hgrunt03.mdl",
+    "w_hache.mdl"
+  ],
+
+  "_comment_models": [
+    "Per-model special cases. Recognized keys:",
+    "  what          one-line description for the inventory",
+    "  note          free text copied to the inventory 'unusual' column",
+    "  skip          reason: the model gets no source folder (cannot be decompiled)",
+    "  keepallbones  true: write $keepallbones (for a model whose rebuilt bone table would",
+    "                otherwise differ; none needs it so far)",
+    "  placeholder_textures  true: the model has no textures inside and its texture file does",
+    "                not ship; the sources get generated stand-in textures (dev_placeholder.bmp)",
+    "  add_idle_sequence  true: give a model that ships without any sequence a one-frame",
+    "                'idle' in the reference pose (on for the three p_ models;",
+    "                every stock p_ model has one and the renderer reads the first sequence)",
+    "The Zombie Grunt fix needs no entry: the fix is 'compile zgrunt as one file, with",
+    "no external sequence groups', which is what the pipeline does for every model."
+  ],
+  "models": {
+    "ammobox": {"what": "Ammo box (ammo_reserve)"},
+    "apache": {"what": "Apache helicopter (monster_apache)"},
+    "artefact": {"what": "Artefact obelisk"},
+    "barney": {"what": "Barney (monster_barney)"},
+    "cyberimp": {"what": "Copy of the imp under another name"},
+    "dark": {"what": "Dark scientist (monster_dark)"},
+    "dgrunt": {"what": "Dark grunt (dark_grunt)"},
+    "hgrunt": {"what": "Human grunt (monster_human_grunt, monster_grunt_hunter)"},
+    "hunted": {"what": "Old 'morphbeta' player-style model at models/hunted.mdl", "note": "not the player model (that is player/hunted/hunted.mdl)"},
+    "imp": {"what": "Imp (monster_imp, monster_imp_hunter)"},
+    "islave": {"what": "Alien slave (monster_alien_slave, monster_hunter)"},
+    "minos": {"what": "Minotaur (monster_cyberminotor)"},
+    "robot": {"what": "Cyborg (monster_cyborg)"},
+    "werewolf": {"what": "Werewolf (monster_werewolf, monster_werewolf_hunter)"},
+    "zgrunt": {"what": "Zombie Grunt (monster_zombie_grunt)", "note": "Zombie Grunt crash fix applies"},
+    "zombie": {"what": "Zombie (monster_zombie, monster_zombie_hunter)"},
+    "player/agent/agent": {"what": "Player model: agent (male)"},
+    "player/agentf/agentf": {"what": "Player model: agent (female)"},
+    "player/hunted/hunted": {"what": "Player model: the hunted"},
+    "w_squeak": {"what": "Pitbull (monster_snark), world model"},
+    "w_weaponbox": {"what": "Weapon box (weaponbox) and satchel world model"},
+    "p_federal": {"add_idle_sequence": true},
+    "p_glauncher": {"add_idle_sequence": true},
+    "p_katana": {"add_idle_sequence": true},
+    "p_wong": {"what": "Fist of Legend player-held model: bare hands", "skip": "intentionally empty (bare hands): nothing to decompile, no sources needed"},
+    "w_grenade": {"what": "Hand grenade world model (weapon_handgrenade) and thrown grenade", "note": "made from the owner's rotating-weapons mesh"},
+    "w_k444": {"what": "K444 world model", "note": "made from the owner's rotating-weapons mesh"},
+    "w_medikit": {"what": "Medikit world model", "note": "made from the owner's rotating-weapons mesh"},
+    "w_rpg": {"what": "RPG world model (weapon_rpg)", "note": "made from the owner's rotating-weapons mesh"},
+    "w_shotgun": {"what": "Saan auto-shotgun world model (weapon_spa)", "note": "made from the owner's rotating-weapons mesh"},
+    "w_sword": {"what": "Energy sword world model (weapon_sword)", "note": "made from the owner's rotating-weapons mesh"},
+    "w_tripmine": {"what": "Tripmine pickup world model (weapon_tripmine)", "note": "made from the owner's rotating-weapons mesh"},
+    "w_warhammer": {"what": "Warhammer world model (weapon_warhammer)", "note": "made from the owner's rotating-weapons mesh"}
+  }
+}

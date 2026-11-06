@@ -1,0 +1,35 @@
+Mapped by Roux
+
+Level of the map : MEDIUM
+
+This fondery hides a federal laboratory. Since 48 hours we has observed a 
+strong scientific and military activity there. There are 2 possibility : an important discovery or a serious accident.
+
+Mission :
+ 
+- Conceal all work on informatic support. 
+
+- Determine if the zone is contaminated. 
+
+ -Destroy any form of xenomorphic life. 
+
+- Destroy the jammer satelite which held up our satellites to observe and
+ to intervene. 
+
+- Evacuate the places.
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

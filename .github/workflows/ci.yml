@@ -1,0 +1,95 @@
+# Every push to a branch and every pull request: Windows and Linux builds (build.yml), the offline tests and the
+# repository checks. Tags (v*) run release.yml instead. "[skip ci]" in the commit message skips it (GitHub's own rule).
+#   build     client + server for Windows (clang-cl) and Linux (sniper), artifacts build-windows / build-linux
+#   binaries  scripts/check_no_test_commands.sh on the four libraries (the test layer is off by default)
+#   tests     tests/*/run_test.sh (ASan/UBSan, not tests/fuzz), scripts/fgd.py check, scripts/check_lowercase.sh,
+#             scripts/check_eol.sh over the pushed commits
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      retention-days: 14
+
+  binaries:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: scripts
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: build-*
+          path: build
+      - name: No test layer in the libraries
+        run: bash scripts/check_no_test_commands.sh build/build-windows/client.dll build/build-windows/hl.dll build/build-linux/client.so build/build-linux/hl.so
+
+  tests:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: ./.github/actions/lfs-pull
+      - name: Offline tests (ASan/UBSan)
+        run: |
+          rc=0; mkdir -p "$RUNNER_TEMP/tests"
+          for t in tests/*/run_test.sh; do
+            case $t in tests/fuzz/*) continue;; esac
+            name=$(basename "$(dirname "$t")")
+            if timeout 1200 bash "$t" > "$RUNNER_TEMP/tests/$name.log" 2>&1; then echo "ok      $name"
+            else echo "FAILED  $name"; echo "::group::$name log"; tail -40 "$RUNNER_TEMP/tests/$name.log"; echo "::endgroup::"; rc=1; fi
+          done
+          exit $rc
+      - name: FGD check
+        if: ${{ !cancelled() }}
+        run: python3 scripts/fgd.py check
+      - name: Lower-case names
+        if: ${{ !cancelled() }}
+        run: bash scripts/check_lowercase.sh
+      - name: Line endings
+        if: ${{ !cancelled() }}
+        env:
+          BEFORE: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          base=$BEFORE
+          if [ -z "$base" ] || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            base=$(git merge-base "origin/$DEFAULT_BRANCH" HEAD 2>/dev/null || git rev-parse -q --verify HEAD~1 || true)
+          fi
+          if [ -z "$base" ]; then
+            echo "no base commit: checking every tracked file"
+            bash scripts/check_eol.sh --all
+          else
+            echo "checking $base..$GITHUB_SHA"
+            bash scripts/check_eol.sh "$base" "$GITHUB_SHA"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ failure() }}
+        with:
+          name: test-logs
+          path: ${{ runner.temp }}/tests/
+          retention-days: 14

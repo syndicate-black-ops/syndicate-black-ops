@@ -1,0 +1,15 @@
+// overview description file for co_ufo
+// frame: orthographic, 6208.41 x 4656.31 world units
+
+global 
+{
+	ZOOM	1.3195
+	ORIGIN	1664.00	-832.00	-448.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_ufo.tga"
+	HEIGHT	-448.00
+}

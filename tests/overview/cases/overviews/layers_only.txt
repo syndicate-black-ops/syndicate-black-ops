@@ -1,0 +1,10 @@
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 2
+}
+layer
+{
+	IMAGE "overviews/b.tga"
+	HEIGHT 1
+}

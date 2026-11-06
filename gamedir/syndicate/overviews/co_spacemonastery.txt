@@ -1,0 +1,16 @@
+// overview description file for co_spacemonastery
+// height clip: nothing above z 784.00 is drawn (-zmax)
+// frame: orthographic, 10054.00 x 7540.50 world units
+
+global 
+{
+	ZOOM	0.8148
+	ORIGIN	36.00	70.00	-224.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_spacemonastery.tga"
+	HEIGHT	-224.00
+}

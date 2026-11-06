@@ -1,0 +1,42 @@
+// wrecksmoke.aur - SBO example (SBO docs: Aurora particle systems) of the XashXT keys "lightmodel" and "killcondition": gray
+// smoke rising from a wreck, as bright as the place it drifts through (dark in shadow, lit near a lamp), that is
+// put out for good once the emitter is under water. Give it a "target" that sinks (a func_train or func_door
+// lowered into water) or place it where water rises. Sprite: steam1 (Half-Life).
+"particles" "120"
+"maintype" "wreck"
+"lightmodel" "1"
+"killcondition" "water"
+
+{
+  "name" "wreck"
+  "spraytype" "smoke"
+  "sprayrate" "16"
+  "sprayforce" "8..20"
+  "spraypitch" "-90..-60"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "smoke"
+  "sprite" "sprites/steam1.spr"
+  "rendermode" "solid"
+  "gravity" "30"
+  "drag" "0.6"
+  "windyaw" "0..360"
+  "windstrength" "6"
+  "lifetime" "4..6"
+  "startsize" "8"
+  "endsize" "40..56"
+  "startred" "0.85"
+  "startgreen" "0.85"
+  "startblue" "0.85"
+  "endred" "1"
+  "endgreen" "1"
+  "endblue" "1"
+  "startalpha" "0.6"
+  "endalpha" "0"
+  "startframe" "0..120"
+  "framerate" "10"
+  "startangle" "0..360"
+  "angledelta" "-20..20"
+}

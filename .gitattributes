@@ -1,0 +1,2 @@
+# Keep every file byte-for-byte as written (SDK sources, .dsp files)
+* -text

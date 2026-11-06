@@ -1,0 +1,61 @@
+// Animations of security_main.res (SBO docs: World screens, "Animations"; Source's hudanimations format).
+// Panel names are the layout's controls; times in seconds: Animate <control> <variable> <value> <interpolator>
+// <start> <duration>, SetVisible <control> <0|1> <start>, RunEvent / StopEvent <sequence> <start>.
+
+// The tabs: buttons with the command "anim:page_status" / "anim:page_log", on this player's screen only.
+event page_status
+{
+	SetVisible LogCover 0 0.0
+	SetVisible LogLine1 0 0.0
+	SetVisible LogLine2 0 0.0
+	SetVisible LogLine3 0 0.0
+	Animate TabMarkStatus BgColor "255 210 64 255" Linear 0.0 0.15
+	Animate TabMarkLog BgColor "24 40 28 255" Linear 0.0 0.15
+}
+event page_log
+{
+	SetVisible LogCover 1 0.0
+	SetVisible LogLine1 1 0.0
+	SetVisible LogLine2 1 0.0
+	SetVisible LogLine3 1 0.0
+	Animate TabMarkStatus BgColor "24 40 28 255" Linear 0.0 0.15
+	Animate TabMarkLog BgColor "255 210 64 255" Linear 0.0 0.15
+}
+
+// The states the map plays (vgui_control_proxy mode 5, state groups door / alarm / lights: a player who joins
+// later gets the latest of each, played from its start).
+event door_lock
+{
+	Animate DoorState FgColor "255 70 70 255" Linear 0.0 0.3
+}
+event door_unlock
+{
+	Animate DoorState FgColor "56 255 110 255" Linear 0.0 0.3
+}
+event lights_on
+{
+	Animate LightsState FgColor "56 255 110 255" Linear 0.0 0.3
+}
+event lights_off
+{
+	Animate LightsState FgColor "255 170 40 255" Linear 0.0 0.3
+}
+// the alarm: the state turns red and the header bar pulses red until the alarm is silenced
+event alarm_on
+{
+	Animate AlarmState FgColor "255 70 70 255" Linear 0.0 0.2
+	RunEvent alarm_pulse 0.0
+}
+event alarm_pulse
+{
+	Animate HeaderBar BgColor "190 26 12 255" Linear 0.0 0.45
+	Animate HeaderBar BgColor "70 10 6 255" Linear 0.5 0.45
+	RunEvent alarm_pulse 1.0
+}
+event alarm_off
+{
+	StopEvent alarm_pulse 0.0
+	StopEvent alarm_on 0.0
+	Animate HeaderBar BgColor "41 107 34 255" Linear 0.0 0.4
+	Animate AlarmState FgColor "56 255 110 255" Linear 0.0 0.3
+}

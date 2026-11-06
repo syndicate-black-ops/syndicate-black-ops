@@ -1,0 +1,21 @@
+global
+{
+	ZOOM 2.35
+	ORIGIN 284 834 -294
+	ROTATED 1
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -923
+}
+layer
+{
+	IMAGE "overviews/nothere.tga"
+	HEIGHT -600
+}
+layer
+{
+	IMAGE "overviews/b.tga"
+	HEIGHT -400
+}

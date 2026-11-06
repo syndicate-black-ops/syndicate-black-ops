@@ -1,0 +1,16 @@
+// overview description file for co_demon_invasion
+// height clip: nothing above z 776.00 is drawn (-zmax)
+// frame: orthographic, 10219.56 x 7664.67 world units
+
+global 
+{
+	ZOOM	0.8016
+	ORIGIN	28.00	34.00	-224.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_demon_invasion.tga"
+	HEIGHT	-224.00
+}

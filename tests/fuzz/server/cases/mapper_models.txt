@@ -1,0 +1,22 @@
+# map entities with no model, the editor placeholder or a missing file: removed instead of ending the map
+map co_fuzz
+spawn env_sprite model ""
+spawn env_glow model models/editor/glow.mdl
+spawn cycler_sprite model sprites/does_not_exist.spr
+spawn cycler_weapon
+spawn monster_furniture
+spawn env_shooter targetname sh
+spawn change_touch
+spawn env_model model models/editor/env_model.mdl
+spawn env_static model models/editor/env_static.mdl
+activate
+frames 3
+expect env_sprite "" at
+expect env_glow "" at
+expect cycler_sprite "" at
+expect cycler_weapon "" at
+expect monster_furniture "" at
+expect env_shooter "sh" at
+expect change_touch "" at
+expect env_model "" at
+expect env_static "" at

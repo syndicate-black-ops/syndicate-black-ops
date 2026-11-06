@@ -1,0 +1,274 @@
+{
+  "_about": "Rules of scripts/fgd.py check. 'accepted': deviations that are right as they are, a reason each. 'tracked': known differences that are not fixed yet; printed as warnings, do not fail. An entry that no longer matches a difference fails the check (stale_rule), so the lists cannot rot.",
+  "tool_keys": {
+    "reason": "Keys for the map compiler (ZHLT/VHLT/SDHLT), never sent to the game code. Patterns match the key name.",
+    "keys": [
+      "zhlt_*", "_*", "light_origin"
+    ]
+  },
+  "shared_code_classes": {
+    "reason": "Framework classes whose KeyValue serves every entity derived from them (delay, killtarget, master, wait, lip, distance, TriggerTarget, ...): their keys are not required on each FGD class. Keys these classes read are still valid when a class offers them.",
+    "classes": [
+      "CBaseEntity", "CBaseDelay", "CBaseToggle", "CBaseMonster", "CBaseTrigger", "CBaseAnimating"
+    ]
+  },
+  "stock_assets": {
+    "reason": "Stock Half-Life files the editor finds in valve/ (SBO does not ship them). Names from the Half-Life FGD the file is based on; not compared with a valve/ folder by the check.",
+    "paths": [
+      "models/can.mdl", "models/fungus(large).mdl", "models/fungus(small).mdl", "models/fungus.mdl",
+      "models/garg.mdl", "models/gman.mdl", "models/hair.mdl", "models/hassassin.mdl", "models/icky.mdl",
+      "models/light.mdl", "models/miniturret.mdl", "models/osprey.mdl", "models/player.mdl",
+      "models/scientist.mdl", "models/sentry.mdl", "models/tree.mdl", "models/turret.mdl",
+      "models/w_battery.mdl", "models/w_oxygen.mdl"
+    ]
+  },
+  "not_for_mappers": [
+    {
+      "reason": "1.38 particle emitters kept for existing maps; new maps use env_particle, so the FGD does not offer them.",
+      "names": ["Flamme_particules", "Fumee_particules"]
+    },
+    {
+      "reason": "Half-Life source files the game does not compile (cmake/sbo_server.cmake): the class never spawns.",
+      "names": ["item_healthkit"]
+    },
+    {
+      "reason": "Weapon and ammo pickups: the FGD keeps its weapon classes as a commented-out block until placing them is tested on 2.0.",
+      "names": [
+        "weapon_*", "ammo_*"
+      ]
+    },
+    {
+      "reason": "Created by the game code only (projectiles, effects, helpers, the player): nothing to place in a map.",
+      "names": [
+        "DelayedUse", "beam", "bodyque", "cine_blood", "crossbow_bolt", "fireanddie", "garg_stomp",
+        "grenade", "hornet", "hvr_rocket", "imp_baspit", "laser_spot", "monster_mortar", "monstermaker_hull", "shot", "plasma", "player",
+        "rpg_rocket", "soundent", "spark_shower", "func_vehicle_proxy", "squidspit", "streak_spiral", "trigger", "trip_beam",
+        "weaponbox", "xen_hull", "xen_ttrigger", "trainthinker", "warpball_hurt", "extra_speaker", "motion_thread"
+      ]
+    },
+    {
+      "reason": "Game Master mode's own entities (gmmode.cpp): created by the game while a Game Master plays, never placed in a map.",
+      "names": [
+        "gm_display", "gm_lifebar", "gm_teleporter_pad", "gm_weapon_drop", "gm_weapon_item"
+      ]
+    },
+    {
+      "reason": "Half-Life developer and test entities, not in the Half-Life FGD either.",
+      "names": [
+        "cycler_prdroid", "monster_cine2_hvyweapons", "monster_cine2_scientist", "monster_cine2_slave",
+        "monster_cine3_barney", "monster_cine3_scientist", "monster_cine_barney", "monster_cine_panther",
+        "monster_cine_scientist", "my_monster", "node_viewer", "node_viewer_fly", "node_viewer_human",
+        "node_viewer_large", "test_effect", "testhull"
+      ]
+    },
+    {
+      "reason": "Second classname of a class the FGD offers under its usual name (env_spark, env_beam; trigger_random for Sven Co-op's trigger_random_time / trigger_random_unique, which set its Timed / Unique flag; the calc entities' Spirit of Half-Life 1.8 names: calc_posfroment = calc_position, calc_numfromnum = calc_ratio, calc_vecfroment = calc_subvelocity, calc_vecfrompos = calc_velocity_path, calc_vecfromvec = calc_velocity_polar).",
+      "names": [
+        "env_debris", "env_lightning", "trigger_random_time", "trigger_random_unique", "monster_bullseye",
+        "calc_posfroment", "calc_numfromnum", "calc_vecfroment", "calc_vecfrompos", "calc_vecfromvec"
+      ]
+    },
+    {
+      "reason": "1.38 entity kept in the code only so old custom maps still work; mappers use its 2.0 replacement (meteo_particules: env_rain / env_snow, docs/WEATHER.md).",
+      "names": [
+        "meteo_particules"
+      ]
+    },
+    {
+      "reason": "Left out of the FGD, kept in the code so existing maps still work: Half-Life single-player level changes and saves (no use in SBO's multiplayer), the cyclers (env_model and env_sprite replace them) and CS's func_rain / func_snow (env_rain / env_snow do the same, docs/WEATHER.md).",
+      "names": [
+        "cycler", "cycler_sprite", "cycler_weapon", "func_rain", "func_snow", "player_loadsaved", "trigger_autosave",
+        "trigger_changelevel", "trigger_endsection", "trigger_transition"
+      ]
+    }
+  ],
+  "accepted": {
+    "unread_key": {
+      "game_player_settings.ARgrenades": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.rockets": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.Hand_Grenade": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.Satchel_Charge": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.Trip_Mine": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.Snarks": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.K444m": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.benm": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.canonm": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.chainm": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.fa18m": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.federalm": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.nm33m": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.pm66m": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.rc28m": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.spam": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.swm": "an ammo name read by CGamePlayerSettings::KeyValue (maprules.cpp) through the ammo registry ('_' for spaces, a leading '_' before a digit), which the scan does not see",
+      "game_player_settings.weapon_ben": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_canon": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_chaingun": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_chainsaw": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_fa18": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_federal": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_glauncher": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_handgrenade": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_k444": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_medikit": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_nm33": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_pm66": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_rc28": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_rpg": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_satchel": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_snark": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_spa": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_sw": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_sword": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_tripmine": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_warhammer": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "game_player_settings.weapon_wong": "a weapon classname read by CGamePlayerSettings::KeyValue (maprules.cpp) as any key starting with weapon_, which the scan does not see",
+      "worldspawn.light": "map compiler key (default light level), kept from the Half-Life FGD",
+      "trigger_random.target1": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target2": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target3": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target4": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target5": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target6": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target7": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target8": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target9": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target10": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target11": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target12": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target13": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target14": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target15": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see",
+      "trigger_random.target16": "read as \"target\" + a number by CTriggerRandom::KeyValue (Featureful), which the scan does not see"
+    },
+    "missing_key": {
+      "func_button.changetarget": "unused in Half-Life; trigger_changetarget does this",
+      "func_rot_button.changetarget": "unused in Half-Life; trigger_changetarget does this",
+      "func_rainvolume.snowflake_life": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_rainvolume.snowflake_max_size": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_rainvolume.snowflake_max_speed": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_rainvolume.snowflake_min_size": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_rainvolume.snowflake_min_speed": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_snowvolume.raindrop_height": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_snowvolume.raindrop_life": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_snowvolume.raindrop_max_speed": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_snowvolume.raindrop_min_speed": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "func_snowvolume.raindrop_width": "CWeatherVolume (triggers.cpp) is one class for func_rainvolume and func_snowvolume: it reads the rain and the snow keys; each FGD class offers its own kind only",
+      "scripted_tanksequence.m_iLaserSpot": "Featureful's laser spot key, accepted and ignored (SBO's tanks have no laser spot)",
+      "scripted_action.m_iFinishSchedule": "scripted_sequence's shared KeyValue (aiscripted_sequence key); a scripted_action plays no AI schedule",
+      "scripted_action.m_iszIdle": "scripted_sequence's shared KeyValue; a scripted_action has no idle animation (Featureful: no idle for actions)",
+      "game_player_settings.weapon_": "the prefix of every weapon key (strncmp in CGamePlayerSettings::KeyValue), not a key of its own",
+      "game_player_equip.weapon_": "the weapon_ prefix check (strncmp in CGamePlayerEquip::KeyValue: only weapon_, ammo_ and item_ classes are given), not a key of its own",
+      "game_player_equip.ammo_": "the ammo_ prefix check (strncmp in CGamePlayerEquip::KeyValue: only weapon_, ammo_ and item_ classes are given), not a key of its own",
+      "game_player_equip.item_": "the item_ prefix check (strncmp in CGamePlayerEquip::KeyValue: only weapon_, ammo_ and item_ classes are given), not a key of its own",
+      "player_capabilities.save_capability": "Featureful's save capability: singleplayer only, accepted and ignored so Featureful maps load quietly",
+      "ambient_random.playmode": "ambient_generic's play mode: ambient_random forces the default (sounds of different lengths)",
+      "ambient_random.linearmin": "ambient_generic's play mode key: not for ambient_random",
+      "ambient_random.linearmax": "ambient_generic's play mode key: not for ambient_random",
+      "env_spritetrain.height": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.lip": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.movesnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.rotation": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.sounds": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.stopsnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.wait": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_spritetrain.custommovesnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.customstopsnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.fireonstart": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.fireonstart_triggerstate": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.fireonstop": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.fireonstop_triggerstate": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.soundpitch": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_spritetrain.soundradius": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.custommovesnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.customstopsnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.fireonstart": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.fireonstart_triggerstate": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.fireonstop": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.fireonstop_triggerstate": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.soundpitch": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.soundradius": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): the train sound and Fire On options of func_train / func_plat; env_spritetrain / env_modeltrain have their own move / stop sound keys (noise, noise1); not offered on this class",
+      "env_modeltrain.height": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.lip": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.movesnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.rotation": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.sounds": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.stopsnd": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "env_modeltrain.wait": "func_train's shared KeyValue chain (CBasePlatTrain / CFuncTrain): plat keys, preset sounds (the train uses Move / Stop Sound) and wait (each path_corner sets it); nothing to set on this class",
+      "game_timer.time_remaining": "run-time only: set on a running timer with trigger_changevalue; Spawn replaces a map value (docs/GAME_TIMER.md)",
+      "game_timer.add_time": "run-time only: set on a running timer with trigger_changevalue; Spawn replaces a map value (docs/GAME_TIMER.md)",
+      "game_timer.remove_time": "run-time only: set on a running timer with trigger_changevalue; Spawn replaces a map value (docs/GAME_TIMER.md)",
+      "game_timer.paused": "run-time only: set on a running timer with trigger_changevalue; Spawn replaces a map value (docs/GAME_TIMER.md)",
+      "game_timer.PlayerFilter": "Source key, accepted for compatibility and not supported (console note at map start); docs/GAME_TIMER.md keeps it out of the FGD",
+      "trigger_changevalue.m_iFloatConversion": "trigger_copyvalue key; both classnames share CTriggerChangeValue",
+      "trigger_changevalue.m_iszDstValueName": "trigger_copyvalue key; both classnames share CTriggerChangeValue",
+      "trigger_changevalue.m_iszSrcValueName": "trigger_copyvalue key; both classnames share CTriggerChangeValue",
+      "trigger_copyvalue.m_iszNewValue": "trigger_changevalue key; both classnames share CTriggerChangeValue",
+      "trigger_copyvalue.m_iszValueName": "trigger_changevalue key; both classnames share CTriggerChangeValue",
+      "trigger_copyvalue.value_type": "trigger_changevalue key (Treat new value as); both classnames share CTriggerChangeValue; copyvalue reads its source entity instead",
+      "gibshooter.m_iszVelFactor": "Spirit of Half-Life's name of the gib speed factor; the FGD offers it as m_flVelocity (which also takes a [LR] value)",
+      "env_shooter.m_iszVelFactor": "Spirit of Half-Life's name of the gib speed factor; the FGD offers it as m_flVelocity (which also takes a [LR] value)",
+      "trigger_random.target": "prefix of target1 ... target16 (CTriggerRandom::KeyValue reads \"target\" + a number); trigger_random has no plain target key",
+      "ambient_music.cspinup": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.fadein": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.fadeout": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.lfomodpitch": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.lfomodvol": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.lforate": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.lfotype": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.linearmax": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.linearmin": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.pitch": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.pitchstart": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.playmode": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.preset": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.spindown": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.spinup": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)",
+      "ambient_music.volstart": "ambient_generic key; both classnames share CAmbientGeneric (music has no pitch, fade or play mode: docs/MAP_MUSIC.md)"
+    }
+  },
+  "tracked": {
+    "unread_key": {
+      "reason": "Inherited from a shared FGD base class (Targetx, Master, Monster) or kept from the Half-Life FGD; the entity's code does not read the key. Fix: narrow the base class or drop the key.",
+      "items": [
+        "button_target.master",
+        "game_counter.delay", "game_counter.killtarget", "game_team_master.delay",
+        "game_team_master.killtarget", "game_team_set.delay", "game_team_set.killtarget",
+        "ammo_reserve.delay", "ammo_reserve.killtarget"
+      ]
+    },
+    "key_case": {
+      "reason": "bmodels.cpp compares with \"Volume\" (as the Half-Life SDK does), the FGD writes volume (as the Half-Life FGD does): the key has no effect. Needs a decision which side changes.",
+      "items": [
+        "func_rotating.volume"
+      ]
+    },
+    "missing_key": {
+      "reason": "Keys the entity code reads that the FGD inherited from the Half-Life FGD (or from 1.38) without. Not added in the merge; each needs a label and a look at whether mappers should get it.",
+      "items": [
+        "func_door.WaveHeight", "func_door.skin",
+        "func_door_rotating.WaveHeight", "func_door_rotating.skin", "func_healthcharger.dmdelay",
+        "func_plat.lip", "func_plat.rotation", "func_plat.wait", "func_platrot.lip", "func_platrot.wait",
+        "func_recharge.dmdelay", "func_rot_button.locked_sentence", "func_rot_button.locked_sound",
+        "func_rot_button.unlocked_sentence", "func_rot_button.unlocked_sound", "func_tanklaser.bullet",
+        "func_tankrocket.bullet", "func_tankmortar.bullet", "func_trackautochange.lip",
+        "func_trackautochange.wait", "func_trackchange.lip", "func_trackchange.wait", "func_train.height",
+        "func_train.lip", "func_train.rotation", "func_train.sounds", "func_train.wait",
+        "func_water.healthvalue", "game_zone_player.master", "info_node.activity", "info_node.hinttype",
+        "info_node_air.activity", "info_node_air.hinttype", "light.pitch", "light_environment.pattern",
+        "light_environment.style", "monster_miniturret.Ff",
+        "monster_miniturret.searchspeed",
+        "monster_sentry.maxsleep", "monster_sentry.orientation", "monster_sentry.searchspeed",
+        "monster_turret.searchspeed",
+        "multi_manager.wait", "aiscripted_sequence.m_iszIdle",
+        "scripted_sequence.m_iFinishSchedule"
+      ]
+    },
+    "missing_class": {
+      "reason": "SBO entities with code and no FGD class.",
+      "items": [
+        "monster_grunt_hunter_repel", "monster_hgrunt_hunter_dead"
+      ]
+    }
+  }
+}

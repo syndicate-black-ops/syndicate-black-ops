@@ -1,0 +1,68 @@
+// Syndicate Black Ops: sequences/global.seq
+//
+// Text styles for the maps' sequence files (sequences/<mapname>.seq, run by trigger_sequence entities).
+// This file is part of the game: every player and every server has it, and it is read before each map's file.
+// A map's file uses a style by its name:
+//
+//     @TitleStyle
+//     #text = "OPERATION NIGHTFALL"
+//
+// A style holds until the entry ends or another style is used. A map that wants other colors or positions
+// defines its own styles in its own file (an entry of the same name there replaces the one here for that map).
+// Do not change this file on a server: maps are made against it. Format: the SDK's examples/sequences.
+//
+// HUD text channels: 0, 2 and 3 are used here. Channel 1 is the game's own (LEVEL UP, and a game_text's
+// default), so no style uses it. Styles on the same channel replace each other on the screen:
+//     TitleStyle 2      SubtitleStyle 3      ObjectiveStyle 0      RadioStyle 3      SignStyle 0
+
+
+// A mission's or a chapter's title: middle of the screen, white, written out letter by letter
+%TitleStyle
+{
+	$position = -1 0.36
+	$color = 255 255 255, color2 = 255 160 0, effect = 2
+	$fadein = 0.03, fxtime = 0.4, holdtime = 4, fadeout = 1
+	$channel = 2
+	$speaker = none
+}
+
+// The line under a title (place, time): smaller role, same place, gray
+%SubtitleStyle
+{
+	$position = -1 0.42
+	$color = 200 200 200, color2 = 255 255 255, effect = 0
+	$fadein = 1, holdtime = 4, fadeout = 1
+	$channel = 3
+	$speaker = none
+}
+
+// A new objective: upper part of the screen, orange, written out letter by letter
+%ObjectiveStyle
+{
+	$position = -1 0.16
+	$color = 255 160 0, color2 = 255 255 255, effect = 2
+	$fadein = 0.02, fxtime = 0.3, holdtime = 5, fadeout = 1
+	$channel = 0
+	$speaker = none
+}
+
+// A line somebody says, over the radio or in person (put "speaker = name" on the #sound line for a monster's
+// voice): lower part of the screen, light blue, on the screen as long as it takes to read
+%RadioStyle
+{
+	$position = -1 0.70
+	$color = 150 220 255, color2 = 255 255 255, effect = 0
+	$fadein = 0.1, holdtime = -1, fadeout = 0.5
+	$channel = 3
+	$speaker = none
+}
+
+// What a sign, a screen or a note in the map says, or a hint: under the crosshair, pale yellow
+%SignStyle
+{
+	$position = -1 0.56
+	$color = 255 240 170, color2 = 255 255 255, effect = 0
+	$fadein = 0.2, holdtime = -1, fadeout = 0.5
+	$channel = 0
+	$speaker = none
+}

@@ -1,0 +1,15 @@
+// overview description file for bk_x-incas
+// frame: orthographic, 4864.03 x 3648.02 world units
+
+global 
+{
+	ZOOM	1.6842
+	ORIGIN	-32.00	32.00	-692.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/bk_x-incas.tga"
+	HEIGHT	-692.00
+}

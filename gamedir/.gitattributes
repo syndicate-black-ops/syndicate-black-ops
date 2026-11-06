@@ -1,0 +1,21 @@
+# SBO game assets (1.38 release snapshot). Binary formats go to Git LFS; text files stay in normal git and are kept
+# byte-for-byte (the repo root sets `* -text`). Patterns are case-insensitive because SBO's file names mix case
+# (e.g. .WAV / .wav, .MDL / .mdl).
+*.[Ww][Aa][Vv] filter=lfs diff=lfs merge=lfs -text
+*.[Mm][Dd][Ll] filter=lfs diff=lfs merge=lfs -text
+*.[Tt][Gg][Aa] filter=lfs diff=lfs merge=lfs -text
+*.[Jj][Pp][Gg] filter=lfs diff=lfs merge=lfs -text
+*.[Bb][Mm][Pp] filter=lfs diff=lfs merge=lfs -text
+*.[Ss][Pp][Rr] filter=lfs diff=lfs merge=lfs -text
+*.[Bb][Ss][Pp] filter=lfs diff=lfs merge=lfs -text
+*.[Ww][Aa][Dd] filter=lfs diff=lfs merge=lfs -text
+*.[Dd][Ll][Ll] filter=lfs diff=lfs merge=lfs -text
+*.[Ss][Oo] filter=lfs diff=lfs merge=lfs -text
+*.[Ii][Cc][Oo] filter=lfs diff=lfs merge=lfs -text
+*.[Aa][Vv][Ii] filter=lfs diff=lfs merge=lfs -text
+*.[Ww][Cc] filter=lfs diff=lfs merge=lfs -text
+*.[Pp][Nn][Gg] filter=lfs diff=lfs merge=lfs -text
+*.[Mm][Pp]3 filter=lfs diff=lfs merge=lfs -text
+*.[Rr][Mm][Ff] filter=lfs diff=lfs merge=lfs -text
+*.[Zz][Ii][Pp] filter=lfs diff=lfs merge=lfs -text
+*.[Tt][Tt][Ff] filter=lfs diff=lfs merge=lfs -text

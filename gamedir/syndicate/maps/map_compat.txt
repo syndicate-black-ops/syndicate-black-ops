@@ -1,0 +1,51 @@
+// Map compatibility rules, read by the server while a map loads (SBO docs: Map compatibility file).
+// A rule removes or sets a key on a custom map that carries the key by accident, so the map plays as it was made.
+// One rule per line:
+//   <map> <crc32 of the .bsp> drop <classname> <selector> <key>
+//   <map> <crc32 of the .bsp> set  <classname> <selector> <key> <value>
+// selector: * (every entity of the class), #N (entity N of the map's entity lump, 0 = worldspawn), or a targetname.
+// The CRC-32 is of the whole .bsp file (python: zlib.crc32): an updated map no longer matches its entries.
+
+// co_corecity, co_corecity_v1: "Obey Trigger Mode" 2 on 11 func_door_rotating, set by accident
+co_corecity		8bc817ea	drop	func_door_rotating	*	m_iObeyTriggerMode
+co_corecity_v1	50e7a51f	drop	func_door_rotating	*	m_iObeyTriggerMode
+
+// co_aneki: env_shooter "fleshshot" has "scale" 0.5 and shoots models/gib_b_gib.mdl. The map was made when
+// model scale was not drawn: without the key its gibs are full size, as the author saw them.
+co_aneki		31a9fe30	drop	env_shooter		fleshshot	scale
+
+// co_zylom: the weapon rack cyclers (w_federal, w_nm33, w_canon, w_pm66) and the w_federal on the table. Their angles were set
+// for the 1.38 models, which lay along another axis than the 2.0 models (muzzle along the entity's angle); these
+// angles and origins show the 2.0 models as the 1.38 ones were shown.
+co_zylom	8cdbc9f6	set	cycler	#431	angles	"-3.8 359.91 270.22"
+co_zylom	8cdbc9f6	set	cycler	#431	origin	"-2521.67 -1171.06 -1268.91"
+co_zylom	8cdbc9f6	set	cycler	#432	angles	"1.07 357.95 270.94"
+co_zylom	8cdbc9f6	set	cycler	#432	origin	"-2445.38 -1172.35 -1287.34"
+co_zylom	8cdbc9f6	set	cycler	#433	angles	"-1.67 0.04 271.96"
+co_zylom	8cdbc9f6	set	cycler	#433	origin	"-2463.99 -1171.93 -1368.27"
+co_zylom	8cdbc9f6	set	cycler	#435	angles	"1.07 357.95 270.94"
+co_zylom	8cdbc9f6	set	cycler	#435	origin	"-2445.38 -1172.35 -1315.09"
+co_zylom	8cdbc9f6	set	cycler	#436	angles	"1.07 357.95 270.94"
+co_zylom	8cdbc9f6	set	cycler	#436	origin	"-2445.38 -1172.35 -1257.09"
+co_zylom	8cdbc9f6	set	cycler	#437	angles	"-3.8 359.91 270.22"
+co_zylom	8cdbc9f6	set	cycler	#437	origin	"-2521.54 -1171.06 -1297.9"
+co_zylom	8cdbc9f6	set	cycler	#438	angles	"-3.8 359.91 270.22"
+co_zylom	8cdbc9f6	set	cycler	#438	origin	"-2521.54 -1171.06 -1327.12"
+co_zylom	8cdbc9f6	set	cycler	#444	angles	"-1.67 0.04 271.96"
+co_zylom	8cdbc9f6	set	cycler	#444	origin	"-2423.67 -1171.93 -1368.58"
+co_zylom	8cdbc9f6	set	cycler	#642	angles	"-0.09 146.8 0.23"
+co_zylom	8cdbc9f6	set	cycler	#642	origin	"-2559.01 -952.13 -1371.06"
+co_zylom	8cdbc9f6	set	cycler	#434	angles	"-3.75 0 90"
+co_zylom	8cdbc9f6	set	cycler	#434	origin	"-2574.27 -1168.82 -1256.24"
+co_zylom	8cdbc9f6	set	cycler	#439	angles	"-3.75 0 90"
+co_zylom	8cdbc9f6	set	cycler	#439	origin	"-2574.35 -1168.82 -1285.01"
+co_zylom	8cdbc9f6	set	cycler	#440	angles	"-3.75 0 90"
+co_zylom	8cdbc9f6	set	cycler	#440	origin	"-2574.35 -1168.82 -1316.24"
+
+// co_crackdown_v1: the three w_fa18 monster_furniture in the gun rack, as above.
+co_crackdown_v1	0f43c462	set	monster_furniture	#715	angles	"89.87 220.66 319.74"
+co_crackdown_v1	0f43c462	set	monster_furniture	#715	origin	"759.61 2065.35 268.56"
+co_crackdown_v1	0f43c462	set	monster_furniture	#716	angles	"89.87 220.66 319.74"
+co_crackdown_v1	0f43c462	set	monster_furniture	#716	origin	"767.61 2065.35 268.56"
+co_crackdown_v1	0f43c462	set	monster_furniture	#717	angles	"89.87 220.66 319.74"
+co_crackdown_v1	0f43c462	set	monster_furniture	#717	origin	"791.61 2065.35 268.56"

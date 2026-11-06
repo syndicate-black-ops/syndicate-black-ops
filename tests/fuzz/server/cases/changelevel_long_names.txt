@@ -1,0 +1,5 @@
+# trigger_changelevel "map" / "landmark" of 32+ characters: warned, then strcpy'd past the 32-byte fields
+map co_fuzz
+spawn trigger_changelevel map mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm landmark mmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmmm
+activate
+frames 2

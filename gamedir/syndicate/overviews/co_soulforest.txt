@@ -1,0 +1,15 @@
+// overview description file for co_soulforest
+// frame: orthographic, 10448.98 x 7836.73 world units
+
+global 
+{
+	ZOOM	0.7840
+	ORIGIN	32.00	50.00	-192.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_soulforest.tga"
+	HEIGHT	-192.00
+}

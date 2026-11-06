@@ -1,0 +1,16 @@
+// overview description file for co_post-fondery
+// height clip: nothing above z 556.00 is drawn (-zmax)
+// frame: orthographic, 5317.41 x 3988.06 world units
+
+global 
+{
+	ZOOM	1.5406
+	ORIGIN	-567.00	-543.00	-1061.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_post-fondery.tga"
+	HEIGHT	-1061.00
+}

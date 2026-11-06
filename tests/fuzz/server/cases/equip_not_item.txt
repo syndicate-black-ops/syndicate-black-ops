@@ -1,0 +1,8 @@
+# game_player_equip with a key that is not an item class: "player" created a non-client player whose spawn ran
+# PlayerSpawn, which touched the equip again (endless recursion, stack overflow); now ignored
+map sp_fuzz
+connect 1
+spawn game_player_equip player 1 weapon_sw 1
+activate
+use 0 player 1
+frames 3

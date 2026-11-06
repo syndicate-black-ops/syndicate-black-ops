@@ -1,0 +1,29 @@
+# Git LFS content for the checked-out commit (gamedir/ and sdk/ assets, about 350 MB), through the Actions cache:
+# only objects the cache does not hold yet are downloaded (LFS bandwidth counts against the organization's quota).
+name: Git LFS pull (cached)
+description: Restore .git/lfs from the cache, fetch what is missing, check out the LFS files.
+inputs:
+  token:
+    description: token for the LFS download (the checkout keeps no credentials)
+    default: ${{ github.token }}
+runs:
+  using: composite
+  steps:
+    - name: LFS object list
+      id: ids
+      shell: bash
+      run: echo "key=lfs-$(git lfs ls-files --long | cut -d' ' -f1 | LC_ALL=C sort | sha256sum | cut -c1-32)" >> "$GITHUB_OUTPUT"
+    - name: Restore the LFS cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: .git/lfs
+        key: ${{ steps.ids.outputs.key }}
+        restore-keys: lfs-
+    - name: git lfs pull
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.token }}
+      run: |
+        auth=$(printf 'x-access-token:%s' "$TOKEN" | base64 -w0)
+        echo "::add-mask::$auth"
+        git -c "http.$GITHUB_SERVER_URL/.extraheader=AUTHORIZATION: basic $auth" lfs pull

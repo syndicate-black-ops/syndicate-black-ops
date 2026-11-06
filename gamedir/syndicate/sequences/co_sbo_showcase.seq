@@ -1,0 +1,24 @@
+// sequences/co_sbo_showcase.seq: the lightning strike in the courtyard of co_sbo_showcase (SBO docs: Sequence files).
+// The trigger_sequence "lt_seq" runs %lightning: the LIGHTNING button in the courtyard and a trigger_random
+// (Timed, every 30-60 s) trigger it.  Only the players in or near the courtyard see and hear it.  Map entities it fires:
+//   lt_flash_ls  trigger_lightstyle: the named light lt_flash flashes (pattern zazmz), then is dark again
+//   lt_beam      env_laser from under the sky down to the impact spot (each fire toggles it)
+//   lt_boom      env_explosion at the impact (no damage, repeatable)
+//   lt_zone1, lt_zone2  game_zone_player over the courtyard (and its west doorway): each player inside fires the
+//                env_fade lt_fade (a white screen flash) / lt_fade2 (a weaker one 0.2 s later), Activator Only
+//   lt_thunder   trigger_random: one of the ambient_generic lt_thunder1 / lt_thunder2 (the stock SBO sounds
+//                sound/anzym/thunder.wav and thunder2.wav) at the courtyard's center, play once with a linear
+//                falloff: full volume in the courtyard, silent elsewhere
+
+%lightning
+{
+	#firetargets = "lt_flash_ls"
+	#firetargets = "lt_zone1"			// the screen flashes white (env_fade), in the courtyard
+	#firetargets = "lt_beam", pause = 0.12		// the bolt: on ...
+	#firetargets = "lt_beam", pause = 0.08		// ... off ...
+	#firetargets = "lt_beam"			// ... on again
+	#firetargets = "lt_zone2"			// a weaker second flicker, 0.2 s after the first
+	#firetargets = "lt_boom", pause = 0.3		// the impact
+	#firetargets = "lt_beam", pause = 0.5		// the bolt goes out
+	#firetargets = "lt_thunder"			// the thunder, heard in the courtyard
+}

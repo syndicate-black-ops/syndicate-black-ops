@@ -1,0 +1,166 @@
+# Tag v* (vX.Y.Z, or vX.Y.Z-pre for a pre-release): build, package, sign, publish the GitHub release.
+#   tag       the tag must be v<project(VERSION) in CMakeLists.txt>[-pre]; a "-pre" tag is a GitHub pre-release and
+#             its builds carry that version (SBO_VERSION_OVERRIDE)
+#   build     build.yml, RelWithDebInfo, -DSBO_TEST_COMMANDS=OFF
+#   package   scripts/package_full_release.sh, on the runner: sbo-<tag>.zip (syndicate/ and syndicate_addon/),
+#             SHA256SUMS, manifest.json (not signed here: this job has no secrets)
+#   publish   environment "release" (its secret SBO_UPDATE_SIGNING_KEY, the Ed25519 private key as PEM text): signs
+#             manifest.json, checks the signature against the public key the game was built with and that the
+#             game libraries carry that key and this repository, then creates the release (notes = the annotated
+#             tag's message) with sbo-<tag>.zip, SHA256SUMS, manifest.json and manifest.json.sig
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions: {}
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      prerelease: ${{ steps.v.outputs.prerelease }}
+      override: ${{ steps.v.outputs.override }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: CMakeLists.txt
+          sparse-checkout-cone-mode: false
+      - name: Tag and project version
+        id: v
+        run: |
+          tag=$GITHUB_REF_NAME
+          project=$(sed -n 's/^project(sbo VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt)
+          if ! [[ $tag =~ ^v([0-9]+\.[0-9]+\.[0-9]+)(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::tag $tag is not vX.Y.Z or vX.Y.Z-pre"; exit 1
+          fi
+          if [ "${BASH_REMATCH[1]}" != "$project" ]; then
+            echo "::error::tag $tag does not match project(sbo VERSION $project) in CMakeLists.txt"; exit 1
+          fi
+          version=${tag#v}
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ -n "${BASH_REMATCH[2]}" ]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"; echo "override=$version" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"; echo "override=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "release $version (project $project)"
+
+  build:
+    needs: tag
+    uses: ./.github/workflows/build.yml
+    permissions:
+      contents: read
+      packages: write
+    with:
+      release: true
+      version-override: ${{ needs.tag.outputs.override }}
+      retention-days: 30
+
+  package:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/lfs-pull
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: build-windows
+          path: build/windows
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: build-linux
+          path: build/linux
+      - name: Package
+        # plain tools only (bash, git, zip/unzip, file, binutils, python3, coreutils): the runner has them
+        env:
+          CI_COMMIT_SHA: ${{ github.sha }}
+          CI_PIPELINE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          bash scripts/package_full_release.sh "$GITHUB_REF_NAME" build/linux build/windows - out/release
+          # the install page links releases/latest/download/sbo-<tag>.zip: the name must be exactly this
+          test -f "out/release/sbo-$GITHUB_REF_NAME.zip" || { echo "::error::no out/release/sbo-$GITHUB_REF_NAME.zip"; ls -la out/release; exit 1; }
+          ls -la out/release
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-package
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            out/release/sbo-*.zip
+            out/release/SHA256SUMS
+            out/release/manifest.json
+
+  publish:
+    needs: [tag, package]
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/updater_release.py
+            src/cl_dll/updater/updater.cmake
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-package
+          path: out/release
+      - name: Sign manifest.json
+        env:
+          SBO_UPDATE_SIGNING_KEY: ${{ secrets.SBO_UPDATE_SIGNING_KEY }}
+        run: |
+          [ -n "$SBO_UPDATE_SIGNING_KEY" ] || { echo "::error::the release environment has no SBO_UPDATE_SIGNING_KEY secret"; exit 1; }
+          python3 scripts/updater_release.py sign out/release/manifest.json --key-env SBO_UPDATE_SIGNING_KEY
+      - name: Check the signature and the game's updater settings
+        env:
+          VAR_PUBKEY: ${{ vars.SBO_UPDATE_PUBKEY }}
+          VAR_REPO: ${{ vars.SBO_UPDATE_REPO }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cmake_default() { sed -n "s/^set($1 \"\\([^\"]*\\)\".*/\\1/p" src/cl_dll/updater/updater.cmake; }
+          pubkey=${VAR_PUBKEY:-$(cmake_default SBO_UPDATE_PUBKEY)}
+          repo=${VAR_REPO:-$(cmake_default SBO_UPDATE_REPO)}
+          [ "$repo" = "$GITHUB_REPOSITORY" ] || { echo "::error::the game reads releases of $repo, not of $GITHUB_REPOSITORY"; exit 1; }
+          python3 scripts/updater_release.py verify out/release/manifest.json out/release/manifest.json.sig --pubkey "$pubkey"
+          zip=out/release/sbo-$TAG.zip
+          for lib in syndicate/cl_dlls/client.dll syndicate/cl_dlls/client.so; do
+            s=$(unzip -p "$zip" "$lib" | strings -a)
+            grep -qx "$pubkey" <<< "$s" || { echo "::error::$lib does not carry the public key $pubkey"; exit 1; }
+            # the linker may share the repository string with a longer one ending in it (the Version tab's repo link)
+            grep -qE "(^|/)$repo\$" <<< "$s" || { echo "::error::$lib does not read $repo"; exit 1; }
+            echo "$lib: public key $pubkey, repository $repo"
+          done
+          (cd out/release && sha256sum -c SHA256SUMS)
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          PRERELEASE: ${{ needs.tag.outputs.prerelease }}
+        run: |
+          # notes: the annotated tag's message without its signature (a lightweight tag: the version only)
+          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type + " " + .object.sha')
+          if [ "${ref%% *}" = tag ]; then
+            gh api "repos/$GITHUB_REPOSITORY/git/tags/${ref#* }" --jq .message | sed '/^-----BEGIN PGP SIGNATURE-----/,$d' > "$RUNNER_TEMP/notes.md"
+          else
+            echo "::warning::$TAG is a lightweight tag: no release notes"; echo "SBO ${TAG#v}" > "$RUNNER_TEMP/notes.md"
+          fi
+          args=(); [ "$PRERELEASE" = true ] && args+=(--prerelease)
+          python3 scripts/updater_release.py publish "$TAG" out/release --repo "$GITHUB_REPOSITORY" --notes "$RUNNER_TEMP/notes.md" "${args[@]}"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets --jq '.url, (.assets[] | "  " + .name + " " + (.size|tostring))'

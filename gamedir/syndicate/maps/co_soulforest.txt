@@ -1,0 +1,28 @@
+Mapped by Roux
+
+Level of the map : MEDIUM
+
+We have locate to proffesor who much kinaped. there are actualy in a 
+federal post-base. kill them ! 
+
+- find the proffessors and kill them
+
+- find the commandant and kill him
+
+
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round is finished when all the players died or when the objectives of 
+mission are successful.
+
+Maximum number of rounds before a failed mission : 14
+
+eXPerience System :
+-you gain xp points each time you wound an ennemy.
+-when you have a sufficient number of xp points, you gain a level.
+-when you will die, you lose xp points. 
+-if you kill a fellow-member, you lose 5 levels.
+
+Max Players : 8

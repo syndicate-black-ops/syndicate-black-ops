@@ -1,0 +1,15 @@
+// overview description file for co_kill-the-doc
+// frame: orthographic, 6485.63 x 4864.22 world units
+
+global 
+{
+	ZOOM	1.2631
+	ORIGIN	-256.00	192.00	-1216.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_kill-the-doc.tga"
+	HEIGHT	-1216.00
+}

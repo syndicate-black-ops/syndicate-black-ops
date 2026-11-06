@@ -1,0 +1,16 @@
+// overview description file for co_sbo_showcase
+// height clip: nothing above z 320.00 is drawn (-zmax)
+// frame: orthographic, 7360.29 x 5520.22 world units
+
+global 
+{
+	ZOOM	1.1130
+	ORIGIN	1208.00	1216.00	-192.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_sbo_showcase.tga"
+	HEIGHT	-192.00
+}

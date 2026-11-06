@@ -1,0 +1,11 @@
+global
+{
+	ZOOM 2.35
+	ORIGIN 284 834 -294
+	ROTATED 1
+}
+layer
+{
+	IMAGE "overviews/b.tga"
+	HEIGHT -923
+}

@@ -1,0 +1,37 @@
+Mapped by Roux.
+
+Level of the map : MEDIUM
+
+A vessel cargo liner of our fellow-members Space unlimited has not given anymore news. It transported for us some delicate things
+to the eyes of the laws federal. You must go in this vessel, recover the bord information, and do the housework.
+
+Mission:
+
+- Recover the 6 modules of information under the command center
+
+- Recover the module of information of the hypersleep rooms.
+
+- Open the access to the hoppers of maintenance of the engines, the
+  switch is in the command center
+
+- Start the system of self-destruction in the cooling chamber of
+  the engine 
+
+- Evacuate the space ship
+
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

@@ -1,0 +1,16 @@
+// overview description file for co_appart
+// height clip: nothing above z -120.00 is drawn (-zmax)
+// frame: orthographic, 3720.09 x 2790.06 world units
+
+global 
+{
+	ZOOM	2.2021
+	ORIGIN	249.00	780.00	-966.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_appart.tga"
+	HEIGHT	-966.00
+}

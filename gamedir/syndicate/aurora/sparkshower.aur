@@ -1,0 +1,57 @@
+// sparkshower.aur - SBO example (SBO docs: Aurora particle systems): a welding torch that throws bursts of sparks which
+// bounce on the floor. A chain of three types: the invisible source makes flashes, each flash sprays about
+// 24 sparks while it lasts, the sparks fall and bounce ("collision" "bounce").
+"particles" "400"
+"maintype" "welder"
+
+{
+  "name" "welder"
+  "spraytype" "flash"
+  "sprayrate" "3..6"
+}
+
+{
+  "name" "flash"
+  "sprite" "sprites/glow01.spr"
+  "rendermode" "additive"
+  "lifetime" "0.2"
+  "startsize" "20..36"
+  "endsize" "4"
+  "startalpha" "0.9"
+  "endalpha" "0"
+  "startred" "1"
+  "startgreen" "0.9"
+  "startblue" "0.6"
+  "endred" "1"
+  "endgreen" "0.6"
+  "endblue" "0.2"
+  "startangle" "0"
+  "spraytype" "spark"
+  "sprayrate" "120"
+  "sprayforce" "80..220"
+  "spraypitch" "-70..40"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "spark"
+  "sprite" "sprites/yelflare1.spr"
+  "rendermode" "additive"
+  "gravity" "-500"
+  "drag" "0.2"
+  "collision" "bounce"
+  "bounce" "0.45"
+  "bouncefriction" "0.15"
+  "lifetime" "1.5..2.5"
+  "startsize" "3..4"
+  "endsize" "1"
+  "startalpha" "1"
+  "endalpha" "0"
+  "startred" "1"
+  "startgreen" "0.9"
+  "startblue" "0.6"
+  "endred" "1"
+  "endgreen" "0.35"
+  "endblue" "0.05"
+  "startangle" "0..360"
+}

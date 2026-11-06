@@ -1,0 +1,15 @@
+// overview description file for co_gore
+// frame: orthographic, 7208.10 x 5406.07 world units
+
+global 
+{
+	ZOOM	1.1365
+	ORIGIN	1167.00	514.00	-3964.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_gore.tga"
+	HEIGHT	-3964.00
+}

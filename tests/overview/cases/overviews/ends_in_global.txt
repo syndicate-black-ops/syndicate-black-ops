@@ -1,0 +1,4 @@
+global
+{
+	ZOOM 2
+	ORIGIN 1 2

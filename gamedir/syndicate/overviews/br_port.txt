@@ -1,0 +1,24 @@
+// overview description file for br_port
+// frame: orthographic, 3541.41 x 2656.06 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	2.3132
+	ORIGIN	-272.00	-640.00	-1296.00
+	ROTATED	0
+}
+
+// layer 2 of 2 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/br_port.tga"
+	HEIGHT	-288.00
+}
+
+// layer 1 of 2: nothing above z -288.00 is drawn
+layer 
+{
+	IMAGE	"overviews/br_port_f1.tga"
+	HEIGHT	-1296.00
+}

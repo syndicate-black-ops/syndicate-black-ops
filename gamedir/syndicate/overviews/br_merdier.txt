@@ -1,0 +1,15 @@
+// overview description file for br_merdier
+// frame: orthographic, 3840.06 x 2880.04 world units
+
+global 
+{
+	ZOOM	2.1333
+	ORIGIN	-16.00	-368.00	144.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/br_merdier.tga"
+	HEIGHT	144.00
+}

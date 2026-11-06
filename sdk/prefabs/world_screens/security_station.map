@@ -1,0 +1,860 @@
+// World screens showcase: the security station prefab (see readme.md next to this file).
+// Textures: anzymut.wad, sbo_tools.wad ({screen).
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"wad" "anzymut.wad;sbo_tools.wad"
+{
+( -16 0 192 ) ( -16 0 0 ) ( -16 16 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 16 192 ) ( 912 16 0 ) ( 912 0 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 16 192 ) ( -16 16 192 ) ( 912 16 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 0 0 ) ( -16 0 0 ) ( 912 0 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 0 192 ) ( -16 0 192 ) ( 912 16 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 912 16 0 ) ( -16 16 0 ) ( 912 0 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 752 -448 192 ) ( 752 -448 0 ) ( 752 -264 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -264 192 ) ( 768 -264 0 ) ( 768 -448 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -264 192 ) ( 752 -264 192 ) ( 768 -264 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -448 0 ) ( 752 -448 0 ) ( 768 -448 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -448 192 ) ( 752 -448 192 ) ( 768 -264 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 768 -264 0 ) ( 752 -264 0 ) ( 768 -448 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 752 -200 192 ) ( 752 -200 0 ) ( 752 0 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 0 192 ) ( 768 0 0 ) ( 768 -200 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 0 192 ) ( 752 0 192 ) ( 768 0 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -200 0 ) ( 752 -200 0 ) ( 768 -200 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -200 192 ) ( 752 -200 192 ) ( 768 0 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 768 0 0 ) ( 752 0 0 ) ( 768 -200 0 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 752 -264 192 ) ( 752 -264 112 ) ( 752 -200 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -200 192 ) ( 768 -200 112 ) ( 768 -264 192 ) 666CEMENT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -200 192 ) ( 752 -200 192 ) ( 768 -200 112 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -264 112 ) ( 752 -264 112 ) ( 768 -264 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 768 -264 192 ) ( 752 -264 192 ) ( 768 -200 192 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 768 -200 112 ) ( 752 -200 112 ) ( 768 -264 112 ) 666CEMENT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_wall"
+"targetname" "sec_console"
+{
+( 392 -56 44 ) ( 392 -56 0 ) ( 392 0 44 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 44 ) ( 552 0 0 ) ( 552 -56 44 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 44 ) ( 392 0 44 ) ( 552 0 0 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 -56 0 ) ( 392 -56 0 ) ( 552 -56 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 -56 44 ) ( 392 -56 44 ) ( 552 0 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 552 0 0 ) ( 392 0 0 ) ( 552 -56 0 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 552 -56 44 ) ( 392 -56 44 ) ( 392 -32 62 ) {screen [ 1 0 0 -156.8 ] [ 0 -0.8 -0.6 52.224 ] 0 2.5 1.5625
+( 552 -32 62 ) ( 392 -32 62 ) ( 552 0 62 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 552 0 62 ) ( 392 0 62 ) ( 552 0 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 44 ) ( 392 0 44 ) ( 552 -56 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 -56 62 ) ( 392 -56 44 ) ( 392 0 62 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 62 ) ( 552 0 44 ) ( 552 -56 62 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+}
+{
+( 392 -32 132 ) ( 392 -32 62 ) ( 392 0 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 132 ) ( 552 0 62 ) ( 552 -32 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 0 132 ) ( 392 0 132 ) ( 552 0 62 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 552 -32 62 ) ( 392 -32 62 ) ( 552 -32 132 ) {screen [ 1 0 0 -156.8 ] [ 0 0 -1 84.48 ] 0 2.5 1.5625
+( 552 -32 132 ) ( 392 -32 132 ) ( 552 0 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 552 0 62 ) ( 392 0 62 ) ( 552 -32 62 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 384 -40 140 ) ( 384 -40 132 ) ( 384 0 140 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 0 140 ) ( 560 0 132 ) ( 560 -40 140 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 0 140 ) ( 384 0 140 ) ( 560 0 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 -40 132 ) ( 384 -40 132 ) ( 560 -40 140 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 -40 140 ) ( 384 -40 140 ) ( 560 0 140 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 560 0 132 ) ( 384 0 132 ) ( 560 -40 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 384 -40 132 ) ( 384 -40 44 ) ( 384 0 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 0 132 ) ( 392 0 44 ) ( 392 -40 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 0 132 ) ( 384 0 132 ) ( 392 0 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -40 44 ) ( 384 -40 44 ) ( 392 -40 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 392 -40 132 ) ( 384 -40 132 ) ( 392 0 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 392 0 44 ) ( 384 0 44 ) ( 392 -40 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 552 -40 132 ) ( 552 -40 44 ) ( 552 0 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 0 132 ) ( 560 0 44 ) ( 560 -40 132 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 0 132 ) ( 552 0 132 ) ( 560 0 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 -40 44 ) ( 552 -40 44 ) ( 560 -40 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 560 -40 132 ) ( 552 -40 132 ) ( 560 0 132 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 560 0 44 ) ( 552 0 44 ) ( 560 -40 44 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_door"
+"targetname" "sec_door"
+"angles" "0 -1 0"
+"speed" "120"
+"wait" "4"
+"lip" "8"
+"master" "sec_door_ms"
+"movesnd" "1"
+"stopsnd" "1"
+{
+( 754 -264 112 ) ( 754 -264 0 ) ( 754 -200 112 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 766 -200 112 ) ( 766 -200 0 ) ( 766 -264 112 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 766 -200 112 ) ( 754 -200 112 ) ( 766 -200 0 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 766 -264 0 ) ( 754 -264 0 ) ( 766 -264 112 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 766 -264 112 ) ( 754 -264 112 ) ( 766 -200 112 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 766 -200 0 ) ( 754 -200 0 ) ( 766 -264 0 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "multisource"
+"origin" "740 -232 176"
+"targetname" "sec_door_ms"
+}
+{
+"classname" "trigger_relay"
+"origin" "16 -360 176"
+"targetname" "sec_ms_flip"
+"triggerstate" "2"
+"target" "sec_door_ms"
+}
+{
+"classname" "func_wall"
+"targetname" "sec_monitor"
+{
+( 744 -264 152 ) ( 744 -264 120 ) ( 744 -200 152 ) {screen [ 0 -1 0 -200 ] [ 0 0 -1 304 ] 0 1 0.5
+( 752 -200 152 ) ( 752 -200 120 ) ( 752 -264 152 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -200 152 ) ( 744 -200 152 ) ( 752 -200 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -264 120 ) ( 744 -264 120 ) ( 752 -264 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -264 152 ) ( 744 -264 152 ) ( 752 -200 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 -200 120 ) ( 744 -200 120 ) ( 752 -264 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 740 -272 158 ) ( 740 -272 152 ) ( 740 -192 158 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 158 ) ( 752 -192 152 ) ( 752 -272 158 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 158 ) ( 740 -192 158 ) ( 752 -192 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 152 ) ( 740 -272 152 ) ( 752 -272 158 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 158 ) ( 740 -272 158 ) ( 752 -192 158 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 -192 152 ) ( 740 -192 152 ) ( 752 -272 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 740 -272 120 ) ( 740 -272 114 ) ( 740 -192 120 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 120 ) ( 752 -192 114 ) ( 752 -272 120 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 120 ) ( 740 -192 120 ) ( 752 -192 114 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 114 ) ( 740 -272 114 ) ( 752 -272 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 120 ) ( 740 -272 120 ) ( 752 -192 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 -192 114 ) ( 740 -192 114 ) ( 752 -272 114 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 740 -272 152 ) ( 740 -272 120 ) ( 740 -264 152 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -264 152 ) ( 752 -264 120 ) ( 752 -272 152 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -264 152 ) ( 740 -264 152 ) ( 752 -264 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 120 ) ( 740 -272 120 ) ( 752 -272 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -272 152 ) ( 740 -272 152 ) ( 752 -264 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 -264 120 ) ( 740 -264 120 ) ( 752 -272 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 740 -200 152 ) ( 740 -200 120 ) ( 740 -192 152 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 152 ) ( 752 -192 120 ) ( 752 -200 152 ) 666MURMETAL [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -192 152 ) ( 740 -192 152 ) ( 752 -192 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -200 120 ) ( 740 -200 120 ) ( 752 -200 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 -200 152 ) ( 740 -200 152 ) ( 752 -192 152 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 -192 120 ) ( 740 -192 120 ) ( 752 -200 120 ) 666MURMETAL [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "vgui_screen"
+"origin" "472 -80 64"
+"targetname" "sec_screen"
+"panelname" "security_main"
+"surface" "sec_console"
+"~door" "sec_door_toggle"
+"~alarm" "sec_alarm_toggle"
+"~lights" "sec_lights_toggle"
+}
+{
+"classname" "vgui_screen"
+"origin" "720 -232 136"
+"targetname" "sec_screen"
+"panelname" "security_mirror"
+"surface" "sec_monitor"
+"spawnflags" "2"
+}
+{
+"classname" "info_target"
+"origin" "32 -360 176"
+"targetname" "sec_log"
+"$s_l1" "> Station online."
+"$s_l2" ""
+"$s_l3" ""
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "48 -360 176"
+"targetname" "sec_log_cp23"
+"netname" "sec_log"
+"m_iszSrcValueName" "$s_l2"
+"target" "sec_log"
+"m_iszDstValueName" "$s_l3"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "64 -360 176"
+"targetname" "sec_log_cp12"
+"netname" "sec_log"
+"m_iszSrcValueName" "$s_l1"
+"target" "sec_log"
+"m_iszDstValueName" "$s_l2"
+}
+{
+"classname" "multi_manager"
+"origin" "80 -360 176"
+"targetname" "sec_log_shift"
+"sec_log_cp23" "0"
+"sec_log_cp12" "0.02"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "96 -360 176"
+"targetname" "sec_log_pub1"
+"netname" "sec_log"
+"m_iszSrcValueName" "$s_l1"
+"target" "sec_p_log1"
+"m_iszDstValueName" "text"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "112 -360 176"
+"targetname" "sec_p_log1"
+"screen" "sec_screen"
+"mode" "0"
+"text" "-"
+"controlname" "LogLine1"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "128 -360 176"
+"targetname" "sec_log_pub2"
+"netname" "sec_log"
+"m_iszSrcValueName" "$s_l2"
+"target" "sec_p_log2"
+"m_iszDstValueName" "text"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "144 -360 176"
+"targetname" "sec_p_log2"
+"screen" "sec_screen"
+"mode" "0"
+"text" "-"
+"controlname" "LogLine2"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "160 -360 176"
+"targetname" "sec_log_pub3"
+"netname" "sec_log"
+"m_iszSrcValueName" "$s_l3"
+"target" "sec_p_log3"
+"m_iszDstValueName" "text"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "176 -360 176"
+"targetname" "sec_p_log3"
+"screen" "sec_screen"
+"mode" "0"
+"text" "-"
+"controlname" "LogLine3"
+}
+{
+"classname" "multi_manager"
+"origin" "192 -360 176"
+"targetname" "sec_log_publish"
+"sec_log_pub1" "0"
+"sec_log_pub2" "0"
+"sec_log_pub3" "0"
+"sec_p_log1" "0.05"
+"sec_p_log2" "0.05"
+"sec_p_log3" "0.05"
+}
+{
+"classname" "info_target"
+"origin" "208 -360 176"
+"targetname" "sec_alarm_vars"
+"$f_level" "0"
+"$f_step" "3.334"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "224 -360 176"
+"targetname" "sec_alarm_push"
+"netname" "sec_alarm_vars"
+"m_iszSrcValueName" "$f_level"
+"target" "sec_p_alarmbar"
+"m_iszDstValueName" "text"
+"m_iFloatConversion" "10"
+"message" "sec_p_alarmbar"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "240 -360 176"
+"targetname" "sec_p_alarmbar"
+"screen" "sec_screen"
+"mode" "0"
+"text" "0"
+"controlname" "AlarmBar"
+}
+{
+"classname" "trigger_copyvalue"
+"origin" "256 -360 176"
+"targetname" "sec_alarm_tick"
+"netname" "sec_alarm_vars"
+"m_iszSrcValueName" "$f_step"
+"target" "sec_alarm_vars"
+"m_iszDstValueName" "$f_level"
+"m_iszValueType" "1"
+"spawnflags" "8"
+"dmg" "1"
+"message" "sec_alarm_push"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "272 -360 176"
+"targetname" "sec_alarm_reset"
+"target" "sec_alarm_vars"
+"m_iszValueName" "$f_level"
+"m_iszNewValue" "0"
+"message" "sec_alarm_push"
+}
+{
+"classname" "trigger_relay"
+"origin" "288 -360 176"
+"targetname" "sec_alarm_tick_on"
+"triggerstate" "1"
+"target" "sec_alarm_tick"
+}
+{
+"classname" "trigger_relay"
+"origin" "304 -360 176"
+"targetname" "sec_alarm_tick_off"
+"triggerstate" "0"
+"target" "sec_alarm_tick"
+}
+{
+"classname" "trigger_relay"
+"origin" "320 -360 176"
+"targetname" "sec_door_toggle"
+"triggerstate" "2"
+"target" "sec_door_unlock"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "16 -344 176"
+"targetname" "sec_p_DoorState_unlock"
+"screen" "sec_screen"
+"mode" "0"
+"text" "UNLOCKED"
+"controlname" "DoorState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "32 -344 176"
+"targetname" "sec_p_BtnDoor_unlock"
+"screen" "sec_screen"
+"mode" "0"
+"text" "LOCK DOOR"
+"controlname" "BtnDoor"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "48 -344 176"
+"targetname" "sec_a_door_unlock"
+"screen" "sec_screen"
+"mode" "5"
+"text" "door_unlock"
+"controlname" "door"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "64 -344 176"
+"targetname" "sec_door_ct_lock"
+"target" "sec_door_toggle"
+"m_iszNewTarget" "sec_door_lock"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "80 -344 176"
+"targetname" "sec_log_set_door_unlock"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Blast door unlocked."
+}
+{
+"classname" "multi_manager"
+"origin" "96 -344 176"
+"targetname" "sec_ev_door_unlock"
+"sec_log_shift" "0"
+"sec_log_set_door_unlock" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "112 -344 176"
+"targetname" "sec_door_unlock"
+"sec_ms_flip" "0"
+"sec_p_DoorState_unlock" "0"
+"sec_p_BtnDoor_unlock" "0"
+"sec_a_door_unlock" "0"
+"sec_door_ct_lock" "0"
+"sec_ev_door_unlock" "0"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "128 -344 176"
+"targetname" "sec_p_DoorState_lock"
+"screen" "sec_screen"
+"mode" "0"
+"text" "LOCKED"
+"controlname" "DoorState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "144 -344 176"
+"targetname" "sec_p_BtnDoor_lock"
+"screen" "sec_screen"
+"mode" "0"
+"text" "UNLOCK DOOR"
+"controlname" "BtnDoor"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "160 -344 176"
+"targetname" "sec_a_door_lock"
+"screen" "sec_screen"
+"mode" "5"
+"text" "door_lock"
+"controlname" "door"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "176 -344 176"
+"targetname" "sec_door_ct_unlock"
+"target" "sec_door_toggle"
+"m_iszNewTarget" "sec_door_unlock"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "192 -344 176"
+"targetname" "sec_log_set_door_lock"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Blast door locked."
+}
+{
+"classname" "multi_manager"
+"origin" "208 -344 176"
+"targetname" "sec_ev_door_lock"
+"sec_log_shift" "0"
+"sec_log_set_door_lock" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "224 -344 176"
+"targetname" "sec_door_lock"
+"sec_ms_flip" "0"
+"sec_p_DoorState_lock" "0"
+"sec_p_BtnDoor_lock" "0"
+"sec_a_door_lock" "0"
+"sec_door_ct_unlock" "0"
+"sec_ev_door_lock" "0"
+}
+{
+"classname" "trigger_relay"
+"origin" "240 -344 176"
+"targetname" "sec_alarm_toggle"
+"triggerstate" "2"
+"target" "sec_alarm_on"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "256 -344 176"
+"targetname" "sec_p_AlarmState_on"
+"screen" "sec_screen"
+"mode" "0"
+"text" "ALARM!"
+"controlname" "AlarmState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "272 -344 176"
+"targetname" "sec_p_BtnAlarm_on"
+"screen" "sec_screen"
+"mode" "0"
+"text" "SILENCE ALARM"
+"controlname" "BtnAlarm"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "288 -344 176"
+"targetname" "sec_a_alarm_on"
+"screen" "sec_screen"
+"mode" "5"
+"text" "alarm_on"
+"controlname" "alarm"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "304 -344 176"
+"targetname" "sec_alarm_ct_off"
+"target" "sec_alarm_toggle"
+"m_iszNewTarget" "sec_alarm_off"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "320 -344 176"
+"targetname" "sec_log_set_alarm_on"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> ALARM RAISED."
+}
+{
+"classname" "multi_manager"
+"origin" "16 -328 176"
+"targetname" "sec_ev_alarm_on"
+"sec_log_shift" "0"
+"sec_log_set_alarm_on" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "32 -328 176"
+"targetname" "sec_alarm_on"
+"sec_alarm_sprite" "0"
+"sec_alarm_siren" "0"
+"sec_alarm_light" "0"
+"sec_alarm_reset" "0"
+"sec_alarm_tick_on" "0.05"
+"sec_p_AlarmState_on" "0"
+"sec_p_BtnAlarm_on" "0"
+"sec_a_alarm_on" "0"
+"sec_alarm_ct_off" "0"
+"sec_ev_alarm_on" "0"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "48 -328 176"
+"targetname" "sec_p_AlarmState_off"
+"screen" "sec_screen"
+"mode" "0"
+"text" "STANDBY"
+"controlname" "AlarmState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "64 -328 176"
+"targetname" "sec_p_BtnAlarm_off"
+"screen" "sec_screen"
+"mode" "0"
+"text" "RAISE ALARM"
+"controlname" "BtnAlarm"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "80 -328 176"
+"targetname" "sec_a_alarm_off"
+"screen" "sec_screen"
+"mode" "5"
+"text" "alarm_off"
+"controlname" "alarm"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "96 -328 176"
+"targetname" "sec_alarm_ct_on"
+"target" "sec_alarm_toggle"
+"m_iszNewTarget" "sec_alarm_on"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "112 -328 176"
+"targetname" "sec_log_set_alarm_off"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Alarm silenced."
+}
+{
+"classname" "multi_manager"
+"origin" "128 -328 176"
+"targetname" "sec_ev_alarm_off"
+"sec_log_shift" "0"
+"sec_log_set_alarm_off" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "144 -328 176"
+"targetname" "sec_alarm_off"
+"sec_alarm_sprite" "0"
+"sec_alarm_siren" "0"
+"sec_alarm_light" "0"
+"sec_alarm_tick_off" "0"
+"sec_alarm_reset" "0.05"
+"sec_p_AlarmState_off" "0"
+"sec_p_BtnAlarm_off" "0"
+"sec_a_alarm_off" "0"
+"sec_alarm_ct_on" "0"
+"sec_ev_alarm_off" "0"
+}
+{
+"classname" "trigger_relay"
+"origin" "160 -328 176"
+"targetname" "sec_lights_toggle"
+"triggerstate" "2"
+"target" "sec_lights_off"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "176 -328 176"
+"targetname" "sec_p_LightsState_off"
+"screen" "sec_screen"
+"mode" "0"
+"text" "OFF"
+"controlname" "LightsState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "192 -328 176"
+"targetname" "sec_p_BtnLights_off"
+"screen" "sec_screen"
+"mode" "0"
+"text" "LIGHTS ON"
+"controlname" "BtnLights"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "208 -328 176"
+"targetname" "sec_a_lights_off"
+"screen" "sec_screen"
+"mode" "5"
+"text" "lights_off"
+"controlname" "lights"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "224 -328 176"
+"targetname" "sec_lights_ct_on"
+"target" "sec_lights_toggle"
+"m_iszNewTarget" "sec_lights_on"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "240 -328 176"
+"targetname" "sec_log_set_lights_off"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Room lights off."
+}
+{
+"classname" "multi_manager"
+"origin" "256 -328 176"
+"targetname" "sec_ev_lights_off"
+"sec_log_shift" "0"
+"sec_log_set_lights_off" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "272 -328 176"
+"targetname" "sec_lights_off"
+"sec_room_light" "0"
+"sec_p_LightsState_off" "0"
+"sec_p_BtnLights_off" "0"
+"sec_a_lights_off" "0"
+"sec_lights_ct_on" "0"
+"sec_ev_lights_off" "0"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "288 -328 176"
+"targetname" "sec_p_LightsState_on"
+"screen" "sec_screen"
+"mode" "0"
+"text" "ON"
+"controlname" "LightsState"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "304 -328 176"
+"targetname" "sec_p_BtnLights_on"
+"screen" "sec_screen"
+"mode" "0"
+"text" "LIGHTS OFF"
+"controlname" "BtnLights"
+}
+{
+"classname" "vgui_control_proxy"
+"origin" "320 -328 176"
+"targetname" "sec_a_lights_on"
+"screen" "sec_screen"
+"mode" "5"
+"text" "lights_on"
+"controlname" "lights"
+}
+{
+"classname" "trigger_changetarget"
+"origin" "16 -312 176"
+"targetname" "sec_lights_ct_off"
+"target" "sec_lights_toggle"
+"m_iszNewTarget" "sec_lights_off"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "32 -312 176"
+"targetname" "sec_log_set_lights_on"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Room lights on."
+}
+{
+"classname" "multi_manager"
+"origin" "48 -312 176"
+"targetname" "sec_ev_lights_on"
+"sec_log_shift" "0"
+"sec_log_set_lights_on" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "64 -312 176"
+"targetname" "sec_lights_on"
+"sec_room_light" "0"
+"sec_p_LightsState_on" "0"
+"sec_p_BtnLights_on" "0"
+"sec_a_lights_on" "0"
+"sec_lights_ct_off" "0"
+"sec_ev_lights_on" "0"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "80 -312 176"
+"targetname" "sec_log_set_door_open"
+"target" "sec_log"
+"m_iszValueName" "$s_l1"
+"m_iszNewValue" "> Blast door opened."
+}
+{
+"classname" "multi_manager"
+"origin" "96 -312 176"
+"targetname" "sec_ev_door_open"
+"sec_log_shift" "0"
+"sec_log_set_door_open" "0.1"
+"sec_log_publish" "0.2"
+}
+{
+"classname" "multi_manager"
+"origin" "112 -312 176"
+"targetname" "sec_door_open"
+"sec_door" "0"
+"sec_ev_door_open" "0"
+}
+{
+"classname" "env_sprite"
+"origin" "472 -24 160"
+"targetname" "sec_alarm_sprite"
+"model" "sprites/glow01.spr"
+"rendermode" "5"
+"renderamt" "255"
+"rendercolor" "255 40 20"
+"renderfx" "4"
+"scale" "0.6"
+}
+{
+"classname" "ambient_generic"
+"origin" "472 -120 120"
+"targetname" "sec_alarm_siren"
+"message" "ambience/siren.wav"
+"health" "8"
+"spawnflags" "20"
+}
+{
+"classname" "light"
+"origin" "472 -96 176"
+"targetname" "sec_alarm_light"
+"_light" "255 30 20 300"
+"pattern" "aaaaazzzzz"
+"spawnflags" "1"
+}
+{
+"classname" "light"
+"origin" "160 -200 168"
+"targetname" "sec_room_light"
+"_light" "255 250 235 170"
+}
+{
+"classname" "light"
+"origin" "472 -200 168"
+"targetname" "sec_room_light"
+"_light" "255 250 235 170"
+}
+{
+"classname" "light"
+"origin" "860 -200 168"
+"targetname" "sec_room_light"
+"_light" "255 250 235 170"
+}
+{
+"classname" "light"
+"origin" "300 -300 120"
+"_light" "120 140 160 25"
+}
+{
+"classname" "func_button"
+"target" "sec_door_toggle"
+"spawnflags" "1"
+"wait" "1"
+"sounds" "14"
+{
+( 56 -8 72 ) ( 56 -8 40 ) ( 56 0 72 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 88 0 72 ) ( 88 0 40 ) ( 88 -8 72 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 88 0 72 ) ( 56 0 72 ) ( 88 0 40 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 88 -8 40 ) ( 56 -8 40 ) ( 88 -8 72 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 88 -8 72 ) ( 56 -8 72 ) ( 88 0 72 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 88 0 40 ) ( 56 0 40 ) ( 88 -8 40 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "sec_alarm_toggle"
+"spawnflags" "1"
+"wait" "1"
+"sounds" "14"
+{
+( 168 -8 72 ) ( 168 -8 40 ) ( 168 0 72 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 0 72 ) ( 200 0 40 ) ( 200 -8 72 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 0 72 ) ( 168 0 72 ) ( 200 0 40 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 -8 40 ) ( 168 -8 40 ) ( 200 -8 72 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 200 -8 72 ) ( 168 -8 72 ) ( 200 0 72 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 200 0 40 ) ( 168 0 40 ) ( 200 -8 40 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "sec_door_open"
+"spawnflags" "1"
+"wait" "1"
+"sounds" "14"
+"master" "sec_door_ms"
+"locked_sound" "10"
+{
+( 280 -8 72 ) ( 280 -8 40 ) ( 280 0 72 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 312 0 72 ) ( 312 0 40 ) ( 312 -8 72 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 312 0 72 ) ( 280 0 72 ) ( 312 0 40 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 312 -8 40 ) ( 280 -8 40 ) ( 312 -8 72 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 312 -8 72 ) ( 280 -8 72 ) ( 312 0 72 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 312 0 40 ) ( 280 0 40 ) ( 312 -8 40 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}

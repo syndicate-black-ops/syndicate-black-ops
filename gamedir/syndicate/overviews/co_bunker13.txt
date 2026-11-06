@@ -1,0 +1,15 @@
+// overview description file for co_bunker13
+// frame: orthographic, 5628.31 x 4221.23 world units
+
+global 
+{
+	ZOOM	1.4555
+	ORIGIN	1808.00	-961.00	-1145.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_bunker13.tga"
+	HEIGHT	-1145.00
+}

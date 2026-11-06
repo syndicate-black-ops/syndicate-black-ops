@@ -1,0 +1,16 @@
+// overview description file for br_burnzone
+// height clip: nothing above z -260.00 is drawn (-zmax)
+// frame: orthographic, 6144.15 x 4608.12 world units
+
+global 
+{
+	ZOOM	1.3333
+	ORIGIN	-10.00	-128.00	-1920.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/br_burnzone.tga"
+	HEIGHT	-1920.00
+}

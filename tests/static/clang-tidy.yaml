@@ -1,0 +1,36 @@
+# clang-tidy checks for scripts/check_sanitizers.sh static: bugs, not style. The excluded bugprone checks only report
+# style or intentional SDK idioms (swappable parameters, reserved identifiers, narrowing, macro parentheses, ...).
+Checks: >
+  -*,
+  clang-analyzer-core.*,
+  clang-analyzer-cplusplus.*,
+  clang-analyzer-deadcode.DeadStores,
+  clang-analyzer-unix.*,
+  clang-analyzer-security.FloatLoopCounter,
+  clang-analyzer-security.ArrayBound,
+  clang-analyzer-alpha.security.ArrayBound,
+  clang-analyzer-alpha.unix.cstring.OutOfBounds,
+  clang-analyzer-alpha.unix.cstring.BufferOverlap,
+  clang-analyzer-optin.portability.UnixAPI,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-reserved-identifier,
+  -bugprone-narrowing-conversions,
+  -bugprone-macro-parentheses,
+  -bugprone-implicit-widening-of-multiplication-result,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-branch-clone,
+  -bugprone-multi-level-implicit-pointer-conversion,
+  -bugprone-switch-missing-default-case,
+  -bugprone-casting-through-void,
+  -bugprone-inc-dec-in-conditions,
+  -bugprone-unchecked-optional-access,
+  -bugprone-exception-escape,
+  -bugprone-unhandled-self-assignment,
+  -bugprone-easily-swappable-parameters,
+  cert-err34-c,
+  cert-flp30-c,
+  cert-env33-c,
+  cert-oop54-cpp
+HeaderFilterRegex: '.*/src/(dlls|cl_dll|game_shared|pm_shared|common)/.*'
+SystemHeaders: false

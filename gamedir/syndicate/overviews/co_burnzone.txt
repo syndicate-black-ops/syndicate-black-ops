@@ -1,0 +1,24 @@
+// overview description file for co_burnzone
+// frame: orthographic, 6954.75 x 5216.06 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	1.1779
+	ORIGIN	88.00	-23.00	-3032.00
+	ROTATED	0
+}
+
+// layer 2 of 2 (top, complete picture): nothing above z -256.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_burnzone.tga"
+	HEIGHT	-1920.00
+}
+
+// layer 1 of 2: nothing above z -1920.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_burnzone_f1.tga"
+	HEIGHT	-3032.00
+}

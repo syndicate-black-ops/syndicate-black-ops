@@ -1,0 +1,6 @@
+# cine_blood: BloodGush kept using the entity after REMOVE_ENTITY freed it
+map co_fuzz
+spawn cine_blood health 1
+activate
+use 0
+frames 10

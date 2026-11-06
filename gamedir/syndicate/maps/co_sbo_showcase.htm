@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>co_sbo_showcase - mission dossier</title>
+<!--
+  HTML map briefing sample (maps/<map>.htm next to maps/<map>.txt).
+  Everything is local: one page, one picture (co_sbo_showcase_plan.jpg, listed in co_sbo_showcase.res).
+  The whole page scales with the window (all sizes in em, the root size from the window size), so it fits the
+  map readme and the spectator "Map Briefing" window at any resolution without scroll bars.
+  Without scripts the page is complete; the script only types the mission text, ticks objectives on click and
+  links the route list to the map markers.
+-->
+<style>
+:root {
+  --green: #11f488;
+  --green-dim: #0b9e5a;
+  --green-dark: #06331f;
+  --amber: #ffb52e;
+  --red: #ff3b3b;
+  --bg: #030a06;
+  --panel: rgba(8, 40, 24, 0.55);
+}
+html {
+  font-size: 1.6vw;
+  font-size: min(1.6vw, 3.69vh);
+}
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+/* see-through dark glass: the game's window and the world behind it show faintly */
+body {
+  background: rgba(2, 9, 5, 0.95);
+  color: var(--green);
+  font-family: "Lucida Console", "DejaVu Sans Mono", "Liberation Mono", "Courier New", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-shadow: 0 0 0.3em rgba(17, 244, 136, 0.45);
+}
+/* CRT: scan lines, vignette and a slow flicker over everything */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 50;
+  background: repeating-linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 2px, rgba(0, 0, 0, 0.28) 3px, rgba(0, 0, 0, 0) 4px);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 51;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.65) 100%);
+  animation: flicker 6s infinite steps(1);
+}
+@keyframes flicker {
+  0%, 100% { opacity: 1; }
+  47% { opacity: 0.85; }
+  48% { opacity: 1; }
+  83% { opacity: 0.92; }
+  84% { opacity: 1; }
+}
+.dossier {
+  position: relative;
+  width: 60em;
+  height: 26em;
+  display: grid;
+  grid-template-rows: 3.1em 1fr 1.3em;
+  row-gap: 0.3em;
+}
+/* header */
+header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  border-bottom: 0.1em solid var(--green-dim);
+  padding-bottom: 0.3em;
+}
+.org { font-size: 0.62em; letter-spacing: 0.25em; color: var(--green-dim); }
+h1 { margin: 0.1em 0 0; font-size: 1.45em; letter-spacing: 0.08em; color: #d9ffe9; }
+h1 span { color: var(--green); }
+.meta { text-align: right; font-size: 0.68em; line-height: 1.45; color: #9fe8c2; margin-right: 17.5em; }
+.meta b { color: var(--green); font-weight: normal; }
+.stamp {
+  position: absolute;
+  top: -0.2em;
+  right: 0.2em;
+  padding: 0.15em 0.5em;
+  font-size: 1.15em;
+  font-weight: bold;
+  letter-spacing: 0.15em;
+  color: var(--red);
+  border: 0.15em solid var(--red);
+  border-radius: 0.2em;
+  transform: rotate(-9deg);
+  text-shadow: 0 0 0.25em rgba(255, 59, 59, 0.6);
+  box-shadow: 0 0 0.4em rgba(255, 59, 59, 0.35), inset 0 0 0.4em rgba(255, 59, 59, 0.25);
+  opacity: 0.88;
+  z-index: 10;
+  animation: stamp 0.35s cubic-bezier(.2, 1.6, .4, 1) 0.5s backwards;
+}
+@keyframes stamp {
+  from { transform: rotate(-9deg) scale(2.6); opacity: 0; }
+  to { transform: rotate(-9deg) scale(1); opacity: 0.88; }
+}
+/* columns */
+main {
+  display: grid;
+  overflow: hidden;
+  grid-template-columns: 15.6em 27.4em 15em;
+  column-gap: 1em;
+  min-height: 0;
+}
+.panel {
+  background: var(--panel);
+  border: 0.08em solid var(--green-dark);
+  box-shadow: inset 0 0 1.2em rgba(17, 244, 136, 0.06);
+  padding: 0.38em 0.55em;
+  min-height: 0;
+}
+h2 {
+  margin: 0 0 0.35em;
+  font-size: 0.7em;
+  font-weight: normal;
+  letter-spacing: 0.22em;
+  color: var(--green-dim);
+}
+h2::before { content: "// "; }
+/* site plan */
+.plan { display: flex; flex-direction: column; }
+.mapbox { position: relative; width: 14.2em; height: 15.65em; margin: 0 auto; overflow: hidden; border: 0.08em solid var(--green-dim); }
+.mapbox img { width: 100%; height: 100%; display: block; }
+.mapbox::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2.5em;
+  top: -2.5em;
+  background: linear-gradient(to bottom, rgba(17, 244, 136, 0), rgba(17, 244, 136, 0.22), rgba(17, 244, 136, 0));
+  animation: sweep 5s linear infinite;
+  pointer-events: none;
+}
+@keyframes sweep { to { top: 100%; } }
+.pt {
+  position: absolute;
+  width: 1.05em;
+  height: 1.05em;
+  margin: -0.525em 0 0 -0.525em;
+  border-radius: 50%;
+  background: rgba(3, 10, 6, 0.85);
+  border: 0.09em solid var(--green);
+  color: var(--green);
+  font-size: 0.62em;
+  line-height: 1.05em;
+  text-align: center;
+  font-weight: bold;
+  cursor: default;
+  z-index: 2;
+}
+.pt.start { border-color: #d9ffe9; color: #d9ffe9; }
+.pt.end { border-color: var(--red); color: var(--red); text-shadow: none; animation: ping 1.6s ease-out infinite; }
+@keyframes ping {
+  0% { box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.75); }
+  100% { box-shadow: 0 0 0 0.9em rgba(255, 59, 59, 0); }
+}
+.pt:hover, .pt.hot { background: var(--green); color: var(--bg); text-shadow: none; z-index: 3; }
+.pt.end:hover, .pt.end.hot { background: var(--red); color: #fff; }
+.pt:hover::after, .pt.hot::after {
+  content: attr(data-name);
+  position: absolute;
+  left: 1.4em;
+  top: -0.15em;
+  white-space: nowrap;
+  padding: 0.1em 0.4em;
+  background: var(--bg);
+  border: 0.08em solid var(--green);
+  color: var(--green);
+  font-weight: normal;
+}
+.pt.right:hover::after, .pt.right.hot::after { left: auto; right: 1.4em; }
+.caption { margin-top: 0.3em; font-size: 0.55em; color: var(--green-dim); text-align: center; letter-spacing: 0.08em; }
+/* mission */
+.mission { display: flex; flex-direction: column; gap: 0.45em; }
+main > section { overflow: hidden; }
+.mission .panel:first-child { flex: 0 0 auto; }
+.brief { margin: 0; font-size: 0.74em; line-height: 1.3; color: #c8ffe0; }
+.caret { display: inline-block; width: 0.55em; height: 1em; vertical-align: -0.12em; background: var(--green); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+ul.obj { list-style: none; margin: 0; padding: 0; }
+ul.obj li {
+  position: relative;
+  padding: 0.1em 0 0.1em 1.7em;
+  font-size: 0.72em;
+  line-height: 1.22;
+  animation: rise 0.4s ease-out backwards;
+}
+ul.obj li:nth-child(1) { animation-delay: 1.0s; }
+ul.obj li:nth-child(2) { animation-delay: 1.25s; }
+ul.obj li:nth-child(3) { animation-delay: 1.5s; }
+@keyframes rise { from { opacity: 0; transform: translateX(-0.6em); } }
+ul.obj li::before {
+  content: "";
+  position: absolute;
+  left: 0.15em;
+  top: 0.32em;
+  width: 0.85em;
+  height: 0.85em;
+  border: 0.1em solid var(--green);
+}
+html.js ul.obj li { cursor: pointer; }
+ul.obj li.done { color: var(--green-dim); text-decoration: line-through; }
+ul.obj li.done::after { content: "\2713"; position: absolute; left: 0.27em; top: 0.08em; font-weight: bold; color: var(--green); text-decoration: none; }
+ul.obj small { color: var(--green-dim); font-size: 0.9em; }
+.tag { color: var(--amber); font-size: 0.8em; letter-spacing: 0.1em; text-shadow: none; display: none; }
+html.js .tag { display: inline; }
+.cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.45em; flex: 1 1 auto; min-height: 0; }
+.card { font-size: 0.62em; line-height: 1.32; color: #b5f5d2; }
+.card h3 { display: flex; justify-content: space-between; align-items: baseline; margin: 0 0 0.25em; font-size: 1em; color: var(--green); letter-spacing: 0.12em; }
+.card .big { font-size: 1.9em; line-height: 1; color: #d9ffe9; letter-spacing: 0; }
+/* route and threats */
+.side { display: flex; flex-direction: column; gap: 0.45em; }
+ol.route { list-style: none; margin: 0; padding: 0; counter-reset: r; }
+ol.route li {
+  counter-increment: r;
+  display: flex;
+  font-size: 0.62em;
+  line-height: 1.34;
+  white-space: nowrap;
+  cursor: default;
+}
+ol.route li::before { content: counter(r, decimal-leading-zero); width: 1.9em; flex: none; color: var(--green-dim); }
+ol.route li span { flex: none; width: 7.8em; color: #d9ffe9; overflow: hidden; }
+ol.route li em { font-style: normal; color: var(--green-dim); overflow: hidden; text-overflow: ellipsis; }
+ol.route li:hover, ol.route li.hot { background: rgba(17, 244, 136, 0.16); }
+ol.route li.end span { color: var(--red); }
+.threat { display: grid; grid-template-columns: 2.4em 1fr; column-gap: 0.4em; align-items: start; margin-top: 0.2em; }
+.threat .lvl {
+  font-size: 0.55em;
+  text-align: center;
+  border: 0.12em solid var(--amber);
+  color: var(--amber);
+  padding: 0.2em 0;
+  letter-spacing: 0.08em;
+  text-shadow: none;
+}
+.threat.high .lvl { border-color: var(--red); color: var(--red); animation: alarm 1.2s steps(1) infinite; }
+@keyframes alarm { 50% { background: rgba(255, 59, 59, 0.25); } }
+.threat p { margin: 0; font-size: 0.62em; line-height: 1.35; color: #b5f5d2; }
+.threat p b { color: #d9ffe9; }
+/* footer ticker */
+footer {
+  overflow: hidden;
+  white-space: nowrap;
+  border-top: 0.08em solid var(--green-dark);
+  font-size: 0.62em;
+  line-height: 2.1em;
+  color: var(--green-dim);
+}
+footer .roll { display: inline-block; padding-left: 100%; animation: roll 38s linear infinite; }
+@keyframes roll { to { transform: translateX(-100%); } }
+footer b { color: var(--green); font-weight: normal; }
+</style>
+</head>
+<body>
+<div class="dossier">
+  <div class="stamp">CLASSIFIED</div>
+
+  <header>
+    <div>
+      <div class="org">SYNDICATE // FIELD OPERATIONS // MISSION DOSSIER</div>
+      <h1>CO_SBO_<span>SHOWCASE</span></h1>
+    </div>
+    <div class="meta">
+      Mapped by <b>MrCalvin</b> &middot; Level <b>EASY</b><br>
+      Squad <b>up to 16 agents</b> &middot; <b>21 rounds</b> max
+    </div>
+  </header>
+
+  <main>
+    <section class="panel plan">
+      <h2>SITE PLAN</h2>
+      <div class="mapbox">
+        <img src="co_sbo_showcase_plan.jpg" alt="Top view of the facility">
+        <div class="pt start" style="left:20.5%;top:85.8%" data-n="1" data-name="Spawn hall">1</div>
+        <div class="pt" style="left:20.5%;top:67.2%" data-n="2" data-name="Materials">2</div>
+        <div class="pt" style="left:20.5%;top:43.0%" data-n="3" data-name="Aurora hall">3</div>
+        <div class="pt" style="left:20.5%;top:31.0%" data-n="4" data-name="Apache booth">4</div>
+        <div class="pt" style="left:38.5%;top:41.0%" data-n="5" data-name="Fades">5</div>
+        <div class="pt" style="left:46.5%;top:48.0%" data-n="6" data-name="Light styles">6</div>
+        <div class="pt right" style="left:59.2%;top:26.4%" data-n="7" data-name="Entity lab">7</div>
+        <div class="pt right" style="left:59.2%;top:12.4%" data-n="8" data-name="Dark room: dynamic lights">8</div>
+        <div class="pt" style="left:46.7%;top:62.4%" data-n="9" data-name="Model scale">9</div>
+        <div class="pt" style="left:42.3%;top:90.1%" data-n="10" data-name="Washroom">10</div>
+        <div class="pt right" style="left:62.7%;top:67.5%" data-n="11" data-name="Lounge">11</div>
+        <div class="pt right" style="left:71.5%;top:54.8%" data-n="12" data-name="Seamless teleport">12</div>
+        <div class="pt right" style="left:82.5%;top:84.7%" data-n="13" data-name="Courtyard">13</div>
+        <div class="pt right" style="left:72.5%;top:90.1%" data-n="14" data-name="West wall">14</div>
+        <div class="pt end right" style="left:93.0%;top:94.0%" data-n="15" data-name="Tower: END button">15</div>
+      </div>
+      <div class="caption">TOP VIEW &middot; NORTH UP &middot; ROUTE 3-5 MIN</div>
+    </section>
+
+    <section class="mission">
+      <div class="panel">
+        <h2>MISSION BRIEF</h2>
+        <p class="brief" id="brief">Croon scientists have asked for a handful of agents to test the newest features being rolled out to the public next month. Croon's press office insists the timing has nothing to do with the recent embezzlement scandal, and hopes the public will be far too busy enjoying the new features to remember it.</p>
+      </div>
+      <div class="panel">
+        <h2>OBJECTIVES <span class="tag">CLICK TO MARK</span></h2>
+        <ul class="obj" id="obj">
+          <li>Walk the route through the facility <small>(you will need to use your legs for this)</small></li>
+          <li>Climb the tower in the courtyard and press its button <small>(you will need to use your hands for this)</small></li>
+          <li>Have a good time <small>(not required)</small></li>
+        </ul>
+      </div>
+      <div class="cards">
+        <div class="panel card">
+          <h3>SQUAD <span class="big">16</span></h3>
+          agents max. Don't kill your teammates: a team kill costs <b>5 levels</b>.
+        </div>
+        <div class="panel card">
+          <h3>XP <span class="big">+</span></h3>
+          for every wound you deal to an enemy. Enough xp gains a level. Dying costs xp.
+        </div>
+        <div class="panel card">
+          <h3>ROUNDS <span class="big">21</span></h3>
+          before a failed mission. A round ends when all agents are dead or the objectives are done.
+        </div>
+      </div>
+    </section>
+
+    <section class="side">
+      <div class="panel">
+        <h2>ROUTE</h2>
+        <ol class="route" id="route">
+          <li data-n="1"><span>Spawn hall</span><em>world text, tutor</em></li>
+          <li data-n="2"><span>Materials</span><em>nine floors</em></li>
+          <li data-n="3"><span>Aurora hall</span><em>particle effects</em></li>
+          <li data-n="4"><span>Apache booth</span><em>live rockets</em></li>
+          <li data-n="5"><span>Fades</span><em>fade out, in, ghost</em></li>
+          <li data-n="6"><span>Light styles</span><em>power failure</em></li>
+          <li data-n="7"><span>Entity lab</span><em>freeze, beams, hurt</em></li>
+          <li data-n="8"><span>Dark room</span><em>dynamic lights</em></li>
+          <li data-n="9"><span>Model scale</span><em>grow and shrink</em></li>
+          <li data-n="10"><span>Washroom</span><em>mirrors</em></li>
+          <li data-n="11"><span>Lounge</span><em>music, screens</em></li>
+          <li data-n="12"><span>Teleport</span><em>seamless corridor</em></li>
+          <li data-n="13"><span>Courtyard</span><em>3D sky, rain, snow</em></li>
+          <li data-n="14"><span>West wall</span><em>day/night, fog</em></li>
+          <li data-n="15" class="end"><span>Tower</span><em>END button</em></li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h2>THREAT ASSESSMENT</h2>
+        <div class="threat high">
+          <div class="lvl">HIGH</div>
+          <p><b>Apache</b> (room 4). Fires real rockets in pairs at you. Watch from the booth window.</p>
+        </div>
+        <div class="threat">
+          <div class="lvl">MED</div>
+          <p><b>Lightning</b> (courtyard). Strikes every 30-60 seconds, or on the west wall button.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer><span class="roll"><b>INTEL</b> &middot; Every room names its feature on the wall &middot; The round starts a while after the first agent picks equipment &middot; <b>EXTRACTION</b>: the END button on the courtyard tower starts a 10 second countdown, then the mission is complete &middot; Rain makes ripples in the courtyard pool &middot; Jump pads and safe falls in the courtyard</span></footer>
+</div>
+
+<script>
+(function () {
+  // Shrink the page if it does not fit (other fonts, odd window sizes): no scroll bars, ever.
+  var root = document.documentElement;
+  root.className += " js";
+  function overflows() {
+    var secs = document.querySelectorAll("main > section");
+    for (var i = 0; i < secs.length; i++)
+      if (secs[i].scrollHeight > secs[i].clientHeight + 1) return true;
+    return false;
+  }
+  function fit() {
+    root.style.fontSize = "";
+    var size = parseFloat(getComputedStyle(root).fontSize);
+    for (var i = 0; i < 25 && (root.scrollHeight > window.innerHeight + 1 || root.scrollWidth > window.innerWidth + 1 ||
+        document.querySelector(".dossier").getBoundingClientRect().bottom > window.innerHeight); i++) {
+      size *= 0.96;
+      root.style.fontSize = size + "px";
+    }
+  }
+  fit();
+  window.addEventListener("resize", fit);
+
+  // Type the mission text out (it is in the page already, for browsers without scripts).
+  var brief = document.getElementById("brief");
+  var text = brief.textContent, n = 0;
+  brief.style.minHeight = brief.offsetHeight + "px";  // keep the layout still while typing
+  brief.textContent = "";
+  var typed = document.createTextNode(""), caret = document.createElement("span");
+  caret.className = "caret";
+  brief.appendChild(typed);
+  brief.appendChild(caret);
+  setTimeout(function step() {
+    n += 2;
+    typed.nodeValue = text.slice(0, n);
+    if (n < text.length) setTimeout(step, 22);
+  }, 900);
+
+  // Objectives: click to tick.
+  var items = document.querySelectorAll("#obj li");
+  for (var i = 0; i < items.length; i++)
+    items[i].addEventListener("click", function () { this.classList.toggle("done"); });
+
+  // Route list <-> map markers.
+  function hot(num, on) {
+    var els = document.querySelectorAll('[data-n="' + num + '"]');
+    for (var j = 0; j < els.length; j++) els[j].classList.toggle("hot", on);
+  }
+  var linked = document.querySelectorAll("[data-n]");
+  for (var k = 0; k < linked.length; k++) {
+    linked[k].addEventListener("mouseenter", function () { hot(this.getAttribute("data-n"), true); });
+    linked[k].addEventListener("mouseleave", function () { hot(this.getAttribute("data-n"), false); });
+  }
+})();
+</script>
+</body>
+</html>

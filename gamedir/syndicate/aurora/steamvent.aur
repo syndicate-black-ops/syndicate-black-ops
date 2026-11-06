@@ -1,0 +1,31 @@
+// steamvent.aur - SBO example (SBO docs: Aurora particle systems): a jet of steam from a broken pipe.
+// Straight up with the default angles; the entity's Angles turn it (pitch 90 = 90 degrees further down:
+// "90 90 0" blows north, level). Stock Half-Life sprite.
+"particles" "120"
+"maintype" "vent"
+
+{
+  "name" "vent"
+  "spraytype" "steam"
+  "sprayrate" "30"
+  "sprayforce" "220..260"
+  "spraypitch" "-90..-78"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "steam"
+  "sprite" "sprites/steam1.spr"
+  "rendermode" "additive"
+  "gravity" "30"
+  "drag" "1.2"
+  "lifetime" "2.5..3"
+  "startalpha" "0.35"
+  "endalpha" "0"
+  "startsize" "6"
+  "endsize" "48..64"
+  "startframe" "0..15"
+  "framerate" "8"
+  "startangle" "0..360"
+  "angledelta" "-30..30"
+}

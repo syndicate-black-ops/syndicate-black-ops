@@ -1,0 +1,5 @@
+# a "globalname" of 64+ characters: CGlobalState::EntityAdd strcpy'd it into name[64]
+map co_fuzz
+spawn func_wall globalname gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg
+activate
+frames 2

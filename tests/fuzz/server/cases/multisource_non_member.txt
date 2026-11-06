@@ -1,0 +1,11 @@
+# a multisource Used by an entity that is not one of its members: it toggled its last member's state
+# (the button targets it: member; the second Use comes from the world: not a member, no toggle)
+map co_fuzz
+spawn multisource targetname m target relay_out
+spawn func_button model *1 target m
+spawn trigger_relay targetname relay_out
+activate
+frames 3
+use 0 world
+frames 2
+expect MultiSrc:Used by non member worldspawn

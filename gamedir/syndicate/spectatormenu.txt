@@ -1,0 +1,65 @@
+// Command Menu definition
+// 
+// Basic Format:
+//		"<Bound Key>" "<Button Text>" "<Command sent to server>"
+//
+// Button texts are #tokens: titles.txt and ui/resource/language/sbo_ui_<language>.txt hold the strings.
+// Plain text works too and is shown as it is.
+//
+// 
+//
+//
+// Buttons can also open up submenus, as follows:
+// {
+// 	"Some More Options",
+//	{
+//		...
+//	}
+// }
+//
+//
+// Buttons preceded with "CUSTOM" are handled in special ways. They can only be moved
+// around or deleted.
+//
+//
+// Limitations:
+//		Maximum of 50 menus.
+//		Maximum of 100 buttons per menu.
+
+//--------------------------------------------------------
+// Everything below here is editable
+
+"7" "#SBO_SpecMenu_OK" 	"spec_menu 0"
+
+"6" "#SBO_SpecMenu_Help"	"spec_help"
+
+CUSTOM "5" "#SBO_SpecMenu_MapBriefing"	"!MAPBRIEFING"
+
+"4" "#SBO_SpecMenu_Settings"
+{	
+	TOGGLE 	"6" "#SBO_SpecMenu_ChatMessages"	"hud_saytext"
+	
+	TOGGLE	"5" "#SBO_SpecMenu_ShowStatus"	"spec_drawstatus"
+	
+	TOGGLE	"4" "#SBO_SpecMenu_ViewCone"		"spec_drawcone"
+	
+	TOGGLE	"3" "#SBO_SpecMenu_PlayerNames"	"spec_drawnames"
+
+	TOGGLE	"2" "#SBO_SpecMenu_TargetInfo"	"spec_drawinfo"
+}
+
+TOGGLE	"3" "#SBO_SpecMenu_PIP" "spec_pip"
+TOGGLE	"2" "#SBO_SpecMenu_AutoDirector"	"spec_autodirector"
+
+//TEAM0 "3" "#SBO_SpecMenu_JoinGame"	"joingame;chooseteam"
+
+"1" "#SBO_SpecMenu_ShowScores"	"togglescores"
+
+// Here are the rest of the buttons and submenus
+// You can change these safely if you want.
+
+
+
+
+
+

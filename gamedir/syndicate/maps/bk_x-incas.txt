@@ -1,0 +1,12 @@
+Mapped by Roux
+
+Kill the hunted !!!!
+
+- +1 Frag by killed ennemy if the killer is hunter.
+- +2 Frags by killed ennemy if the killer is hunted.
+- +10 Frags by killed ennemy if the killed is hunted.
+- -10 if the player killed himself.
+
+Story : This area is an archeological place...
+
+Max players : 32

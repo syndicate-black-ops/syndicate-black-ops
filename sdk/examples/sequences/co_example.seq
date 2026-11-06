@@ -1,0 +1,129 @@
+// Syndicate Black Ops SDK: an example sequence file. The SBO docs (Sequence files) have the full description.
+//
+// A sequence file is the script of a map: sequences/<mapname>.seq in the game directory, next to maps/. This one
+// would be syndicate/sequences/co_example.seq for maps/co_example.bsp. A trigger_sequence entity in the map runs
+// one entry ("%name { ... }") of it when it is triggered.
+//
+// THE ENTITIES OF THIS EXAMPLE (syndicate.fgd)
+//
+//   trigger_sequence   Name: seq_intro       Sequence name: example_intro       flag "Fire once"
+//   trigger_auto       Target: seq_intro     Delay: 5    Trigger State: On     (the intro, 5 s after the map starts)
+//
+//   trigger_sequence   Name: seq_alarm       Sequence name: example_alarm
+//   func_button        Target: seq_alarm                           (ON: starts the alarm; again: starts it over)
+//   trigger_relay      Name: alarm_off       Target: seq_alarm     Trigger State: Off
+//   func_button        Target: alarm_off                           (OFF: stops the alarm)
+//
+//   trigger_sequence   Name: seq_countdown   Sequence name: example_countdown
+//   trigger_once       Target: seq_countdown                       (a player walks into the vault)
+//
+//   Fired by the entries: vault_light (a light), alarm_light (a light), alarm_sound (an ambient_generic),
+//   vault_door (a func_door), vault_spawner (a monstermaker, removed by the script), and the monster named
+//   "guard_boss" speaks.
+//
+// HOW TO SEND ON AND OFF
+//   Buttons, trigger_once / trigger_multiple and multi_manager start a sequence (they send "toggle", which a
+//   trigger_sequence takes as ON); triggered again while it runs, it starts over.
+//   To stop one, trigger it through a trigger_relay with Trigger State "Off".
+//   CAREFUL: a trigger_relay or trigger_auto with Trigger State "Off", or without the key (older maps), sends
+//   OFF. New ones placed with syndicate.fgd are "Toggle", which starts a sequence.
+//   "Fire once": the sequence can be started once; stopped or finished, it stays used.
+//
+// The styles used below (@TitleStyle, @SubtitleStyle, @ObjectiveStyle, @RadioStyle, @SignStyle) are the game's:
+// sequences/global.seq. The file gets to the players with the map: a server that has it sends it.
+
+
+// FILE DEFAULTS: modifiers outside the entries. Every entry below starts with them.
+$fadein = 0.3, fadeout = 0.5
+
+
+// SOUNDS OF THIS MAP. Lines whose names differ only in the number at the end are one group; "#sound = EX_ALARM"
+// plays one of the group at random. A sound is a file under sound/, with or without ".wav".
+!sentences
+{
+	EX_RADIO0 radio/cover			// sound/radio/cover.wav
+	EX_RADIO1 radio/follow.wav
+
+	EX_ALARM0 buttons/blip1
+
+	// More than one word is a sentence, as in sound/sentences.txt: the words are played one after the other, a
+	// ',' is a pause, "(p110)" a setting. Without a directory the words are the announcer's (sound/vox/).
+	// Such a sentence is for lines without a speaker.
+	EX_WARNING0 warning, security breach(p105) detected
+}
+
+
+// A STYLE OF THIS MAP: an entry of modifiers only, used as a macro ("@VaultStyle"). A style sets everything it
+// cares about; what an earlier style set stays in force otherwise.
+%VaultStyle
+{
+	$position = 0.05 0.5			// x y: 0 to 1 from the left / the top, -1 = centered
+	$color = 120 255 120, color2 = 0 0 0, effect = 0
+	$fadein = 0.2, holdtime = 3, fadeout = 0.5
+	$channel = 2				// 0, 2 or 3 (1 is the game's own)
+}
+
+
+// THE INTRO: texts with the game's styles, a radio call, targets
+%example_intro
+{
+	#firetargets = "vault_light"		// trigger the entities named vault_light
+
+	@TitleStyle
+	#text = "THE VAULT"
+	#pause = 1				// wait 1 s before the next line
+
+	@SubtitleStyle
+	#text = "Sector 7, 02:14",		// a line goes on after a ',': the pause belongs to the text
+		pause = 4
+
+	@RadioStyle
+	#sound = EX_RADIO			// no speaker: everybody hears it, wherever they are
+	#text = "Control: get to the vault before the guards do.",
+		pause = 4
+
+	@ObjectiveStyle
+	#text = "Find the vault", holdtime = 8	// a modifier after a ',' is for this line only
+}
+
+
+// THE ALARM: runs until it is stopped. "#repeat = -1" starts the entry over, forever; the entry needs a pause.
+// ON (or a second press of the button) starts it from the beginning, OFF stops it.
+%example_alarm
+{
+	#firetargets = "alarm_light"
+	#sound = EX_ALARM, pause = 0.8
+	#repeat = -1
+}
+
+
+// THE COUNTDOWN: "#repeat = N" starts the entry over N times and then goes on: the lines above it run N + 1
+// times in all (here 3), then the rest once.
+%example_countdown
+{
+	@VaultStyle
+	#text = "Vault lock: hold on...", holdtime = 1.5
+	#firetargets = "alarm_sound", pause = 2
+	#repeat = 2
+
+	#sound = EX_WARNING			// the announcer's sentence
+	#killtargets = "vault_spawner"		// remove the entities named vault_spawner
+	#firetargets = "vault_door", pause = 2
+
+	#gosub = example_boss_line		// the same as "@example_boss_line": that entry's lines, here
+
+	@SignStyle
+	#text = "The vault is open."
+}
+
+
+// USED ABOVE AS A MACRO: an entry can be both, a macro and what a trigger_sequence runs.
+%example_boss_line
+{
+	@RadioStyle
+	// A monster says the line: the group BA_OK of sound/sentences.txt, by the monster named guard_boss, to the
+	// nearest player. If no monster has that name the line is silent.
+	#sound = BA_OK, speaker = guard_boss, listener = player
+	#text = "Guard: you should not be here.",
+		pause = 3
+}

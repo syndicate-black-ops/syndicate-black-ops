@@ -1,0 +1,15 @@
+// overview description file for co_carnage
+// frame: orthographic, 8629.52 x 6472.14 world units
+
+global 
+{
+	ZOOM	0.9493
+	ORIGIN	0.00	0.00	376.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_carnage.tga"
+	HEIGHT	376.00
+}

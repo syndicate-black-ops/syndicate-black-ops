@@ -1,0 +1,52 @@
+// muzzleburst.aur - SBO example (SBO docs: Aurora particle systems) for an env_particle on a model's attachment point
+// ("Move with entity" + "Attachment point"): bursts of muzzle flashes with smoke wisps. Give the
+// env_particle the model's angles: "sprayyaw" 0 is then the way the model faces, and the spray turns with
+// the model. Sprites: muzzleflash1 (stock Half-Life), fasmoke2 (SBO).
+"particles" "120"
+"maintype" "barrel"
+
+{
+  "name" "barrel"
+  "spraytype" "flash"
+  "sprayrate" "6..10"
+}
+
+{
+  "name" "flash"
+  "sprite" "sprites/muzzleflash1.spr"
+  "rendermode" "additive"
+  "lifetime" "0.07"
+  "startsize" "6..9"
+  "endsize" "3"
+  "startalpha" "1"
+  "endalpha" "0.3"
+  "startangle" "0..360"
+  "spraytype" "wisp"
+  "sprayrate" "30"
+  "sprayforce" "20..40"
+  "spraypitch" "-15..5"
+  "sprayyaw" "-15..15"
+}
+
+{
+  "name" "wisp"
+  "sprite" "sprites/fasmoke2.spr"
+  "rendermode" "solid"
+  "gravity" "15"
+  "drag" "1.5"
+  "lifetime" "1..1.5"
+  "startsize" "2"
+  "endsize" "10..14"
+  "startred" "0.6"
+  "startgreen" "0.6"
+  "startblue" "0.6"
+  "endred" "0.8"
+  "endgreen" "0.8"
+  "endblue" "0.8"
+  "startalpha" "0.3"
+  "endalpha" "0"
+  "startframe" "0..120"
+  "framerate" "15"
+  "startangle" "0..360"
+  "angledelta" "-40..40"
+}

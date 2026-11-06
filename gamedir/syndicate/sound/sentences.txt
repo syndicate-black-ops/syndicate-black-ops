@@ -1,0 +1,1334 @@
+syndicate blacks ops (c)
+
+// HUMAN GRUNTS
+HG_GREN0 sentences/hg_gren0
+HG_GREN1 sentences/hg_gren1
+HG_GREN2 sentences/hg_gren2
+HG_GREN3 sentences/hg_gren3
+HG_GREN4 sentences/hg_gren4
+HG_GREN5 sentences/hg_gren5
+HG_GREN6 sentences/hg_gren6
+
+// Player Alert
+HG_ALERT0 sentences/hg_alert0
+HG_ALERT1 sentences/hg_alert1
+HG_ALERT2 sentences/hg_alert2
+HG_ALERT3 sentences/hg_alert3
+HG_ALERT4 sentences/hg_alert4
+HG_ALERT5 sentences/hg_alert4
+HG_ALERT6 sentences/hg_alert6
+
+// Monster Alert
+HG_MONST0 sentences/hg_monst0
+HG_MONST1 sentences/hg_monst1
+HG_MONST2 sentences/hg_monst2
+HG_MONST3 sentences/hg_monst3
+
+// Take cover
+HG_COVER0 sentences/hg_cover0
+HG_COVER1 sentences/hg_cover1
+HG_COVER2 sentences/hg_cover2
+HG_COVER3 sentences/hg_cover3
+HG_COVER4 sentences/hg_cover4
+HG_COVER5 sentences/hg_cover5
+HG_COVER6 sentences/hg_cover6
+HG_COVER7 sentences/hg_cover7
+
+// Throw grenade
+HG_THROW0 sentences/hg_throw0
+HG_THROW1 sentences/hg_throw1
+HG_THROW2 sentences/hg_throw2
+HG_THROW3 sentences/hg_throw3
+ 
+// Taunt
+HG_TAUNT0 sentences/hg_taunt0
+HG_TAUNT1 sentences/hg_taunt1
+HG_TAUNT2 sentences/hg_taunt2
+HG_TAUNT3 sentences/hg_taunt3
+HG_TAUNT4 sentences/hg_taunt4
+HG_TAUNT5 sentences/hg_taunt5
+
+// Charge
+HG_CHARGE0 sentences/hg_charge0
+HG_CHARGE1 sentences/hg_charge1
+HG_CHARGE2 sentences/hg_charge2
+HG_CHARGE3 sentences/hg_charge3
+
+// Idle
+HG_IDLE0 sentences/hg_idle0
+HG_IDLE1 sentences/hg_idle1
+HG_IDLE2 sentences/hg_idle2
+
+HG_QUEST0 sentences/hg_quest0
+HG_QUEST1 sentences/hg_quest1 
+HG_QUEST2 sentences/hg_quest2
+HG_QUEST3 sentences/hg_quest3
+HG_QUEST4 sentences/hg_quest4
+HG_QUEST5 sentences/hg_quest5
+HG_QUEST6 sentences/hg_quest6
+HG_QUEST7 sentences/hg_quest7
+HG_QUEST8 sentences/hg_quest8
+HG_QUEST9 sentences/hg_quest9
+HG_QUEST10 sentences/hg_quest10
+HG_QUEST11 sentences/hg_quest11
+
+HG_ANSWER0 sentences/hg_answer0
+HG_ANSWER1 sentences/hg_answer1
+HG_ANSWER2 sentences/hg_answer2
+HG_ANSWER3 sentences/hg_answer3
+HG_ANSWER4 sentences/hg_answer4
+HG_ANSWER5 sentences/hg_answer5
+HG_ANSWER6 sentences/hg_answer6
+
+HG_CLEAR0 sentences/hg_clear0
+HG_CLEAR1 sentences/hg_clear1
+HG_CLEAR2 sentences/hg_clear2
+HG_CLEAR3 sentences/hg_clear3
+HG_CLEAR4 sentences/hg_clear4
+HG_CLEAR5 sentences/hg_clear5
+HG_CLEAR6 sentences/hg_clear6
+HG_CLEAR7 sentences/hg_clear7
+HG_CLEAR8 sentences/hg_clear8
+HG_CLEAR9 sentences/hg_clear9
+HG_CLEAR10 sentences/hg_clear10
+HG_CLEAR11 sentences/hg_clear11
+HG_CLEAR12 sentences/hg_clear12
+
+HG_CHECK0 sentences/hg_check0
+HG_CHECK1 sentences/hg_check1
+HG_CHECK2 sentences/hg_check2
+HG_CHECK3 sentences/hg_check3
+HG_CHECK4 sentences/hg_check4
+HG_CHECK5 sentences/hg_check5
+HG_CHECK6 sentences/hg_check6
+HG_CHECK7 sentences/hg_check7
+
+//narrative
+
+HG_SNOOP1A hgrunt/c2a2_hg_chat1a
+HG_SNOOP2A hgrunt/c2a2_hg_chat2a
+HG_SNOOP3A hgrunt/c2a2_hg_chat3a
+HG_SNOOP4A hgrunt/c2a2_hg_chat4a
+HG_SNOOP5A hgrunt/c2a2_hg_chat5a
+
+HG_DRAG1A hgrunt/c2a3_hg_1drag
+HG_DRAG2A hgrunt/c2a3_hg_2drag
+HG_DRAG3A hgrunt/c2a3_hg_3drag
+HG_DRAG4A hgrunt/c2a3_hg_4drag
+HG_DRAG5A hgrunt/c2a3_hg_5drag
+HG_DRAG6A hgrunt/c2a3_hg_laugh
+
+// BASE COMPUTER
+// C1A0 intercom\
+C1A0_START sentences/dadeda c1a0_start 
+
+C1A0_0 sentences/dadeda c1a0_0
+C1A0_1 sentences/dadeda c1a0_1
+C1A0_2 sentences/dadeda c1a0_2
+C1A0_3 sentences/doop c1a0_3
+C1A0_4 sentences/doop c1a0_4
+C1A0_5 sentences/doop c1a0_5
+C1A0_6 sentences/doop c1a0_6
+C1A0_7 sentences/dadeda c1a0_7
+C1A0_8 sentences/dadeda c1a0_8
+C1A0_9 sentences/dadeda c1a0_9
+C1A0_10 sentences/doop c1a0_10
+C1A0_11 sentences/bloop c1a0_11
+C1A0_12 sentences/bloop c1a0_12
+C1A0_13 sentences/bloop c1a0_13
+C1A0_14 sentences/bloop c1a0_14
+C1A0_15 sentences/bloop c1a0_15
+C1A0_16 sentences/bloop c1a0_16
+C1A0_17 sentences/bloop c1a0_17
+C1A0_18 sentences/bloop c1a0_18
+C1A0_19 sentences/bloop c1a0_19
+C1A0_20 sentences/dadeda c1a0_20
+C1A0_21 sentences/dadeda c1a0_21
+C1A0_22 sentences/deeoo c1a0_22
+
+// C1A1 intercom anomalous materials test lab sector c, coolant resevoir facility sector b
+C1A1_0 sentences/bizwarn bizwarn bizwarn c1a1_0
+C1A1_1 sentences/buzwarn buzwarn c1a1_1
+C1A1_2 sentences/buzwarn buzwarn c1a1_2
+C1A1_3 sentences/buzwarn buzwarn c1a1_3
+C1A1_4 sentences/bizwarn bizwarn bizwarn c1a1_4
+C1A1_5 sentences/buzwarn buzwarn c1a1_5
+C1A1_6 sentences/bizwarn bizwarn bizwarn c1a1_6
+C1A1_7 sentences/buzwarn buzwarn c1a1_7
+C1A1_8 sentences/buzwarn buzwarn c1a1_8
+C1A1_9 sentences/ bizwarn bizwarn bizwarn c1a1_9
+C1A1_10 sentences/deeoo deeoo c1a1_10
+C1A1_11 sentences/deeoo deeoo c1a1_11
+
+// C1A2 intercom administration center sector d
+C1A2_0 sentences/deeoo c1a2_0
+C1A2_1 sentences/buzwarn buzwarn c1a2_1
+C1A2_2 sentences/deeoo deeoo c1a2_2
+C1A2_3 sentences/deeoo c1a2_3
+C1A2_4 sentences/buzwarn buzwarn c1a2_4
+C1A2_5 sentences/deeoo c1a2_5
+C1A2_6 sentences/bizwarn bizwarn bizwarn c1a2_6
+C1A2_7 sentences/deeoo deeoo c1a2_7
+C1A2_8 sentences/bizwarn bizwarn bizwarn c1a2_8
+C1A2_9 sentences/deeoo c1a2_9
+C1A2_10 sentences/deeoo deeoo c1a2_10
+C1A2_11 sentences/buzwarn buzwarn c1a2_11
+
+// C1A3 intercom high security materials storage area sector d
+C1A3_0 sentences/buzwarn buzwarn c1a3_0
+C1A3_1 sentences/buzwarn buzwarn c1a3_1
+C1A3_2 sentences/bizwarn bizwarn c1a3_2
+C1A3_3 sentences/deeoo c1a3_3
+C1A3_4 sentences/buzwarn buzwarn c1a3_4
+C1A3_5 sentences/bizwarn bizwarn bizwarn c1a3_5
+C1A3_6 sentences/buzwarn buzwarn c1a3_6
+C1A3_7 sentences/buzwarn buzwarn c1a3_7
+C1A3_8 sentences/bizwarn bizwarn c1a3_8
+C1A3_9 sentences/bizwarn bizwarn c1a3_9
+C1A3_10 sentences/bizwarn bizwarn bizwarn c1a3_10
+
+C1A3_warn sentences/buzwarn buzwarn c1a3_warn
+C1A3_lock sentences/bizwarn bizwarn c1a3_lock
+
+// C1A4 intercom experimental propulsion labs silo d
+C1A4_0 sentences/ buzwarn buzwarn c1a4_0
+C1A4_1 sentences/ deeoo c1a4_1
+C1A4_2 sentences/ deeoo c1a4_2
+C1A4_3 sentences/ deeoo c1a4_3
+C1A4_4 sentences/ buzwarn buzwarn c1a4_4
+C1A4_5 sentences/ buzwarn buzwarn c1a4_5
+C1A4_6 sentences/ buzwarn buzwarn c1a4_6
+C1A4_7 sentences/ buzwarn buzwarn c1a4_7
+C1A4_8 sentences/ buzwarn buzwarn c1a4_8
+
+
+// C2A1 intercom track control sector e
+C2A1_0 sentences/ buzwarn buzwarn c2a1_0
+C2A1_1 sentences/ deeoo c2a1_1
+C2A1_2 sentences/ dadeda c2a1_2
+C2A1_3 sentences/ buzwarn buzwarn c2a1_3
+C2A1_4 sentences/ bizwarn bizwarn bizwarn c2a1_4
+C2A1_5 sentences/ deeoo c2a1_5
+C2A1_6 sentences/ buzwarn buzwarn c2a1_6
+C2A1_7 sentences/ buzwarn buzwarn c2a1_7
+C2A1_8 sentences/ bizwarn bizwarn c2a1_8
+
+// C2A2 intercom launch control silo e
+C2A2_0 sentences/buzwarn buzwarn c2a2_0
+C2A2_1 sentences/deeoo c2a2_1
+C2A2_2 sentences/buzwarn buzwarn c2a2_2
+C2A2_3 sentences/buzwarn buzwarn c2a2_3
+C2A2_3 sentences/buzwarn buzwarn c2a2_3
+C2A2_4 sentences/buzwarn buzwarn c2a2_4
+C2A2_5 sentences/deeoo deeoo c2a2_5
+C2A2_6 sentences/buzwarn buzwarn c2a2_6
+C2A2_7 sentences/deeoo deeoo c2a2_7
+
+C2A2_launch (p50) deeoo deeoo deeoo 
+
+// C2A3 observation tank1, 2. cryogenic system
+// silent
+
+// C2A4 intercom bio waste processing plant. advanced biological research lab
+C2A4_0 sentences/buzwarn buzwarn c2a4_0
+C2A4_1 sentences/bizwarn bizwarn c2a4_1
+C2A4_2 sentences/bizwarn bizwarn c2a4_2
+C2A4_3 sentences/buzwarn buzwarn c2a4_3
+C2A4_4 sentences/buzwarn buzwarn c2a4_4
+C2A4_5 sentences/buzwarn buzwarn c2a4_5
+C2A4_6 sentences/deeoo deeoo c2a4_6
+C2A4_7 sentences/bizwarn bizwarn c2a4_7
+C2A4_8 sentences/bizwarn bizwarn c2a4_8
+C2A4_9 sentences/bizwarn bizwarn c2a4_9
+C2A4_10 sentences/buzwarn buzwarn c2a4_10
+C2A4_11 sentences/buzwarn buzwarn c2a4_11
+C2A4_12 sentences/c2a4_12
+
+C2A4_ster bizwarn sentences/c2a4_ster 
+
+// C2A5 intercom tactical operations center, motorpool, armory, hydro plant, checkpoint alpha/bravo/delta, barracks, hangars
+// silent
+
+// C3A1 intercom central command and communications
+C3A1_0 sentences/buzwarn buzwarn c3a1_0
+C3A1_1 sentences/buzwarn buzwarn c3a1_1
+C3A1_2 sentences/buzwarn buzwarn c3a1_2
+C3A1_3 sentences/bizwarn bizwarn c3a1_3
+C3A1_4 sentences/buzwarn buzwarn c3a1_4
+C3A1_5 sentences/buzwarn buzwarn c3a1_5
+C3A1_6 sentences/buzwarn buzwarn c3a1_6
+C3A1_7 sentences/buzwarn buzwarn c3a1_7
+C3A1_8 sentences/buzwarn buzwarn c3a1_8
+C3A1_9 sentences/bizwarn bizwarn c3a1_9
+
+//  intercom lambda reactor complex.main reactor facility. radioactive materials handling bay
+C3A2_0 sentences/bizwarn bizwarn c3a2_0
+C3A2_1 sentences/bizwarn bizwarn c3a2_1
+C3A2_2 sentences/buzwarn buzwarn c3a2_2
+C3A2_3 sentences/bizwarn bizwarn c3a2_3
+C3A2_4 sentences/bizwarn bizwarn c3a2_4
+C3A2_5 sentences/bizwarn bizwarn /c3a2_5
+C3A2_6 sentences/bizwarn bizwarn c3a2_6
+C3A2_7 sentences/bizwarn bizwarn c3a2_7
+
+C3A2_target sentences/c3a2_target 
+C3A2_portal sentences/ bizwarn bizwarn bizwarn c3a2_portal 
+C3A2_core sentences/ bizwarn bizwarn bizwarn c3a2_core 
+
+// countdown
+
+CTR0 sentences/ctr0
+CTR1 sentences/ctr1
+CTR2 sentences/ctr2
+CTR3 sentences/ctr3
+CTR4 sentences/ctr4
+CTR5 sentences/ctr5
+CTR6 sentences/ctr6
+CTR7 sentences/ctr7
+CTR8 sentences/ctr8
+CTR9 sentences/ctr9
+CTR10 sentences/ctr10
+CTR11 sentences/ctr11
+CTR12 sentences/ctr12
+CTR13 sentences/ctr13
+CTR14 sentences/ctr14
+CTR15 sentences/ctr15
+CTR16 sentences/ctr16
+CTR17 sentences/ctr17
+CTR18 sentences/ctr18
+CTR19 sentences/ctr19
+CTR20 sentences/ctr20
+
+// doors, general
+NA0 sentences/na0
+NA1 sentences/na1
+NA2 sentences/na2
+NA3 sentences/na3
+NA4 sentences/na4
+NA5 sentences/na5
+NA6 sentences/na6
+NA7 sentences/na7
+NA8 sentences/na8
+NA9 sentences/na9
+NA10 sentences/na10
+NA11 sentences/na11
+NA12 sentences/na12
+NA13 sentences/na13
+NA14 sentences/na14
+NA15 sentences/na15
+NA16 sentences/na16
+NA17 sentences/na17
+NA18 sentences/na18
+EA0 sentences/ea0
+EA1 sentences/ea1
+EA2 sentences/ea2
+EA3 sentences/ea3
+EA4 sentences/ea4
+EA5 sentences/ea5
+EA6 sentences/ea6
+EA7 sentences/ea7
+EA8 sentences/ea8
+
+// doors, security lockout
+ND0 sentences/nd0
+ND1 sentences/nd1
+ND2 sentences/nd2
+ND3 sentences/nd3
+ND4 sentences/nd4
+ND5 sentences/nd5
+ND6 sentences/nd6
+ND7 sentences/nd7
+ED0 sentences/ed0
+ED1 sentences/ed1
+ED2 sentences/ed2
+ED3 sentences/ed3
+ED4 sentences/ed4
+ED5 sentences/ed5
+ED6 sentences/ed6
+
+// blast doors
+NF0 sentences/nf0
+NF1 sentences/nf1
+NF3 sentences/nf3
+EF0 sentences/ef0
+EF1 sentences/ef1
+EF3 sentences/ef3
+
+// fire door
+NFIRE0 sentences/nfire0
+EFIRE0 sentences/efire0
+
+// chemical door
+NCHEM0 sentences/nchem0
+ECHEM0 sentences/echem0
+
+// radiation door
+NRAD0 sentences/nrad0
+ERAD0 sentences/erad0
+
+// generic containment door
+NCON0 sentences/ncon0
+ECON0 sentences/econ0
+
+// broken locked door
+NG0 sentences/ng0
+NG1 sentences/ng1
+NG2 sentences/ng2
+
+// maintenance door
+NH0 sentences/nh0
+NH1 sentences/nh1
+EH0 sentences/eh0
+EH1 sentences/eh1
+
+// turrets, defensive systems
+
+T0 sentences/t0
+T1 sentences/t1
+T2 sentences/t2
+T3 sentences/t3
+T4 sentences/t4
+T5 sentences/t5
+
+// warnings
+
+WE0 sentences/we0
+WE1 sentences/we1
+WE2 sentences/we2
+WE3 sentences/we3
+
+// danger
+
+DR0 sentences/dr0
+DR1 sentences/dr1
+DR2 sentences/dr2
+DR3 sentences/dr3
+DR4 sentences/dr4
+
+DC0 sentences/dc0
+DC1 sentences/dc1
+DC2 sentences/dc2
+DC3 sentences/dc3
+DC4 sentences/dc4
+
+DB0 sentences/db0
+DB1 sentences/db1
+DB2 sentences/db2
+DB3 sentences/db3
+
+// training room
+
+TR_A sentences/tr_a 
+TR_B sentences/ deeoo tr_b 
+
+
+
+// HEV Suit
+
+// powerup
+
+HEV_AAx sentences/bell hev_a0 , hev_a2 , hev_a3 , hev_a4 , hev_a5 , hev_a6 , hev_a7 , hev_a8 , hev_a10
+HEV_A0 sentences/bell , hev_a0
+
+HEV_A1 sentences/blip blip hev_a1
+HEV_A2 sentences/blip blip hev_a2
+HEV_A3 sentences/blip blip hev_a3
+HEV_A4 sentences/blip blip boop hev_a4 boop boop
+HEV_A5 sentences/blip blip hev_a5
+HEV_A6 sentences/blip blip hev_a6
+HEV_A7 sentences/blip blip hev_a7
+HEV_A8 sentences/blip blip hev_a8
+HEV_A9 sentences/fuzz hev_a9
+HEV_A10 sentences/hev_a10 bell
+
+// medical
+HEV_DEAD0 fvox/beep beep beep beep beep beep flatline
+HEV_DEAD2 fvox/beep beep beep beep beep flatline
+
+HEV_MED0 sentences/boop boop boop hev_med0
+HEV_MED1 sentences/boop boop boop hev_med1
+HEV_MED2 sentences/boop boop boop hev_med2
+
+HEV_HEAL0 sentences/boop boop boop hev_heal0
+HEV_HEAL1 sentences/boop boop boop hev_heal1
+HEV_HEAL2 sentences/boop boop boop hev_heal2
+HEV_HEAL3 sentences/boop boop boop hev_heal3
+HEV_HEAL4 sentences/boop boop boop hev_heal4
+HEV_HEAL5 sentences/boop boop boop hev_heal5
+HEV_HEAL6 sentences/boop boop boop hev_heal6
+HEV_HEAL7 sentences/boop boop boop hev_heal7
+HEV_HEAL8 sentences/boop boop boop hev_heal8
+
+HEV_DMG0 sentences/boop boop boop hev_dmg0
+HEV_DMG1 sentences/boop boop boop hev_dmg1
+HEV_DMG2 sentences/boop boop boop hev_dmg2
+HEV_DMG3 sentences/boop boop boop hev_dmg3
+HEV_DMG4 sentences/boop boop boop hev_dmg4
+HEV_DMG5 sentences/boop boop boop hev_dmg5
+HEV_DMG6 sentences/boop boop boop hev_dmg6 
+HEV_DMG7 sentences/boop boop boop hev_dmg7
+
+HEV_HLTH0 sentences/beep beep hev_hlth0
+HEV_HLTH1 sentences/beep beep hev_hlth1
+HEV_HLTH2 sentences/beep beep hev_hlth2
+HEV_HLTH3 sentences/beep beep hev_hlth3
+HEV_HLTH4 sentences/beep beep hev_hlth4
+HEV_HLTH5 sentences/beep beep hev_hlth5
+HEV_HLTH6 sentences/beep beep hev_hlth6
+
+HEV_SHOCK sentences/beep beep hev_shock 
+HEV_FIRE sentences/beep beep hev_fire 
+
+// items
+HEV_AIM_ON sentences/blip hev_aim_on 
+HEV_AIM_OFF sentences/blip hev_aim_off 
+HEV_BATTERY sentences/blip hev_battery 
+HEV_MEDKIT sentences/blip hev_medkit 
+
+HEV_PISTOL sentences/blip hev_pistol 
+HEV_SHOTGUN sentences/blip hev_shotgun 
+HEV_GRENADE sentences/blip hev_grenade 
+HEV_ASSAULT sentences/blip hev_assault 
+HEV_44PISTOL sentences/blip hev_44pistol 
+HEV_RPG sentences/blip hev_rpg 
+HEV_SATCHEL sentences/blip hev_satchel 
+HEV_TRIPMINE sentences/blip hev_tripmine 
+HEV_HORNET sentences/blip hev_hornet 
+HEV_SQUEEK sentences/blip hev_squeek 
+HEV_EGON sentences/blip hev_egon 
+HEV_GAUSS sentences/blip hev_gauss 
+HEV_XBOW sentences/blip hev_xbow 
+
+HEV_9MM sentences/blip hev_9mm 
+HEV_44AMMO sentences/blip hev_44ammo 
+HEV_BUCKSHOT sentences/blip hev_buckshot 
+HEV_BOLTS sentences/blip hev_bolts 
+HEV_RPGAMMO sentences/blip hev_rpgammo 
+HEV_AGRENADE sentences/blip hev_agrenade 
+HEV_EGONPOWER sentences/blip hev_egonpower 
+
+// time
+
+//HEV_C1t sentences/bell HEV_C1t 
+//HEV_C13t sentences/bell HEV_C13t 
+
+// power levels
+
+HEV_D00 sentences/fuzz fuzz hev_d00
+HEV_D01 sentences/fuzz fuzz hev_d01
+
+HEV_0P sentences/fuzz fuzz hev_0p 
+HEV_1P sentences/fuzz fuzz hev_1p 
+HEV_2P sentences/fuzz fuzz hev_2p 
+HEV_3P sentences/fuzz fuzz hev_3p 
+HEV_4P sentences/fuzz fuzz hev_4p 
+HEV_5P sentences/fuzz fuzz hev_5p 
+HEV_6P sentences/fuzz fuzz hev_6p 
+HEV_7P sentences/fuzz fuzz hev_7p 
+HEV_8P sentences/fuzz fuzz hev_8p 
+HEV_9P sentences/fuzz fuzz hev_9p 
+HEV_10P sentences/fuzz fuzz hev_10p 
+HEV_11P sentences/fuzz fuzz hev_11p 
+HEV_12P sentences/fuzz fuzz hev_12p 
+HEV_13P sentences/fuzz fuzz hev_13p 
+HEV_14P sentences/fuzz fuzz hev_14p 
+HEV_15P sentences/fuzz fuzz hev_15p 
+HEV_16P sentences/fuzz fuzz hev_16p 
+HEV_17P sentences/fuzz fuzz hev_17p 
+HEV_18P sentences/fuzz fuzz hev_18p 
+HEV_19P sentences/fuzz fuzz hev_19p 
+
+// weapon/ammo
+
+HEV_AMO0 sentences/ blip hev_amo0
+
+// suit
+
+HEV_V0 sentences/ blip hev_v0
+HEV_V1 sentences/ blip hev_v1
+
+HEV_E0 sentences/buzz buzz hev_e0
+HEV_E1 sentences/buzz hev_e1
+HEV_E2 sentences/buzz hev_e2
+HEV_E3 sentences/buzz hev_e3
+HEV_E4 sentences/buzz hev_e4
+HEV_E5 sentences/buzz hev_e5
+
+// time remaining countdown
+
+//HEV_F10t sentences/bell HEV_F10t 
+//HEV_F15t sentences/bell HEV_F15t 
+//HEV_F20t sentences/bell HEV_F20t 
+//HEV_F30t sentences/bell HEV_F30t 
+
+// detections
+
+HEV_DET0 sentences/ blip blip blip hev_det0
+HEV_DET1 sentences/ blip blip blip hev_det1
+HEV_DET2 sentences/ blip blip blip hev_det2
+HEV_DET3 sentences/ blip blip blip hev_det3
+HEV_DET4 sentences/ blip blip blip hev_det4
+HEV_DET5 sentences/ blip blip blip hev_det5
+
+//HEV_GR0r sentences/HEV_GR0r 
+//HEV_GR1r sentences/HEV_GR1r 
+//HEV_GR2r sentences/HEV_GR2r 
+
+
+// BARNEY
+
+BA_OK0 barney/teamup2
+BA_OK1 barney/dobettertogether
+BA_OK2 barney/imwithyou
+BA_OK3 barney/teamup1
+BA_OK4 barney/gladtolendhand
+BA_OK5 barney/letsgo
+BA_OK6 barney/letsmoveit
+
+BA_WAIT0 barney/helpothers
+BA_WAIT1 barney/iwaithere
+BA_WAIT2 barney/slowingyoudown
+BA_WAIT3 barney/illwait
+BA_WAIT4 barney/seeya
+BA_WAIT5 barney/standguard
+
+BA_HELLO0 barney/hellonicesuit
+BA_HELLO1 barney/howdy
+BA_HELLO2 barney/howyoudoing
+BA_HELLO3 barney/haybuddy
+BA_HELLO4 barney/hayfella
+BA_HELLO5 barney/heybuddy
+BA_HELLO6 barney/heyfella
+
+BA_QUESTION0 barney/beertopside
+BA_QUESTION1 barney/wayout
+BA_QUESTION2 barney/getanyworse
+BA_QUESTION3 barney/gladof38
+BA_QUESTION4 barney/workingonstuff
+BA_QUESTION5 barney/wayout
+BA_QUESTION6 barney/whatsgoingon
+BA_QUESTION7 barney/aintscared
+BA_QUESTION8 barney/nodrill
+BA_QUESTION9 barney/gettingcloser
+BA_QUESTION10 barney/youhearthat
+BA_QUESTION11 barney/crewdied
+BA_QUESTION12 barney/somethingmoves
+BA_QUESTION13 barney/thinking
+BA_QUESTION14 barney/missingleg
+
+BA_ANSWER0 barney/noway
+BA_ANSWER1 barney/ireckon
+BA_ANSWER2 barney/soundsright
+BA_ANSWER3 barney/yessir
+BA_ANSWER4 barney/youbet
+BA_ANSWER5 barney/yougotit
+BA_ANSWER6 barney/yup
+BA_ANSWER7 barney/dontaskme
+BA_ANSWER8 barney/dontbet
+BA_ANSWER9 barney/dontbuyit
+BA_ANSWER10 barney/dontfigure
+BA_ANSWER11 barney/dontguess
+BA_ANSWER12 barney/hardtosay
+BA_ANSWER13 barney/justdontknow
+BA_ANSWER14 barney/nope
+BA_ANSWER15 barney/nosir
+BA_ANSWER16 barney/cantfigure
+BA_ANSWER17 barney/maybe
+BA_ANSWER18 barney/notelling
+BA_ANSWER19 barney/bequiet
+BA_ANSWER20 barney/youtalkmuch
+BA_ANSWER21 barney/alreadyasked
+
+// player is staring at scientist
+BA_STARE0 barney/yup
+BA_STARE1 barney/yessir
+BA_STARE2 barney/howyoudoing
+BA_STARE3 barney/heyfella
+
+BA_IDLE0 barney/whatisthat
+BA_IDLE1 barney/coldone
+BA_IDLE2 barney/guyresponsible
+BA_IDLE3 barney/bigmess
+BA_IDLE4 barney/luckwillturn
+BA_IDLE5 barney/bigplace
+BA_IDLE6 barney/targetpractice
+BA_IDLE7 barney/badfeeling
+BA_IDLE8 barney/ambush
+BA_IDLE9 barney/survive
+BA_IDLE10 barney/stophere 
+
+BA_ATTACK0 barney/openfire(e50)
+BA_ATTACK1 barney/openfire(s50)
+BA_ATTACK2 barney/standback
+BA_ATTACK3 barney/whatisthat
+BA_ATTACK4 barney/diebloodsucker
+BA_ATTACK5 barney/aimforhead
+
+BA_HEAR0 barney/hearsomething
+BA_HEAR1 barney/icanhear
+BA_HEAR2 barney/soundsbad
+
+BA_SMELL0 barney/somethingdied
+BA_SMELL1 barney/somethingstinky
+BA_SMELL2 barney/stench
+
+BA_CUREA barney/checkwounds
+BA_CUREB barney/youneedmedic
+BA_CUREC barney/realbadwound
+
+BA_SCARED0 barney/donthurtem
+BA_SCARED1 barney/leavealone
+
+BA_WOUND0 barney/imhit
+BA_WOUND1 barney/hitbad
+BA_MORTAL0 barney/imdead
+
+//If you shoot Barney:
+BA_SHOT0 barney/ba_whoathere
+BA_SHOT1 barney/ba_dotoyou
+BA_SHOT2 barney/ba_watchit
+BA_SHOT3 barney/ba_whatyou
+BA_SHOT4 barney/ba_friends
+BA_SHOT5 barney/ba_pissme
+
+//When Barney's really pissed at you:
+BA_MAD0 barney/ba_stepoff
+BA_MAD1 barney/ba_iwish
+BA_MAD2 barney/ba_uwish
+BA_MAD3 barney/ba_somuch
+BA_MAD4 barney/ba_endline
+BA_MAD5 barney/ba_dontmake
+BA_MAD6 barney/ba_tomb
+
+//When Barney's killed something
+BA_KILL0 barney/ba_gotone
+BA_KILL1 barney/ba_another
+BA_KILL2 barney/ba_buttugly
+BA_KILL3 barney/ba_seethat
+BA_KILL4 barney/ba_close
+BA_KILL5 barney/ba_firepl
+BA_KILL6 barney/ba_bring
+
+
+//If you use Barney in Hazard Course
+BA_HAZ_OK0 holo/tr_ba_use
+
+//If you unuse Barney in Hazard Course
+BA_HAZ_WAIT0 holo/tr_ba_unuse
+
+//Barney in Hazard Course
+BA_LIGHTSON holo/tr_ba_lightson
+
+//If you use Barney before the disaster
+BA_POK0 barney/ba_post
+BA_POK1 barney/ba_duty
+BA_POK2 barney/ba_raincheck
+BA_POK3 barney/ba_later
+
+// if barney can't follow you
+BA_STOP0 barney/stop1
+BA_STOP1 barney/stop2
+BA_STOP2 barney/stop3
+
+//scripted_sentences
+
+//c1a0 scripts
+BA_LATE barney/c1a0_ba_late
+BA_HEADDOWN barney/c1a0_ba_headdown
+BA_DESK barney/c1a0_ba_desk
+BA_BUTTON barney/c1a0_ba_button
+BA_HEVNO barney/c1a0_ba_hevno
+BA_HEVYES barney/c1a0_ba_hevyes
+
+//c1a1 scripts
+BA_GLAD barney/c1a1_ba_glad
+
+//c1a2 scripts
+BA_BULLSQUID barney/c1a2_ba_bullsquid
+BA_ZOMBIE2 barney/c1a2_ba_2zomb
+BA_ZOMBIE4 barney/c1a2_ba_4zomb
+BA_CLIMB barney/c1a2_ba_climb
+BA_SLEW barney/c1a2_ba_slew
+BA_SURFACE barney/c1a2_ba_surface
+BA_TOPSIDE barney/c1a2_ba_top
+
+//c1a4 scripts
+BA_WHISPER barney/c1a4_ba_wisp
+BA_TENTACLE barney/c1a4_ba_octo1
+
+//c2a1 scripts
+BA_HUB1A barney/c2a1_ba_hub1a
+BA_HUB2A barney/c2a1_ba_hub2a
+BA_AGAIN barney/c2a1_ba_again
+
+//c2a2 scripts
+
+BA_LAUNCH barney/c2a2_ba_launch
+
+//c2a3 scripts
+
+BA_ASSN barney/c2a3_ba_assn 
+
+//c2a4 scripts
+BA_LONGNITE barney/c2a4_ba_longnite
+BA_STERIL barney/c2a4_ba_steril
+BA_TEACH barney/c2a4_ba_teach
+
+BA_ARG1A barney/c2a4_ba_arg1a
+BA_ARG2A barney/c2a4_ba_arg3a
+BA_ARG3A barney/c2a4_ba_arg5a
+
+BA_TAU1A barney/c2a4_ba_1tau
+BA_TAU3A barney/c2a4_ba_3tau
+BA_TAU5A barney/c2a4_ba_5tau
+
+BA_ALIVE barney/c2a4_ba_alive 
+
+//c2a5 scripts
+BA_LETMEOUT barney/c2a5_ba_letout
+BA_RPG barney/c2a5_ba_rpg
+BA_HELPME barney/c2a5_ba_helpme
+BA_SNIPED barney/c2a5_ba_sniped 
+
+//c3a2 scripts
+BA_SURVEY2A barney/c3a2_ba_2surv
+BA_SURVEY4A barney/c3a2_ba_4surv
+BA_SURVEY6A barney/c3a2_ba_6surv
+BA_SURVEY8A barney/c3a2_ba_8surv
+BA_PORTSTAY barney/c3a2_ba_stay
+
+
+// SCIENTIST
+
+SC_OK0 scientist/excellentteam
+SC_OK1 scientist/fellowscientist
+SC_OK2 scientist/fine
+SC_OK3 scientist/hopeyouknow
+SC_OK4 scientist/leadtheway
+SC_OK5 scientist/letsgo
+SC_OK6 scientist/yesletsgo
+SC_OK7 scientist/yes3
+SC_OK8 scientist/alright
+
+SC_WAIT0 scientist/beenaburden
+SC_WAIT1 scientist/slowingyou
+SC_WAIT2 scientist/reconsider
+SC_WAIT3 scientist/whyleavehere
+SC_WAIT4 scientist/illwaithere 
+SC_WAIT5 scientist/istay
+SC_WAIT6 scientist/illwait
+
+// fail to follow player any more
+SC_STOP0 scientist/stop1
+SC_STOP1 scientist/stop2
+SC_STOP2 scientist/stop3
+SC_STOP3 scientist/stop4
+
+
+// player is staring at scientist
+SC_STARE0 scientist/yees
+SC_STARE1 scientist/areyouthink
+SC_STARE2 scientist/noidea
+
+SC_HELLO0 scientist/hellothere
+SC_HELLO1 scientist/freemanalive
+SC_HELLO2 scientist/afellowsci
+SC_HELLO3 scientist/greetings2
+SC_HELLO4 scientist/hello
+SC_HELLO5 scientist/goodtoseeyou
+SC_HELLO6 scientist/newhevsuit
+SC_HELLO7 scientist/hellofromlab
+SC_HELLO8 scientist/inmesstoo
+
+SC_ANSWER0 scientist/notsure
+SC_ANSWER1 scientist/notcertain
+SC_ANSWER2 scientist/perhaps
+SC_ANSWER3 scientist/whocansay
+SC_ANSWER4 scientist/inconclusive
+SC_ANSWER5 scientist/theoretically
+SC_ANSWER6 scientist/whyaskme
+SC_ANSWER7 scientist/lowervoice
+SC_ANSWER8 scientist/ofcourse
+SC_ANSWER9 scientist/absolutely
+SC_ANSWER10 scientist/yes
+SC_ANSWER11 scientist/ibelieveso
+SC_ANSWER12 scientist/right
+SC_ANSWER13 scientist/imsure
+SC_ANSWER14 scientist/positively
+SC_ANSWER15 scientist/nodoubt
+SC_ANSWER16 scientist/yees
+SC_ANSWER17 scientist/ofcoursenot
+SC_ANSWER18 scientist/absolutelynot
+SC_ANSWER19 scientist/noo
+SC_ANSWER20 scientist/idontthinkso
+SC_ANSWER21 scientist/completelywrong
+SC_ANSWER22 scientist/cantbeserious
+SC_ANSWER23 scientist/dontknow
+SC_ANSWER24 scientist/ridiculous
+SC_ANSWER25 scientist/shutup
+SC_ANSWER26 scientist/noguess
+SC_ANSWER27 scientist/stopasking
+SC_ANSWER28 scientist/justasked
+SC_ANSWER29 scientist/repeat
+
+SC_QUESTION0 scientist/everseen
+SC_QUESTION1 scientist/needsleep
+SC_QUESTION2 scientist/areyouthink
+SC_QUESTION3 scientist/evergetout
+SC_QUESTION4 scientist/rightwayout
+SC_QUESTION5 scientist/cantbeworse
+SC_QUESTION6 scientist/rescueus
+SC_QUESTION7 scientist/fascinating
+SC_QUESTION8 scientist/stimulating
+SC_QUESTION9 scientist/luckwillchange
+SC_QUESTION10 scientist/hearsomething
+SC_QUESTION11 scientist/doyousmell
+SC_QUESTION12 scientist/uselessphd
+SC_QUESTION13 scientist/waithere
+SC_QUESTION14 scientist/survival
+SC_QUESTION15 scientist/headcrab
+SC_QUESTION16 scientist/goodpaper
+SC_QUESTION17 scientist/catchone
+SC_QUESTION18 scientist/dinner
+SC_QUESTION19 scientist/alientrick
+SC_QUESTION20 scientist/alienappeal
+SC_QUESTION21 scientist/rumorclean
+SC_QUESTION22 scientist/nothostile
+SC_QUESTION23 scientist/announcer
+SC_QUESTION24 scientist/smellburn
+SC_QUESTION25 scientist/noidea
+SC_QUESTION26 scientist/whatnext
+
+SC_IDLE0 scientist/ipredictedthis
+SC_IDLE1 scientist/containfail
+SC_IDLE2 scientist/chaostheory
+SC_IDLE3 scientist/howinteresting
+SC_IDLE4 scientist/neverseen
+SC_IDLE5 scientist/peculiarmarks
+SC_IDLE6 scientist/whoresponsible
+SC_IDLE7 scientist/nogrant
+SC_IDLE8 scientist/bloodsample
+SC_IDLE9 scientist/administrator
+SC_IDLE10 scientist/improbable
+SC_IDLE11 scientist/organicmatter
+SC_IDLE12 scientist/lambdalab
+SC_IDLE13 scientist/ihearsomething
+
+SC_NOGO scientist/dontgothere
+
+SC_MONST0 scientist/seeheadcrab
+SC_MONST1 scientist/importantspecies
+
+SC_HEAR0 scientist/ihearsomething
+SC_HEAR1 scientist/didyouhear
+SC_HEAR2 scientist/whatissound
+
+SC_SMELL0 scientist/somethingfoul
+SC_SMELL1 scientist/odorfromyou
+SC_SMELL2 scientist/peculiarodor
+SC_SMELL3 scientist/stench
+
+SC_WOUND0 scientist/iwounded
+SC_WOUND1 scientist/iwounded2
+
+SC_MORTAL0 scientist/iwoundedbad
+SC_MORTAL1 scientist/iwounded2
+
+SC_CUREA scientist/youlookbad
+SC_CUREB scientist/youwounded
+SC_CUREC scientist/youneedmedic
+
+SC_HEAL0 scientist/heal1
+SC_HEAL1 scientist/heal2
+SC_HEAL2 scientist/youneedmedic, letstrythis
+SC_HEAL3 scientist/youlookbad, holdstill
+SC_HEAL4 scientist/youwounded, letstrythis
+SC_HEAL5 scientist/heal3
+SC_HEAL6 scientist/heal4
+SC_HEAL7 scientist/heal5
+
+SC_PLFEAR0 scientist/whatyoudoing
+SC_PLFEAR1 scientist/canttakemore
+SC_PLFEAR2 scientist/madness
+SC_PLFEAR3 scientist/noplease
+SC_PLFEAR4 scientist/getoutofhere
+SC_PLFEAR5 scientist/sorryimleaving
+
+SC_FEAR0 scientist/nooo
+SC_FEAR1 scientist/startle2
+SC_FEAR2 scientist/startle1 nooo
+SC_FEAR3 scientist/dontwantdie
+SC_FEAR4 scientist/getoutalive
+SC_FEAR5 scientist/startle3
+SC_FEAR6 scientist/startle4
+SC_FEAR7 scientist/startle5
+SC_FEAR8 scientist/startle6
+SC_FEAR9 scientist/startle7
+SC_FEAR10 scientist/startle8
+SC_FEAR11 scientist/startle9
+SC_FEAR12 scientist/startle1
+
+SC_SCREAM0 scientist/sci_fear1
+SC_SCREAM1 scientist/sci_fear2
+SC_SCREAM2 scientist/sci_fear3
+SC_SCREAM3 scientist/sci_fear4
+SC_SCREAM4 scientist/sci_fear5
+SC_SCREAM5 scientist/sci_fear6
+SC_SCREAM6 scientist/sci_fear7
+SC_SCREAM7 scientist/sci_fear8
+SC_SCREAM8 scientist/sci_fear9
+SC_SCREAM9 scientist/sci_fear10
+SC_SCREAM10 scientist/sci_fear11
+SC_SCREAM11 scientist/sci_fear12
+SC_SCREAM12 scientist/sci_fear13
+SC_SCREAM13 scientist/sci_fear14
+SC_SCREAM14 scientist/sci_fear15
+
+SC_SCARED0 scientist/whatyoudoing
+SC_SCARED1 scientist/stopattacking
+SC_SCARED2 scientist/youinsane
+
+// predisaster scientist
+
+SC_PHELLO0 scientist/hellofreeman
+SC_PHELLO1 scientist/greetings2
+SC_PHELLO2 scientist/goodtoseeyou
+SC_PHELLO3 scientist/greetings
+SC_PHELLO4 scientist/hello
+SC_PHELLO5 scientist/hellothere
+SC_PHELLO6 scientist/freeman
+
+SC_PQUEST0 scientist/beverage
+SC_PQUEST1 scientist/statusreport
+SC_PQUEST2 scientist/tunnelcalc
+SC_PQUEST3 scientist/shakeunification
+SC_PQUEST4 scientist/correcttheory
+SC_PQUEST5 scientist/analysis
+SC_PQUEST6 scientist/purereadings
+SC_PQUEST7 scientist/newsample
+SC_PQUEST8 scientist/perfectday
+SC_PQUEST9 scientist/cascade
+SC_PQUEST10 scientist/delayagain
+SC_PQUEST11 scientist/softethics
+SC_PQUEST12 scientist/tunedtoday
+SC_PQUEST13 scientist/donuteater
+SC_PQUEST14 scientist/seencup
+SC_PQUEST15 scientist/hungryyet
+SC_PQUEST16 scientist/recalculate
+SC_PQUEST17 scientist/checkatten
+
+SC_PIDLE0 scientist/hideglasses
+SC_PIDLE1 scientist/weartie
+SC_PIDLE2 scientist/runtest
+SC_PIDLE3 scientist/limitsok
+SC_PIDLE4 scientist/asexpected
+SC_PIDLE5 scientist/thatsodd
+SC_PIDLE6 scientist/allnominal
+SC_PIDLE7 scientist/shutdownchart
+SC_PIDLE8 scientist/reportflux
+SC_PIDLE9 scientist/simulation
+SC_PIDLE10 scientist/hopenominal
+
+//If you use Scientists in Hazard Course
+SC_HAZ_OK0 holo/tr_sci_use
+
+//If you unuse Scientists in Hazard Course
+SC_HAZ_WAIT0 holo/tr_sci_unuse
+
+//Scientists in Hazard Course
+SC_GOODWORK holo/tr_sci_goodwork
+SC_HARDLYNOTICE holo/tr_sci_hardlynoticed
+SC_NEXTSTATION holo/tr_sci_nextstation
+
+//If you use Scientists before the disaster
+
+SC_POK0 scientist/sci_alone
+SC_POK1 scientist/sci_bother
+SC_POK2 scientist/sci_busy
+SC_POK3 scientist/sci_aftertest
+SC_POK4 scientist/sci_somewhere
+
+//narrative audio
+
+SC_1MUMBLE scientist/c1a0_sci_mumble
+
+SC_DISA scientist/c1a0_sci_disa
+SC_DIS1A scientist/c1a0_sci_dis1a
+SC_DIS1B scientist/c1a0_sci_dis1b
+SC_DIS1C scientist/c1a0_sci_dis1c
+SC_DIS1D scientist/c1a0_sci_dis1d
+
+SC_DIS2A scientist/c1a0_sci_dis2a
+SC_DIS3A scientist/c1a0_sci_dis3a
+SC_DIS4A scientist/c1a0_sci_dis4a
+SC_DIS5A scientist/c1a0_sci_dis5a
+SC_DIS6A scientist/c1a0_sci_dis6a
+SC_DIS7A scientist/c1a0_sci_dis7a
+SC_DIS8A scientist/c1a0_sci_dis8a
+SC_DIS9A scientist/c1a0_sci_dis9a
+SC_DIS10A scientist/c1a0_sci_dis10a
+SC_DIS11A scientist/c1a0_sci_dis11a
+SC_DIS12A scientist/c1a0_sci_dis12a
+SC_DIS13A scientist/c1a0_sci_dis13a
+SC_DIS14A scientist/c1a0_sci_dis14a
+SC_DIS15A scientist/c1a0_sci_dis15a
+SC_DIS16A scientist/c1a0_sci_dis16a
+SC_DIS17A scientist/c1a0_sci_dis17a
+
+SC_GETAWAY scientist/c1a0_sci_getaway
+SC_GMORN scientist/c1a0_sci_gm
+SC_BIGDAY scientist/c1a0_sci_bigday
+SC_SAMPLE scientist/c1a0_sci_samp
+SC_NOTTHAT scientist/c1a0_sci_desk
+
+SC_LOCK1A scientist/c1a0_sci_lock1a
+SC_LOCK2A scientist/c1a0_sci_lock2a
+SC_LOCK3A scientist/c1a0_sci_lock3a
+SC_LOCK4A scientist/c1a0_sci_lock4a
+SC_LOCK5A scientist/c1a0_sci_lock5a
+SC_LOCK6A scientist/c1a0_sci_lock6a
+SC_LOCK7A scientist/c1a0_sci_lock7a
+SC_LOCK8A scientist/c1a0_sci_lock8a
+SC_LOCK9A scientist/c1a0_sci_lock9a
+
+SC_CRIT1A scientist/c1a0_sci_crit1a
+SC_CRIT2A scientist/c1a0_sci_crit2a
+SC_CRIT3A scientist/c1a0_sci_crit3a
+
+SC_CTRL1A scientist/c1a0_sci_ctrl1a
+SC_CTRL2A scientist/c1a0_sci_ctrl2a
+SC_CTRL3A scientist/c1a0_sci_ctrl3a
+SC_CTRL4A scientist/c1a0_sci_ctrl4a
+
+SC_CONSOLE1A scientist/c1a1_sci_1scan
+SC_CONSOLE2A scientist/c1a1_sci_2scan
+SC_CONSOLE3A scientist/c1a1_sci_3scan
+SC_CONSOLE4A scientist/c1a1_sci_4scan
+SC_CONSOLE5A scientist/c1a1_sci_5scan
+SC_CONSOLERPT scientist/c1a1_sci_scanrpt
+
+//c1a2scripts
+
+SC_ZOMBIE1A scientist/c1a2_sci_1zomb
+SC_ZOMBIE3A scientist/c1a2_sci_3zomb
+SC_ZOMBIE5A scientist/c1a2_sci_5zomb
+SC_ZOMBIE6A scientist/c1a2_sci_6zomb
+
+SC_DANGLING scientist/c1a2_sci_dangling
+SC_DARKROOM scientist/c1a2_sci_darkroom
+SC_ELEVATOR scientist/c1a2_sci_elevator
+SC_LOUNGE scientist/c1a2_sci_lounge
+SC_TRANSMISSION scientist/c1a2_sci_transm
+
+//c1a3 scripts
+SC_1MAN scientist/c1a3_sci_1man
+SC_ATLAST scientist/c1a3_sci_atlast
+SC_RESCUED scientist/c1a3_sci_rescued
+SC_SILO1A scientist/c1a3_sci_silo1a
+SC_SILO2A scientist/c1a3_sci_silo2a
+SC_TEAM scientist/c1a3_sci_team
+SC_THANKGOD scientist/c1a3_sci_thankgod
+
+//c1a4 scripts
+SC_TRAINEND scientist/c1a4_sci_trainend
+SC_ROCKET scientist/c1a4_sci_rocket
+SC_BLIND scientist/c1a4_sci_blind
+SC_POWEROFF scientist/c1a4_sci_pwroff
+SC_POWERON scientist/c1a4_sci_pwr
+SC_GENER scientist/c1a4_sci_gener
+SC_TRUST scientist/c1a4_sci_trust
+SC_TENT scientist/c1a4_sci_tent
+
+//c2a3 scripts
+SC_ICKY scientist/c2a3_sci_icky
+SC_TRACK scientist/c2a3_sci_track 
+
+//c2a4 scripts
+SC_ARG1A scientist/c2a4_sci_arg2a
+SC_ARG2A scientist/c2a4_sci_arg4a
+
+SC_TAU2A scientist/c2a4_sci_2tau
+SC_TAU4A scientist/c2a4_sci_4tau
+
+SC_1PSURG scientist/c2a4_sci_scanner
+SC_2PSURG scientist/c2a4_sci_sugicaloff
+SC_3PSURG scientist/c2a4_sci_surgury
+SC_ALLDIE scientist/c2a4_sci_alldie
+SC_LETOUT scientist/c2a4_sci_letout
+
+//c2a5 scripts
+SC_BOOBIE scientist/c2a5_sci_boobie
+SC_LEBUZ scientist/c2a5_sci_lebuz 
+
+//c3a2 scripts
+
+SC_STRAWS scientist/c3a2_sci_straws 
+SC_GLUON2A scientist/c3a2_sci_2glu
+SC_FLOOD scientist/c3a2_sci_flood
+SC_LINGER scientist/c3a2_sci_linger 
+SC_SURVEY1A scientist/c3a2_sci_1surv
+SC_SURVEY3A scientist/c3a2_sci_3surv
+SC_SURVEY5A scientist/c3a2_sci_5surv
+SC_SURVEY7A scientist/c3a2_sci_7surv
+SC_LJUMP scientist/c3a2_sci_ljump
+SC_UPHERE scientist/c3a2_sci_uphere 
+SC_PORTAL scientist/c3a2_sci_portal
+SC_PORTOPEN scientist/c3a2_sci_portopen
+SC_POSITION scientist/c3a2_sci_position
+SC_FOREVER scientist/c3a2_sci_forever
+SC_NOTYET scientist/c3a2_sci_notyet
+SC_FOOL scientist/c3a2_sci_fool 
+
+//miscellaneous useful scripts
+SC_LETYOUIN scientist/letyouin
+SC_OVERHERE scientist/overhere
+
+// outdoor
+WILD0 ambience/(v30) quail1(p103), quail1(t10), quail1(p101)
+WILD1 ambience/bee1(v75)
+WILD2 ambience/bee2(p105)
+WILD3 ambience/hawk1(p98 v30)
+WILD4 ambience/hawk1(p105 v20)
+WILD5 ambience/(v50 p97) quail1, quail1(t15)
+WILD6 ambience/bee1(p98 v50)
+WILD7 ambience/bee1(p97)
+WILD8 ambience/quail1(p98 v20))
+WILD9 ambience/des_wind1(v50)
+WILD10 ambience/des_wind2(v50)
+WILD11 ambience/des_wind3(v50)
+WILD9 ambience/des_wind1(v40 p105)
+WILD10 ambience/des_wind2(v40 p98)
+WILD11 ambience/des_wind3(v40 p103)
+WILD12 ambience/wren1(v80)
+
+// rocket
+ROCKET0 ambience/steamburst1
+ROCKET1 ambience/steamburst1(p80)
+ROCKET2 ambience/steamburst1(p120)
+ROCKET3 ambience/rocket_groan1
+ROCKET4 ambience/rocket_groan2
+ROCKET5 ambience/rocket_groan3
+ROCKET6 ambience/rocket_groan4
+
+
+// distant war zone
+FAR_WAR0 ambience/(v50) distantmortar1
+FAR_WAR1 ambience/(v60) distantmortar2
+FAR_WAR2 ambience/(v50) distantmortar3
+FAR_WAR3 ambience/(v15) biggun3
+FAR_WAR4 ambience/(v20) rifle2
+FAR_WAR5 ambience/(v10 p120) jetflyby1
+FAR_WAR6 ambience/(v10) mgun_burst4
+FAR_WAR7 ambience/(v30) distantmortar1 distantmortar3 distantmortar2
+FAR_WAR8 ambience/(v10) biggun2 biggun2 biggun2
+FAR_WAR9 ambience/(v15) mgun_burst1
+FAR_WAR10 ambience/(v20) biggun1 rifle2
+FAR_WAR11 ambience/(v60) distantmortar1 distantmortar1, distantmortar2, distantmortar1
+FAR_WAR12 ambience/(v30) distantmortar2, distantmortar2 distantmortar2 distantmortar2, distantmortar3 distantmortar1
+FAR_WAR13 ambience/(v10) mgun_burst2
+FAR_WAR14 ambience/(v15) mgun_burst3 mgun_burst3
+FAR_WAR15 ambience/(v10) rifle1 rifle1
+FAR_WAR16 ambience/(v10) biggun2, biggun2 biggun2
+
+// near war zone
+NEAR_WAR0 ambience/(v60) mgun_burst3 mgun_burst3 mgun_burst3(v50)
+NEAR_WAR1 ambience/(v60) rifle1 rifle2 rifle2 rifle1 rifle1
+NEAR_WAR2 ambience/(v60) alienflyby1
+NEAR_WAR3 ambience/(v60) biggun3 biggun3 biggun3
+NEAR_WAR4 ambience/(v60) mgun_burst4 mgun_burst3 rifle1 mgun_burst4
+NEAR_WAR5 ambience/(v60) jetflyby1
+NEAR_WAR6 ambience/(v60) mgun_burst4 mgun_burst3
+NEAR_WAR7 ambience/distantmortar1 distantmortar3 distantmortar2
+NEAR_WAR8 ambience/(v60) biggun2 biggun2 biggun2 biggun2(v30)
+NEAR_WAR9 ambience/(v60) mgun_burst1 mgun_burst1 rifle2 mgun_burst3
+NEAR_WAR10 agrunt/(v40) ag_fire1 ag_fire2 ag_fire2 ag_fire1
+NEAR_WAR11 ambience/distantmortar1 distantmortar1, distantmortar2
+NEAR_WAR12 ambience/(v60) mgun_burst2 mgun_burst2 mgun_burst3 mgun_burst2
+
+
+//HOLOGRAM
+
+HOLO_3JUMPS holo/tr_holo_3jumps
+HOLO_BREAKBOX holo/tr_holo_breakbox
+HOLO_BREATH holo/tr_holo_breath
+HOLO_BUTTON holo/tr_holo_button
+HOLO_CHARGER holo/tr_holo_charger
+HOLO_COMMENCING holo/tr_holo_commencing
+HOLO_CONGRATS holo/tr_holo_congrats
+HOLO_DONE holo/tr_holo_done
+HOLO_DROWN holo/tr_holo_drown
+HOLO_DUCK holo/tr_holo_duck
+HOLO_FALLSHORT holo/tr_holo_fallshort
+HOLO_FANTASTIC holo/tr_holo_fantastic
+HOLO_FLASHLIGHT holo/tr_holo_flashlight
+HOLO_GREATWORK holo/tr_holo_greatwork
+HOLO_GRENADE holo/tr_holo_grenade
+HOLO_HITALL holo/tr_holo_hitall
+HOLO_INJURY holo/tr_holo_injury
+HOLO_INTRO holo/tr_holo_intro
+HOLO_JDUCK holo/tr_holo_jduck
+HOLO_JUMP holo/tr_holo_jump
+HOLO_JUMPDOWN holo/tr_holo_jumpdown
+HOLO_JUMPGAP holo/tr_holo_jumpgap
+HOLO_KEEPTRYING holo/tr_holo_keeptrying
+HOLO_LADDER holo/tr_holo_ladder
+HOLO_LEADGUARD holo/tr_holo_leadguard
+HOLO_LIGHTOFF holo/tr_holo_lightoff
+HOLO_LONGJUMP holo/tr_holo_longjump
+HOLO_MEDKIT holo/tr_holo_medkit
+HOLO_MOVE holo/tr_holo_move
+HOLO_NICEJOB holo/tr_holo_nicejob
+HOLO_PIPEDUCK holo/tr_holo_pipeduck
+HOLO_PULLBOX holo/tr_holo_pullbox
+HOLO_PUSHBOX holo/tr_holo_pushbox
+HOLO_RADIATION holo/tr_holo_radiation
+HOLO_RETRY holo/tr_holo_retry
+HOLO_RUNSTART holo/tr_holo_runstart
+HOLO_SPINBRIDGE holo/tr_holo_spinbridge
+HOLO_STARTLIFT holo/tr_holo_startlift
+HOLO_STEAM holo/tr_holo_steam
+HOLO_TARGET holo/tr_holo_target
+HOLO_TRYAGAIN holo/tr_holo_tryagain
+HOLO_USETRAIN holo/tr_holo_usetrain
+
+////////////////////////////////syndicate////////////////////////////////////
+// demon slave
+DEMON_IDLE0 demon/demon_word1 demon_word2
+DEMON_IDLE1 demon/demon_word2 demon_word3(p95)
+DEMON_IDLE2 demon/demon_word3 demon_word2
+DEMON_IDLE3 demon/demon_word2 demon_word1 demon_word1(p90)
+DEMON_IDLE4 demon/demon_word2(p110) demon_word3 demon_word2 demon_word3
+DEMON_IDLE5 demon/demon_word3 demon_word3 demon_word2
+DEMON_IDLE6 demon/demon_word2 demon_word1 demon_word3
+DEMON_IDLE7 demon/demon_word2 demon_word1 demon_word1 demon_word2(p95)
+DEMON_IDLE8 demon/demon_word1(p115) demon_word3
+DEMON_IDLE9 demon/demon_word3 demon_word3(p90)
+DEMON_IDLE10 demon/demon_word2(p85)
+
+DEMON_ALERT0 demon/(p105) demon_alert1 demon_word2
+DEMON_ALERT1 demon/(p105) demon_word2 demon_word1 demon_word2 demon_word1
+DEMON_ALERT2 demon/(p105) demon_alert4 demon_word2 demon_alert3
+DEMON_ALERT3 demon/(p108) demon_alert1 demon_word1
+DEMON_ALERT4 demon/(p108) demon_word1(p110) demon_word1 demon_word2
+DEMON_ALERT5 demon/(p108) demon_alert4 demon_word3 demon_alert1
+
+// werewolf
+WERE_IDLE0 werewolf/were_word1 
+WERE_IDLE1 werewolf/were_word2 were_word3(p95)
+WERE_IDLE2 werewolf/were_word3 were_word2
+WERE_IDLE3 werewolf/were_word2 were_word6 were_word4(p90)
+WERE_IDLE4 werewolf/were_word2(p110) were_word3 were_word2 were_word3
+WERE_IDLE5 werewolf/were_word3 were_word3 were_word2
+WERE_IDLE6 werewolf/were_word2 were_word2 were_word3
+WERE_IDLE7 werewolf/were_word2 were_word5 were_word2(p95)
+WERE_IDLE8 werewolf/were_word7(p115) were_word3
+WERE_IDLE9 werewolf/were_word3 were_word3(p90)
+WERE_IDLE10 werewolf/were_word1(p85)
+
+WERE_ALERT0 werewolf/(p105) were_alert1 were_word2
+WERE_ALERT1 werewolf/(p105) were_word6 were_word3 were_word5 were_word2
+WERE_ALERT2 werewolf/(p105) were_alert3 were_word4 were_alert3
+WERE_ALERT3 werewolf/(p108) were_alert1 were_word3
+WERE_ALERT4 werewolf/(p108) were_word5(p110) were_word3 were_word5
+WERE_ALERT5 werewolf/(p108) were_alert4 were_word4 were_alert1
+

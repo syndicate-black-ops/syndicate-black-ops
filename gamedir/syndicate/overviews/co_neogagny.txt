@@ -1,0 +1,15 @@
+// overview description file for co_neogagny
+// frame: orthographic, 8448.84 x 6336.63 world units
+
+global 
+{
+	ZOOM	0.9696
+	ORIGIN	-344.00	-288.00	-3200.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_neogagny.tga"
+	HEIGHT	-3200.00
+}

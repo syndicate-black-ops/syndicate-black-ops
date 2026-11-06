@@ -1,0 +1,48 @@
+// tests/sequences: every part of the format once; parser_test.cpp checks what it becomes
+
+$channel = 2, holdtime = 3
+$color = 10 20 30
+
+!sentences
+{
+	// two sentences of the group TEST_LINE, with and without ".wav"
+	TEST_LINE0 test/line_a
+	TEST_LINE1 test/line_b.wav
+
+	TEST_MULTI0 test/one two(p120) three.
+	plain0 hello
+}
+
+%Style
+{
+	$position = 0.1 0.2
+	$speaker = none
+}
+
+%intro
+{
+	#pause = 1.5
+	#firetargets = "door1",
+		pause = .25
+	@TitleStyle
+	#text = "Hello
+world", holdtime = 7
+	#text = "second"
+	@Style	#sound = TEST_LINE,
+		speaker = guard1, listener = player,
+		channel = 3,
+		pause = 2
+	#killtargets = "door1"
+	/* a comment
+	over two lines */ #sentence = TEST_LINE
+}
+
+$fxtime = 4
+
+%loop
+{
+	#firetargets = "tick", pause = 1
+	#repeat = 3
+	#gosub = intro
+	#repeat = -1, pause = 0.5
+}

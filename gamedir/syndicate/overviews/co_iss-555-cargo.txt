@@ -1,0 +1,24 @@
+// overview description file for co_iss-555-cargo
+// frame: orthographic, 10247.69 x 7685.76 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	0.7994
+	ORIGIN	-25.00	-29.50	-1843.00
+	ROTATED	1
+}
+
+// layer 2 of 2 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/co_iss-555-cargo.tga"
+	HEIGHT	612.00
+}
+
+// layer 1 of 2: nothing above z 612.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_iss-555-cargo_f1.tga"
+	HEIGHT	-1843.00
+}

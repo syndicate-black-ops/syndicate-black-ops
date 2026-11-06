@@ -1,0 +1,16 @@
+Mapped by Roux
+
+The last survivor would be selectionned in the syndicate.
+Player versus player mode.
+The round start when there are 2 players...
+The round will be finished when there's only one surviving.
+
+- +1 for each frag. 
+- +3 for the survivor.
+- +5 if you killed the last ennemy.
+- -5 if the player killed himself.
+
+Story : This place of recruitment is an old district forsaken by the federation.
+Survive.
+
+Max players : 32

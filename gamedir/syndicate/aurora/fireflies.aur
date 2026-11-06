@@ -1,0 +1,35 @@
+// fireflies.aur - SBO example (SBO docs: Aurora particle systems): small lights that wander over an area. No spray force:
+// each one gets its own wind ("windyaw" 0..360) and drifts towards it ("drag" pulls the speed to the wind).
+// Place it in the middle of the area, a little above the ground. Sprite: glow01 (SBO).
+"particles" "60"
+"maintype" "swarm"
+
+{
+  "name" "swarm"
+  "spraytype" "fly"
+  "sprayrate" "8"
+  "sprayforce" "0..60"
+  "spraypitch" "-30..30"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "fly"
+  "sprite" "sprites/glow01.spr"
+  "rendermode" "additive"
+  "gravity" "-2..4"
+  "drag" "0.6"
+  "windyaw" "0..360"
+  "windstrength" "15..40"
+  "lifetime" "4..6"
+  "startsize" "2..3"
+  "sizedelta" "-0.3"
+  "startred" "0.7..0.9"
+  "startgreen" "1"
+  "startblue" "0.2..0.4"
+  "endred" "0.4"
+  "endgreen" "0.8"
+  "endblue" "0.1"
+  "startalpha" "1"
+  "endalpha" "0"
+}

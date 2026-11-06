@@ -1,0 +1,4 @@
+# sp_ (teamplay): InitHUD -> ChangePlayerTeam( pPlayer, pPlayer->m_szTeamName ): strncpy onto itself
+map sp_fuzz
+connect 1
+frames 5

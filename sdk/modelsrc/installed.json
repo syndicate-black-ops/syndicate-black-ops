@@ -1,0 +1,1256 @@
+{
+ "deleted": [
+  "ammoboxt.mdl",
+  "apachet.mdl",
+  "barney01.mdl",
+  "barney02.mdl",
+  "barney03.mdl",
+  "barneyt.mdl",
+  "cyberimp01.mdl",
+  "cyberimpt.mdl",
+  "dark01.mdl",
+  "dark02.mdl",
+  "dark03.mdl",
+  "dark04.mdl",
+  "dark05.mdl",
+  "dark06.mdl",
+  "dark07.mdl",
+  "darkt.mdl",
+  "dgrunt01.mdl",
+  "dgrunt02.mdl",
+  "dgrunt03.mdl",
+  "dgruntt.mdl",
+  "hgrunt01.mdl",
+  "hgrunt02.mdl",
+  "hgrunt03.mdl",
+  "hgruntt.mdl",
+  "imp01.mdl",
+  "impt.mdl",
+  "islave01.mdl",
+  "islave02.mdl",
+  "islavet.mdl",
+  "minost.mdl",
+  "p_p228.mdl",
+  "p_terror.mdl",
+  "robott.mdl",
+  "w_hache.mdl",
+  "w_p228.mdl",
+  "w_squeakt.mdl",
+  "werewolf01.mdl",
+  "werewolf02.mdl",
+  "werewolft.mdl",
+  "zgrunt01.mdl",
+  "zgrunt02.mdl",
+  "zgrunt03.mdl",
+  "zgruntt.mdl",
+  "zombie01.mdl",
+  "zombie02.mdl",
+  "zombie03.mdl",
+  "zombiet.mdl"
+ ],
+ "models": {
+  "ammobox": {
+   "differences": [],
+   "file": "ammobox.mdl",
+   "replaced": {
+    "files": [
+     "ammobox.mdl",
+     "ammoboxt.mdl"
+    ],
+    "size": 123384
+   },
+   "result": "equivalent",
+   "sha1": "fab43f4cf6a889313a655e86c2c75d2fc924edb9",
+   "size": 123140
+  },
+  "apache": {
+   "differences": [],
+   "file": "apache.mdl",
+   "replaced": {
+    "files": [
+     "apache.mdl",
+     "apachet.mdl"
+    ],
+    "size": 137852
+   },
+   "result": "equivalent",
+   "sha1": "ebd193f43d65cc1985dc0c7a025be26538da172c",
+   "size": 137608
+  },
+  "artefact": {
+   "differences": [],
+   "file": "artefact.mdl",
+   "replaced": {
+    "files": [
+     "artefact.mdl"
+    ],
+    "size": 58888
+   },
+   "result": "equivalent",
+   "sha1": "dcfa61b28fa07febdcf6caddb7cec18cb57d757d",
+   "size": 58888
+  },
+  "barney": {
+   "differences": [],
+   "file": "barney.mdl",
+   "replaced": {
+    "files": [
+     "barney.mdl",
+     "barneyt.mdl",
+     "barney01.mdl",
+     "barney02.mdl",
+     "barney03.mdl"
+    ],
+    "size": 404104
+   },
+   "result": "equivalent",
+   "sha1": "0c45ade75bbc158f6bfbe200c8e8e00e78b05959",
+   "size": 401796
+  },
+  "crate_steps": {
+   "differences": [],
+   "file": "crate_steps.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "new model",
+   "sha1": "018f57cb396820521e13eeac2c0a5abd328c83ec",
+   "size": 123676
+  },
+  "cyberimp": {
+   "differences": [],
+   "file": "cyberimp.mdl",
+   "replaced": {
+    "files": [
+     "cyberimp.mdl",
+     "cyberimpt.mdl",
+     "cyberimp01.mdl"
+    ],
+    "size": 357616
+   },
+   "result": "equivalent",
+   "sha1": "5c114b1ec17bf9a05035ce08a84c817bbf507388",
+   "size": 357176
+  },
+  "dark": {
+   "differences": [],
+   "file": "dark.mdl",
+   "replaced": {
+    "files": [
+     "dark.mdl",
+     "darkt.mdl",
+     "dark01.mdl",
+     "dark02.mdl",
+     "dark03.mdl",
+     "dark04.mdl",
+     "dark05.mdl",
+     "dark06.mdl",
+     "dark07.mdl"
+    ],
+    "size": 714500
+   },
+   "result": "equivalent",
+   "sha1": "e7860f002023e6f007c3ad55969a73a75883718c",
+   "size": 711464
+  },
+  "dgrunt": {
+   "differences": [],
+   "file": "dgrunt.mdl",
+   "replaced": {
+    "files": [
+     "dgrunt.mdl",
+     "dgruntt.mdl"
+    ],
+    "size": 679096
+   },
+   "result": "equivalent",
+   "sha1": "6258151e6c4c98a657c901d2fd42e55074c9ba39",
+   "size": 678332
+  },
+  "hgrunt": {
+   "differences": [],
+   "file": "hgrunt.mdl",
+   "replaced": {
+    "files": [
+     "hgrunt.mdl",
+     "hgruntt.mdl"
+    ],
+    "size": 853072
+   },
+   "result": "equivalent",
+   "sha1": "b2808237eb31dee01a05e9598671d7ff68bd0fbf",
+   "size": 852752
+  },
+  "hunted": {
+   "differences": [],
+   "file": "hunted.mdl",
+   "replaced": {
+    "files": [
+     "hunted.mdl"
+    ],
+    "size": 476160
+   },
+   "result": "equivalent",
+   "sha1": "da3e5434a6fb14ed25294703384d059ef219e6d9",
+   "size": 475164
+  },
+  "imp": {
+   "differences": [],
+   "file": "imp.mdl",
+   "replaced": {
+    "files": [
+     "imp.mdl",
+     "impt.mdl",
+     "imp01.mdl"
+    ],
+    "size": 357616
+   },
+   "result": "equivalent",
+   "sha1": "91a7968575b57791925cbf9107b66a9227b4ad15",
+   "size": 357176
+  },
+  "islave": {
+   "differences": [],
+   "file": "islave.mdl",
+   "replaced": {
+    "files": [
+     "islave.mdl",
+     "islavet.mdl",
+     "islave01.mdl",
+     "islave02.mdl"
+    ],
+    "size": 437372
+   },
+   "result": "equivalent",
+   "sha1": "bf02c2c237d3a2a43883733abbb44a5dcce88578",
+   "size": 436604
+  },
+  "minos": {
+   "differences": [],
+   "file": "minos.mdl",
+   "replaced": {
+    "files": [
+     "minos.mdl",
+     "minost.mdl"
+    ],
+    "size": 323836
+   },
+   "result": "equivalent",
+   "sha1": "1141b071aa558c224759bfc62e187e1d751bb44c",
+   "size": 323584
+  },
+  "p_ben": {
+   "differences": [],
+   "file": "p_ben.mdl",
+   "replaced": {
+    "files": [
+     "p_ben.mdl"
+    ],
+    "size": 119832
+   },
+   "result": "equivalent",
+   "sha1": "3ad4967e39a82f0c9fd948b7c849ecd69791ed3b",
+   "size": 119832
+  },
+  "p_canon": {
+   "differences": [],
+   "file": "p_canon.mdl",
+   "replaced": {
+    "files": [
+     "p_canon.mdl"
+    ],
+    "size": 33200
+   },
+   "result": "equivalent",
+   "sha1": "d83fbe1c09dbdddfb47d39e34070913d2677d067",
+   "size": 33200
+  },
+  "p_fa18": {
+   "differences": [],
+   "file": "p_fa18.mdl",
+   "replaced": {
+    "files": [
+     "p_fa18.mdl"
+    ],
+    "size": 56372
+   },
+   "result": "equivalent",
+   "sha1": "c9e2192a1908756a4c7218a44e9dcf6e57d4d13a",
+   "size": 56372
+  },
+  "p_federal": {
+   "differences": [
+    "intentional: one-frame 'idle' sequence added by the rules table (the shipped model has no sequence)"
+   ],
+   "file": "p_federal.mdl",
+   "replaced": {
+    "files": [
+     "p_federal.mdl"
+    ],
+    "size": 139916
+   },
+   "result": "intentional difference",
+   "sha1": "768f3271212afc04eaaa275cd172f2dbfc733b52",
+   "size": 140236
+  },
+  "p_glauncher": {
+   "differences": [
+    "intentional: one-frame 'idle' sequence added by the rules table (the shipped model has no sequence)"
+   ],
+   "file": "p_glauncher.mdl",
+   "replaced": {
+    "files": [
+     "p_glauncher.mdl"
+    ],
+    "size": 249748
+   },
+   "result": "intentional difference",
+   "sha1": "8d7e38cde9503b14218532d9934fe09424e9b5e4",
+   "size": 250068
+  },
+  "p_k444": {
+   "differences": [],
+   "file": "p_k444.mdl",
+   "replaced": {
+    "files": [
+     "p_k444.mdl"
+    ],
+    "size": 40192
+   },
+   "result": "equivalent",
+   "sha1": "6f7d87ac783b8b63f38b9a47c5bb5cf9e740557c",
+   "size": 40192
+  },
+  "p_katana": {
+   "differences": [
+    "intentional: one-frame 'idle' sequence added by the rules table (the shipped model has no sequence)"
+   ],
+   "file": "p_katana.mdl",
+   "replaced": {
+    "files": [
+     "p_katana.mdl"
+    ],
+    "size": 43204
+   },
+   "result": "intentional difference",
+   "sha1": "0a07073a57586753caa1b941e16928a24a1d314d",
+   "size": 43536
+  },
+  "p_medikit": {
+   "differences": [],
+   "file": "p_medikit.mdl",
+   "replaced": {
+    "files": [
+     "p_medikit.mdl"
+    ],
+    "size": 9908
+   },
+   "result": "equivalent",
+   "sha1": "96e3c32a23abf565a77abbc0e5dfe608a9e06cce",
+   "size": 9908
+  },
+  "p_mini": {
+   "differences": [],
+   "file": "p_mini.mdl",
+   "replaced": {
+    "files": [
+     "p_mini.mdl"
+    ],
+    "size": 43344
+   },
+   "result": "equivalent",
+   "sha1": "93ffb722519bd23010fa4148709cc9a5b2769b64",
+   "size": 43344
+  },
+  "p_nm33": {
+   "differences": [],
+   "file": "p_nm33.mdl",
+   "replaced": {
+    "files": [
+     "p_nm33.mdl"
+    ],
+    "size": 42508
+   },
+   "result": "equivalent",
+   "sha1": "4f4e80d2b0a3f434925e3b4d0fa4d4763173923e",
+   "size": 42508
+  },
+  "p_pm66": {
+   "differences": [],
+   "file": "p_pm66.mdl",
+   "replaced": {
+    "files": [
+     "p_pm66.mdl"
+    ],
+    "size": 68732
+   },
+   "result": "equivalent",
+   "sha1": "50ac4da61ecefa5921fc3a5ad3bc3d5bdc0d4da2",
+   "size": 68732
+  },
+  "p_rc28": {
+   "differences": [],
+   "file": "p_rc28.mdl",
+   "replaced": {
+    "files": [
+     "p_rc28.mdl"
+    ],
+    "size": 59788
+   },
+   "result": "equivalent",
+   "sha1": "67cba08d96809dea34c4dda0bb3f413dab77f60e",
+   "size": 59712
+  },
+  "p_rifle": {
+   "differences": [],
+   "file": "p_rifle.mdl",
+   "replaced": {
+    "files": [
+     "p_rifle.mdl"
+    ],
+    "size": 275416
+   },
+   "result": "equivalent",
+   "sha1": "b8c66515ad16ee77e7ca389d5680cd6ea4cbff9a",
+   "size": 275416
+  },
+  "p_rpg": {
+   "differences": [],
+   "file": "p_rpg.mdl",
+   "replaced": {
+    "files": [
+     "p_rpg.mdl"
+    ],
+    "size": 57008
+   },
+   "result": "equivalent",
+   "sha1": "df309408a5a55fcc9fe7892e6ef091d78bcab173",
+   "size": 56972
+  },
+  "p_shotgun": {
+   "differences": [],
+   "file": "p_shotgun.mdl",
+   "replaced": {
+    "files": [
+     "p_shotgun.mdl"
+    ],
+    "size": 47016
+   },
+   "result": "equivalent",
+   "sha1": "2a1e2915ccfdb9b4c5182e397d55354e74552b1d",
+   "size": 47016
+  },
+  "p_squeak": {
+   "differences": [],
+   "file": "p_squeak.mdl",
+   "replaced": {
+    "files": [
+     "p_squeak.mdl"
+    ],
+    "size": 253444
+   },
+   "result": "equivalent",
+   "sha1": "bc49874909fd2992e3c673a9a5f2a46da810600c",
+   "size": 253444
+  },
+  "p_sword": {
+   "differences": [],
+   "file": "p_sword.mdl",
+   "replaced": {
+    "files": [
+     "p_sword.mdl"
+    ],
+    "size": 40480
+   },
+   "result": "equivalent",
+   "sha1": "23d1e4168ff58b26f55e3200bbd71cbacf074d8d",
+   "size": 40480
+  },
+  "p_tripmine": {
+   "differences": [],
+   "file": "p_tripmine.mdl",
+   "replaced": {
+    "files": [
+     "p_tripmine.mdl"
+    ],
+    "size": 266156
+   },
+   "result": "equivalent",
+   "sha1": "9c72b4158983a59d8623845389e77040349e9922",
+   "size": 266136
+  },
+  "p_warhammer": {
+   "differences": [],
+   "file": "p_warhammer.mdl",
+   "replaced": {
+    "files": [
+     "p_warhammer.mdl"
+    ],
+    "size": 74136
+   },
+   "result": "equivalent",
+   "sha1": "5035c6c1b3710c90ba40fbd98748f5fca3e86b37",
+   "size": 74136
+  },
+  "player/agent/agent": {
+   "differences": [],
+   "file": "player/agent/agent.mdl",
+   "replaced": {
+    "files": [
+     "player/agent/agent.mdl"
+    ],
+    "size": 602176
+   },
+   "result": "equivalent",
+   "sha1": "d6ac20e9263b257e355f3ef06a864c12d6a8361a",
+   "size": 602076
+  },
+  "player/agentf/agentf": {
+   "differences": [],
+   "file": "player/agentf/agentf.mdl",
+   "replaced": {
+    "files": [
+     "player/agentf/agentf.mdl"
+    ],
+    "size": 536292
+   },
+   "result": "equivalent",
+   "sha1": "532cd00942121e570504c5c312db69682f380e52",
+   "size": 536236
+  },
+  "player/hunted/hunted": {
+   "differences": [],
+   "file": "player/hunted/hunted.mdl",
+   "replaced": {
+    "files": [
+     "player/hunted/hunted.mdl"
+    ],
+    "size": 602208
+   },
+   "result": "equivalent",
+   "sha1": "23e4042332655b1fdc0f9131e17ab34e32813f86",
+   "size": 602140
+  },
+  "robot": {
+   "differences": [],
+   "file": "robot.mdl",
+   "replaced": {
+    "files": [
+     "robot.mdl",
+     "robott.mdl"
+    ],
+    "size": 320068
+   },
+   "result": "equivalent",
+   "sha1": "d5850ce70bf172a60119d16f61c174138b7b669c",
+   "size": 319568
+  },
+  "v_ben": {
+   "differences": [
+    "intentional: accepted with --accept: sequence 3 insert: events [(0, 5004, 0, 'weapons/m3_insertshell.wav')], rebuilt []",
+    "intentional: accepted with --accept: sequence 4 after_reload: events [(0, 5004, 0, 'weapons/m3_pump.wav')], rebuilt []"
+   ],
+   "file": "v_ben.mdl",
+   "replaced": {
+    "files": [
+     "v_ben.mdl"
+    ],
+    "size": 162864
+   },
+   "result": "intentional difference",
+   "sha1": "4a1da287bf1e9b15b36cbb43ba632df4b516ad2a",
+   "size": 162796
+  },
+  "v_canon": {
+   "differences": [],
+   "file": "v_canon.mdl",
+   "replaced": {
+    "files": [
+     "v_canon.mdl"
+    ],
+    "size": 237488
+   },
+   "result": "equivalent",
+   "sha1": "ce9d911d66537153c660dd6da6000effee531ba3",
+   "size": 237588
+  },
+  "v_fa18": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 3, rebuilt 4",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_fa18.mdl",
+   "replaced": {
+    "files": [
+     "v_fa18.mdl"
+    ],
+    "size": 331920
+   },
+   "result": "intentional difference",
+   "sha1": "4b68c18c41846950644fd73516289e70c6e6d58a",
+   "size": 594780
+  },
+  "v_federal": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 2, rebuilt 3",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_federal.mdl",
+   "replaced": {
+    "files": [
+     "v_federal.mdl"
+    ],
+    "size": 228248
+   },
+   "result": "intentional difference",
+   "sha1": "4d5c7928a27767f055363f66292511a59ca39694",
+   "size": 405540
+  },
+  "v_glauncher": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 3, rebuilt 5",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_glauncher.mdl",
+   "replaced": {
+    "files": [
+     "v_glauncher.mdl"
+    ],
+    "size": 140872
+   },
+   "result": "intentional difference",
+   "sha1": "22831231fdab1618a8ed3a7a7fd538e6d5141311",
+   "size": 236468
+  },
+  "v_grenade": {
+   "differences": [],
+   "file": "v_grenade.mdl",
+   "replaced": {
+    "files": [
+     "v_grenade.mdl"
+    ],
+    "size": 88884
+   },
+   "result": "equivalent",
+   "sha1": "593b3bc2bdd7660695d2121a9630a48edb0838f1",
+   "size": 87044
+  },
+  "v_k444": {
+   "differences": [],
+   "file": "v_k444.mdl",
+   "replaced": {
+    "files": [
+     "v_k444.mdl"
+    ],
+    "size": 208088
+   },
+   "result": "equivalent",
+   "sha1": "414908fa2427753282ba9e3b9449754fbd64859b",
+   "size": 208008
+  },
+  "v_katana": {
+   "differences": [],
+   "file": "v_katana.mdl",
+   "replaced": {
+    "files": [
+     "v_katana.mdl"
+    ],
+    "size": 76916
+   },
+   "result": "equivalent",
+   "sha1": "7fffc0ed6def6b18522b77ccb68152e9d2899a2e",
+   "size": 76988
+  },
+  "v_medikit": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 8, rebuilt 9",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_medikit.mdl",
+   "replaced": {
+    "files": [
+     "v_medikit.mdl"
+    ],
+    "size": 149044
+   },
+   "result": "intentional difference",
+   "sha1": "97ea6e75e1d489170de85197729b6374157abf3e",
+   "size": 215160
+  },
+  "v_mini": {
+   "differences": [],
+   "file": "v_mini.mdl",
+   "replaced": {
+    "files": [
+     "v_mini.mdl"
+    ],
+    "size": 87104
+   },
+   "result": "equivalent",
+   "sha1": "f7ae7eb98ce3df42e65bcbf805738a3c3cd7dcbc",
+   "size": 87356
+  },
+  "v_nm33": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 1, rebuilt 2",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_nm33.mdl",
+   "replaced": {
+    "files": [
+     "v_nm33.mdl"
+    ],
+    "size": 318376
+   },
+   "result": "intentional difference",
+   "sha1": "a86316415049a1e51987a2f1ed3cb0bcdee019f9",
+   "size": 581296
+  },
+  "v_pm66": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 2, rebuilt 3",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_pm66.mdl",
+   "replaced": {
+    "files": [
+     "v_pm66.mdl"
+    ],
+    "size": 286868
+   },
+   "result": "intentional difference",
+   "sha1": "73ab53df648809f3a64f64b30af61c59da748c38",
+   "size": 517948
+  },
+  "v_rc28": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 7, rebuilt 8",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_rc28.mdl",
+   "replaced": {
+    "files": [
+     "v_rc28.mdl"
+    ],
+    "size": 98228
+   },
+   "result": "intentional difference",
+   "sha1": "f1aa0c83e4a3d6de36d368872a1c6b08bef094c0",
+   "size": 131924
+  },
+  "v_rifle": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 2, rebuilt 3",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_rifle.mdl",
+   "replaced": {
+    "files": [
+     "v_rifle.mdl"
+    ],
+    "size": 310788
+   },
+   "result": "intentional difference",
+   "sha1": "524e383b26df31b0a4478aea1913aa3eb76c303c",
+   "size": 573880
+  },
+  "v_rpg": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 7, rebuilt 8",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_rpg.mdl",
+   "replaced": {
+    "files": [
+     "v_rpg.mdl"
+    ],
+    "size": 224948
+   },
+   "result": "intentional difference",
+   "sha1": "b268736e8568ff1037842550dc07a4b7b7b58471",
+   "size": 362352
+  },
+  "v_satchel": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 9, rebuilt 12",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_satchel.mdl",
+   "replaced": {
+    "files": [
+     "v_satchel.mdl"
+    ],
+    "size": 82180
+   },
+   "result": "intentional difference",
+   "sha1": "47c42869031da21035dbc96a1125ea0b25dbc6b8",
+   "size": 107924
+  },
+  "v_satchel_radio": {
+   "differences": [
+    "intentional: accepted with --accept: textures: 9, rebuilt 10",
+    "intentional: accepted with --accept: skin families: 1, rebuilt 2"
+   ],
+   "file": "v_satchel_radio.mdl",
+   "replaced": {
+    "files": [
+     "v_satchel_radio.mdl"
+    ],
+    "size": 61472
+   },
+   "result": "intentional difference",
+   "sha1": "90cce1c5831a42fc763a63af8e2cd0eedb4ab83d",
+   "size": 68460
+  },
+  "v_shotgun": {
+   "differences": [],
+   "file": "v_shotgun.mdl",
+   "replaced": {
+    "files": [
+     "v_shotgun.mdl"
+    ],
+    "size": 100560
+   },
+   "result": "equivalent",
+   "sha1": "f9d4a16d2f45051025cf590b7f7d4f3880cf3c82",
+   "size": 100516
+  },
+  "v_squeak": {
+   "differences": [],
+   "file": "v_squeak.mdl",
+   "replaced": {
+    "files": [
+     "v_squeak.mdl"
+    ],
+    "size": 277612
+   },
+   "result": "equivalent",
+   "sha1": "6abc4467f2c2d7f3a0d9720cbe9d1e37c7edd3dd",
+   "size": 277720
+  },
+  "v_sword": {
+   "differences": [],
+   "file": "v_sword.mdl",
+   "replaced": {
+    "files": [
+     "v_sword.mdl"
+    ],
+    "size": 64856
+   },
+   "result": "equivalent",
+   "sha1": "3f66248ae97595110d5d1a04e74d6761994034d3",
+   "size": 64964
+  },
+  "v_tripmine": {
+   "differences": [],
+   "file": "v_tripmine.mdl",
+   "replaced": {
+    "files": [
+     "v_tripmine.mdl"
+    ],
+    "size": 329236
+   },
+   "result": "equivalent",
+   "sha1": "5cb9ea6508f8d0357c141d6abf4d34b8d67b2d4f",
+   "size": 329180
+  },
+  "v_warhammer": {
+   "differences": [],
+   "file": "v_warhammer.mdl",
+   "replaced": {
+    "files": [
+     "v_warhammer.mdl"
+    ],
+    "size": 305132
+   },
+   "result": "equivalent",
+   "sha1": "d2ba61478ae7dc820463000f5a54c0353c5089e6",
+   "size": 305240
+  },
+  "v_wong": {
+   "differences": [],
+   "file": "v_wong.mdl",
+   "replaced": {
+    "files": [
+     "v_wong.mdl"
+    ],
+    "size": 35348
+   },
+   "result": "equivalent",
+   "sha1": "9e50d8c6faa408d643b302117ae249fc42302f3b",
+   "size": 35456
+  },
+  "w_ben": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_ben: 114 shipped triangles have no match in the rebuilt mesh (114 rebuilt triangles left over)"
+   ],
+   "file": "w_ben.mdl",
+   "replaced": {
+    "files": [
+     "w_ben.mdl"
+    ],
+    "size": 17672
+   },
+   "result": "intentional difference",
+   "sha1": "b1bd569d6cb0410b64a71ce2b477a51099e44fb8",
+   "size": 118608
+  },
+  "w_canon": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_canon: 134 shipped triangles have no match in the rebuilt mesh (134 rebuilt triangles left over)"
+   ],
+   "file": "w_canon.mdl",
+   "replaced": {
+    "files": [
+     "w_canon.mdl"
+    ],
+    "size": 17696
+   },
+   "result": "intentional difference",
+   "sha1": "71628a24e42f3ff25946d02d1d72435c70d2a9ee",
+   "size": 32084
+  },
+  "w_fa18": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_fa18: 158 shipped triangles have no match in the rebuilt mesh (158 rebuilt triangles left over)"
+   ],
+   "file": "w_fa18.mdl",
+   "replaced": {
+    "files": [
+     "w_fa18.mdl"
+    ],
+    "size": 54696
+   },
+   "result": "intentional difference",
+   "sha1": "e65ca260f70c880e4c38945fb40fb9e742310e12",
+   "size": 54772
+  },
+  "w_federal": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_federal: 282 shipped triangles have no match in the rebuilt mesh (282 rebuilt triangles left over)"
+   ],
+   "file": "w_federal.mdl",
+   "replaced": {
+    "files": [
+     "w_federal.mdl"
+    ],
+    "size": 44840
+   },
+   "result": "intentional difference",
+   "sha1": "0477e29b8a49c6c3454b57fe783aebd4e79a62db",
+   "size": 138956
+  },
+  "w_glauncher": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_glauncher: 326 shipped triangles have no match in the rebuilt mesh (326 rebuilt triangles left over)"
+   ],
+   "file": "w_glauncher.mdl",
+   "replaced": {
+    "files": [
+     "w_glauncher.mdl"
+    ],
+    "size": 20184
+   },
+   "result": "intentional difference",
+   "sha1": "637b22f5548e952b4e6b1fb204f4295542eda36a",
+   "size": 248788
+  },
+  "w_grenade": {
+   "differences": [
+    "intentional: accepted with --accept: bones: 1, rebuilt 1; missing ['weapon_root']; extra ['Line02']",
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: sequences: 1, rebuilt 7"
+   ],
+   "file": "w_grenade.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "intentional difference",
+   "sha1": "c3f6982854e48b4551ba8f8a6548fbef7b5ceec8",
+   "size": 21588
+  },
+  "w_k444": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_k444: 170 shipped triangles have no match in the rebuilt mesh (170 rebuilt triangles left over)"
+   ],
+   "file": "w_k444.mdl",
+   "replaced": {
+    "files": [
+     "w_k444.mdl"
+    ],
+    "size": 2988
+   },
+   "result": "intentional difference",
+   "sha1": "f0acf952ca4f4504c9c1aaab0293c8e19d721b9d",
+   "size": 38908
+  },
+  "w_katana": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_katana: 336 shipped triangles have no match in the rebuilt mesh (336 rebuilt triangles left over)"
+   ],
+   "file": "w_katana.mdl",
+   "replaced": {
+    "files": [
+     "w_katana.mdl"
+    ],
+    "size": 26688
+   },
+   "result": "intentional difference",
+   "sha1": "2a82792f387ebe817159802c1112a067c1a36e52",
+   "size": 42068
+  },
+  "w_medikit": {
+   "differences": [
+    "intentional: accepted with --accept: body studio/w_medikit: 52 shipped triangles have no match in the rebuilt mesh (52 rebuilt triangles left over)"
+   ],
+   "file": "w_medikit.mdl",
+   "replaced": {
+    "files": [
+     "w_medikit.mdl"
+    ],
+    "size": 4148
+   },
+   "result": "intentional difference",
+   "sha1": "7d30461ca8d23ae03ef4502029bb096850b60c7a",
+   "size": 8504
+  },
+  "w_mini": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_mini: 206 shipped triangles have no match in the rebuilt mesh (206 rebuilt triangles left over)"
+   ],
+   "file": "w_mini.mdl",
+   "replaced": {
+    "files": [
+     "w_mini.mdl"
+    ],
+    "size": 24884
+   },
+   "result": "intentional difference",
+   "sha1": "61c5d959de6bee8f283a1146a2ac54bdf56bb21c",
+   "size": 42064
+  },
+  "w_nm33": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_nm33: 230 shipped triangles have no match in the rebuilt mesh (230 rebuilt triangles left over)"
+   ],
+   "file": "w_nm33.mdl",
+   "replaced": {
+    "files": [
+     "w_nm33.mdl"
+    ],
+    "size": 40924
+   },
+   "result": "intentional difference",
+   "sha1": "7c45f4c2405cef61ee60aa66b58456b65eeb5d72",
+   "size": 40916
+  },
+  "w_pm66": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_pm66: 114 shipped triangles have no match in the rebuilt mesh (114 rebuilt triangles left over)"
+   ],
+   "file": "w_pm66.mdl",
+   "replaced": {
+    "files": [
+     "w_pm66.mdl"
+    ],
+    "size": 24660
+   },
+   "result": "intentional difference",
+   "sha1": "6416e23a6b5b8bc18043a629098becda7006e2d3",
+   "size": 67460
+  },
+  "w_rc28": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_rc28: 116 shipped triangles have no match in the rebuilt mesh (116 rebuilt triangles left over)"
+   ],
+   "file": "w_rc28.mdl",
+   "replaced": {
+    "files": [
+     "w_rc28.mdl"
+    ],
+    "size": 36700
+   },
+   "result": "intentional difference",
+   "sha1": "af7c5b6417f29f89ebf16b043ba2be3fcfa8ec8e",
+   "size": 58432
+  },
+  "w_rifle": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_rifle: 373 shipped triangles have no match in the rebuilt mesh (373 rebuilt triangles left over)"
+   ],
+   "file": "w_rifle.mdl",
+   "replaced": {
+    "files": [
+     "w_rifle.mdl"
+    ],
+    "size": 30420
+   },
+   "result": "intentional difference",
+   "sha1": "6a050e80e0f7f2602b190eb114498386500092f6",
+   "size": 273768
+  },
+  "w_rpg": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_rpg: 209 shipped triangles have no match in the rebuilt mesh (209 rebuilt triangles left over)"
+   ],
+   "file": "w_rpg.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "intentional difference",
+   "sha1": "3314d59ea437544deae895abebc91c4cdb01f0b7",
+   "size": 55708
+  },
+  "w_shotgun": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_shotgun: 66 shipped triangles have no match in the rebuilt mesh (66 rebuilt triangles left over)"
+   ],
+   "file": "w_shotgun.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "intentional difference",
+   "sha1": "1a0c9978f8f99bdd815e741fcb1a050e2611149f",
+   "size": 45736
+  },
+  "w_squeak": {
+   "differences": [],
+   "file": "w_squeak.mdl",
+   "replaced": {
+    "files": [
+     "w_squeak.mdl",
+     "w_squeakt.mdl"
+    ],
+    "size": 256848
+   },
+   "result": "equivalent",
+   "sha1": "0b9e8d0e5d9db9b9a196fa71675966b083d7be6f",
+   "size": 256604
+  },
+  "w_sword": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_sword: 350 shipped triangles have no match in the rebuilt mesh (350 rebuilt triangles left over)"
+   ],
+   "file": "w_sword.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "intentional difference",
+   "sha1": "1d98d9871d10635eb9b0c09729f6ec743b40359b",
+   "size": 39200
+  },
+  "w_tripmine": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_tripmine: 191 shipped triangles have no match in the rebuilt mesh (191 rebuilt triangles left over)"
+   ],
+   "file": "w_tripmine.mdl",
+   "replaced": {
+    "files": [],
+    "size": 0
+   },
+   "result": "intentional difference",
+   "sha1": "ef50ddc09650176127207cc4857d280c3c94c100",
+   "size": 264700
+  },
+  "w_warhammer": {
+   "differences": [
+    "intentional: accepted with --accept: hitbox 0 differs",
+    "intentional: accepted with --accept: body studio/w_warhammer: 212 shipped triangles have no match in the rebuilt mesh (212 rebuilt triangles left over)"
+   ],
+   "file": "w_warhammer.mdl",
+   "replaced": {
+    "files": [
+     "w_warhammer.mdl"
+    ],
+    "size": 4132
+   },
+   "result": "intentional difference",
+   "sha1": "97564cafa4bdc1953afc8f0e8d3900c7707564fc",
+   "size": 74104
+  },
+  "w_weaponbox": {
+   "differences": [],
+   "file": "w_weaponbox.mdl",
+   "replaced": {
+    "files": [
+     "w_weaponbox.mdl"
+    ],
+    "size": 21480
+   },
+   "result": "equivalent",
+   "sha1": "78180104cb743d583b2a603d5db098ff65ab05c7",
+   "size": 21480
+  },
+  "werewolf": {
+   "differences": [],
+   "file": "werewolf.mdl",
+   "replaced": {
+    "files": [
+     "werewolf.mdl",
+     "werewolft.mdl",
+     "werewolf01.mdl",
+     "werewolf02.mdl"
+    ],
+    "size": 370384
+   },
+   "result": "equivalent",
+   "sha1": "cb25f8a78feaaaec198c8b67d85d4f53aa1f8c17",
+   "size": 369328
+  },
+  "zgrunt": {
+   "differences": [],
+   "file": "zgrunt.mdl",
+   "replaced": {
+    "files": [
+     "zgrunt.mdl",
+     "zgruntt.mdl",
+     "zgrunt01.mdl",
+     "zgrunt02.mdl",
+     "zgrunt03.mdl"
+    ],
+    "size": 506300
+   },
+   "result": "equivalent",
+   "sha1": "96bd3280f4f2475abc1656a57f28026c610e9437",
+   "size": 505380
+  },
+  "zombie": {
+   "differences": [],
+   "file": "zombie.mdl",
+   "replaced": {
+    "files": [
+     "zombie.mdl",
+     "zombiet.mdl",
+     "zombie01.mdl",
+     "zombie02.mdl",
+     "zombie03.mdl"
+    ],
+    "size": 686112
+   },
+   "result": "equivalent",
+   "sha1": "2e5d7302710f2013af557a50c3867dfe2f6bcdd9",
+   "size": 684992
+  }
+ }
+}

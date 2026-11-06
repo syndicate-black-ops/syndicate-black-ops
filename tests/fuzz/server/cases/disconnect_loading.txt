@@ -1,0 +1,6 @@
+# a client that disconnects before ClientPutInServer (no private data): ClientDisconnected wrote through NULL
+map co_fuzz
+connect 1
+connectonly 2
+disconnect 2
+frames 2

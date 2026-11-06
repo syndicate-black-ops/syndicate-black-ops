@@ -1,0 +1,46 @@
+Mapped by anzymut
+
+Level of the map : HARD
+
+Aemos Federal Colony. Croon has installed a research and development base in one 
+of their buildings. During the Zeta primus incident, a gate has been opened in the 
+colony which results to Outside world forces invasion. Unlike than for the others 
+incidents, Federal marines were in the place. They controlled the invasion and 
+stood the siege. Now they stand again, and Croon dislikes this situation because 
+no one and particularly not the federation should know.
+That's why Croon orders us to eliminate any trace of its experiment.
+
+
+Mission :
+
+- Eliminate the 7 scientists who are surviving.
+
+- Stop the TerraForming factory.
+ 
+- Turn off the 3 thermic evacuation tube in order to make the atmosphere disapearing.
+ Federals troop has created near this points some siege zones.
+ 
+- Destroy the Croon building. You can find a remote control for the federal satelite, 
+in one of the marine's post.
+ 
+- Take the artefact in the bar.
+ 
+But be carefull Agent. There's a very strong cyborg also in the aera.
+ 
+Glory to the Syndicate !
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

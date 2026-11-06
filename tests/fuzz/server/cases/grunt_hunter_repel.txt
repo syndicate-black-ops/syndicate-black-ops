@@ -1,0 +1,6 @@
+# monster_grunt_hunter_repel: Create( "monster_human_grunt_hunter" ) returns NULL (no such class), then dereferenced
+map co_fuzz
+spawn monster_grunt_hunter_repel targetname r
+activate
+use 0
+frames 3

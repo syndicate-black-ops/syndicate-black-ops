@@ -1,0 +1,25 @@
+Mapped by Anzymut, your best friend :) .
+
+Level of the map : do you like imp ???
+
+Imps hate you !!!!!!! you smell fresh meat.
+
+Mission:
+
+- Escape from appart !!!!!!!!!!!!!
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

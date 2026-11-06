@@ -1,0 +1,15 @@
+// overview description file for co_hellraiser
+// frame: orthographic, 8992.32 x 6744.24 world units
+
+global 
+{
+	ZOOM	0.9110
+	ORIGIN	188.00	-56.00	-3680.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_hellraiser.tga"
+	HEIGHT	-3680.00
+}

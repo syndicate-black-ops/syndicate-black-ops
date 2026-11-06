@@ -1,0 +1,34 @@
+// colorfountain.aur - SBO example (SBO docs: Aurora particle systems): a fountain of colored drops. Every drop gets its own
+// color (ranges on start and end colors) and bounces on the floor. Sprite: glow01 (SBO).
+"particles" "300"
+"maintype" "jet"
+
+{
+  "name" "jet"
+  "spraytype" "drop"
+  "sprayrate" "80"
+  "sprayforce" "260..300"
+  "spraypitch" "-88..-78"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "drop"
+  "sprite" "sprites/glow01.spr"
+  "rendermode" "additive"
+  "gravity" "-400"
+  "collision" "bounce"
+  "bounce" "0.3"
+  "bouncefriction" "0.3"
+  "lifetime" "2..2.5"
+  "startsize" "2..3"
+  "endsize" "1.5"
+  "startred" "0..1"
+  "startgreen" "0..1"
+  "startblue" "0.5..1"
+  "endred" "0..1"
+  "endgreen" "0..1"
+  "endblue" "0.5..1"
+  "startalpha" "1"
+  "endalpha" "0.2"
+}

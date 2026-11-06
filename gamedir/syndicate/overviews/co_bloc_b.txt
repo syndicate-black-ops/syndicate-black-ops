@@ -1,0 +1,24 @@
+// overview description file for co_bloc_b
+// frame: orthographic, 8842.83 x 6632.12 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	0.9264
+	ORIGIN	-40.00	-52.00	-2329.00
+	ROTATED	1
+}
+
+// layer 2 of 2 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/co_bloc_b.tga"
+	HEIGHT	-1792.00
+}
+
+// layer 1 of 2: nothing above z -1792.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_bloc_b_f1.tga"
+	HEIGHT	-2329.00
+}

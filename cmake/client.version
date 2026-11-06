@@ -1,0 +1,7 @@
+# Linker version script of client.so (cmake/sbo_client.cmake, docs/dev/LINUX_CLIENT.md).
+# The engine looks the client's functions up by their C names; C++ symbols (template instantiations from the
+# standard library headers, which -fvisibility=hidden does not cover) stay inside the library.
+{
+	global: *;
+	local: _Z*;
+};

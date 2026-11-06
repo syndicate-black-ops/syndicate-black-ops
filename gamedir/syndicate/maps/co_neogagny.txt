@@ -1,0 +1,27 @@
+Mapped by Roux.
+
+Level of the map : HARD
+
+since two weeks, a civil war has taken place in the center of the town called Neogagny. It
+ opposes the Federation to an anti-capitalism Guerilla, a small local terrorist organization. Croon tested and lost there one of his anti-riot
+ prototypes called PLC-002. The engineers think there is a bit probably that it has been destroyed. It's certainly only a simple breakdown.
+
+Mision : 
+
+- You must locate it and open a path for the technical teams.
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

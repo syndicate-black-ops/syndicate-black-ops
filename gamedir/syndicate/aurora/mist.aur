@@ -1,0 +1,39 @@
+// mist.aur - SBO example (SBO docs: Aurora particle systems): spray mist at the foot of a waterfall. Big soft puffs roll
+// out in every direction, slow down and drift with a light breeze (towards yaw 90, north, with the default
+// angles of the entity; the wind does not turn with the entity). Stock Half-Life sprite.
+"particles" "100"
+"maintype" "pool"
+
+{
+  "name" "pool"
+  "spraytype" "mist"
+  "sprayrate" "14"
+  "sprayforce" "30..80"
+  "spraypitch" "-25..10"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "mist"
+  "sprite" "sprites/steam1.spr"
+  "rendermode" "additive"
+  "gravity" "6"
+  "drag" "0.8"
+  "windyaw" "80..100"
+  "windstrength" "15..25"
+  "lifetime" "4..6"
+  "startsize" "24..32"
+  "endsize" "96..128"
+  "startred" "0.8"
+  "startgreen" "0.9"
+  "startblue" "1"
+  "endred" "0.8"
+  "endgreen" "0.9"
+  "endblue" "1"
+  "startalpha" "0.18"
+  "endalpha" "0"
+  "startframe" "0..15"
+  "framerate" "3"
+  "startangle" "0..360"
+  "angledelta" "-12..12"
+}

@@ -1,0 +1,11 @@
+# context = repository root; only what the image uses
+*
+!src/cl_dll/aurora/
+!src/cl_dll/parsemsg.h
+!src/cl_dll/parsemsg.cpp
+!src/game_shared/aurora_shared.h
+!gamedir/syndicate/aurora/
+!gamedir/syndicate/sprites/
+!tools/aurora-editor/
+tools/aurora-editor/tests/node_modules/
+tools/aurora-editor/tests/out/

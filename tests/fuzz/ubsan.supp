@@ -1,0 +1,4 @@
+# UBSan suppressions for the sanitizer runs (tests/fuzz/*, tests/soak/run_soak.sh).
+# STRING() / MAKE_STRING() / ALLOC_STRING: string_t is an offset from gpGlobals->pStringBase to a string anywhere in
+# memory (game literals, engine heap), the HL SDK's design; the pointer arithmetic wraps on purpose.
+pointer-overflow:*

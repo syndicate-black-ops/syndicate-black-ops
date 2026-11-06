@@ -1,0 +1,31 @@
+// overview description file for co_oldcity
+// frame: orthographic, 7093.87 x 5320.40 world units
+// layers: 3, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	1.1548
+	ORIGIN	174.00	-868.00	-720.00
+	ROTATED	0
+}
+
+// layer 3 of 3 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/co_oldcity.tga"
+	HEIGHT	72.00
+}
+
+// layer 1 of 3: nothing above z -88.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_oldcity_f1.tga"
+	HEIGHT	-720.00
+}
+
+// layer 2 of 3: nothing above z 72.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_oldcity_f2.tga"
+	HEIGHT	-88.00
+}

@@ -1,0 +1,24 @@
+Mapped by Anzymut
+
+Level of the map : MEDIUM
+
+There's an unamed and dark secret in the mysterious Gagny's quarries. Discover This secret.
+
+Objectives : Discover the secret.
+
+Your are in operation, don't kill your team mates.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round is finished when all the players died or when the objectives of 
+mission are finished.
+
+Maximum number of rounds before a failed mission : unknow !!!
+
+EXPerience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max Players : 8
+

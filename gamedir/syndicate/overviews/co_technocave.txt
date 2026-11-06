@@ -1,0 +1,16 @@
+// overview description file for co_technocave
+// height clip: nothing above z 928.00 is drawn (-zmax)
+// frame: orthographic, 8284.79 x 6213.59 world units
+
+global 
+{
+	ZOOM	0.9888
+	ORIGIN	-250.50	101.50	-1007.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_technocave.tga"
+	HEIGHT	-1007.00
+}

@@ -1,0 +1,24 @@
+// overview description file for br_marsarena
+// frame: orthographic, 2986.73 x 2240.05 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	2.7428
+	ORIGIN	192.00	-16.00	-696.00
+	ROTATED	0
+}
+
+// layer 2 of 2 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/br_marsarena.tga"
+	HEIGHT	-448.00
+}
+
+// layer 1 of 2: nothing above z -448.00 is drawn
+layer 
+{
+	IMAGE	"overviews/br_marsarena_f1.tga"
+	HEIGHT	-696.00
+}

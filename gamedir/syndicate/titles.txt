@@ -1,0 +1,242 @@
+Radio
+{
+1. Cover Me !
+2. Follow Me !
+3. Shoot Them all!
+4. Medic !!!!!!!!!
+5. Help Me !!!!
+6. Wait Me !!!
+7. Attack by side
+8. Grenade !!
+9. Retreat !!!
+
+0.Nothing...
+}
+
+Br
+{
+Waiting ? Dot not choose :)
+1.go
+}
+
+Spec_Help_Text
+{
+press duck for option; jump for change ghost mode 
+}
+
+Spec_Mode1
+{
+Ghost Mode 1 : Chase Locked 
+}
+
+Spec_Mode2
+{
+Ghost Mode 2 : Chase Free 
+}
+
+Spec_Mode3
+{
+Ghost Mode 3 : You are a Free Ghost 
+}
+
+Spec_Duck
+{
+Show help menu : duck
+}
+
+Spec_Map
+{
+Theater of Operation
+}
+
+Spec_Help_Title
+{
+Help Brother ?
+}
+
+OBS_CHASE_LOCKED
+{
+Chase Locked
+}
+
+OBS_CHASE_FREE
+{
+Chase Free
+}
+
+OBS_ROAMING
+{
+roaming
+}
+
+OBS_IN_EYE
+{
+In eye
+}
+
+OBS_MAP_FREE
+{
+map free
+}
+
+OBS_MAP_CHASE
+{
+Map chase
+}
+
+OBS_NONE
+{
+None ...
+}
+
+SPECT_OPTIONS
+{
+Options
+}
+
+CAM_OPTIONS
+{
+Cam options
+}
+
+Spectators
+{
+Ghosts
+}
+
+Muted
+{
+ %s Muted
+}
+
+Unmuted
+{
+%s Unmuted
+}
+
+No_longer_hear_that_player
+{
+... no speak brother
+}
+
+Spec_Auto
+{
+Spec Auto
+}
+
+Spec_Mode4
+{
+first personnal view
+}
+
+Spec_Mode5
+{
+Free map
+}
+
+Spec_Mode6
+{
+Chase map
+}
+
+Spec_NoTarget
+{
+No Target
+}
+
+// Spectator menu texts (spectatormenu.txt, spectcammenu.txt). ui/resource/language/sbo_ui_english.txt has the
+// same tokens for the new-style menus.
+SBO_SpecMenu_OK
+{
+OK
+}
+
+SBO_SpecMenu_Help
+{
+Help
+}
+
+SBO_SpecMenu_MapBriefing
+{
+Map Briefing
+}
+
+SBO_SpecMenu_Settings
+{
+Settings
+}
+
+SBO_SpecMenu_ChatMessages
+{
+Chat Messages
+}
+
+SBO_SpecMenu_ShowStatus
+{
+Show Status
+}
+
+SBO_SpecMenu_ViewCone
+{
+View Cone
+}
+
+SBO_SpecMenu_TargetInfo
+{
+Target Info
+}
+
+SBO_SpecMenu_PlayerNames
+{
+Player Names
+}
+
+SBO_SpecMenu_PIP
+{
+Picture-In-Picture
+}
+
+SBO_SpecMenu_AutoDirector
+{
+Auto Director
+}
+
+SBO_SpecMenu_JoinGame
+{
+Join Game
+}
+
+SBO_SpecMenu_ShowScores
+{
+Show Scores
+}
+
+SBO_SpecCam_ChaseOverview
+{
+Chase Overview
+}
+
+SBO_SpecCam_FreeOverview
+{
+Free Overview
+}
+
+SBO_SpecCam_FirstPerson
+{
+First Person
+}
+
+SBO_SpecCam_FreeLook
+{
+Free Look
+}
+
+SBO_SpecCam_FreeChaseCam
+{
+Free Chase Cam
+}
+
+SBO_SpecCam_LockedChaseCam
+{
+Locked Chase Cam
+}

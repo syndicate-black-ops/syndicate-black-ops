@@ -1,0 +1,29 @@
+Mapped by MrCalvin
+
+Level of the map : EASY
+
+Croon scientists have asked for a handful of agents to test the newest features being rolled out to the public next month. Croon's press office insists the timing has nothing to do with the recent embezzlement scandal, and hopes the public will be far too busy enjoying the new features to remember it.
+
+Mission:
+
+- Walk the route through the facility (you will need to use your legs for this)
+
+- Climb the tower in the courtyard and press its button (you will need to use your hands for this)
+
+- Have a good time (not required)
+
+You are in operation, don't kill your teammates.
+The round starts after a certain time when at least one of the players chooses
+his equipment.
+The round will be finished when all the players are dead or when the objectives of the
+mission are accomplished.
+
+Maximum number of rounds before a failed mission : 21
+
+Experience System :
+-You gain xp points each time you wound an enemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points.
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 16

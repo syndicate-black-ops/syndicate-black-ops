@@ -1,0 +1,14 @@
+// tests/sequences: what a global.seq is for, text styles used as macros by the maps' files
+
+%TitleStyle
+{
+	$position = -1 0.3
+	$fadein = 0.1, holdtime = -1, fadeout = 0.5
+	$color = 255 255 255, color2 = 128 128 128, effect = 2
+	$channel = 1
+}
+
+!sentences
+{
+	GLOBAL_HELLO0 test/hello
+}

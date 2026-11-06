@@ -1,0 +1,8 @@
+# game_player_equip with a huge count: EquipPlayer gave items until the server hung / ran out of edicts (now at most 100)
+map co_fuzz
+connect 1
+spawn game_player_equip ammo_buckshot 2147483647
+activate
+use 0 player 1
+frames 3
+expect ammo_buckshot count 2147483647, using 100

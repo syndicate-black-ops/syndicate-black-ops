@@ -1,0 +1,28 @@
+Mapped by Roux.
+
+Level of the map : MEDIUM
+
+The doctor called Molarie is a spy. Indded, he works for the federation. He is actualy in the village called "sainte sophie la pouilleuse".
+Find him and kill him.
+
+Mission :
+
+- Find the doc.
+
+- kill him.
+
+Your are in operation, don't kill your team mate.
+The round starts after a certain time when at least one of players chooses 
+his equipment.
+The round will be finished when all the players will be died or when the objectives of 
+mission will be successful.
+
+Maximum number of rounds before a failed mission : 21 
+
+Experience System :
+-You gain xp points each time you wound an ennemy.
+-When you have a sufficient number of xp points, you gain a level.
+-When you die, you lose xp points. 
+-If you kill a fellow-member, you lose 5 levels.
+
+Max players : 8

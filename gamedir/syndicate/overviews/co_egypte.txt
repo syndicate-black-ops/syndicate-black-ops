@@ -1,0 +1,15 @@
+// overview description file for co_egypte
+// frame: orthographic, 9216.92 x 6912.69 world units
+
+global 
+{
+	ZOOM	0.8888
+	ORIGIN	-23.50	-256.00	-1088.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_egypte.tga"
+	HEIGHT	-1088.00
+}

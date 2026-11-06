@@ -1,0 +1,14 @@
+# "volume" "nan" / "inf" on func_rotating, func_plat and scripted_sentence: a NaN volume reached EMIT_SOUND
+map co_fuzz
+connect 1
+spawn func_rotating model *1 Volume nan spawnflags 1 message ambience/drips.wav
+spawn func_plat model *2 volume nan height 64
+spawn scripted_sentence targetname s sentence !HG_ALERT0 volume inf entity player
+activate
+use 0 world
+use 1 player 1
+use 2 world
+frames 20
+expect func_rotating "": volume "nan" is not a number
+expect func_plat "": volume "nan" is not a number
+expect scripted_sentence "s": volume "inf" is not a number

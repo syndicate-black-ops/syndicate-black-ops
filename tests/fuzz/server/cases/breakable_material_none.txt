@@ -1,0 +1,6 @@
+# func_breakable "material" "9" (matNone, not in the FGD) without a gib model: Precache used an uninitialized pointer
+map co_fuzz
+connect 1
+spawn func_breakable material 9 health 10
+activate
+frames 3

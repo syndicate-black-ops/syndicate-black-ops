@@ -1,0 +1,204 @@
+// NOTE:  THIS FILE IS AUTOMATICALLY REGENERATED, 
+//DO NOT EDIT THIS HEADER, YOUR COMMENTS WILL BE LOST IF YOU DO
+// Multiplayer options script
+//
+// Format:
+//  Version [float]
+//  Options description followed by 
+//  Options defaults
+//
+// Option description syntax:
+//
+//  "cvar" { "Prompt" { type [ type info ] } { default } }
+//
+//  type = 
+//   BOOL   (a yes/no toggle)
+//   STRING
+//   NUMBER
+//   LIST
+//
+// type info:
+// BOOL                 no type info
+// NUMBER       min max range, use -1 -1 for no limits
+// STRING       no type info
+// LIST          delimited list of options value pairs
+//
+//
+// default depends on type
+// BOOL is "0" or "1"
+// NUMBER is "value"
+// STRING is "value"
+// LIST is "index", where index "0" is the first element of the list
+
+
+// Half-Life Server Configuration Layout Script (stores last settings chosen, too)
+// File generated:  Tue Aug 31 04:27:40 PM
+//
+//
+// Cvar	-	Setting
+
+VERSION 1.0
+
+DESCRIPTION SERVER_OPTIONS
+{
+	"hostname"
+	{
+		"Server name"
+		{ STRING }
+		{ "Syndicate Black Ops Server" }
+	}
+
+	"sv_lan"
+	{
+		"LAN server"
+		{
+			LIST
+			"No" "0"
+			"Yes" "1"
+		}
+		{ "0.000000" }
+	}
+
+	"mp_fraglimit"
+	{
+		"Frag Limit (not in co_)"
+		{ NUMBER 0.000000 -1.000000 }
+		{ "0.000000" }
+	}
+
+	"mp_timelimit"
+	{
+		"Time Limit (Min.)(not in co_)"
+		{ NUMBER 0.000000 -1.000000 }
+		{ "20.000000" }
+	}
+
+	"mp_hardcore"
+	{
+		"percentage of team must be killed for a round failed (from 0 to 100)(co_)"
+		{ NUMBER 0.000000 100.000000 }
+		{ "100.000000" }
+	}
+
+	"mp_juniorpowmonst"
+	{
+		"Monster power level"
+		{
+			LIST
+			"Junior Mode(new bee powa)" "0"
+			"Normal" "1"
+			"HardCore overgore" "2"
+			"argggg very powerfull" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"mp_junioracmar"
+	{
+		"Marines ability"
+		{
+			LIST
+			"Junior Mode(new bee powa)" "0"
+			"Normal Marines" "1"
+			"Veteran" "2"
+			"Elite" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"mp_juniorpvmonst"
+	{
+		"Monster Health level"
+		{
+			LIST
+			"Junior Mode(new bee powa)" "0"
+			"Normal " "1"
+			"HardCore overgore" "2"
+			"Survivor" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"mp_makermon"
+	{
+		"Production of Monster maker"
+		{
+			LIST
+			"low" "0"
+			"Normal " "1"
+			"high" "2"
+			"heavy" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"mp_speedmon"
+	{
+		"Speed Production of Monster maker"
+		{
+			LIST
+			"slow" "0"
+			"Normal" "1"
+			"high" "2"
+			"fast" "3"
+		}
+		{ "1.000000" }
+	}
+
+	"mp_friendlyfire"
+	{
+		"friendly fire(only in co_)"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"mp_ban"
+	{
+		"punish team killer"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"mp_junior"
+	{
+		"Junior (new bee) Mode damage"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"mp_easymode"
+	{
+		"maximum number of rounds x 1.5 (only in co_map)"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"mp_gmmode"
+	{
+		"game master (gm) mode :allows to create monsters in game "
+		{ BOOL }
+		{ "0" }
+	}
+
+	"mp_XP"
+	{
+		"Allow XP mode "
+		{ BOOL }
+		{ "1" }
+	}
+
+	"mp_footsteps"
+	{
+		"Footsteps"
+		{ BOOL }
+		{ "1" }
+	}
+
+	"mp_flashlight"
+	{
+		"Flashlight"
+		{ BOOL }
+		{ "1" }
+	}
+
+}

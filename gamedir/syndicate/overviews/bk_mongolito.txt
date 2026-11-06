@@ -1,0 +1,15 @@
+// overview description file for bk_mongolito
+// frame: orthographic, 9472.71 x 7104.53 world units
+
+global 
+{
+	ZOOM	0.8648
+	ORIGIN	160.00	-96.00	-1280.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/bk_mongolito.tga"
+	HEIGHT	-1280.00
+}

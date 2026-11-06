@@ -1,0 +1,106 @@
+global
+{
+	ZOOM 2.35
+	ORIGIN 284 834 -294
+	ROTATED 1
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 0
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -50
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -100
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -150
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -200
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -250
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -300
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -350
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -400
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -450
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -500
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -550
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -600
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -650
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -700
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -750
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -800
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -850
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -900
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -950
+}

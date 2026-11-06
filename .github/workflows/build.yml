@@ -1,0 +1,151 @@
+# Builds Syndicate Black Ops on Linux runners (called by ci.yml and release.yml):
+#   toolchain  the clang-cl + xwin image from docker/clang-cl/Dockerfile, kept in this repository's GitHub container
+#              registry (ghcr.io/<repo>/clang-cl:<first 16 hex digits of the sha256 of the Dockerfile without comments
+#              and blank lines>): every run pulls it; it is built and pushed only when that tag is missing, i.e. when
+#              the Dockerfile's instructions changed (a comment edit keeps the tag)
+#   windows    cl_dlls/client.dll + dlls/hl.dll   clang-cl + lld-link + xwin MSVC CRT/SDK
+#   linux      cl_dlls/client.so + dlls/hl.so     GCC -m32 in the Steam Runtime 3 "sniper" SDK (glibc 2.31)
+# Both run scripts/build.sh (docker; the same script local builds use) -> scripts/cmake_build.sh, RelWithDebInfo.
+#
+# Repository variables (Settings > Secrets and variables > Actions > Variables), all optional; unset = the defaults
+# in src/cl_dll/updater/updater.cmake. Only test repositories set them:
+#   SBO_UPDATE_REPO         owner/name whose releases the game's updater reads
+#   SBO_UPDATE_PUBKEY       Ed25519 public key (64 hex digits) that the game accepts for manifest.json
+#   SBO_UPDATE_PRERELEASES  ON: the updater also offers pre-releases
+name: build
+
+on:
+  workflow_call:
+    inputs:
+      release:
+        description: release build (configured with -DSBO_TEST_COMMANDS=OFF)
+        type: boolean
+        default: false
+      version-override:
+        description: SBO_VERSION_OVERRIDE (pre-release tags), empty otherwise
+        type: string
+        default: ""
+      retention-days:
+        type: number
+        default: 14
+
+permissions: {}
+
+env:
+  # Steam Runtime 3 "sniper" SDK, pinned by digest
+  SNIPER_IMAGE: registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20260805.254768@sha256:1c33c507bc75d012e77df5727f93b0d5b8c3f7c8d4142ba5f7a16882cc92e014
+
+jobs:
+  toolchain:
+    runs-on: ubuntu-24.04
+    # a first build takes about 15 min
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: docker/clang-cl
+      - name: clang-cl image (build and push when missing)
+        id: image
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag=$(sed -e 's/[[:space:]]*$//' -e '/^[[:space:]]*#/d' -e '/^$/d' docker/clang-cl/Dockerfile | sha256sum | cut -c1-16)
+          img="ghcr.io/${GITHUB_REPOSITORY,,}/clang-cl:$tag"
+          echo "image=$img" >> "$GITHUB_OUTPUT"
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          if err=$(docker manifest inspect "$img" 2>&1 >/dev/null); then
+            echo "$img is in the registry"; exit 0
+          fi
+          echo "$img: $err"
+          if ! grep -qiE 'manifest unknown|not found' <<< "$err"; then
+            echo "::error::cannot read $img (${err:0:200}). The package needs Actions access for this repository (package settings > Manage Actions access)."
+            exit 1
+          fi
+          # the image pins its packages to a snapshot.debian.org date: fail at once when that service does not answer
+          snap=$(sed -n 's/^ARG DEBIAN_SNAPSHOT=//p' docker/clang-cl/Dockerfile)
+          code=$(curl -sL -o /dev/null -m 30 -r 0-1023 -w '%{http_code}' \
+                 "http://snapshot.debian.org/archive/debian/$snap/dists/trixie/main/binary-amd64/Packages.xz" || true)
+          if [ "$code" != 200 ] && [ "$code" != 206 ]; then
+            echo "::error::$img is missing and snapshot.debian.org answers $code: the image cannot be built now. Push it to $img (docker tag + docker push), or rerun later."
+            exit 1
+          fi
+          echo "building $img"
+          docker build --progress=plain -t "$img" docker/clang-cl
+          docker push "$img"
+
+  windows:
+    needs: toolchain
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Pull the toolchain
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE: ${{ needs.toolchain.outputs.image }}
+        run: |
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker pull -q "$IMAGE"
+      - name: Build
+        env:
+          CLANG_CL_IMAGE: ${{ needs.toolchain.outputs.image }}
+          RELEASE: ${{ inputs.release }}
+          VERSION_OVERRIDE: ${{ inputs.version-override }}
+          UPDATE_REPO: ${{ vars.SBO_UPDATE_REPO }}
+          UPDATE_PUBKEY: ${{ vars.SBO_UPDATE_PUBKEY }}
+          UPDATE_PRERELEASES: ${{ vars.SBO_UPDATE_PRERELEASES }}
+        run: bash .github/scripts/ci_build.sh windows
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: build-windows
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+          path: |
+            build/windows/*.dll
+            build/windows/*.pdb
+            build/windows/*.map
+            build/windows/logs/
+
+  linux:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          submodules: true
+      - name: Pull the toolchain
+        run: docker pull -q "$SNIPER_IMAGE"
+      - name: Build
+        env:
+          RELEASE: ${{ inputs.release }}
+          VERSION_OVERRIDE: ${{ inputs.version-override }}
+          UPDATE_REPO: ${{ vars.SBO_UPDATE_REPO }}
+          UPDATE_PUBKEY: ${{ vars.SBO_UPDATE_PUBKEY }}
+          UPDATE_PRERELEASES: ${{ vars.SBO_UPDATE_PRERELEASES }}
+        run: bash .github/scripts/ci_build.sh linux
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: build-linux
+          retention-days: ${{ inputs.retention-days }}
+          if-no-files-found: error
+          path: |
+            build/linux/client.so
+            build/linux/client.map
+            build/linux/hl.so
+            build/linux/hl.map
+            build/linux/logs/

@@ -1,0 +1,7 @@
+# Build outputs
+/build/
+/dist/
+/out/
+# Local Python env
+/.venv/
+__pycache__/

@@ -1,0 +1,15 @@
+global
+{
+	ZOOM 2.35
+	ORIGIN 284 834 -294
+	ROTATED 1
+}
+layer
+{
+	HEIGHT 5
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 2
+}

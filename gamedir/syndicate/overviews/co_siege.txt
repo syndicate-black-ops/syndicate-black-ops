@@ -1,0 +1,31 @@
+// overview description file for co_siege
+// frame: orthographic, 10351.28 x 7763.46 world units
+// layers: 3, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	0.7914
+	ORIGIN	1.50	-66.50	-3246.00
+	ROTATED	1
+}
+
+// layer 3 of 3 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/co_siege.tga"
+	HEIGHT	-1008.00
+}
+
+// layer 1 of 3: nothing above z -1720.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_siege_f1.tga"
+	HEIGHT	-3246.00
+}
+
+// layer 2 of 3: nothing above z -1008.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_siege_f2.tga"
+	HEIGHT	-1720.00
+}

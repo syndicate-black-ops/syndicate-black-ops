@@ -1,0 +1,10 @@
+# the internal helper classes placed in a map that is not co-op (GM mode precaches their models only on co-op maps,
+# ambient_extraspeaker precaches extra_speaker's): SET_MODEL of a model nobody precached (engine Host_Error)
+map dm_fuzz
+spawn extra_speaker
+spawn gm_weapon_drop
+spawn gm_weapon_item
+spawn gm_teleporter_pad
+spawn gm_lifebar
+activate
+frames 3

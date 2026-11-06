@@ -1,0 +1,7 @@
+# a multisource nobody targets, used: m_rgTriggered[-1] ^= 1
+map co_fuzz
+spawn multisource targetname m
+activate
+frames 2
+use 0 world
+frames 2

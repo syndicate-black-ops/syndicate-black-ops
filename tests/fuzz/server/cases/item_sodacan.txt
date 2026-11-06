@@ -1,0 +1,5 @@
+# item_sodacan placed in a map (the FGD offers it): SET_MODEL of a model nobody precached (engine Host_Error)
+map co_fuzz
+spawn item_sodacan
+activate
+frames 3

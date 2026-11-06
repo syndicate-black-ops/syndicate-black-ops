@@ -1,0 +1,152 @@
+# Half-Life (valve/sprites) sprites that can be particles: the only ones the Dockerfile copies from the optional
+# valve_sprites build context (Valve content: local test images only, see README.md). One file name per line,
+# matched case-insensitively against the top of valve/sprites; # starts a comment.
+#
+# Left out on purpose: HUD and weapon-menu sheets (1280/, 2560/, 320*, 640*, 1280*, 2560*, hud*.txt sprites),
+# crosshairs, logos (logo, small_logo, 320_logo, 640_logo), scoreboard / spectator icons (iflagblue, iflagred,
+# iplayer*, iunknown), voiceicon, camera, arrow1, cnt1, tile, shellchrome, xffloor, bm1, agrunt1 (a picture of
+# an alien grunt), and the orientation test
+# sprites (oriented, vp_parallel, vp_parallel_oriented).
+
+# explosions
+aexplo.spr
+bexplo.spr
+cexplo.spr
+dexplo.spr
+eexplo.spr
+explode1.spr
+explode2.spr
+fexplo.spr
+fexplo1.spr
+gexplo.spr
+hexplo.spr
+mushroom.spr
+wxplo1.spr
+zerogxplode.spr
+blast.spr
+shockwave.spr
+gwave1.spr
+
+# fire
+fire.spr
+xfire.spr
+xfire2.spr
+xfireball3.spr
+rjet1.spr
+bluejet1.spr
+
+# smoke, steam, puffs
+ballsmoke.spr
+smoke.spr
+steam1.spr
+stmbal1.spr
+wallpuff.spr
+xsmoke1.spr
+xsmoke3.spr
+xsmoke4.spr
+xssmke1.spr
+
+# sparks, ricochets, streaks
+spark1.spr
+richo1.spr
+richo2.spr
+streak.spr
+xspark1.spr
+xspark2.spr
+xspark3.spr
+xspark4.spr
+
+# glows and flares
+animglow01.spr
+glow01.spr
+glow02.spr
+glow03.spr
+glow04.spr
+glow05.spr
+hotglow.spr
+flare1.spr
+flare2.spr
+flare3.spr
+flare4.spr
+flare5.spr
+flare6.spr
+blueflare1.spr
+blueflare2.spr
+redflare1.spr
+redflare2.spr
+yelflare1.spr
+yelflare2.spr
+xflare1.spr
+xflare2.spr
+xflare3.spr
+gargeye1.spr
+nhth1.spr
+laserdot.spr
+dot.spr
+white.spr
+spotlight01.spr
+spotlight02.spr
+spotlight03.spr
+spotlight04.spr
+moths.spr
+
+# muzzle flashes
+muz1.spr
+muz2.spr
+muz3.spr
+muz4.spr
+muz5.spr
+muz6.spr
+muz7.spr
+muz8.spr
+muzzleflash.spr
+muzzleflash1.spr
+muzzleflash2.spr
+muzzleflash3.spr
+
+# water, drips, bubbles
+bubble.spr
+sdrip1.spr
+wdrip2.spr
+wsplash3.spr
+
+# blood, spit, goo
+blood.spr
+blooddrop.spr
+bloodspray.spr
+bigspit.spr
+tinyspit.spr
+mommablob.spr
+mommaspit.spr
+mommaspout.spr
+poison.spr
+bhit.spr
+
+# teleport and energy
+b-tele1.spr
+c-tele1.spr
+d-tele1.spr
+e-tele1.spr
+tele1.spr
+enter1.spr
+exit1.spr
+portal1.spr
+plasma.spr
+
+# beams, lasers, lightning
+bolt1.spr
+laserbeam.spr
+lgtning.spr
+rope.spr
+xbeam1.spr
+xbeam2.spr
+xbeam3.spr
+xbeam4.spr
+xbeam5.spr
+xenobeam.spr
+zbeam1.spr
+zbeam2.spr
+zbeam3.spr
+zbeam4.spr
+zbeam5.spr
+zbeam6.spr

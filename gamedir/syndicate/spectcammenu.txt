@@ -1,0 +1,41 @@
+// Command Menu definition
+// 
+// Basic Format:
+//		"<Bound Key>" "<Button Text>" "<Command sent to server>"
+//
+// Button texts are #tokens: titles.txt and ui/resource/language/sbo_ui_<language>.txt hold the strings.
+// Plain text works too and is shown as it is.
+//
+// 
+//
+//
+// Buttons can also open up submenus, as follows:
+// {
+// 	"Some More Options",
+//	{
+//		...
+//	}
+// }
+//
+//
+// Buttons preceded with "CUSTOM" are handled in special ways. They can only be moved
+// around or deleted.
+//
+//
+// Limitations:
+//		Maximum of 50 menus.
+//		Maximum of 100 buttons per menu.
+
+//--------------------------------------------------------
+// Everything below here is editable
+
+"6" "#SBO_SpecCam_ChaseOverview"	"spec_mode 6"
+"5" "#SBO_SpecCam_FreeOverview"	"spec_mode 5"
+"4" "#SBO_SpecCam_FirstPerson"	"spec_mode 4"
+"3" "#SBO_SpecCam_FreeLook"		"spec_mode 3"
+"2" "#SBO_SpecCam_FreeChaseCam"	"spec_mode 2"
+"1" "#SBO_SpecCam_LockedChaseCam"	"spec_mode 1"
+
+
+
+

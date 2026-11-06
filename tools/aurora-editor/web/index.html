@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aurora Particle Editor</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6' fill='%23ffb347'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header id="topbar">
+	<div class="brand">Aurora <span>particle editor</span></div>
+	<div class="filename">
+		<span class="dim">aurora/</span><input id="scriptName" spellcheck="false" maxlength="54" title="The script's file name: aurora/&lt;name&gt;.aur"><span class="dim">.aur</span>
+	</div>
+	<nav>
+		<button id="btnNew" title="New from a template">New</button>
+		<button id="btnOpen" title="Open a shipped script, an upload or a draft (Ctrl+O)">Open</button>
+		<button id="btnUpload" title="Upload .aur and .spr files (or drop them anywhere)">Upload</button>
+		<span class="sep"></span>
+		<button id="btnUndo" title="Undo (Ctrl+Z)">Undo</button>
+		<button id="btnRedo" title="Redo (Ctrl+Y / Ctrl+Shift+Z)">Redo</button>
+		<span class="sep"></span>
+		<button id="btnSave" title="Download the .aur (Ctrl+S)">Download .aur</button>
+		<button id="btnZip" title="A zip with aurora/ and sprites/ as in the game folder">Download zip</button>
+		<button id="btnShare" title="Copy a link that holds this script and the scene">Share link</button>
+		<button id="btnEntity" title="The env_particle for your map">Map entity</button>
+		<span class="sep"></span>
+		<button id="btnHelp" title="Help and keys (H)">Help</button>
+	</nav>
+	<input id="fileInput" type="file" multiple accept=".aur,.spr" hidden>
+</header>
+
+<main id="layout">
+	<aside id="left">
+		<div class="tabs" data-tabs="left">
+			<button data-tab="types" class="active">Types</button>
+			<button data-tab="sprites">Sprites</button>
+		</div>
+		<section data-panel="types" class="panel active">
+			<div class="toolbar">
+				<button id="btnAddType" title="A new type">+ Type</button>
+				<button id="btnAddSpray" title="A new type sprayed by the selected one">+ Spray child</button>
+				<button id="btnAddOverlay" title="A new type drawn over the selected one">+ Overlay</button>
+			</div>
+			<div class="toolbar">
+				<button id="btnRename">Rename</button>
+				<button id="btnDuplicate">Duplicate</button>
+				<button id="btnSetMain">Set as main</button>
+				<button id="btnDelete" class="danger">Delete</button>
+			</div>
+			<div id="tree" class="tree" role="tree"></div>
+		</section>
+		<section data-panel="sprites" class="panel">
+			<div class="toolbar">
+				<input id="spriteFilter" type="search" placeholder="Filter sprites" spellcheck="false">
+				<select id="spriteSource" title="Where the sprite comes from">
+					<option value="">All</option>
+					<option value="upload">Uploaded</option>
+					<option value="sbo">SBO</option>
+					<option value="valve">Half-Life</option>
+				</select>
+			</div>
+			<label class="check note" title="HUD sheets, crosshairs, scopes, icons and screen borders are hidden: they are not particle sprites"><input id="spriteShowUi" type="checkbox"> Show HUD / UI sprites</label>
+			<div id="spriteDetail" class="sprite-detail" hidden></div>
+			<div id="spriteGrid" class="sprite-grid"></div>
+		</section>
+	</aside>
+
+	<section id="center">
+		<div id="viewport">
+			<canvas id="view" tabindex="0"></canvas>
+			<div id="hud"></div>
+			<div id="compareLabels"></div>
+			<div id="cameraHint">Drag: orbit · Right drag / Shift+drag: pan · Wheel: zoom · F: frame</div>
+		</div>
+		<div id="transport">
+			<button id="btnPlay" title="Play / pause (Space)">Pause</button>
+			<button id="btnStep" title="One frame (. key)">Step</button>
+			<button id="btnRestart" title="Start over (R)">Restart</button>
+			<label title="Simulation speed">Speed <select id="speed">
+				<option value="0.1">0.1x</option><option value="0.25">0.25x</option><option value="0.5">0.5x</option>
+				<option value="1" selected>1x</option><option value="2">2x</option><option value="4">4x</option>
+			</select></label>
+			<label title="The client's frame rate: spray timing, collisions and drag depend on it (the game caps a frame at 0.1 s)">Client fps <select id="clientFps">
+				<option value="0">Browser</option><option value="30">30</option><option value="60">60</option>
+				<option value="100" selected>100</option><option value="200">200</option>
+			</select></label>
+			<span class="sep"></span>
+			<label title="Looping: the entity is on (env_particle with Start On, or without a name). One-shot: Spawn Use copies, as each trigger makes one">Mode <select id="playMode">
+				<option value="loop">Looping (entity on)</option>
+				<option value="oneshot">One-shot (Spawn Use)</option>
+			</select></label>
+			<button id="btnToggle" title="Switch the entity on / off (O)">Turn off</button>
+			<button id="btnTrigger" title="Trigger a Spawn Use copy at the emitter (T)">Trigger copy</button>
+			<label id="autoTriggerLabel" title="Trigger a copy every this many seconds (0: only with the button)">every <input id="autoTrigger" type="number" min="0" max="120" step="0.5" value="3"> s</label>
+		</div>
+	</section>
+
+	<aside id="right">
+		<div class="tabs" data-tabs="right">
+			<button data-tab="props" class="active">Properties</button>
+			<button data-tab="text">Script</button>
+			<button data-tab="scene">Scene</button>
+			<button data-tab="problems">Problems <span id="problemCount" class="badge"></span></button>
+			<button data-tab="compare">Compare</button>
+		</div>
+		<section data-panel="props" class="panel active">
+			<div id="form" class="form"></div>
+		</section>
+		<section data-panel="text" class="panel">
+			<div class="text-wrap">
+				<div id="lineNumbers" class="line-numbers" aria-hidden="true"></div>
+				<textarea id="scriptText" spellcheck="false" wrap="off" autocomplete="off" autocapitalize="off"></textarea>
+			</div>
+			<p class="note">The text is the script: what you type here is what the game reads. The form changes only the line of the key you edit; comments and unknown keys stay.</p>
+		</section>
+		<section data-panel="scene" class="panel">
+			<div id="sceneForm" class="form"></div>
+		</section>
+		<section data-panel="problems" class="panel">
+			<div id="problems"></div>
+		</section>
+		<section data-panel="compare" class="panel">
+			<div id="compareForm" class="form"></div>
+		</section>
+	</aside>
+</main>
+
+<div id="dropzone" hidden><div>Drop .aur scripts and .spr sprites</div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<dialog id="dialog"><form method="dialog"><div id="dialogBody"></div><menu id="dialogButtons"></menu></form></dialog>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

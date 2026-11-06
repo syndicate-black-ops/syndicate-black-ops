@@ -1,0 +1,46 @@
+global
+{
+	ZOOM 2.35
+	ORIGIN 284 834 -294
+	ROTATED 1
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 100
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 50
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT 0
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -50
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -100
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -150
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -200
+}
+layer
+{
+	IMAGE "overviews/a.bmp"
+	HEIGHT -250
+}

@@ -1,0 +1,24 @@
+// overview description file for co_escape
+// frame: orthographic, 7833.24 x 5874.93 world units
+// layers: 2, the first block is the complete picture (written by fastdl-automate)
+
+global 
+{
+	ZOOM	1.0458
+	ORIGIN	91.50	-1124.00	-240.00
+	ROTATED	1
+}
+
+// layer 2 of 2 (top, complete picture): no height clip
+layer 
+{
+	IMAGE	"overviews/co_escape.tga"
+	HEIGHT	64.00
+}
+
+// layer 1 of 2: nothing above z 64.00 is drawn
+layer 
+{
+	IMAGE	"overviews/co_escape_f1.tga"
+	HEIGHT	-240.00
+}

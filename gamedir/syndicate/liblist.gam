@@ -1,0 +1,21 @@
+// syndicate Black Ops
+
+game "Syndicate Black Ops"
+
+type "multiplayer_only"
+gamedir "syndicate"
+version "2.0.0"
+
+gamedll "dlls\hl.dll"
+gamedll_linux "dlls/hl.so"
+
+url_info "https://syndicateblackops.neocities.org/"
+url_dl "http://www.syndicateblackops.fr.st/"
+developer "Streumon Studio"
+developer_url "http://sbo.streumon-studio.com/index-eng.php"
+
+nomodels "1"
+edicts "2048"
+
+icon "game"
+

@@ -1,0 +1,15 @@
+// overview description file for co_launchrock
+// frame: orthographic, 7808.60 x 5856.45 world units
+
+global 
+{
+	ZOOM	1.0491
+	ORIGIN	-304.00	976.00	-2380.00
+	ROTATED	1
+}
+
+layer 
+{
+	IMAGE	"overviews/co_launchrock.tga"
+	HEIGHT	-2380.00
+}

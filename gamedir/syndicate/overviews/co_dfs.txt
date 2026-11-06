@@ -1,0 +1,16 @@
+// overview description file for co_dfs
+// height clip: nothing above z -768.00 is drawn (-zmax)
+// frame: orthographic, 8278.09 x 6208.57 world units
+
+global 
+{
+	ZOOM	0.9896
+	ORIGIN	-800.00	-736.00	-2240.00
+	ROTATED	0
+}
+
+layer 
+{
+	IMAGE	"overviews/co_dfs.tga"
+	HEIGHT	-2240.00
+}

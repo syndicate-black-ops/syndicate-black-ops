@@ -1,0 +1,272 @@
+// Material types for every map: the steps, hit sounds and impact effects of each material letter.
+// The letters come from Half-Life's sound/materials.txt and materials/textures.txt. Half-Life's letters
+// (C M D V G T S W P Y F) and the ladder and wade steps are built in; a block here changes only the keys it
+// names. A letter without steps walks like C, a letter without hit sounds is hit like C. A map can change all
+// of this for itself in materials/maps/<map>.txt. See the SBO docs: Materials.
+//
+//   material <letter> { keys }      ladder { step keys }      wade { step keys }      texture "NAME" { fx keys }
+//   step_right { "a.wav" "b.wav" }  step_left { ... }  (up to 6 each; one is picked at random per step)
+//   walk_volume 0.2  walk_time 400  run_volume 0.5  run_time 300  (time: msec to the next step)  step_skip 0/1
+//   hit { "a.wav" ... }  hit_volume 0.9  hit_volume_bar 0.6  hit_attenuation 0.8  hit_sparks 0/1
+//   name "grass"
+//   fx_* : impact effects (SBO docs: Materials, "Effect keys")
+// Sound paths are relative to sound/. A file with an error is not used at all; the console says where it is.
+// The new letters use the footsteps and impact effects of CS:CZ Deleted Scenes. Chips and puffs are off with
+// cl_effectsdetail 0.
+
+material C
+{
+	// concrete (CS:CZ DS concrete.mat)
+	fx_debris { "sprites/debris_concrete1.spr" "sprites/debris_concrete2.spr" "sprites/debris_concrete3.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 8  fx_debris_speed 1.15  fx_debris_brightness 200  fx_debris_additive 0
+	fx_debris_gravity 3.0  fx_debris_damp_time 0.9  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 1.0
+	fx_smoke 1  fx_smoke_color 175 175 175
+	fx_decal "{bhitcrete"
+	fx_ricochet { "weapons/ric1.wav" "weapons/ric2.wav" "weapons/ric3.wav" "weapons/ric4.wav" "weapons/ric5.wav" "debris/ric_conc-1.wav" }
+}
+
+material M
+{
+	// metal (CS:CZ DS metal.mat: sparks only)
+	fx_smoke 0
+	fx_sparks 1
+	fx_decal "{bhitmetal"
+	fx_ricochet { "debris/ric_metal-1.wav" "debris/ric_metal-2.wav" }
+}
+
+material D
+{
+	// dirt (dirt.mat)
+	fx_debris { "sprites/debris_dirt.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 10  fx_debris_speed 0.8  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 3.0  fx_debris_damp_time 0.1  fx_debris_damp_speed 2.0  fx_debris_afterdamp_gravity 2.0
+	fx_smoke 1  fx_smoke_color 101 84 54
+	fx_decal "none"
+}
+
+material V
+{
+	// vent (CS:CZ DS metal.mat: sparks only)
+	fx_smoke 0
+	fx_sparks 1
+	fx_decal "{bhitmetal"
+	fx_ricochet { "debris/ric_metal-1.wav" "debris/ric_metal-2.wav" }
+}
+
+material G
+{
+	// grate (CS:CZ DS metal.mat: sparks only)
+	fx_smoke 0
+	fx_sparks 1
+	fx_decal "{bhitmetal"
+	fx_ricochet { "debris/ric_metal-1.wav" "debris/ric_metal-2.wav" }
+}
+
+material T
+{
+	// tile (tile.mat)
+	fx_debris { "sprites/debris_tiles.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 10  fx_debris_speed 1.25  fx_debris_brightness 190  fx_debris_additive 0
+	fx_debris_gravity 2.0  fx_debris_damp_time 0.3  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 0.95
+	fx_smoke 1  fx_smoke_color 75 75 75
+	fx_decal "{bhitctile"
+	fx_ricochet { "weapons/ric1.wav" "weapons/ric2.wav" "weapons/ric3.wav" "weapons/ric4.wav" "weapons/ric5.wav" "debris/ric_conc-1.wav" }
+}
+
+material S
+{
+	// slosh (slosh.mat: nothing)
+	fx_smoke 0
+	fx_decal "none"
+}
+
+material W
+{
+	name "wood"
+	// wood floors: steps of their own (CS:CZ Deleted Scenes' pl_wood1-4, shipped by SBO)
+	step_right { "player/pl_wood1.wav" "player/pl_wood3.wav" }
+	step_left { "player/pl_wood2.wav" "player/pl_wood4.wav" }
+	// wood (wood.mat)
+	fx_debris { "sprites/debris_wood1.spr" "sprites/debris_wood2.spr" "sprites/debris_wood3.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 10  fx_debris_speed 1.15  fx_debris_brightness 190  fx_debris_additive 0
+	fx_debris_gravity 0.8  fx_debris_damp_time 0.3  fx_debris_damp_speed 0.55  fx_debris_afterdamp_gravity 0.7
+	fx_smoke 1  fx_smoke_color 124 108 85
+	fx_decal "{bhitwood"
+}
+
+material P
+{
+	// computer (computer.mat)
+	fx_debris { "sprites/debris_plastic.spr" }
+	fx_debris_count 4
+	fx_debris_size 3.0  fx_debris_life 2  fx_debris_speed 1.15  fx_debris_brightness 200  fx_debris_additive 0
+	fx_debris_gravity 2.0  fx_debris_damp_time 0.9  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 1.0
+	fx_smoke 1  fx_smoke_color 75 75 75
+	fx_sparks 1
+	fx_decal "{bhitplastic"
+}
+
+material Y
+{
+	// glass (glass.mat)
+	fx_debris { "sprites/debris_glass.spr" }
+	fx_debris_count 4
+	fx_debris_size 3.0  fx_debris_life 8  fx_debris_speed 1.15  fx_debris_brightness 200  fx_debris_additive 0
+	fx_debris_gravity 2.0  fx_debris_damp_time 0.9  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 1.0
+	fx_smoke 1  fx_smoke_color 175 175 175
+	fx_decal "{bglasshole"
+}
+
+material A
+{
+	name "grass"
+	step_right { "player/pl_grass1.wav" "player/pl_grass3.wav" }
+	step_left { "player/pl_grass2.wav" "player/pl_grass4.wav" }
+	hit { "player/pl_grass1.wav" "player/pl_grass2.wav" "player/pl_grass3.wav" "player/pl_grass4.wav" }
+	hit_volume 0.9
+	hit_volume_bar 0.1
+	// grass (grass.mat)
+	fx_debris { "sprites/debris_grass.spr" }
+	fx_debris_count 4
+	fx_debris_size 4.5  fx_debris_life 5  fx_debris_speed 1.15  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 1.0  fx_debris_damp_time 0.1  fx_debris_damp_speed 0.8  fx_debris_afterdamp_gravity 1.1
+	fx_smoke 1  fx_smoke_color 81 64 34
+	fx_decal "none"
+}
+
+material E
+{
+	name "carpet"
+	step_right { "player/pl_carpet1.wav" "player/pl_carpet3.wav" }
+	step_left { "player/pl_carpet2.wav" "player/pl_carpet4.wav" }
+	hit { "player/pl_carpet1.wav" "player/pl_carpet2.wav" "player/pl_carpet3.wav" "player/pl_carpet4.wav" }
+	hit_volume 0.6
+	hit_volume_bar 0.2
+	// carpet (clothe.mat)
+	fx_debris { "sprites/debris_clothe.spr" }
+	fx_debris_count 4
+	fx_debris_size 6.0  fx_debris_life 4  fx_debris_speed 0.8  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 0.7  fx_debris_damp_time 0.1  fx_debris_damp_speed 0.4  fx_debris_afterdamp_gravity 0.05
+	fx_smoke 1  fx_smoke_color 50 50 50
+	fx_decal "{bhitclothe"
+}
+
+material R
+{
+	name "gravel"
+	step_right { "player/pl_gravel1.wav" "player/pl_gravel3.wav" }
+	step_left { "player/pl_gravel2.wav" "player/pl_gravel4.wav" }
+	hit { "player/pl_gravel1.wav" "player/pl_gravel2.wav" "player/pl_gravel3.wav" "player/pl_gravel4.wav" }
+	hit_volume 0.9
+	hit_volume_bar 0.1
+	// gravel (rock.mat, with concrete chips)
+	fx_debris { "sprites/debris_concrete1.spr" "sprites/debris_concrete2.spr" "sprites/debris_concrete3.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 10  fx_debris_speed 1.25  fx_debris_brightness 190  fx_debris_additive 0
+	fx_debris_gravity 1.75  fx_debris_damp_time 0.3  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 0.95
+	fx_smoke 1  fx_smoke_color 175 175 175
+	fx_decal "{bhitcrete"
+	fx_ricochet { "weapons/ric1.wav" "weapons/ric2.wav" "weapons/ric3.wav" "weapons/ric4.wav" "weapons/ric5.wav" "debris/ric_conc-1.wav" }
+}
+
+material N
+{
+	name "snow"
+	// hits as CS:CZ Deleted Scenes: pl_snow1-4 at volume 0.7
+	step_right { "player/pl_snow1.wav" "player/pl_snow3.wav" "player/pl_snow5.wav" }
+	step_left { "player/pl_snow2.wav" "player/pl_snow4.wav" "player/pl_snow6.wav" }
+	hit { "player/pl_snow1.wav" "player/pl_snow2.wav" "player/pl_snow3.wav" "player/pl_snow4.wav" }
+	hit_volume 0.7
+	hit_volume_bar 0.1
+	// snow (snow.mat)
+	fx_debris { "sprites/debris_snow1.spr" "sprites/debris_snow2.spr" "sprites/debris_snow3.spr" }
+	fx_debris_count 4
+	fx_debris_size 3.5  fx_debris_life 8  fx_debris_speed 1.15  fx_debris_brightness 200  fx_debris_additive 0
+	fx_debris_gravity 0.85  fx_debris_damp_time 0.9  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 1.0
+	fx_debris_color 203 213 224
+	fx_smoke 1  fx_smoke_color 203 213 224
+	fx_decal "{bhitsnow"
+}
+
+material L
+{
+	name "light snow"
+	step_right { "player/pl_snow_light1.wav" "player/pl_snow_light3.wav" }
+	step_left { "player/pl_snow_light2.wav" "player/pl_snow_light4.wav" }
+	hit { "player/pl_snow_light1.wav" "player/pl_snow_light2.wav" "player/pl_snow_light3.wav" "player/pl_snow_light4.wav" }
+	hit_volume 0.7
+	hit_volume_bar 0.1
+	// light snow (snow.mat)
+	fx_debris { "sprites/debris_snow1.spr" "sprites/debris_snow2.spr" "sprites/debris_snow3.spr" }
+	fx_debris_count 4
+	fx_debris_size 3.5  fx_debris_life 8  fx_debris_speed 1.15  fx_debris_brightness 200  fx_debris_additive 0
+	fx_debris_gravity 0.85  fx_debris_damp_time 0.9  fx_debris_damp_speed 0.85  fx_debris_afterdamp_gravity 1.0
+	fx_debris_color 203 213 224
+	fx_smoke 1  fx_smoke_color 203 213 224
+	fx_decal "{bhitsnow"
+}
+
+material Z
+{
+	name "mud"
+	step_right { "player/pl_mud1.wav" "player/pl_mud3.wav" }
+	step_left { "player/pl_mud2.wav" "player/pl_mud4.wav" }
+	hit { "player/pl_mud1.wav" "player/pl_mud2.wav" "player/pl_mud3.wav" "player/pl_mud4.wav" }
+	hit_volume 0.9
+	hit_volume_bar 0.1
+	// mud (dirt.mat)
+	fx_debris { "sprites/debris_dirt.spr" }
+	fx_debris_count 4
+	fx_debris_size 5.0  fx_debris_life 10  fx_debris_speed 0.8  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 3.0  fx_debris_damp_time 0.1  fx_debris_damp_speed 2.0  fx_debris_afterdamp_gravity 2.0
+	fx_smoke 1  fx_smoke_color 81 64 34
+	fx_decal "none"
+}
+
+material I
+{
+	name "tin"
+	step_right { "player/pl_tin1.wav" "player/pl_tin3.wav" }
+	step_left { "player/pl_tin2.wav" "player/pl_tin4.wav" }
+	hit { "player/pl_tin1.wav" "player/pl_tin2.wav" "player/pl_tin3.wav" "player/pl_tin4.wav" }
+	hit_volume 0.9
+	hit_volume_bar 0.3
+	// tin (CS:CZ DS metal.mat: sparks only)
+	fx_smoke 0
+	fx_sparks 1
+	fx_decal "{bhitmetal"
+	fx_ricochet { "debris/ric_metal-1.wav" "debris/ric_metal-2.wav" }
+}
+
+material X
+{
+	name "paper"
+	// paper hits use Half-Life step sounds; paper walks like concrete
+	hit { "player/pl_step1.wav" "player/pl_step2.wav" }
+	hit_volume 0.5
+	hit_volume_bar 0.2
+	// paper (paper.mat)
+	fx_debris { "sprites/debris_paper1.spr" "sprites/debris_paper2.spr" "sprites/debris_paper3.spr" }
+	fx_debris_count 4
+	fx_debris_size 2.0  fx_debris_life 10  fx_debris_speed 0.8  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 0.8  fx_debris_damp_time 0.1  fx_debris_damp_speed 0.08  fx_debris_afterdamp_gravity 0.05
+	fx_smoke 1  fx_smoke_color 50 50 50
+	fx_decal "{bhitpaper"
+}
+
+material K
+{
+	name "custom"
+	// CS:CZ Deleted Scenes' "custom": sounds like concrete; a map gives it sounds in its own file
+	// custom (custom.mat)
+	fx_debris { "sprites/debris_cement.spr" }
+	fx_debris_count 4
+	fx_debris_size 3.0  fx_debris_life 10  fx_debris_speed 1.0  fx_debris_brightness 255  fx_debris_additive 1
+	fx_debris_gravity 1.0  fx_debris_damp_time 0.0  fx_debris_damp_speed 1.0  fx_debris_afterdamp_gravity 1.0
+	fx_smoke 1  fx_smoke_color 50 50 50
+	fx_decal "{bhitcrete"
+}

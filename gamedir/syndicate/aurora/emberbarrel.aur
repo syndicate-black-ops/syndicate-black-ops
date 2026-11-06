@@ -1,0 +1,81 @@
+// emberbarrel.aur - SBO example (SBO docs: Aurora particle systems): a fire in a barrel. Licks of flame; some flames throw
+// an ember that drifts up on its own wind; embers leave puffs of dark smoke that rise above the fire.
+// Place it on the barrel's top. Sprites: stock Half-Life (xfireball3, hotglow is SBO's), fasmoke2 (SBO).
+"particles" "260"
+"maintype" "barrel"
+
+{
+  "name" "barrel"
+  "spraytype" "flame"
+  "sprayrate" "25"
+  "sprayforce" "10..30"
+  "spraypitch" "-90..-60"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "flame"
+  "sprite" "sprites/xfireball3.spr"
+  "rendermode" "additive"
+  "gravity" "90"
+  "lifetime" "0.5..0.7"
+  "startsize" "10..14"
+  "endsize" "3"
+  "startalpha" "0.8"
+  "endalpha" "0"
+  "startframe" "0..5"
+  "framerate" "20"
+  "startangle" "0..360"
+  "angledelta" "-90..90"
+  "spraytype" "ember"
+  "sprayrate" "1.5..3"
+  "sprayforce" "20..60"
+  "spraypitch" "-90..-30"
+  "sprayyaw" "0..360"
+}
+
+{
+  "name" "ember"
+  "sprite" "sprites/hotglow.spr"
+  "rendermode" "additive"
+  "gravity" "60"
+  "drag" "0.6"
+  "windyaw" "0..360"
+  "windstrength" "10..40"
+  "lifetime" "1.5..2.5"
+  "startsize" "1.5..2.5"
+  "endsize" "0.5"
+  "startred" "1"
+  "startgreen" "0.7"
+  "startblue" "0.3"
+  "endred" "0.8"
+  "endgreen" "0.15"
+  "endblue" "0"
+  "startalpha" "1"
+  "endalpha" "0"
+  "spraytype" "smoke"
+  "sprayrate" "1.2"
+}
+
+{
+  "name" "smoke"
+  "sprite" "sprites/fasmoke2.spr"
+  "rendermode" "solid"
+  "gravity" "25"
+  "drag" "0.5"
+  "lifetime" "3..4"
+  "startsize" "8"
+  "endsize" "40..56"
+  "startred" "0.25"
+  "startgreen" "0.23"
+  "startblue" "0.22"
+  "endred" "0.4"
+  "endgreen" "0.4"
+  "endblue" "0.4"
+  "startalpha" "0.45"
+  "endalpha" "0"
+  "startframe" "0..120"
+  "framerate" "10"
+  "startangle" "0..360"
+  "angledelta" "-20..20"
+}
