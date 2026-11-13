@@ -94,7 +94,7 @@ void Warn(const char *reason)
 	s_bWarned = true;
 	char msg[256];
 	snprintf(msg, sizeof(msg), "Console colors are off: %s.\n", reason);
-	sbo::ConsolePrint(msg);
+	sbo::DevPrint(msg);
 }
 
 // true if the n bytes at p are mapped readable (and writable when bWrite): checked before every access to GameUI's

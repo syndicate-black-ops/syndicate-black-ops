@@ -31,6 +31,8 @@
 #include	"video_shared.h"	// game_shared: movie names
 #include	"vgui_screen_shared.h"
 #include	"client_sendqueue.h"
+#include	"movewith.h"
+#include	<string.h>
 
 extern int gmsgWScreen;
 extern int CountPlayers( void );
@@ -326,8 +328,12 @@ static void WriteAngle16( float a )
 
 int CVGuiScreen::DefineSize( void )
 {
+	int iParent;
+	Vector lo, la;
+	const BOOL bParent = !m_bBound && MoveWith_ClientLink( this, &iParent, &lo, &la );
 	return VGUI_SCREEN_MSG_OVERHEAD + 24 + (int)strlen( STRING( m_iszPanelName ) ) + 1 + ( m_bBound ? 4 : 0 ) +
-		( IsMovie() ? (int)strlen( STRING( m_iszMovie ) ) + 1 + 4 + 1 + 2 : 0 );
+		( IsMovie() ? (int)strlen( STRING( m_iszMovie ) ) + 1 + 4 + 1 + 2 : 0 ) +
+		( bParent ? VGUI_SCREEN_MSG_OVERHEAD + 1 + 2 + 2 + 12 + 6 : 0 );
 }
 
 int CVGuiScreen::SendDefine( CBasePlayer *pPlayer )
@@ -365,6 +371,29 @@ int CVGuiScreen::SendDefine( CBasePlayer *pPlayer )
 			WRITE_SHORT( (int)( m_flRadius > 32767 ? 32767 : m_flRadius ) );
 		}
 	MESSAGE_END();
+
+	// SBO 2.1: a screen with a parent (movewith; not "surface", which follows its carrier already): the clients draw
+	// it on the parent's drawn pose (docs/MOVEWITH.md)
+	int iParent;
+	Vector localOrigin, localAngles;
+	if ( !m_bBound && MoveWith_ClientLink( this, &iParent, &localOrigin, &localAngles ) )
+	{
+		MESSAGE_BEGIN( MSG_ONE, gmsgWScreen, NULL, pPlayer->pev );
+			WRITE_BYTE( WSCREEN_OP_PARENT );
+			WRITE_SHORT( entindex() );
+			WRITE_SHORT( iParent );
+			for ( int i = 0; i < 3; i++ )
+			{
+				float f = localOrigin[i];
+				int bits;
+				memcpy( &bits, &f, sizeof( bits ) );
+				WRITE_LONG( bits );
+			}
+			WriteAngle16( localAngles.x );
+			WriteAngle16( localAngles.y );
+			WriteAngle16( localAngles.z );
+		MESSAGE_END();
+	}
 	return DefineSize();
 }
 

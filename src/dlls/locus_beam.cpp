@@ -277,7 +277,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 	{
 	case 0: // ents
 		pStartEnt = Locus_FindEntity( NULL, STRING( m_iszStart ), pActivator );
-		pEndEnt = Locus_FindEntity( NULL, STRING( m_iszEnd ), pActivator );
+		pEndEnt = Locus_FindEntity( NULL, Locus_KeyOrLocus( m_iszEnd ), pActivator );
 
 		if ( pStartEnt == NULL || pEndEnt == NULL )
 			return;
@@ -310,7 +310,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 		if ( !TryCalcLocus_Position( this, pActivator, STRING( m_iszStart ), vecStartPos ) )
 			return;
 
-		pEndEnt = Locus_FindEntity( NULL, STRING( m_iszEnd ), pActivator );
+		pEndEnt = Locus_FindEntity( NULL, Locus_KeyOrLocus( m_iszEnd ), pActivator );
 
 		if ( pEndEnt == NULL )
 			return;
@@ -327,7 +327,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 
 	case 2: // points
 		if ( !TryCalcLocus_Position( this, pActivator, STRING( m_iszStart ), vecStartPos ) ||
-			 !TryCalcLocus_Position( this, pActivator, STRING( m_iszEnd ), vecEndPos ) )
+			 !TryCalcLocus_Position( this, pActivator, Locus_KeyOrLocus( m_iszEnd ), vecEndPos ) )
 			return;
 
 		pBeam = GetClassPtr( (CLocusBeamBeam *)NULL );
@@ -337,7 +337,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 
 	case 3: // point & offset
 		if ( !TryCalcLocus_Position( this, pActivator, STRING( m_iszStart ), vecStartPos ) ||
-			 !TryCalcLocus_Velocity( this, pActivator, STRING( m_iszEnd ), vecEndPos ) )
+			 !TryCalcLocus_Velocity( this, pActivator, Locus_KeyOrLocus( m_iszEnd ), vecEndPos ) )
 			return;
 
 		pBeam = GetClassPtr( (CLocusBeamBeam *)NULL );
@@ -390,6 +390,7 @@ void CLocusBeam::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 void CLocusBeam::Spawn( void )
 {
 	Precache();
+	Locus_DefaultToLocus( m_iszEnd );	// SBO 2.0: a blank "End at" is *locus, the FGD default
 	m_iFlags = 0;
 	if ( pev->spawnflags & SF_LBEAM_SHADEIN )
 		m_iFlags |= BEAM_FSHADEIN;

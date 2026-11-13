@@ -325,7 +325,14 @@ void Featureful_TakeDamage( CBaseEntity *pTarget, entvars_t *pevInflictor, entva
 		pTarget->pev->health += HURT_REMOTE_HEALTH_BUFFER;
 	}
 
+	// TakeDamage can free the target at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+	// checks the edict's serial number and private data, so a target freed there comes back NULL and nothing is put
+	// back (armor and punch are only put back on players, and players are never freed)
+	EHANDLE hTarget;
+	hTarget = pTarget;
 	pTarget->TakeDamage( pevInflictor, pevAttacker, flDamage, bitsDamage );
+	if ( hTarget == NULL )
+		return;
 
 	if ( flFloor > 0 && pTarget->pev->health > 0 )
 	{

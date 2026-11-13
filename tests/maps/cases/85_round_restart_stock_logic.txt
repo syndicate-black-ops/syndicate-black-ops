@@ -1,0 +1,49 @@
+# a new co-op round does not reset stock logic entities (docs/ROUNDS.md: map entities go on; only entities with a
+# round_reset key go back): a trigger_once that fired stays removed, a multisource keeps its members' slots, a
+# game_counter keeps its count, a trigger_relay with "Remove On fire" stays removed. Round 1 ends with the only player
+# killed (FAILED ROUND); round 2 goes on from the state round 1 left
+# covers: trigger_once multisource game_counter trigger_relay:1
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn trigger_once model *1 target once_out
+spawn multisource targetname ms target ms_out
+spawn trigger_relay targetname m1 target ms
+spawn trigger_relay targetname m2 target ms
+spawn game_counter targetname c health 2 target c_hit
+spawn trigger_relay targetname r_once target r_once_out spawnflags 1
+spawn trigger_hurt model *2 dmg 100000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark round1
+touchclient 0 1
+fire m1
+fire c world
+fire r_once world
+frames 3
+expectcount trigger_once 0
+mark kill_player
+touchclient 6 1
+frames 150
+expect FAILED ROUND
+mark round2
+expectcount trigger_once 0
+fire m2
+fire c world
+fire r_once world
+frames 3
+expectn 1 Firing: (once_out)
+expectn 1 Firing: (ms_out)
+expectn 1 Firing: (c_hit)
+expectn 1 Firing: (r_once_out)

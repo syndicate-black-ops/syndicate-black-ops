@@ -1,0 +1,39 @@
+# monster TriggerCondition 3 "50% Health Remaining": a scientist (a player in the game: monsters run their AI only
+# with a client in their PVS) hurt by a trigger_hurt, 12 per touch (half the dmg each half second), fires its
+# TriggerTarget once its health is at or below half its maximum (100 -> 52: not yet; 40: fired), and only once
+# covers: monster_scientist.triggercondition=3 monster_scientist.triggertarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist TriggerCondition 3 TriggerTarget cond_3 origin "0 300 0"
+spawn trigger_hurt model *1 dmg 24 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+touchent 1 0
+frames 10
+touchent 1 0
+frames 10
+touchent 1 0
+frames 10
+touchent 1 0
+frames 10
+dump 0
+expectnot Firing: (cond_3)
+touchent 1 0
+frames 10
+dump 0
+expectn 1 Firing: (cond_3)
+touchent 1 0
+frames 10
+expectn 1 Firing: (cond_3)

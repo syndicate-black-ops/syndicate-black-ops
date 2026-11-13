@@ -52,7 +52,7 @@ def sw_zoomed_fresh_map(t):
 
 
 @S.test('monster_cyberminotor ejects shell casings: TE_MODEL with models/shell.mdl, never index 0', players=1,
-        size=(512, 512, 512))
+        size=(512, 512, 512), covers=('monster_cyberminotor',))
 def minos_shells(t):
     # its gun is the model's muzzle, about 200 units ahead of it (CMinotaure::GetGunPosition): it stands in the
     # room's middle facing south, the player beyond its melee range (200) to the south

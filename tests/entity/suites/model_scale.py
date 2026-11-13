@@ -28,17 +28,20 @@ def zombie_claws_player(t, scale):
     t.expect.distance('end', 'zom', 'player1', 16 * float(scale) + 16 - 1, 1000)
 
 
-@S.test('2x zombie: its claws reach and hurt a test player', players=1, doc=DOC, size=TALL)
+@S.test('2x zombie: its claws reach and hurt a test player', players=1, doc=DOC, size=TALL,
+        covers=('monster_zombie', 'monster_zombie.scale'))
 def zombie2_player(t):
     zombie_claws_player(t, '2')
 
 
-@S.test('4x zombie: its claws still reach and hurt a test player', players=1, doc=DOC, size=TALL)
+@S.test('4x zombie: its claws still reach and hurt a test player', players=1, doc=DOC, size=TALL,
+        covers=('monster_zombie', 'monster_zombie.scale'))
 def zombie4_player(t):
     zombie_claws_player(t, '4')
 
 
-@S.test('1x zombie (control): its claws hurt a test player', players=1, doc=DOC)
+@S.test('1x zombie (control): its claws hurt a test player', players=1, doc=DOC,
+        covers=('monster_zombie', 'monster_zombie.scale'))
 def zombie1_player(t):
     zombie_claws_player(t, '1')
 
@@ -62,12 +65,14 @@ def zombie_vs_scientist(t, zscale, sscale):
     t.expect.not_damaged('player1')
 
 
-@S.test('2x zombie vs 3x scientist: the claws reach the scientist edge to edge', players=1, doc=DOC, size=TALL)
+@S.test('2x zombie vs 3x scientist: the claws reach the scientist edge to edge', players=1, doc=DOC, size=TALL,
+        covers=('monster_zombie', 'monster_zombie.scale', 'monster_scientist', 'monster_scientist.scale'))
 def zombie2_scientist3(t):
     zombie_vs_scientist(t, '2', '3')
 
 
-@S.test('1x zombie vs 1x scientist (control)', players=1, doc=DOC)
+@S.test('1x zombie vs 1x scientist (control)', players=1, doc=DOC,
+        covers=('monster_zombie', 'monster_zombie.scale', 'monster_scientist', 'monster_scientist.scale'))
 def zombie1_scientist1(t):
     zombie_vs_scientist(t, '1', '1')
 
@@ -86,19 +91,22 @@ def item_walk(t, scale, offset, picked):
         t.expect.sound('9mmclip1', ent='@ammo_reserve', min=0, count=0, after='walk')
 
 
-@S.test('0.5x ammo_reserve: picked up when the player walks over it', players=1, doc=DOC)
+@S.test('0.5x ammo_reserve: picked up when the player walks over it', players=1, doc=DOC,
+        covers=('ammo_reserve', 'ammo_reserve.scale'))
 def item_half_touch(t):
     item_walk(t, '0.5', 0, True)
 
 
 # The engine links every box 1 unit larger on each side (SV_LinkEdict), so a player (16) touches an item whose half
 # width is h while the centers are less than 16 + h + 2 apart: 26 for the 0.5x box (8), 34 for the 1x box (16).
-@S.test('0.5x ammo_reserve: not picked up passing 28 units to the side (its box is 16 wide)', players=1, doc=DOC)
+@S.test('0.5x ammo_reserve: not picked up passing 28 units to the side (its box is 16 wide)', players=1, doc=DOC,
+        covers=('ammo_reserve', 'ammo_reserve.scale'))
 def item_half_miss(t):
     item_walk(t, '0.5', 28, False)
 
 
-@S.test('1x ammo_reserve (control): picked up passing 28 units to the side (box 32 wide)', players=1, doc=DOC)
+@S.test('1x ammo_reserve (control): picked up passing 28 units to the side (box 32 wide)', players=1, doc=DOC,
+        covers=('ammo_reserve', 'ammo_reserve.scale'))
 def item_one_side(t):
     item_walk(t, '1', 28, True)
 
@@ -121,20 +129,23 @@ def follow(t, scale, use_key):
     t.snap('end', 'player1', 'origin')
 
 
-@S.test('3x scientist: +use makes it follow (it comes to the player)', players=1, doc=DOC, size=TALL)
+@S.test('3x scientist: +use makes it follow (it comes to the player)', players=1, doc=DOC, size=TALL,
+        covers=('monster_scientist', 'monster_scientist.scale'))
 def sci3_use(t):
     follow(t, '3', True)
     t.expect.used('sci', activator='player1', min=1)
     t.expect.distance('end', 'sci', 'player1', 0, 260)       # it came: it started 350 away
 
 
-@S.test('3x scientist following: stops about 160 from the player (128 edge to edge)', players=1, doc=DOC, size=TALL)
+@S.test('3x scientist following: stops about 160 from the player (128 edge to edge)', players=1, doc=DOC, size=TALL,
+        covers=('monster_scientist', 'monster_scientist.scale'))
 def sci3_follow(t):
     follow(t, '3', False)
     t.expect.distance('end', 'sci', 'player1', 145, 200)
 
 
-@S.test('1x scientist following (control): stops about 128 from the player', players=1, doc=DOC)
+@S.test('1x scientist following (control): stops about 128 from the player', players=1, doc=DOC,
+        covers=('monster_scientist', 'monster_scientist.scale'))
 def sci1_follow(t):
     follow(t, '1', False)
     t.expect.distance('end', 'sci', 'player1', 100, 150)
@@ -175,7 +186,8 @@ def box1(t):
 ER_DOC = 'ENV_RENDER.md#scale-and-collision'
 
 
-@S.test('env_render m_fScale 3, no fade: the cycler\'s box is 3x at once', players=1, doc=ER_DOC, size=TALL)
+@S.test('env_render m_fScale 3, no fade: the cycler\'s box is 3x at once', players=1, doc=ER_DOC, size=TALL,
+        covers=('env_render', 'env_render.m_fScale'))
 def env_render_scale_now(t):
     t.point('cycler', at=(0, 100, 0), targetname='cyc', model='models/hgrunt.mdl')
     t.point('env_render', targetname='grow', target='cyc', spawnflags='15', m_fScale='3')
@@ -192,7 +204,7 @@ def env_render_scale_now(t):
 
 
 @S.test('env_render m_fScale 3 with Fade Time 2: the box grows with the drawn scale (2x half way), 3x at its end',
-        players=1, doc=ER_DOC, size=TALL)
+        players=1, doc=ER_DOC, size=TALL, covers=('env_render', 'env_render.m_fScale', 'env_render.frags'))
 def env_render_scale_fade(t):
     t.point('cycler', at=(0, 100, 0), targetname='cyc', model='models/hgrunt.mdl')
     t.point('env_render', targetname='grow', target='cyc', spawnflags='15', m_fScale='3', frags='2')
@@ -208,7 +220,8 @@ def env_render_scale_fade(t):
     t.expect.value('after', 'cyc', 'maxs', (48, 48, 216), tol=0.1)
 
 
-@S.test('env_render m_fScale 0.5, no fade: the cycler\'s box is half size', players=1, doc=ER_DOC)
+@S.test('env_render m_fScale 0.5, no fade: the cycler\'s box is half size', players=1, doc=ER_DOC,
+        covers=('env_render', 'env_render.m_fScale'))
 def env_render_scale_half(t):
     t.point('cycler', at=(0, 100, 0), targetname='cyc', model='models/hgrunt.mdl')
     t.point('env_render', targetname='shrink', target='cyc', spawnflags='15', m_fScale='0.5')

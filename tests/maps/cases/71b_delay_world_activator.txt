@@ -1,0 +1,15 @@
+# a delayed target fired by the world (no player): a func_button ("Don't move", delay 1) used by the world. 1.38 made
+# the activator NULL after the delay, 3a88d857 keeps the world. The game_player_hurt at the end hurts only a player
+# activator and fires its own target with the same activator: 1.38 called IsPlayer() on the NULL activator (a
+# server crash); develop checks for NULL as well (halflife-updated #246) and fires its target
+# covers: func_button func_button:1 func_button.delay game_player_hurt game_player_hurt.dmg
+map co_fuzz
+spawn func_button model *1 target hurt delay 1 spawnflags 1 wait 1
+spawn game_player_hurt targetname hurt dmg 10 target hurt_out
+activate
+connect 1 P1
+frames 3
+mark use_by_world
+useent 0 world
+frames 25
+expectn 1 Firing: (hurt_out)

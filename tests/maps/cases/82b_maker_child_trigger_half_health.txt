@@ -1,0 +1,28 @@
+# monstermaker childtriggercondition 3 "50% Health Remaining": the child fires the maker's childtriggertarget once its
+# health is at or below half (hurt by a trigger_hurt, 120 per touch: one touch), not before it is hurt. 1.38 ignores
+# the keys
+# covers: monstermaker.childtriggercondition=3 monstermaker.childtriggertarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk monstertype monster_scientist monstercount 1 childtriggertarget child_half childtriggercondition 3 origin "0 500 0"
+spawn trigger_hurt model *1 dmg 120 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useent 0 world
+frames 30
+expectnot Firing: (child_half)
+touchclass 1 monster_scientist
+frames 20
+expectn 1 Firing: (child_half)

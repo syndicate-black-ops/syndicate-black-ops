@@ -1,0 +1,19 @@
+# trigger_auto Trigger State (the use type it fires with), seen through game_counters (On / Toggle count up, Off counts
+# down; each counter fires at its limit): 0 Off, 1 On, 2 Toggle; no key: Off (HL SDK: triggerType 0 = USE_OFF; the FGD
+# default 2 is what the editor writes)
+# covers: trigger_auto.triggerstate=0 trigger_auto.triggerstate=1 trigger_auto.triggerstate=2 game_counter.health
+map co_fuzz
+spawn trigger_auto target c_off triggerstate 0
+spawn trigger_auto target c_on triggerstate 1
+spawn trigger_auto target c_toggle triggerstate 2
+spawn trigger_auto target c_default
+spawn game_counter targetname c_off health -1 target off_down
+spawn game_counter targetname c_on health 1 target on_up
+spawn game_counter targetname c_toggle health 1 target toggle_up
+spawn game_counter targetname c_default health -1 target default_down
+activate
+frames 10
+expectn 1 Firing: (off_down)
+expectn 1 Firing: (on_up)
+expectn 1 Firing: (toggle_up)
+expectn 1 Firing: (default_down)

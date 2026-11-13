@@ -1,0 +1,30 @@
+# Monster flag 4 MonsterClip (FGD base Monster): the monster is stopped by func_monsterclip brushes (FL_MONSTERCLIP
+# 8388608 in its flags; suite map_used2 shows a scientist with it stopped by one); without the flag it is not
+# covers: dark_grunt:4 monster_human_grunt:4 monster_werewolf:4 monster_imp:4 monster_grunt_hunter:4 monster_generic:4
+map co_fuzz
+spawn dark_grunt targetname c0 spawnflags 4 origin "0 1000 0"
+spawn dark_grunt targetname n0 origin "0 1400 0"
+spawn monster_human_grunt targetname c1 spawnflags 4 origin "200 1000 0"
+spawn monster_human_grunt targetname n1 origin "200 1400 0"
+spawn monster_werewolf targetname c2 spawnflags 4 origin "400 1000 0"
+spawn monster_werewolf targetname n2 origin "400 1400 0"
+spawn monster_imp targetname c3 spawnflags 4 origin "600 1000 0"
+spawn monster_imp targetname n3 origin "600 1400 0"
+spawn monster_grunt_hunter targetname c4 spawnflags 4 origin "800 1000 0"
+spawn monster_grunt_hunter targetname n4 origin "800 1400 0"
+spawn monster_generic targetname c5 spawnflags 4 model models/scientist.mdl origin "1000 1000 0"
+spawn monster_generic targetname n5 model models/scientist.mdl origin "1000 1400 0"
+activate
+frames 5
+expectbits c0 flags 8388608
+expectnobits n0 flags 8388608
+expectbits c1 flags 8388608
+expectnobits n1 flags 8388608
+expectbits c2 flags 8388608
+expectnobits n2 flags 8388608
+expectbits c3 flags 8388608
+expectnobits n3 flags 8388608
+expectbits c4 flags 8388608
+expectnobits n4 flags 8388608
+expectbits c5 flags 8388608
+expectnobits n5 flags 8388608

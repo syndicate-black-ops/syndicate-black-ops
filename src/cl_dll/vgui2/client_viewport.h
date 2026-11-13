@@ -48,6 +48,20 @@ private:
 	bool m_bActive = false;
 };
 
+//-----------------------------------------------------------------------------
+// color_correction while the game menu is open: the engine draws no HUD then (no HUD_Redraw, whose start grades the
+// frame's last view) and paints no client panel, only GameUI's. This 1x1, input-less panel is the first child of
+// GameUI's root: its Paint grades a view no view model or HUD graded, before the game menu is drawn over it.
+//-----------------------------------------------------------------------------
+class CColorCorrMenuHook : public vgui2::Panel
+{
+	DECLARE_CLASS_SIMPLE(CColorCorrMenuHook, vgui2::Panel);
+
+public:
+	CColorCorrMenuHook();
+	virtual void Paint() override;
+};
+
 class CGameUIViewport : public vgui2::EditablePanel
 {
 	DECLARE_CLASS_SIMPLE(CGameUIViewport, vgui2::EditablePanel);

@@ -33,6 +33,7 @@
 #include "round_hooks.h"	// SBO 2.0: Logic_IsPlayerInPlay (trigger_inout)
 #include "pm_shared.h"	// SBO 2.0: PLAYER_SUPPRESS_* (trigger_camera Freeze Player with Stop by player input)
 #include "game.h"		// SBO 2.0: g_psv_gravity (trigger_jump)
+#include "movewith.h"	// SBO 2.1: MoveWith_IsChild (trigger_camera with a parent)
 
 #define	SF_TRIGGER_PUSH_START_OFF	2//spawnflag that makes trigger_push spawn turned OFF
 #define SF_TRIGGER_HURT_TARGETONCE	1// Only fire hurt target once
@@ -225,6 +226,7 @@ private:
 	// SBO 2.0, from Featureful: "Delay Before Reset": after firing, calls are ignored for this long; no map sets it
 	float		m_flDelayBeforeReset;
 	float		m_flResetTime;
+	string_t	m_sMaster;	// SBO 2.1 (Half-Life Unified SDK): "master"; while it is locked, the relay does not fire
 };
 LINK_ENTITY_TO_CLASS( trigger_relay, CTriggerRelay );
 
@@ -239,6 +241,7 @@ TYPEDESCRIPTION	CTriggerRelay::m_SaveData[] =
 	DEFINE_FIELD( CTriggerRelay, triggerType, FIELD_INTEGER ),
 	DEFINE_FIELD( CTriggerRelay, m_flDelayBeforeReset, FIELD_FLOAT ),
 	DEFINE_FIELD( CTriggerRelay, m_flResetTime, FIELD_TIME ),
+	DEFINE_FIELD( CTriggerRelay, m_sMaster, FIELD_STRING ),
 };
 
 IMPLEMENT_SAVERESTORE(CTriggerRelay,CBaseDelay);
@@ -255,6 +258,11 @@ void CTriggerRelay::KeyValue( KeyValueData *pkvd )
 		m_flDelayBeforeReset = atof( pkvd->szValue );
 		pkvd->fHandled = TRUE;
 	}
+	else if (FStrEq(pkvd->szKeyName, "master"))	// SBO 2.1 (Half-Life Unified SDK)
+	{
+		m_sMaster = ALLOC_STRING( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
 	else
 		CBaseDelay::KeyValue( pkvd );
 }
@@ -269,6 +277,10 @@ void CTriggerRelay::Spawn( void )
 
 void CTriggerRelay::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	// SBO 2.1 (Half-Life Unified SDK): "master": while it is locked for the activator, the relay does not fire
+	if ( !UTIL_IsMasterTriggered( m_sMaster, pActivator ) )
+		return;
+
 	// SBO 2.0 (Featureful): "Delay Before Reset"
 	if ( m_flDelayBeforeReset > 0 && m_flResetTime > gpGlobals->time )
 		return;
@@ -339,8 +351,35 @@ public:
 #endif
 
 	BOOL		HasTarget( string_t targetname );
+	// SBO 2.1: a target's delay changed at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue	GetKeyValue( const char *keyName );
+	int			FindTarget( const char *keyName );
+	void		SortTargets( int iFrom );
+	BOOL		m_fSpawned;		// a target key now updates its entry instead of adding one
+	BOOL		m_fResort;		// an entry already fired this run changed: sort the list when the run ends
 	
 	int ObjectCaps( void ) { return CBaseToggle::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+
+	// SBO 2.1 (Spirit of Half-Life): On from the trigger until it has fired its last target, Off while it waits to be
+	// triggered. A multithreaded one runs in copies of itself: it is On while one of them runs
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		if ( IsRunning() )
+			return STATE_ON;
+		if ( ShouldClone() && !FStringNull( pev->targetname ) )
+		{
+			CBaseEntity *pEntity = NULL;
+			while ( ( pEntity = UTIL_FindEntityByTargetname( pEntity, STRING( pev->targetname ) ) ) != NULL )
+			{
+				if ( pEntity != this && FClassnameIs( pEntity->pev, "multi_manager" ) && ( (CMultiManager *)pEntity )->IsClone()
+					&& ( (CMultiManager *)pEntity )->IsRunning() )
+					return STATE_ON;
+			}
+		}
+		return STATE_OFF;
+	}
+	// running: the Use is off from the trigger until the last target fired (ManagerUse, ManagerThink)
+	BOOL IsRunning( void ) { return m_pfnUse == NULL; }
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -374,6 +413,8 @@ TYPEDESCRIPTION	CMultiManager::m_SaveData[] =
 	DEFINE_FIELD( CMultiManager, m_startTime, FIELD_TIME ),
 	DEFINE_ARRAY( CMultiManager, m_iTargetName, FIELD_STRING, MAX_MULTI_TARGETS ),
 	DEFINE_ARRAY( CMultiManager, m_flTargetDelay, FIELD_FLOAT, MAX_MULTI_TARGETS ),
+	DEFINE_FIELD( CMultiManager, m_fSpawned, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CMultiManager, m_fResort, FIELD_BOOLEAN ),
 };
 
 IMPLEMENT_SAVERESTORE(CMultiManager,CBaseToggle);
@@ -390,6 +431,22 @@ void CMultiManager :: KeyValue( KeyValueData *pkvd )
 		m_flWait = atof(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
+	else if ( m_fSpawned && FindTarget( pkvd->szKeyName ) >= 0 )
+	{
+		// SBO 2.1: at run time a target already in the list ("name", or "name#n" for its next entries, as the map
+		// editors name them) gets the new delay, and the list is sorted again: the targets not fired yet in a run
+		// at once, the whole list when the run ends
+		m_flTargetDelay[ FindTarget( pkvd->szKeyName ) ] = atof( pkvd->szValue );
+		const BOOL fRunning = m_pfnThink != NULL && m_pfnUse == NULL;
+		SortTargets( fRunning ? m_index : 0 );
+		if ( fRunning )
+		{
+			m_fResort = TRUE;
+			if ( m_index < m_cTargets )
+				pev->nextthink = m_startTime + m_flTargetDelay[ m_index ];
+		}
+		pkvd->fHandled = TRUE;
+	}
 	else // add this field to the target list
 	{
 		// this assumes that additional fields are targetnames and their values are delay values.
@@ -403,6 +460,9 @@ void CMultiManager :: KeyValue( KeyValueData *pkvd )
 			m_cTargets++;
 			pkvd->fHandled = TRUE;
 		}
+		else	// SBO 2.1 (Half-Life Unified SDK)
+			ALERT( at_console, "%s \"%s\": too many targets (more than %d), \"%s\" left out\n", STRING( pev->classname ),
+				STRING( pev->targetname ), MAX_MULTI_TARGETS, pkvd->szKeyName );
 	}
 }
 
@@ -413,6 +473,55 @@ void CMultiManager :: Spawn( void )
 	SetUse ( &CMultiManager::ManagerUse );
 	SetThink ( &CMultiManager::ManagerThink);
 
+	SortTargets( 0 );
+	m_fSpawned = TRUE;	// SBO 2.1
+}
+
+// the entry a run-time key names: "name" its first entry, "name#n" the one after n others of that name (Hammer's
+// numbering of a repeated target); -1: none
+int CMultiManager::FindTarget( const char *keyName )
+{
+	char tmp[128];
+	UTIL_StripToken( keyName, tmp, sizeof( tmp ) );
+	const char *pHash = strchr( keyName, '#' );
+	int iSkip = pHash ? atoi( pHash + 1 ) : 0;
+
+	for ( int i = 0; i < m_cTargets; i++ )
+	{
+		if ( FStrEq( tmp, STRING( m_iTargetName[i] ) ) && iSkip-- == 0 )
+			return i;
+	}
+	return -1;
+}
+
+// SBO 2.1: a target's delay ("name" / "name#n") and "wait" read back
+CKeyValue CMultiManager::GetKeyValue( const char *keyName )
+{
+	CKeyValue keyvalue = CBaseToggle::GetKeyValue( keyName );
+	if ( keyvalue.keyType )
+		return keyvalue;
+
+	if ( FStrEq( keyName, "wait" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_FLOAT;
+		keyvalue.keyName = "wait";
+		keyvalue.fVal = m_flWait;
+		return keyvalue;
+	}
+
+	const int i = FindTarget( keyName );
+	if ( i >= 0 )
+	{
+		keyvalue.keyType = KEY_TYPE_FLOAT;
+		keyvalue.keyName = keyName;
+		keyvalue.fVal = m_flTargetDelay[i];
+	}
+	return keyvalue;
+}
+
+// the targets from iFrom on by delay (Spawn: all of them)
+void CMultiManager::SortTargets( int iFrom )
+{
 	// Sort targets
 	// Quick and dirty bubble sort
 	int swapped = 1;
@@ -420,7 +529,7 @@ void CMultiManager :: Spawn( void )
 	while ( swapped )
 	{
 		swapped = 0;
-		for ( int i = 1; i < m_cTargets; i++ )
+		for ( int i = iFrom + 1; i < m_cTargets; i++ )
 		{
 			if ( m_flTargetDelay[i] < m_flTargetDelay[i-1] )
 			{
@@ -464,6 +573,11 @@ void CMultiManager :: ManagerThink ( void )
 	if ( m_index >= m_cTargets )// have we fired all targets?
 	{
 		SetThink( NULL );
+		if ( m_fResort )	// SBO 2.1: a delay changed while it ran
+		{
+			m_fResort = FALSE;
+			SortTargets( 0 );
+		}
 		if ( IsClone() || FBitSet( pev->spawnflags, SF_MULTIMAN_ONLYONCE ) )	// SBO 2.0 (Featureful): Once only
 		{
 			UTIL_Remove( this );
@@ -485,6 +599,7 @@ CMultiManager *CMultiManager::Clone( void )
 
 	pMulti->pev->spawnflags |= SF_MULTIMAN_CLONE;	// (Instant is copied with the rest of pev)
 	pMulti->m_cTargets = m_cTargets;
+	pMulti->m_fSpawned = TRUE;	// SBO 2.1
 	memcpy( pMulti->m_iTargetName, m_iTargetName, sizeof( m_iTargetName ) );
 	memcpy( pMulti->m_flTargetDelay, m_flTargetDelay, sizeof( m_flTargetDelay ) );
 
@@ -745,6 +860,16 @@ public:
 	void EXPORT ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void InitTrigger( void );
 
+	// SBO 2.1: On while a touch would set it off, Off while it is switched off or waits after firing ("Delay before
+	// reset"); a trigger_once that fired is removed a moment later (Spirit of Half-Life gave triggers no state: they
+	// read as On)
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		if ( pev->solid == SOLID_NOT || m_pfnThink == static_cast<BASEPTR>( &CBaseTrigger::MultiWaitOver )
+			|| m_pfnThink == static_cast<BASEPTR>( &CBaseEntity::SUB_Remove ) )
+			return STATE_OFF;
+		return STATE_ON;
+	}
 	virtual int	ObjectCaps( void ) { return CBaseToggle :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
 	// SBO 2.0, from Featureful (halflife-featureful dlls/triggers.cpp CBaseTrigger, Half-Life 1 SDK license):
@@ -904,6 +1029,11 @@ void CTriggerMonsterJump :: Touch( CBaseEntity *pOther )
 	{// touched by a non-monster.
 		return;
 	}
+
+	// SBO 2.0: "master": while it is locked for the monster, no throw (as trigger_hurt / trigger_jump). 1.38 (as
+	// Half-Life) offered Master and never checked it.
+	if ( !UTIL_IsMasterTriggered( m_sMaster, pOther ) )
+		return;
 
 	pevOther->origin.z += 1;
 	
@@ -1234,6 +1364,10 @@ void CBaseTrigger :: HurtTouch ( CBaseEntity *pOther )
 		|| ( !FStringNull( pOther->pev->targetname ) && FStrEq( STRING( pOther->pev->targetname ), STRING( pev->netname ) ) ) ) )
 		return;
 
+	// SBO 2.0: "master": while it is locked for the toucher, no damage and no target (as trigger_multiple)
+	if ( !UTIL_IsMasterTriggered( m_sMaster, pOther ) )
+		return;
+
 	// HACKHACK -- In multiplayer, players touch this based on packet receipt.
 	// So the players who send packets later aren't always hurt.  Keep track of
 	// how much time has passed and whether or not you've touched that player
@@ -1347,7 +1481,9 @@ void CBaseTrigger :: HurtTouch ( CBaseEntity *pOther )
 
   
 	
-	if ( pev->target )
+	// SBO 2.0: a Kill target alone fires too (Half-Life ran SUB_UseTargets, and with it the kill target, only with a
+	// target)
+	if ( pev->target || m_iszKillTarget )
 	{
 		// trigger has a target it wants to fire. 
 		if ( pev->spawnflags & SF_TRIGGER_HURT_CLIENTONLYFIRE )
@@ -1361,7 +1497,10 @@ void CBaseTrigger :: HurtTouch ( CBaseEntity *pOther )
 
 		SUB_UseTargets( pOther, USE_TOGGLE, 0 );
 		if ( pev->spawnflags & SF_TRIGGER_HURT_TARGETONCE )
+		{
 			pev->target = 0;
+			m_iszKillTarget = 0;	// SBO 2.0: once means the kill target too
+		}
 	}
 }
 
@@ -1414,6 +1553,14 @@ public:
 	BOOL CanTouch( CBaseEntity *pOther );
 	void FireOnEntry( CBaseEntity *pOther );
 	void FireOnLeaving( CBaseEntity *pOther );
+	// SBO 2.1 (Spirit of Half-Life): On while an entity it counts is inside, Off while it is empty
+	STATE GetState( CBaseEntity *pActivator )
+	{
+		for ( int i = 0; i < m_iInside; i++ )
+			if ( m_hInside[i] != NULL )
+				return STATE_ON;
+		return STATE_OFF;
+	}
 
 	string_t m_iszAltTarget;
 	string_t m_iszBothTarget;
@@ -2111,14 +2258,14 @@ edict_t *CChangeLevel :: FindLandmark( const char *pLandmarkName )
 {
 	edict_t	*pentLandmark;
 
-	pentLandmark = FIND_ENTITY_BY_STRING( NULL, "targetname", pLandmarkName );
+	pentLandmark = FIND_ENTITY_BY_TARGETNAME( NULL, pLandmarkName );
 	while ( !FNullEnt( pentLandmark ) )
 	{
 		// Found the landmark
 		if ( FClassnameIs( pentLandmark, "info_landmark" ) )
 			return pentLandmark;
 		else
-			pentLandmark = FIND_ENTITY_BY_STRING( pentLandmark, "targetname", pLandmarkName );
+			pentLandmark = FIND_ENTITY_BY_TARGETNAME( pentLandmark, pLandmarkName );
 	}
 	ALERT( at_error, "Can't find landmark %s\n", pLandmarkName );
 	return NULL;
@@ -2462,6 +2609,9 @@ public:
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
 	void Touch( CBaseEntity *pOther );
+	// SBO 2.1: "angles" / "speed" changed at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
 
 	// SBO 2.0, from Featureful / Spirit of Half-Life: "m_iszPushSpeed" speed factor [LR], "m_iszPushVel" push
 	// direction [LV] (instead of the angles; times the speed), computed for each toucher
@@ -2509,6 +2659,36 @@ void CTriggerPush :: Spawn( )
 	UTIL_SetOrigin( pev, pev->origin );		// Link into the list
 }
 
+// SBO 2.1: Spawn turns "angles" into the push direction (movedir) and clears them (a trigger's brush must not turn),
+// so the angles read back are those of the direction (Up and Down: -90 / 90 pitch, as MakeVectors reads them)
+CKeyValue CTriggerPush :: GetKeyValue( const char *keyName )
+{
+	if ( !stricmp( keyName, "angles" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		Vector vecAngles = UTIL_VecToAngles( pev->movedir );
+		vecAngles.x = -vecAngles.x;	// VecToAngles' pitch is up-positive, the entity angles' down-positive
+		keyvalue.keyType = KEY_TYPE_VECTOR;
+		keyvalue.keyName = "angles";
+		vecAngles.CopyToArray( keyvalue.vVal );
+		return keyvalue;
+	}
+	return CBaseTrigger::GetKeyValue( keyName );
+}
+
+// SBO 2.1: new angles give a new push direction, as in Spawn (angles 0 0 0 push along yaw 360); speed 0 is 100
+void CTriggerPush :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( !stricmp( keyName, "angles" ) )
+	{
+		if ( pev->angles == g_vecZero )
+			pev->angles.y = 360;
+		SetMovedir( pev );
+	}
+	else if ( FStrEq( keyName, "speed" ) && pev->speed == 0 )
+		pev->speed = 100;
+}
+
 
 void CTriggerPush :: Touch( CBaseEntity *pOther )
 {
@@ -2528,6 +2708,11 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 	if ( FBitSet( pev->spawnflags, SF_TRIGGER_PUSH_NO_CLIENTS ) && FBitSet( pevToucher->flags, FL_CLIENT ) )
 		return;
 	if ( FBitSet( pev->spawnflags, SF_TRIGGER_PUSH_NO_MONSTERS ) && FBitSet( pevToucher->flags, FL_MONSTER ) )
+		return;
+
+	// SBO 2.0: "master": while it is locked for the toucher, no push (as trigger_hurt / trigger_jump /
+	// trigger_monsterjump). 1.38 (as Half-Life) offered Master and never checked it; no 1.38 map sets one.
+	if ( !UTIL_IsMasterTriggered( m_sMaster, pOther ) )
 		return;
 
 	// SBO 2.0 (Featureful): the push, with the Locus keys; without them pev->speed * pev->movedir as in Half-Life
@@ -2588,6 +2773,11 @@ void CTriggerPush :: Touch( CBaseEntity *pOther )
 // named Target is as likely (reservoir pick over all of them)
 static edict_t *Teleport_FindTarget( entvars_t *pev )
 {
+	// Half-Life Unified SDK: no target, no teleport (an empty name matched any entity whose name is an empty string,
+	// such as one renamed to "" at run time: a seemingly random spot)
+	if ( FStringNull( pev->target ) || !STRING( pev->target )[0] )
+		return NULL;
+
 	if ( !FBitSet( pev->spawnflags, SF_TELEPORT_RANDOM_DESTINATION ) )
 		return FIND_ENTITY_BY_TARGETNAME( NULL, STRING( pev->target ) );
 
@@ -3059,11 +3249,38 @@ void CTriggerEndSection :: KeyValue( KeyValueData *pkvd )
 }
 
 
+//=========================================================
+// trigger_gravity -- a player touching it gets its gravity (a multiplier of sv_gravity); players only (Half-Life)
+//
+// SBO 2.1: "master" (while it is locked for the toucher, nothing happens); a named trigger turns on and off when fired
+// (On turns it on, Off turns it off, Toggle toggles), flag 2 "Start Off" (as trigger_hurt and trigger_push); flag 4
+// "Reset on leave": a player in play inside is tracked (as trigger_inout), and his gravity goes back to 1 when he
+// leaves the brush, leaves play (dies, turns spectator or Game Master, disconnects), or the trigger is turned off or
+// removed while he is inside; unless something else changed it meanwhile (e.g. another trigger_gravity he walked
+// into). Without the flag a player keeps the gravity until something else changes it, as in Half-Life
+// (CBasePlayer::Spawn sets 1 on every spawn and new round). docs/FEATUREFUL_OPTIONS.md "Other entities".
+// Not saved (multiplayer only, as trigger_inout): the list of players inside is rebuilt by the next touch.
+//=========================================================
+
+#define SF_TRIGGER_GRAVITY_START_OFF		2
+#define SF_TRIGGER_GRAVITY_RESET_ON_LEAVE	4
+#define GRAVITY_MAX_INSIDE				32	// players (the engine's MAX_CLIENTS)
+
 class CTriggerGravity : public CBaseTrigger
 {
 public:
 	void Spawn( void );
+	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void UpdateOnRemove( void );
 	void EXPORT GravityTouch( CBaseEntity *pOther );
+	void EXPORT GravityThink( void );
+
+private:
+	void ResetPlayer( CBaseEntity *pPlayer );
+	void ResetAll( void );
+
+	EHANDLE m_hInside[ GRAVITY_MAX_INSIDE ];
+	int m_iInside;
 };
 LINK_ENTITY_TO_CLASS( trigger_gravity, CTriggerGravity );
 
@@ -3071,6 +3288,15 @@ void CTriggerGravity::Spawn( void )
 {
 	InitTrigger();
 	SetTouch( &CTriggerGravity::GravityTouch );
+	SetThink( &CTriggerGravity::GravityThink );
+	m_iInside = 0;
+	pev->nextthink = -1;
+
+	if ( FBitSet( pev->spawnflags, SF_TRIGGER_GRAVITY_START_OFF ) )
+	{
+		pev->solid = SOLID_NOT;
+		UTIL_SetOrigin( pev, pev->origin );
+	}
 }
 
 void CTriggerGravity::GravityTouch( CBaseEntity *pOther )
@@ -3079,7 +3305,108 @@ void CTriggerGravity::GravityTouch( CBaseEntity *pOther )
 	if ( !pOther->IsPlayer() )
 		return;
 
+	if ( !UTIL_IsMasterTriggered( m_sMaster, pOther ) )
+		return;
+
+	if ( !FBitSet( pev->spawnflags, SF_TRIGGER_GRAVITY_RESET_ON_LEAVE ) )
+	{
+		pOther->pev->gravity = pev->gravity;
+		return;
+	}
+
+	// "Reset on leave": only players in play, each tracked until he leaves
+	if ( !Logic_IsPlayerInPlay( pOther ) )
+		return;
+
 	pOther->pev->gravity = pev->gravity;
+
+	for ( int i = 0; i < m_iInside; i++ )
+	{
+		if ( (CBaseEntity *)m_hInside[i] == pOther )
+			return;	// already inside
+	}
+
+	if ( m_iInside >= GRAVITY_MAX_INSIDE )
+		return;
+
+	m_hInside[ m_iInside++ ] = pOther;
+
+	if ( pev->nextthink <= 0 )
+		pev->nextthink = gpGlobals->time + 0.1;
+}
+
+// every 0.1 s (as trigger_inout): who has left
+void CTriggerGravity::GravityThink( void )
+{
+	int kept = 0;
+
+	for ( int i = 0; i < m_iInside; i++ )
+	{
+		CBaseEntity *pEnt = m_hInside[i];
+
+		if ( !pEnt )
+			continue;	// gone
+
+		if ( !Intersects( pEnt ) || !Logic_IsPlayerInPlay( pEnt ) )
+			ResetPlayer( pEnt );
+		else
+			m_hInside[ kept++ ] = pEnt;
+	}
+
+	for ( int i = kept; i < m_iInside; i++ )
+		m_hInside[i] = NULL;
+	m_iInside = kept;
+
+	pev->nextthink = m_iInside ? gpGlobals->time + 0.1 : -1;
+}
+
+void CTriggerGravity::ResetPlayer( CBaseEntity *pPlayer )
+{
+	// only the gravity this trigger gave: another trigger_gravity he is in now keeps its own
+	if ( pPlayer->pev->gravity == pev->gravity )
+		pPlayer->pev->gravity = 1.0;
+}
+
+void CTriggerGravity::ResetAll( void )
+{
+	for ( int i = 0; i < m_iInside; i++ )
+	{
+		CBaseEntity *pEnt = m_hInside[i];
+
+		if ( pEnt )
+			ResetPlayer( pEnt );
+		m_hInside[i] = NULL;
+	}
+	m_iInside = 0;
+	pev->nextthink = -1;
+}
+
+// SBO 2.1: On turns it on, Off turns it off, Toggle toggles
+void CTriggerGravity::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	BOOL bOn = pev->solid != SOLID_NOT;
+
+	if ( !ShouldToggle( useType, bOn ) )
+		return;
+
+	if ( bOn )
+	{
+		pev->solid = SOLID_NOT;
+		ResetAll();	// "Reset on leave": the players inside have left
+	}
+	else
+	{
+		pev->solid = SOLID_TRIGGER;
+		gpGlobals->force_retouch++;
+	}
+	UTIL_SetOrigin( pev, pev->origin );
+}
+
+// SBO 2.1: removed (killtarget) with players inside: they have left
+void CTriggerGravity::UpdateOnRemove( void )
+{
+	ResetAll();
+	CBaseTrigger::UpdateOnRemove();
 }
 
 
@@ -3095,6 +3422,8 @@ public:
 	void KeyValue( KeyValueData *pkvd );
 	void Spawn( void );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void EXPORT ChangeThink( void );	// SBO 2.0: "Delay before trigger"
+	void ChangeTarget( CBaseEntity *pActivator );
 
 	int ObjectCaps( void ) { return CBaseDelay::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 	virtual int		Save( CSave &save );
@@ -3130,8 +3459,35 @@ void CTriggerChangeTarget::Spawn( void )
 }
 
 
+// SBO 2.0: "Delay before trigger" (the FGD's Targetx base): the new target is set that many seconds after the trigger,
+// as a delayed SUB_UseTargets fires (Half-Life set it at once and never read the delay). The change is the same each
+// time, so a trigger while one is pending changes nothing more. "KillTarget" (Targetx too) removes its entities at
+// the same moment, before the change, as SUB_UseTargets does (Half-Life never read it).
 void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	if ( m_flDelay > 0 )
+	{
+		if ( m_pfnThink != NULL )
+			return;
+		m_hActivator = pActivator;
+		SetThink( &CTriggerChangeTarget::ChangeThink );
+		pev->nextthink = gpGlobals->time + m_flDelay;
+		return;
+	}
+
+	ChangeTarget( pActivator );
+}
+
+void CTriggerChangeTarget::ChangeThink( void )
+{
+	SetThink( NULL );
+	ChangeTarget( m_hActivator );
+}
+
+void CTriggerChangeTarget::ChangeTarget( CBaseEntity *pActivator )
+{
+	SUB_KillTargets( pActivator );	// as SUB_UseTargets: !activator / !caller, never a player or itself
+
 	CBaseEntity *pTarget = UTIL_FindEntityByString( NULL, "targetname", STRING( pev->target ) );
 
 	if (pTarget)
@@ -3151,6 +3507,11 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 #define SF_CAMERA_PLAYER_POSITION	1
 #define SF_CAMERA_PLAYER_TARGET		2
 #define SF_CAMERA_PLAYER_TAKECONTROL 4
+// SBO 2.0 (2026-11-07): "All Players", Sven Co-op's bit (SevenKewp dlls/triggers/CTriggerCamera.h
+// SF_CAMERA_ALL_PLAYERS; Featureful keeps 8 reserved for it): every player in play gets the camera's view, not only
+// the activator. No map sets it (scan 2026-11-07)
+#define SF_CAMERA_ALL_PLAYERS		8
+#define CAMERA_MAX_VIEWERS			32		// one per client slot (entity index - 1), MAX_CLIENTS
 // SBO 2.0, from Featureful (halflife-featureful dlls/triggers.cpp CTriggerCamera, commits 633c971, 31a3028, 04cbb94,
 // 2026-10-13; Half-Life 1 SDK license; Sven Co-op's "Instant Move" bit): no map sets these bits or "turnspeed"
 #define SF_CAMERA_INSTANT_MOVE			64		// from path to path at the path's speed, no smoothing
@@ -3164,6 +3525,8 @@ void CTriggerChangeTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 #define SF_CAMERA_DONT_SLOW_DOWN_IF_NOT_FREEZE	(1<<13)	// without Freeze Player its speed is not damped every frame
 #define SF_CAMERA_DONT_SKIP_FIRST_PATH_CORNER	(1<<14)	// travels to the first path corner (Half-Life starts at the second)
 #define SF_CAMERA_INSTANT_INITIAL_TURN			(1<<15)	// faces its target at once when it starts
+// SBO 2.0: 1<<17 "Hide HUD and crosshair" is SF_CAMERA_HIDE_HUD in player.h (the player code hides the HUD while the
+// camera has the view)
 
 class CTriggerCamera : public CBaseDelay
 {
@@ -3206,8 +3569,21 @@ public:
 	// SBO 2.0: the capabilities this camera took from its player instead of FL_FROZEN (Freeze Player with Stop by
 	// player input): the engine drops a frozen client's buttons (SV_ParseMove), so +use never reached the game
 	int m_iCapsTaken;
-	void TakeControl( CBasePlayer *pPlayer );
-	void GiveControl( CBasePlayer *pPlayer );
+	void TakeControl( CBasePlayer *pPlayer, int &iCapsTaken );
+	void GiveControl( CBasePlayer *pPlayer, int &iCapsTaken );
+
+	// SBO 2.0 "All Players" (8): the players who got the view, by client slot, each with the capabilities the camera
+	// took from him (Freeze Player with Stop by player input) and his connection's user id: a client who connects
+	// to a slot that was left keeps the same edict (and EHANDLE), and is not the viewer. The ids are not saved:
+	// 0 (after a restore) takes the slot's player
+	EHANDLE m_hViewers[ CAMERA_MAX_VIEWERS ];
+	int m_iViewerCaps[ CAMERA_MAX_VIEWERS ];
+	int m_iViewerIds[ CAMERA_MAX_VIEWERS ];
+	CBasePlayer *Viewer( int i );
+	void TakeViewers( void );
+	void ReleaseViewer( int i );
+	void ReleaseViewers( void );
+	BOOL ViewersInPlay( void );
 };
 LINK_ENTITY_TO_CLASS( trigger_camera, CTriggerCamera );
 
@@ -3230,6 +3606,8 @@ TYPEDESCRIPTION	CTriggerCamera::m_SaveData[] =
 	DEFINE_FIELD( CTriggerCamera, m_state, FIELD_INTEGER ),
 	DEFINE_FIELD( CTriggerCamera, m_turnspeed, FIELD_FLOAT ),
 	DEFINE_FIELD( CTriggerCamera, m_iszTurnedOffTarget, FIELD_STRING ),
+	DEFINE_ARRAY( CTriggerCamera, m_hViewers, FIELD_EHANDLE, CAMERA_MAX_VIEWERS ),
+	DEFINE_ARRAY( CTriggerCamera, m_iViewerCaps, FIELD_INTEGER, CAMERA_MAX_VIEWERS ),
 };
 
 IMPLEMENT_SAVERESTORE(CTriggerCamera,CBaseDelay);
@@ -3298,6 +3676,18 @@ void CTriggerCamera :: KeyValue( KeyValueData *pkvd )
 
 void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	// SBO 2.0 "All Players" with "Stop by player input": a viewer's use key (CBasePlayer::PlayerUse turns the camera
+	// off with the player as activator and caller) gives only him his own view back; the camera runs on for the
+	// others and ends as it would
+	if ( FBitSet( pev->spawnflags, SF_CAMERA_ALL_PLAYERS ) && FBitSet( pev->spawnflags, SF_CAMERA_STOP_BY_PLAYER_INPUT_USE )
+		&& useType == USE_OFF && m_state && pActivator && pActivator == pCaller && pActivator->IsPlayer() )
+	{
+		const int i = pActivator->entindex() - 1;
+		if ( i >= 0 && i < CAMERA_MAX_VIEWERS && Viewer( i ) == pActivator )
+			ReleaseViewer( i );
+		return;
+	}
+
 	if ( !ShouldToggle( useType, m_state ) )
 		return;
 
@@ -3308,22 +3698,56 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		m_flReturnTime = gpGlobals->time;
 		return;
 	}
-	if ( !pActivator || !pActivator->IsPlayer() )
-	{
-		pActivator = CBaseEntity::Instance(g_engfuncs.pfnPEntityOfEntIndex( 1 ));
 
-		// halflife-updated: no player in slot 1 (a free client slot has no entity)
-		if ( !pActivator )
-			return;
+	// SBO 2.0: without "All Players" the view goes to the player who fired the camera, if they are in play. A camera
+	// fired by anything else (a monster, a timer, another entity, nothing) or by a player out of play (dead,
+	// spectating, waiting) has no viewer: it moves, holds, ends and fires its targets, and touches no player.
+	// "All Players": every player in play gets the view (TakeViewers); Start At Player and Follow Player use the
+	// activator if they are a player in play, else the first player in play, else the player in client slot 1.
+	const BOOL fAllPlayers = FBitSet( pev->spawnflags, SF_CAMERA_ALL_PLAYERS );
+	CBasePlayer *pPlayer = NULL;	// without "All Players": the viewer, NULL for none
+	if ( fAllPlayers )
+	{
+		if ( !Logic_IsPlayerInPlay( pActivator ) )
+		{
+			for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+			{
+				CBaseEntity *pInPlay = UTIL_PlayerByIndex( i );
+				if ( Logic_IsPlayerInPlay( pInPlay ) )
+				{
+					pActivator = pInPlay;
+					break;
+				}
+			}
+		}
+
+		if ( !pActivator || !pActivator->IsPlayer() )
+		{
+			pActivator = CBaseEntity::Instance(g_engfuncs.pfnPEntityOfEntIndex( 1 ));
+
+			// halflife-updated: no player in slot 1 (a free client slot has no entity)
+			if ( !pActivator )
+				return;
+		}
 	}
-		
-	// SBO 2.0 (Featureful): "Alive player only": nothing for a player out of play (dead, observing, waiting).
-	// Featureful leaves the camera "on" then; SBO turns it back off, so the next trigger starts it
+	else
+	{
+		pPlayer = Logic_IsPlayerInPlay( pActivator ) ? (CBasePlayer *)pActivator : NULL;
+		pActivator = pPlayer;
+	}
+
+	// SBO 2.0 (Featureful): "Alive player only": nothing for a player out of play (dead, observing, waiting) or for a
+	// camera with no viewer. Featureful leaves the camera "on" then; SBO turns it back off, so the next trigger starts it
 	if ( FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_ALIVE_ONLY ) && !Logic_IsPlayerInPlay( pActivator ) )
 	{
 		m_state = 0;
 		return;
 	}
+
+	// a viewer the camera still has (turned off and on again before it let go) gets their own view back first
+	CBasePlayer *pOldViewer = (CBasePlayer *)((CBaseEntity *)m_hPlayer);
+	if ( !fAllPlayers && pOldViewer && (CBaseEntity *)pOldViewer->m_hViewEntity == this )
+		ReleasePlayer();
 
 	m_hPlayer = pActivator;
 
@@ -3331,7 +3755,8 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	pev->speed = m_initialSpeed;
 	m_targetSpeed = m_initialSpeed;
 
-	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TARGET ) )
+	// Follow Player with no viewer looks at the camera's target
+	if ( FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TARGET ) && pActivator )
 	{
 		m_hTarget = m_hPlayer;
 	}
@@ -3340,22 +3765,17 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		m_hTarget = GetNextTarget();
 	}
 
-	// Nothing to look at!
+	// Nothing to look at! (a camera with no viewer turns back off, so the next trigger starts it)
 	if ( m_hTarget == NULL )
 	{
+		if ( !pActivator )
+			m_state = 0;
 		return;
 	}
 
-
-	// SBO 2.0: only a living player gets the camera's view (and loses control). The camera gives the view back to
-	// a living player only, so a dead player or an observer (player 1 when something else fired the camera) was
-	// left with it; for them the camera just runs and fires its targets.
-	CBasePlayer *pPlayer = (CBasePlayer *)pActivator;
-	BOOL fTakeView = pPlayer->IsAlive() && !pPlayer->has_disconnected;
-
-	if ( fTakeView && FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL ) )
+	if ( pPlayer && FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL ) )
 	{
-		TakeControl( pPlayer );
+		TakeControl( pPlayer, m_iCapsTaken );
 	}
 
 	if ( m_sPath )
@@ -3364,6 +3784,16 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	}
 	else
 	{
+		m_pentPath = NULL;
+	}
+
+	// SBO 2.1 (docs/MOVEWITH.md): a camera with a parent rides with it, so its position comes from the parent only
+	// and its own path is not used; its aim, turning and target tracking stay its own
+	const BOOL fRides = MoveWith_IsChild( this );
+	if ( m_pentPath && fRides )
+	{
+		ALERT( at_console, "trigger_camera %s has a parent, so it ignores its path and rides with the parent\n",
+			STRING( pev->targetname ) );
 		m_pentPath = NULL;
 	}
 
@@ -3376,14 +3806,16 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		m_flStopTime += m_pentPath->GetDelay();
 	}
 
-	// copy over player information
-	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_POSITION ) )
+	// copy over player information (Start At Player with no viewer: the camera starts where it is)
+	if (FBitSet (pev->spawnflags, SF_CAMERA_PLAYER_POSITION ) && pActivator )
 	{
-		UTIL_SetOrigin( pev, pActivator->pev->origin + pActivator->pev->view_ofs );
+		// (a camera with a parent takes the player's view angles only: its place is on the parent)
+		if ( !fRides )
+			UTIL_SetOrigin( pev, pActivator->pev->origin + pActivator->pev->view_ofs );
 		pev->angles.x = -pActivator->pev->angles.x;
 		pev->angles.y = pActivator->pev->angles.y;
 		pev->angles.z = 0;
-		pev->velocity = pActivator->pev->velocity;
+		pev->velocity = fRides ? g_vecZero : pActivator->pev->velocity;
 	}
 	else
 	{
@@ -3398,13 +3830,18 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		}
 	}
 
-	if ( fTakeView )
+	if ( pPlayer )
 	{
-		SET_VIEW( pActivator->edict(), edict() );
+		SET_VIEW( pPlayer->edict(), edict() );
 		pPlayer->m_hViewEntity = this;	// halflife-updated; CBasePlayer::ResetViewEntity (death, observer)
 	}
+	else if ( fAllPlayers )
+	{
+		TakeViewers();
+	}
 
-	SET_MODEL(ENT(pev), STRING(pActivator->pev->model) );
+	if ( pActivator )
+		SET_MODEL(ENT(pev), STRING(pActivator->pev->model) );
 
 	// follow the player down
 	SetThink( &CTriggerCamera::FollowTarget );
@@ -3427,14 +3864,13 @@ void CTriggerCamera::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 void CTriggerCamera::FollowTarget( )
 {
-	if (m_hPlayer == NULL)
-		return;
-
 	// SBO 2.0 (Featureful): "Ignore Hold Time" ends only when turned off; "Alive player only" also when the
-	// player leaves play
+	// player leaves play. pPlayer is NULL for a camera with no viewer, which runs all the same
 	CBasePlayer *pPlayer = (CBasePlayer *)((CBaseEntity *)m_hPlayer);
 	const BOOL fGoOff = FBitSet( pev->spawnflags, SF_CAMERA_IGNORE_HOLD_TIME ) ? !m_state : m_flReturnTime < gpGlobals->time;
-	const BOOL fTurnOff = FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_ALIVE_ONLY ) && !Logic_IsPlayerInPlay( pPlayer );
+	// ("All Players": when none of its viewers is in play any more)
+	const BOOL fTurnOff = FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_ALIVE_ONLY )
+		&& ( FBitSet( pev->spawnflags, SF_CAMERA_ALL_PLAYERS ) ? !ViewersInPlay() : !Logic_IsPlayerInPlay( pPlayer ) );
 
 	if (m_hTarget == NULL || fGoOff || fTurnOff)
 	{
@@ -3444,8 +3880,8 @@ void CTriggerCamera::FollowTarget( )
 			SUB_UseTargets( this, USE_TOGGLE, 0 );
 		if ( !FStringNull( m_iszTurnedOffTarget ) )
 		{
-			// the player, while still connected
-			CBaseEntity *pActivator = pPlayer->has_disconnected ? (CBaseEntity *)this : (CBaseEntity *)pPlayer;
+			// the player, while still connected; the camera itself with no viewer
+			CBaseEntity *pActivator = ( !pPlayer || pPlayer->has_disconnected ) ? (CBaseEntity *)this : (CBaseEntity *)pPlayer;
 			FireTargets( STRING( m_iszTurnedOffTarget ), pActivator, this, USE_TOGGLE, 0 );
 		}
 		pev->avelocity = Vector( 0, 0, 0 );
@@ -3506,7 +3942,8 @@ void CTriggerCamera::FollowTarget( )
 // Freeze Player. With "Stop by player input" the player keeps his buttons: movement, jump, duck and attack are taken
 // (player_capabilities' suppression, predicted by the client) instead of FL_FROZEN, which makes the engine zero a
 // client's buttons (SV_ParseMove), so his +use could never end the camera. Without it: FL_FROZEN, as Half-Life.
-void CTriggerCamera::TakeControl( CBasePlayer *pPlayer )
+// iCapsTaken: the player's record of the capabilities taken (m_iCapsTaken, or his m_iViewerCaps with "All Players")
+void CTriggerCamera::TakeControl( CBasePlayer *pPlayer, int &iCapsTaken )
 {
 	if ( !FBitSet( pev->spawnflags, SF_CAMERA_STOP_BY_PLAYER_INPUT_USE ) )
 	{
@@ -3514,19 +3951,101 @@ void CTriggerCamera::TakeControl( CBasePlayer *pPlayer )
 		return;
 	}
 	const int iFreeze = PLAYER_SUPPRESS_MOVEMENT | PLAYER_SUPPRESS_JUMP | PLAYER_SUPPRESS_DUCK | PLAYER_SUPPRESS_ATTACK;
-	m_iCapsTaken = iFreeze & ~pPlayer->m_iSuppressedCaps;	// only what the player still had
-	pPlayer->SetSuppressedCaps( pPlayer->m_iSuppressedCaps | m_iCapsTaken );
+	iCapsTaken = iFreeze & ~pPlayer->m_iSuppressedCaps;	// only what the player still had
+	pPlayer->SetSuppressedCaps( pPlayer->m_iSuppressedCaps | iCapsTaken );
 }
 
-void CTriggerCamera::GiveControl( CBasePlayer *pPlayer )
+void CTriggerCamera::GiveControl( CBasePlayer *pPlayer, int &iCapsTaken )
 {
 	if ( !FBitSet( pev->spawnflags, SF_CAMERA_STOP_BY_PLAYER_INPUT_USE ) )
 	{
 		pPlayer->EnableControl( TRUE );
 		return;
 	}
-	pPlayer->SetSuppressedCaps( pPlayer->m_iSuppressedCaps & ~m_iCapsTaken );
-	m_iCapsTaken = 0;
+	pPlayer->SetSuppressedCaps( pPlayer->m_iSuppressedCaps & ~iCapsTaken );
+	iCapsTaken = 0;
+}
+
+// "All Players": viewer i while he is the same client, still connected; NULL otherwise
+CBasePlayer *CTriggerCamera::Viewer( int i )
+{
+	CBasePlayer *pPlayer = (CBasePlayer *)((CBaseEntity *)m_hViewers[ i ]);
+	if ( !pPlayer || pPlayer->has_disconnected )
+		return NULL;
+	if ( m_iViewerIds[ i ] != 0 && GETPLAYERUSERID( pPlayer->edict() ) != m_iViewerIds[ i ] )
+		return NULL;
+	return pPlayer;
+}
+
+// "All Players": every player in play gets the camera's view, and loses his controls with Freeze Player. A player
+// who joins, respawns or comes into play later is not added
+void CTriggerCamera::TakeViewers( void )
+{
+	for ( int i = 0; i < CAMERA_MAX_VIEWERS; i++ )
+	{
+		m_hViewers[ i ] = NULL;
+		m_iViewerCaps[ i ] = 0;
+		m_iViewerIds[ i ] = 0;
+
+		CBasePlayer *pPlayer = i < gpGlobals->maxClients ? (CBasePlayer *)UTIL_PlayerByIndex( i + 1 ) : NULL;
+		if ( !Logic_IsPlayerInPlay( pPlayer ) )
+			continue;
+
+		m_hViewers[ i ] = pPlayer;
+		m_iViewerIds[ i ] = GETPLAYERUSERID( pPlayer->edict() );
+		if ( FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL ) )
+			TakeControl( pPlayer, m_iViewerCaps[ i ] );
+		SET_VIEW( pPlayer->edict(), edict() );
+		pPlayer->m_hViewEntity = this;
+	}
+}
+
+// "All Players": viewer i gets his own view back (and his controls, if the camera took them), as ReleasePlayer does
+// for the one player: a viewer who died or started observing got the view back then (ResetViewEntity); one who
+// left, or a new client in his slot, is not touched. A viewer another camera has taken since keeps that view, and
+// its Freeze Player
+void CTriggerCamera::ReleaseViewer( int i )
+{
+	CBasePlayer *pPlayer = Viewer( i );
+	if ( pPlayer )
+	{
+		CBaseEntity *pView = pPlayer->m_hViewEntity;
+		const BOOL fOtherView = pView && pView != this;
+
+		if ( pPlayer->IsAlive() )
+		{
+			if ( !fOtherView )
+				SET_VIEW( pPlayer->edict(), pPlayer->edict() );
+			if ( FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL )
+				&& ( !fOtherView || FBitSet( pev->spawnflags, SF_CAMERA_STOP_BY_PLAYER_INPUT_USE ) ) )
+				GiveControl( pPlayer, m_iViewerCaps[ i ] );
+		}
+		if ( pView == this )
+			pPlayer->m_hViewEntity = NULL;
+	}
+	m_hViewers[ i ] = NULL;
+	m_iViewerCaps[ i ] = 0;
+	m_iViewerIds[ i ] = 0;
+}
+
+void CTriggerCamera::ReleaseViewers( void )
+{
+	for ( int i = 0; i < CAMERA_MAX_VIEWERS; i++ )
+	{
+		if ( (CBaseEntity *)m_hViewers[ i ] )
+			ReleaseViewer( i );
+	}
+}
+
+// "All Players" with "Alive player only": one of its viewers is still in play
+BOOL CTriggerCamera::ViewersInPlay( void )
+{
+	for ( int i = 0; i < CAMERA_MAX_VIEWERS; i++ )
+	{
+		if ( Logic_IsPlayerInPlay( Viewer( i ) ) )
+			return TRUE;
+	}
+	return FALSE;
 }
 
 void CTriggerCamera::ReleasePlayer( void )
@@ -3534,6 +4053,12 @@ void CTriggerCamera::ReleasePlayer( void )
 	// SBO 2.0: a player who died or started observing got the view back then (CBasePlayer::ResetViewEntity),
 	// and FL_FROZEN is theirs now (Killed, StartObserver, PreThink for waiting players); a player who left
 	// is not touched (the edict stays, and may belong to a new client)
+	if ( FBitSet( pev->spawnflags, SF_CAMERA_ALL_PLAYERS ) )
+	{
+		ReleaseViewers();
+		return;
+	}
+
 	CBasePlayer *pPlayer = (CBasePlayer *)((CBaseEntity *)m_hPlayer);
 	if ( !pPlayer )
 		return;
@@ -3543,7 +4068,7 @@ void CTriggerCamera::ReleasePlayer( void )
 		SET_VIEW( pPlayer->edict(), pPlayer->edict() );
 		// SBO 2.0 (Featureful 057c8ae5): only a camera that took the controls (Freeze Player) gives them back
 		if ( FBitSet( pev->spawnflags, SF_CAMERA_PLAYER_TAKECONTROL ) )
-			GiveControl( pPlayer );
+			GiveControl( pPlayer, m_iCapsTaken );
 	}
 	if ( (CBaseEntity *)pPlayer->m_hViewEntity == this )
 		pPlayer->m_hViewEntity = NULL;
@@ -3555,7 +4080,7 @@ void CTriggerCamera::ReleasePlayer( void )
 void CTriggerCamera::UpdateOnRemove( void )
 {
 	CBasePlayer *pPlayer = (CBasePlayer *)((CBaseEntity *)m_hPlayer);
-	if ( m_state || ( pPlayer && (CBaseEntity *)pPlayer->m_hViewEntity == this ) )
+	if ( m_state || ( pPlayer && (CBaseEntity *)pPlayer->m_hViewEntity == this ) || FBitSet( pev->spawnflags, SF_CAMERA_ALL_PLAYERS ) )
 	{
 		ReleasePlayer();
 		m_state = 0;
@@ -3623,65 +4148,54 @@ void CTriggerCamera::Move()
 }
 
 //=========================================================
-// ReGameDLL_CS (regamedll/dlls/triggers.cpp, triggers.h): CS 1.6 weather entities. They have no settings: if the map
-// has one, CBasePlayer::SendWeatherInfo sends ReceiveW (rain or snow) and the client draws the weather around the view,
-// wherever the sky is above (cs16-client environment.cpp). As in CS the brush volume of func_rain/func_snow (and of
-// brush env_rain/env_snow) is not used. See docs/WEATHER.md.
+// Rain and snow (docs/WEATHER.md). The client draws them with the CS 1.6 weather (cs16-client environment.cpp); the
+// server sends each one with the WeatherVol message: the whole-map weather (CWeather: env_rain / env_snow, and CS's
+// func_rain / func_snow) and the brush volumes (CWeatherVolume: func_rainvolume / func_snowvolume) share its keys,
+// its spawnflags (Featureful's numbers) and the message; only the brush flag tells the client a volume from a
+// whole-map weather.
+//  - Keys: "intensity" (drops / flakes per update), "update_period" (seconds), rain: raindrop_width / raindrop_height /
+//    raindrop_min_speed / raindrop_max_speed / raindrop_life, snow: snowflake_min_size / snowflake_max_size /
+//    snowflake_min_speed / snowflake_max_speed / snowflake_life. Left out (or 0): the CS weather's values, except a
+//    volume's intensity (150 for snow too, Featureful's).
+//  - Wind (Spirit of Half-Life's rain_modify keys, also read under Spirit's names m_flWindX / m_flWindY / m_flRandX /
+//    m_flRandY): "wind_x" / "wind_y", a fixed sideways speed (units per second) of every drop / flake, which
+//    replaces the CS wind (random, changing every 15-30 s) once either is given; "wind_rand_x" / "wind_rand_y", a
+//    random extra -n..n per drop / flake, on the fixed wind or on the CS wind. All left out: the CS wind as before.
+//    Spawnflag 4 (not affected by wind) still means no sideways speed at all.
+//  - Spawnflags: 1 Start Active (always on without a name), 2 Allow indoor, 4 not affected by wind, rain 32 no wind
+//    puffs / 64 no splashes / 128 no ripples, 256 goes through brush entities, 512 ignores water.
+//  - Use: on / off / toggle; every client gets the change at once (one message, no per-frame traffic).
+//  - A key or spawnflag changed at run time (trigger_changevalue / trigger_copyvalue: KeyValue_DispatchRuntime,
+//    RuntimeKeyValueChanged) gets SetDefaults' defaults and limits, and every client gets the weather again in the
+//    next frame (one message for all the keys changed in a frame).
+//  - cl_weather (0-3) multiplies every intensity on the client (0: none).
 //=========================================================
-class CWeather : public CBaseTrigger
-{
-public:
-	void Spawn( void );
-};
-
-LINK_ENTITY_TO_CLASS( env_snow, CWeather );
-LINK_ENTITY_TO_CLASS( func_snow, CWeather );
-LINK_ENTITY_TO_CLASS( env_rain, CWeather );
-LINK_ENTITY_TO_CLASS( func_rain, CWeather );
-
-void CWeather :: Spawn( void )
-{
-	// SBO: a point entity has no brush model for InitTrigger's SET_MODEL; it only has to exist
-	if ( FStringNull( pev->model ) )
-	{
-		pev->solid = SOLID_NOT;
-		pev->movetype = MOVETYPE_NONE;
-		pev->effects |= EF_NODRAW;
-		return;
-	}
-
-	InitTrigger();
-}
-
-//=========================================================
-// SBO 2.0, from Featureful (dlls/effects.cpp CFuncRainVolume / CFuncSnowVolume, Half-Life 1 SDK license): rain or snow
-// only inside a brush, drawn by the clients with the CS 1.6 weather above (cs16-client environment.cpp, which already
-// has Featureful's volume weather: WeatherData::IsVolume). Featureful's particle weather is not imported: the server
-// sends the volume (WeatherVol) and the client spawns CS drops / flakes in it. docs/WEATHER.md "Rain and snow volumes".
-//  - Keys: "intensity" (drops / flakes per update, default 150), "update_period" (seconds, default 0.3 rain, 0.5
-//    snow), rain: raindrop_width / raindrop_height / raindrop_min_speed / raindrop_max_speed / raindrop_life, snow:
-//    snowflake_min_size / snowflake_max_size / snowflake_min_speed / snowflake_max_speed / snowflake_life.
-//  - Spawnflags (Featureful's numbers): 1 Start Active (always on without a name), 2 Allow indoor, 4 not affected by
-//    wind, rain 32 no wind puffs / 64 no splashes / 128 no ripples, 256 goes through brush entities, 512 ignores water.
-//  - Use: on / off / toggle; every client gets the change at once (one message per volume, no per-frame traffic).
-//  - With a global env_rain / env_snow: both draw, the volume adds its own drops inside its brush. cl_weather scales
-//    volumes as it scales the global weather (0: none).
-//=========================================================
-#define SF_WEATHERVOL_ACTIVE		1
+#define SF_WEATHER_ACTIVE			1
 #define WEATHERVOL_BRUSH_FLAG		( 1 << 12 )	// the client's WEATHER_BRUSH_ENTITY
-#define WEATHERVOL_SENDFLAGS		( 2 | 4 | 32 | 64 | 128 | 256 | 512 )
+#define WEATHERVOL_FIXED_WIND		( 1 << 13 )	// the client's WEATHER_FIXED_WIND: wind_x / wind_y given
+#define WEATHER_SENDFLAGS			( 2 | 4 | 32 | 64 | 128 | 256 | 512 )
 
 extern int gmsgWeatherVol;
 
-class CWeatherVolume : public CBaseEntity
+// what both kinds share: the keys, Use and the message. A CBaseTrigger for CS's brush env_rain / func_rain
+// (InitTrigger, CWeather::Spawn).
+class CWeatherBase : public CBaseTrigger
 {
 public:
-	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
+	void EXPORT ResendThink( void );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+	virtual BOOL IsSnow( void ) = 0;
+	virtual BOOL IsVolume( void ) = 0;
+	virtual int DefaultIntensity( void ) = 0;
+	virtual BOOL IsSent( void ) { return TRUE; }	// its clients get it (CWeather: named, or the map's unnamed one)
+	void SetDefaults( void );
+	// SBO 2.1 (Spirit of Half-Life env_rain): On while it is active (an unnamed one always is), Off while it is off
+	STATE GetState( CBaseEntity *pActivator ) { return FBitSet( pev->spawnflags, SF_WEATHER_ACTIVE ) ? STATE_ON : STATE_OFF; }
 	void Send( CBasePlayer *pPlayer );	// NULL: every client
-	BOOL IsSnow( void ) { return FClassnameIs( pev, "func_snowvolume" ); }
 
 	virtual int Save( CSave &save );
 	virtual int Restore( CRestore &restore );
@@ -3692,25 +4206,30 @@ public:
 	float m_flSize1, m_flSize2;		// rain: width, height; snow: min, max size
 	float m_flSpeed1, m_flSpeed2;	// min, max falling speed
 	float m_flLife;
+	float m_flWindX, m_flWindY;		// wind_x / wind_y: the fixed sideways speed (units per second)
+	float m_flRandX, m_flRandY;		// wind_rand_x / wind_rand_y: random extra sideways speed, -n..n
+	int m_iWindSet;					// 1 wind_x, 2 wind_y given: the fixed wind replaces the CS wind
 };
 
-LINK_ENTITY_TO_CLASS( func_rainvolume, CWeatherVolume );
-LINK_ENTITY_TO_CLASS( func_snowvolume, CWeatherVolume );
-
-TYPEDESCRIPTION CWeatherVolume::m_SaveData[] =
+TYPEDESCRIPTION CWeatherBase::m_SaveData[] =
 {
-	DEFINE_FIELD( CWeatherVolume, m_iIntensity, FIELD_INTEGER ),
-	DEFINE_FIELD( CWeatherVolume, m_flUpdatePeriod, FIELD_FLOAT ),
-	DEFINE_FIELD( CWeatherVolume, m_flSize1, FIELD_FLOAT ),
-	DEFINE_FIELD( CWeatherVolume, m_flSize2, FIELD_FLOAT ),
-	DEFINE_FIELD( CWeatherVolume, m_flSpeed1, FIELD_FLOAT ),
-	DEFINE_FIELD( CWeatherVolume, m_flSpeed2, FIELD_FLOAT ),
-	DEFINE_FIELD( CWeatherVolume, m_flLife, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_iIntensity, FIELD_INTEGER ),
+	DEFINE_FIELD( CWeatherBase, m_flUpdatePeriod, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flSize1, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flSize2, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flSpeed1, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flSpeed2, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flLife, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flWindX, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flWindY, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flRandX, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_flRandY, FIELD_FLOAT ),
+	DEFINE_FIELD( CWeatherBase, m_iWindSet, FIELD_INTEGER ),
 };
 
-IMPLEMENT_SAVERESTORE( CWeatherVolume, CBaseEntity );
+IMPLEMENT_SAVERESTORE( CWeatherBase, CBaseTrigger );
 
-void CWeatherVolume::KeyValue( KeyValueData *pkvd )
+void CWeatherBase::KeyValue( KeyValueData *pkvd )
 {
 	float f = atof( pkvd->szValue );
 	if ( FStrEq( pkvd->szKeyName, "intensity" ) )
@@ -3727,13 +4246,246 @@ void CWeatherVolume::KeyValue( KeyValueData *pkvd )
 		m_flSpeed2 = f;
 	else if ( FStrEq( pkvd->szKeyName, "raindrop_life" ) || FStrEq( pkvd->szKeyName, "snowflake_life" ) )
 		m_flLife = f;
+	// wind_x / wind_y given with a value: the fixed wind (an empty value is left out)
+	else if ( FStrEq( pkvd->szKeyName, "wind_x" ) || FStrEq( pkvd->szKeyName, "m_flWindX" ) )
+	{
+		m_flWindX = f;
+		m_iWindSet = pkvd->szValue[0] ? ( m_iWindSet | 1 ) : ( m_iWindSet & ~1 );
+	}
+	else if ( FStrEq( pkvd->szKeyName, "wind_y" ) || FStrEq( pkvd->szKeyName, "m_flWindY" ) )
+	{
+		m_flWindY = f;
+		m_iWindSet = pkvd->szValue[0] ? ( m_iWindSet | 2 ) : ( m_iWindSet & ~2 );
+	}
+	else if ( FStrEq( pkvd->szKeyName, "wind_rand_x" ) || FStrEq( pkvd->szKeyName, "m_flRandX" ) )
+		m_flRandX = f;
+	else if ( FStrEq( pkvd->szKeyName, "wind_rand_y" ) || FStrEq( pkvd->szKeyName, "m_flRandY" ) )
+		m_flRandY = f;
 	else
 	{
-		CBaseEntity::KeyValue( pkvd );
+		CBaseTrigger::KeyValue( pkvd );
 		return;
 	}
 	pkvd->fHandled = TRUE;
 }
+
+// the current value of a weather key (trigger_changevalue's operations, trigger_copyvalue, calc entities)
+CKeyValue CWeatherBase::GetKeyValue( const char *keyName )
+{
+	static const char *s_floatKeys[] = { "update_period", "raindrop_width", "snowflake_min_size", "raindrop_height",
+		"snowflake_max_size", "raindrop_min_speed", "snowflake_min_speed", "raindrop_max_speed", "snowflake_max_speed",
+		"raindrop_life", "snowflake_life", "wind_x", "m_flWindX", "wind_y", "m_flWindY", "wind_rand_x", "m_flRandX",
+		"wind_rand_y", "m_flRandY" };
+	const float floats[] = { m_flUpdatePeriod, m_flSize1, m_flSize1, m_flSize2, m_flSize2, m_flSpeed1, m_flSpeed1,
+		m_flSpeed2, m_flSpeed2, m_flLife, m_flLife, m_flWindX, m_flWindX, m_flWindY, m_flWindY, m_flRandX, m_flRandX,
+		m_flRandY, m_flRandY };
+
+	CKeyValue keyvalue = g_emptyKeyValue;
+	if ( FStrEq( keyName, "intensity" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "intensity";
+		keyvalue.iVal = m_iIntensity;
+		return keyvalue;
+	}
+	for ( int i = 0; i < (int)ARRAYSIZE( s_floatKeys ); i++ )
+	{
+		if ( FStrEq( keyName, s_floatKeys[i] ) )
+		{
+			keyvalue.keyType = KEY_TYPE_FLOAT;
+			keyvalue.keyName = s_floatKeys[i];
+			keyvalue.fVal = floats[i];
+			return keyvalue;
+		}
+	}
+	return CBaseTrigger::GetKeyValue( keyName );
+}
+
+// trigger_changevalue / trigger_copyvalue changed a key or the spawnflags (keyvalue.cpp KeyValue_DispatchRuntime): the
+// defaults and limits of Spawn, then every client gets the weather in the next frame (after HandleTarget's
+// UTIL_SetOrigin, so a moved volume sends its new box; several keys changed in one frame make one message)
+void CWeatherBase::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( FStringNull( pev->targetname ) )
+		SetBits( pev->spawnflags, SF_WEATHER_ACTIVE );	// an unnamed one is always on
+	SetDefaults();
+	SetThink( &CWeatherBase::ResendThink );
+	pev->nextthink = gpGlobals->time + 0.01;
+}
+
+void CWeatherBase::ResendThink( void )
+{
+	SetThink( NULL );
+	if ( IsSent() )
+		Send( NULL );
+}
+
+// a key left out or 0 (or below) gets the CS weather's value (cs16-client RainData / SnowData), the intensity the
+// class's; clamped to what the client keeps. The wind keys have no default: left out is the CS wind.
+void CWeatherBase::SetDefaults( void )
+{
+	const BOOL fSnow = IsSnow();
+	if ( m_iIntensity <= 0 )
+		m_iIntensity = DefaultIntensity();
+	if ( m_iIntensity > 1000 )
+		m_iIntensity = 1000;
+	if ( m_flUpdatePeriod <= 0 )
+		m_flUpdatePeriod = fSnow ? 0.5 : 0.3;
+	if ( m_flUpdatePeriod < 0.05 )
+		m_flUpdatePeriod = 0.05;
+	if ( m_flSize1 <= 0 )
+		m_flSize1 = fSnow ? 2.1 : 2;
+	if ( m_flSize2 <= 0 )
+		m_flSize2 = fSnow ? 2.6 : 80;
+	if ( m_flSpeed1 <= 0 )
+		m_flSpeed1 = fSnow ? 131 : 500;
+	if ( m_flSpeed2 <= 0 )
+		m_flSpeed2 = fSnow ? 210 : 1800;
+	if ( m_flLife <= 0 )
+		m_flLife = fSnow ? 3.0 : 1.0;
+	// a spread is -n..n either way
+	m_flRandX = fabs( m_flRandX );
+	m_flRandY = fabs( m_flRandY );
+}
+
+// WeatherVol: short entity index, byte type (1 rain, 2 snow; 0 removes it), short flags (the client's weather
+// flags: 1, the brush flag for a volume, the spawnflags it reads), short intensity, short update period x 100, 6
+// coords (the entity's box: where a volume's drops fall; unused for a whole-map weather), 4 shorts: rain width,
+// height, min and max speed / snow min size x 10, max size x 10, min and max speed (0: the client's CS default),
+// short life x 100 (0: default), 4 signed shorts: wind x, wind y (units per second; used with the fixed-wind flag),
+// random spread x, y (0: none). 39 bytes. pPlayer NULL: every client.
+void CWeatherBase::Send( CBasePlayer *pPlayer )
+{
+	const BOOL fActive = FBitSet( pev->spawnflags, SF_WEATHER_ACTIVE ) != 0;
+	const BOOL fSnow = IsSnow();
+	// rounded, not truncated: 2.1 x 10 is 20.99 in float
+	auto Clamp = []( float v ) { return (int)( v < 0 ? 0 : ( v > 32000 ? 32000 : v + 0.5f ) ); };
+	auto ClampSigned = []( float v ) { return (int)( v < -32000 ? -32000 : ( v > 32000 ? 32000 : floor( v + 0.5f ) ) ); };
+	if ( pPlayer )
+		MESSAGE_BEGIN( MSG_ONE, gmsgWeatherVol, NULL, pPlayer->pev );
+	else
+		MESSAGE_BEGIN( MSG_ALL, gmsgWeatherVol );
+		WRITE_SHORT( entindex() );
+		WRITE_BYTE( fActive ? ( fSnow ? 2 : 1 ) : 0 );
+		WRITE_SHORT( ( IsVolume() ? WEATHERVOL_BRUSH_FLAG : 0 ) | ( m_iWindSet ? WEATHERVOL_FIXED_WIND : 0 ) | 1
+			| ( pev->spawnflags & WEATHER_SENDFLAGS ) );
+		WRITE_SHORT( m_iIntensity );
+		WRITE_SHORT( Clamp( m_flUpdatePeriod * 100 ) );
+		WRITE_COORD( pev->absmin.x );
+		WRITE_COORD( pev->absmin.y );
+		WRITE_COORD( pev->absmin.z );
+		WRITE_COORD( pev->absmax.x );
+		WRITE_COORD( pev->absmax.y );
+		WRITE_COORD( pev->absmax.z );
+		WRITE_SHORT( Clamp( fSnow ? m_flSize1 * 10 : m_flSize1 ) );
+		WRITE_SHORT( Clamp( fSnow ? m_flSize2 * 10 : m_flSize2 ) );
+		WRITE_SHORT( Clamp( m_flSpeed1 ) );
+		WRITE_SHORT( Clamp( m_flSpeed2 ) );
+		WRITE_SHORT( Clamp( m_flLife * 100 ) );
+		WRITE_SHORT( ClampSigned( m_flWindX ) );
+		WRITE_SHORT( ClampSigned( m_flWindY ) );
+		WRITE_SHORT( Clamp( m_flRandX ) );
+		WRITE_SHORT( Clamp( m_flRandY ) );
+	MESSAGE_END();
+}
+
+void CWeatherBase::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	// an unnamed one is always on
+	if ( FStringNull( pev->targetname ) )
+		return;
+	BOOL fActive = FBitSet( pev->spawnflags, SF_WEATHER_ACTIVE ) != 0;
+	if ( !ShouldToggle( useType, fActive ) )
+		return;
+	if ( fActive )
+		ClearBits( pev->spawnflags, SF_WEATHER_ACTIVE );
+	else
+		SetBits( pev->spawnflags, SF_WEATHER_ACTIVE );
+	Send( NULL );
+}
+
+//=========================================================
+// ReGameDLL_CS (regamedll/dlls/triggers.cpp, triggers.h): CS 1.6 weather entities, rain or snow over the whole map
+// around the view, wherever the sky is above. As in CS the brush of func_rain / func_snow (and of a brush env_rain /
+// env_snow) does not limit where it falls. SBO 2.0: the keys and spawnflags of func_rainvolume / func_snowvolume
+// (above); CS's have none.
+//  - Without a name an entity is always on (as in CS, which has no Use), and only the map's first one counts: the
+//    first unnamed env_rain / func_rain, else the first unnamed env_snow / func_snow (CS: rain wins). More unnamed
+//    ones do nothing, as in CS.
+//  - A named one is its own weather besides that one: off at the start unless Start Active is set, switched by Use.
+//  - Keys left out: CS's rain (150 drops every 0.3 s within 400 units of the view) and snow (512 flakes every 0.5 s
+//    within 1024 units).
+//=========================================================
+class CWeather : public CWeatherBase
+{
+public:
+	void Spawn( void );
+	BOOL IsSnow( void ) { return FClassnameIs( pev, "env_snow" ) || FClassnameIs( pev, "func_snow" ); }
+	BOOL IsVolume( void ) { return FALSE; }
+	int DefaultIntensity( void ) { return IsSnow() ? 512 : 150; }	// CS: 512 flakes / 150 drops per update
+	BOOL IsSent( void );	// named, or the map's unnamed one
+};
+
+LINK_ENTITY_TO_CLASS( env_snow, CWeather );
+LINK_ENTITY_TO_CLASS( func_snow, CWeather );
+LINK_ENTITY_TO_CLASS( env_rain, CWeather );
+LINK_ENTITY_TO_CLASS( func_rain, CWeather );
+
+void CWeather :: Spawn( void )
+{
+	if ( FStringNull( pev->targetname ) )
+		pev->spawnflags |= SF_WEATHER_ACTIVE;
+	SetDefaults();
+
+	// SBO: a point entity has no brush model for InitTrigger's SET_MODEL; it only has to exist
+	if ( FStringNull( pev->model ) )
+	{
+		pev->solid = SOLID_NOT;
+		pev->movetype = MOVETYPE_NONE;
+		pev->effects |= EF_NODRAW;
+		return;
+	}
+
+	InitTrigger();
+}
+
+BOOL CWeather::IsSent( void )
+{
+	if ( !FStringNull( pev->targetname ) )
+		return TRUE;
+	static const char *s_classes[] = { "env_rain", "func_rain", "env_snow", "func_snow" };
+	for ( int c = 0; c < 4; c++ )
+	{
+		CBaseEntity *pEntity = NULL;
+		while ( ( pEntity = UTIL_FindEntityByClassname( pEntity, s_classes[c] ) ) != NULL )
+		{
+			if ( FStringNull( pEntity->pev->targetname ) )
+				return pEntity == this;
+		}
+	}
+	return FALSE;
+}
+
+//=========================================================
+// SBO 2.0, from Featureful (dlls/effects.cpp CFuncRainVolume / CFuncSnowVolume, Half-Life 1 SDK license): rain or snow
+// only inside a brush, drawn by the clients with the CS 1.6 weather above (cs16-client environment.cpp, which already
+// has Featureful's volume weather: WeatherData::IsVolume). Featureful's particle weather is not imported: the server
+// sends the volume (WeatherVol) and the client spawns CS drops / flakes in it. docs/WEATHER.md "Rain and snow volumes".
+//  - Keys and spawnflags: the weather keys above; intensity 150 when left out (snow too, Featureful's), update_period
+//    0.3 rain, 0.5 snow.
+//  - With a global env_rain / env_snow: both draw, the volume adds its own drops inside its brush.
+//=========================================================
+class CWeatherVolume : public CWeatherBase
+{
+public:
+	void Spawn( void );
+	BOOL IsSnow( void ) { return FClassnameIs( pev, "func_snowvolume" ); }
+	BOOL IsVolume( void ) { return TRUE; }
+	int DefaultIntensity( void ) { return 150; }	// Featureful's FGD, snow too
+};
+
+LINK_ENTITY_TO_CLASS( func_rainvolume, CWeatherVolume );
+LINK_ENTITY_TO_CLASS( func_snowvolume, CWeatherVolume );
 
 void CWeatherVolume::Spawn( void )
 {
@@ -3744,66 +4496,29 @@ void CWeatherVolume::Spawn( void )
 	UTIL_SetOrigin( pev, pev->origin );
 	pev->effects |= EF_NODRAW;
 	if ( FStringNull( pev->targetname ) )
-		pev->spawnflags |= SF_WEATHERVOL_ACTIVE;
+		pev->spawnflags |= SF_WEATHER_ACTIVE;
 
-	// defaults (Featureful's FGD): 150 per update, rain every 0.3 s, snow every 0.5 s; clamped to what the client keeps
-	if ( m_iIntensity <= 0 )
-		m_iIntensity = 150;
-	if ( m_iIntensity > 1000 )
-		m_iIntensity = 1000;
-	if ( m_flUpdatePeriod <= 0 )
-		m_flUpdatePeriod = IsSnow() ? 0.5 : 0.3;
-	if ( m_flUpdatePeriod < 0.05 )
-		m_flUpdatePeriod = 0.05;
+	// defaults (Featureful's FGD): 150 per update, rain every 0.3 s, snow every 0.5 s
+	SetDefaults();
 }
 
-void CWeatherVolume::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
-{
-	BOOL fActive = FBitSet( pev->spawnflags, SF_WEATHERVOL_ACTIVE ) != 0;
-	if ( !ShouldToggle( useType, fActive ) )
-		return;
-	if ( fActive )
-		ClearBits( pev->spawnflags, SF_WEATHERVOL_ACTIVE );
-	else
-		SetBits( pev->spawnflags, SF_WEATHERVOL_ACTIVE );
-	Send( NULL );
-}
-
-// WeatherVol: short entity index, byte type (1 rain, 2 snow; 0 removes it), short flags (the client's weather
-// flags), short intensity, short update period x 100, 6 coords (the box), 4 shorts: rain width, height, min and max
-// speed / snow min size x 10, max size x 10, min and max speed (0: the client's CS default), short life x 100 (0:
-// default). 31 bytes.
-void CWeatherVolume::Send( CBasePlayer *pPlayer )
-{
-	const BOOL fActive = FBitSet( pev->spawnflags, SF_WEATHERVOL_ACTIVE ) != 0;
-	auto Clamp = []( float v ) { return (int)( v < 0 ? 0 : ( v > 32000 ? 32000 : v ) ); };
-	if ( pPlayer )
-		MESSAGE_BEGIN( MSG_ONE, gmsgWeatherVol, NULL, pPlayer->pev );
-	else
-		MESSAGE_BEGIN( MSG_ALL, gmsgWeatherVol );
-		WRITE_SHORT( entindex() );
-		WRITE_BYTE( fActive ? ( IsSnow() ? 2 : 1 ) : 0 );
-		WRITE_SHORT( WEATHERVOL_BRUSH_FLAG | 1 | ( pev->spawnflags & WEATHERVOL_SENDFLAGS ) );
-		WRITE_SHORT( m_iIntensity );
-		WRITE_SHORT( Clamp( m_flUpdatePeriod * 100 ) );
-		WRITE_COORD( pev->absmin.x );
-		WRITE_COORD( pev->absmin.y );
-		WRITE_COORD( pev->absmin.z );
-		WRITE_COORD( pev->absmax.x );
-		WRITE_COORD( pev->absmax.y );
-		WRITE_COORD( pev->absmax.z );
-		WRITE_SHORT( Clamp( IsSnow() ? m_flSize1 * 10 : m_flSize1 ) );
-		WRITE_SHORT( Clamp( IsSnow() ? m_flSize2 * 10 : m_flSize2 ) );
-		WRITE_SHORT( Clamp( m_flSpeed1 ) );
-		WRITE_SHORT( Clamp( m_flSpeed2 ) );
-		WRITE_SHORT( Clamp( m_flLife * 100 ) );
-	MESSAGE_END();
-}
-
-// every rain / snow volume of the map to one client (its HUD initialisation: connect, respawn, demo start); inactive
-// ones too, so a client that had one from before a respawn drops it
+// the map's weather to one client (its HUD initialisation: connect, respawn, demo start), after its ReceiveW 0
+// (CBasePlayer::SendWeatherInfo), which drops the whole-map weather the client had: the whole-map weather (the
+// unnamed one and every named one), then every rain / snow volume. Inactive ones too, so a client that had one from
+// before a respawn drops it.
 void WeatherVol_SendAll( CBasePlayer *pPlayer )
 {
+	static const char *s_global[] = { "env_rain", "func_rain", "env_snow", "func_snow" };
+	for ( int c = 0; c < 4; c++ )
+	{
+		CBaseEntity *pEntity = NULL;
+		while ( ( pEntity = UTIL_FindEntityByClassname( pEntity, s_global[c] ) ) != NULL )
+		{
+			if ( ( (CWeather *)pEntity )->IsSent() )
+				( (CWeather *)pEntity )->Send( pPlayer );
+		}
+	}
+
 	static const char *s_classes[] = { "func_rainvolume", "func_snowvolume" };
 	for ( int c = 0; c < 2; c++ )
 	{
@@ -3845,6 +4560,48 @@ void CClientFog :: Spawn( void )
 	// Spirit of Half-Life (CEnvFog::Spawn): a fog nothing can switch on is on
 	if ( FStringNull( pev->targetname ) )
 		SetBits( pev->spawnflags, SF_FOG_ACTIVE );
+}
+
+// SBO 2.1: "density" (KeyValue keeps it as a number in 0-0.01)
+CKeyValue CClientFog :: GetKeyValue( const char *keyName )
+{
+	if ( FStrEq( keyName, "density" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		keyvalue.keyType = KEY_TYPE_FLOAT;
+		keyvalue.keyName = "density";
+		keyvalue.fVal = m_fDensity;
+		return keyvalue;
+	}
+	return CBaseEntity::GetKeyValue( keyName );
+}
+
+// SBO 2.1: trigger_changevalue / trigger_copyvalue changed a key (density, rendercolor, spawnflags, origin, ...):
+// an unnamed fog or zone stays on (Spawn), and the players in the game get it again in the next frame, so several
+// keys changed in one frame make one send and a moved zone sends its new box (HandleTarget's UTIL_SetOrigin runs
+// after the key). Neither entity thinks otherwise.
+void CClientFog :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( FStringNull( pev->targetname ) )
+		SetBits( pev->spawnflags, SF_FOG_ACTIVE );	// SF_FOGZONE_ACTIVE is the same bit
+	SetThink( &CClientFog::ResendThink );
+	pev->nextthink = gpGlobals->time + 0.01;
+}
+
+void CClientFog :: ResendThink( void )
+{
+	SetThink( NULL );
+	const BOOL fZone = FClassnameIs( pev, "env_fogzone" );
+	for ( int i = 1; i <= gpGlobals->maxClients; i++ )
+	{
+		CBasePlayer *pPlayer = (CBasePlayer *)UTIL_PlayerByIndex( i );
+		if ( !pPlayer || !pPlayer->m_fGameHUDInitialized || pPlayer->has_disconnected )
+			continue;
+		if ( fZone )
+			FogZone_Send( pPlayer, (CEnvFogZone *)this );
+		else
+			pPlayer->SendFog();
+	}
 }
 
 // Spirit of Half-Life (CEnvFog::Use: USE_ON, USE_OFF, USE_TOGGLE). Spirit sends the new fog to every client; SBO sends

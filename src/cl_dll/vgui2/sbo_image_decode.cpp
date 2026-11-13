@@ -5,6 +5,8 @@
 
 #include <string.h>
 
+#include <algorithm>
+
 #include "sbo_image_decode.h"
 
 // stb_image: JPEG only, from memory, no file access, our size limit
@@ -82,6 +84,18 @@ bool sbo_image::DecodeJpegScaled(const uint8_t *data, size_t size, int maxWide, 
 	stbi_image_free(pixels);
 	ScaleToFit(full, w, h, maxWide, maxTall, rgba, wide, tall);
 	return true;
+}
+
+bool sbo_image::ReadTgaHeader(const uint8_t *data, size_t size, int &wide, int &tall, int &bits, int &imageType)
+{
+	if (!data || size < 18)
+		return false;
+	imageType = data[2];
+	wide = data[12] | (data[13] << 8);
+	tall = data[14] | (data[15] << 8);
+	bits = data[16];
+	return (imageType == 2 || imageType == 10) && (bits == 24 || bits == 32) && data[1] <= 1 && wide >= 1 && tall >= 1 &&
+	       wide <= MAX_SOURCE_SIDE && tall <= MAX_SOURCE_SIDE;
 }
 
 bool sbo_image::DecodeTgaScaled(const uint8_t *data, size_t size, int maxWide, int maxTall, std::vector<uint8_t> &rgba,
@@ -162,5 +176,156 @@ bool sbo_image::DecodeTgaScaled(const uint8_t *data, size_t size, int maxWide, i
 	}
 
 	ScaleToFit(full, w, h, maxWide, maxTall, rgba, wide, tall);
+	return true;
+}
+
+bool sbo_image::DecodeSprScaled(const uint8_t *data, size_t size, int maxWide, int maxTall, std::vector<uint8_t> &rgba,
+    int &wide, int &tall)
+{
+	if (!data || size < 42 || size > MAX_FILE_BYTES || maxWide < 1 || maxTall < 1)
+		return false;
+	auto i32 = [data](size_t at) {
+		return (int32_t)((uint32_t)data[at] | ((uint32_t)data[at + 1] << 8) | ((uint32_t)data[at + 2] << 16) |
+		                 ((uint32_t)data[at + 3] << 24));
+	};
+	if (memcmp(data, "IDSP", 4) != 0 || i32(4) != 2)
+		return false;
+	const int texFormat = i32(12);
+	const int numFrames = i32(28);
+	if (numFrames < 1)
+		return false;
+	// the palette after the 40-byte header: a short count, then count RGB triples
+	size_t at = 40;
+	const int colors = data[at] | (data[at + 1] << 8);
+	at += 2;
+	if (colors < 1 || colors > 256 || at + (size_t)colors * 3 > size)
+		return false;
+	uint8_t pal[256][3] = {};
+	memcpy(pal, data + at, (size_t)colors * 3);
+	at += (size_t)colors * 3;
+	// the frames: type 0 a single frame, 1 a group (count, intervals, then its frames: its first is used). An
+	// animation's first frame is often empty or tiny (smoke growing from nothing): the frame with the most to see
+	// among the first 256 (32 of them looked at, evenly spread) is shown.
+	struct Frame
+	{
+		size_t pixels;
+		int w, h;
+	};
+	std::vector<Frame> frames;
+	for (int f = 0; f < numFrames && f < 256; f++)
+	{
+		if (at + 4 > size)
+			break;
+		const int frameType = i32(at);
+		at += 4;
+		bool group = false;
+		if (frameType != 0)
+		{
+			if (at + 4 > size)
+				break;
+			const int groupFrames = i32(at);
+			at += 4;
+			if (groupFrames < 1 || groupFrames > 4096 || at + (size_t)groupFrames * 4 > size)
+				break;
+			at += (size_t)groupFrames * 4; // intervals
+			group = true;
+		}
+		if (at + 16 > size)
+			break;
+		const int fw = i32(at + 8), fh = i32(at + 12);
+		at += 16;
+		if (fw < 1 || fh < 1 || fw > MAX_SOURCE_SIDE || fh > MAX_SOURCE_SIDE || at + (size_t)fw * (size_t)fh > size)
+			break;
+		frames.push_back({ at, fw, fh });
+		at += (size_t)fw * (size_t)fh;
+		if (group)
+			break; // the rest of a group's frames are not walked
+	}
+	if (frames.empty())
+		return false;
+	const size_t step = (frames.size() + 31) / 32;
+	size_t best = 0;
+	unsigned long long bestScore = 0;
+	for (size_t f = 0; f < frames.size(); f += step)
+	{
+		unsigned long long score = 0;
+		const uint8_t *px = data + frames[f].pixels;
+		for (size_t i = 0; i < (size_t)frames[f].w * (size_t)frames[f].h; i++)
+		{
+			const uint8_t idx = px[i];
+			if (texFormat == 2)
+				score += idx;
+			else if (texFormat == 3)
+				score += idx != 255 ? 255u : 0u;
+			else
+				score += (unsigned)pal[idx][0] + pal[idx][1] + pal[idx][2];
+		}
+		if (score > bestScore)
+		{
+			bestScore = score;
+			best = f;
+		}
+	}
+	at = frames[best].pixels;
+	const int w = frames[best].w, h = frames[best].h;
+	std::vector<uint8_t> full((size_t)w * (size_t)h * 4);
+	for (size_t i = 0; i < (size_t)w * (size_t)h; i++)
+	{
+		const uint8_t idx = data[at + i];
+		uint8_t *d = &full[i * 4];
+		switch (texFormat)
+		{
+		case 2: // index alpha: one color, the index is its alpha
+			d[0] = pal[255][0];
+			d[1] = pal[255][1];
+			d[2] = pal[255][2];
+			d[3] = idx;
+			break;
+		case 3: // alpha test: the last color is a hole
+			d[0] = pal[idx][0];
+			d[1] = pal[idx][1];
+			d[2] = pal[idx][2];
+			d[3] = idx == 255 ? 0 : 255;
+			break;
+		default:
+			d[0] = pal[idx][0];
+			d[1] = pal[idx][1];
+			d[2] = pal[idx][2];
+			d[3] = 255;
+			break;
+		}
+	}
+	// additive and index alpha sprites (glows, smoke, steam) are faint on black: brightest pixel to full white
+	if (texFormat == 1 || texFormat == 2)
+	{
+		int top = 0;
+		for (size_t i = 0; i < full.size(); i += 4)
+			top = std::max(top, (int)std::max(full[i], std::max(full[i + 1], full[i + 2])));
+		if (top > 0 && top < 255)
+			for (size_t i = 0; i < full.size(); i += 4)
+				for (int c = 0; c < 3; c++)
+					full[i + c] = (uint8_t)std::min(255, full[i + c] * 255 / top);
+	}
+	if (w >= maxWide || h >= maxTall)
+	{
+		ScaleToFit(full, w, h, maxWide, maxTall, rgba, wide, tall);
+		return true;
+	}
+	// smaller than the box: scaled up to fill it, aspect kept (nearest pixel)
+	const double scale = std::min((double)maxWide / w, (double)maxTall / h);
+	const int dw = std::max(1, std::min(maxWide, (int)(w * scale + 0.5))),
+	          dh = std::max(1, std::min(maxTall, (int)(h * scale + 0.5)));
+	rgba.assign((size_t)dw * (size_t)dh * 4, 0);
+	for (int y = 0; y < dh; y++)
+	{
+		const int sy = std::min(h - 1, (int)((long long)y * h / dh));
+		for (int x = 0; x < dw; x++)
+		{
+			const int sx = std::min(w - 1, (int)((long long)x * w / dw));
+			memcpy(&rgba[((size_t)y * dw + x) * 4], &full[((size_t)sy * w + sx) * 4], 4);
+		}
+	}
+	wide = dw;
+	tall = dh;
 	return true;
 }

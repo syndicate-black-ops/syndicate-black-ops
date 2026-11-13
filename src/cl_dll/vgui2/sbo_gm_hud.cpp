@@ -5,7 +5,7 @@
 //   * CSboGmHud: the status strip (top left), nearest players (top right), the placement line under the crosshair
 //     and the key hints (bottom center), while the Game Master flies and no GM window is open;
 //   * CSboGmBoxSelect: Fire held and dragged draws the selection box on the screen (the mouse draws it, the view
-//     stays); on release "gm_select" sends it to the server, which takes the Game Master's monsters inside it;
+//     stays); on release "gm_select" sends it to the server, which takes the monsters he can select inside it;
 //   * CSboGmPlayersWindow: the players window: the level's overview map with the players' dots and the Game Master's
 //     triangle, Level buttons per overview layer, Player / Health / Distance / Weapon rows (the living first, the dead
 //     below with "Killed by your <monster>"), Go to / Follow / View through eyes / Spawn near.
@@ -70,6 +70,16 @@ int S(float px)
 	int sw, sh;
 	vgui2::surface()->GetScreenSize(sw, sh);
 	return (int)floorf(px * sh / 720.0f + 0.5f);
+}
+
+int HintsBarTall()
+{
+	return S(22); // the design's bar
+}
+
+int HintsBarTop(int bottom)
+{
+	return bottom - S(16) - HintsBarTall(); // 16 px over the bottom
 }
 
 vgui2::HFont Font(float px, bool bold)
@@ -864,8 +874,8 @@ private:
 			w += TextWide(bold, h.key.c_str()) + TextWide(font, h.text.c_str());
 		int sw, sh;
 		vgui2::surface()->GetScreenSize(sw, sh);
-		const int h = S(22); // the design's bar
-		const int x0 = (sw - w) / 2, y0 = sh - S(16) - h;
+		const int h = HintsBarTall();
+		const int x0 = (sw - w) / 2, y0 = HintsBarTop(sh);
 		Fill(x0, y0, w, h, BG_HINTS);
 		int x = x0 + padX;
 		for (size_t i = 0; i < hints.size(); i++)

@@ -156,8 +156,10 @@ void CPm66::PrimaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usPm66, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.04;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	// SBO 2.0: the burst waits for the shot too, so the two modes never fire on two frames in a row
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay( 0.04 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -166,7 +168,7 @@ void CPm66::SecondaryAttack()
 	if (m_iClip <= 1)
 	{
 		PlayEmptySound();
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.3;
+		m_flNextPrimaryAttack = m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.3;
 		return;
 	}
 
@@ -210,8 +212,12 @@ void CPm66::SecondaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usPm66_2, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
+	// SBO 2.0: the burst has its own time. 1.38 set none (only the primary's), so held alt-fire fired a burst on every
+	// user command: as fast as the player's frame rate, one burst every 0.01 s at the usual 100 fps. 0.01 s keeps that
+	// rate for everyone and on every server, and holds the primary shot back 0.02 s as before.
+	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.01;
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.02;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -231,5 +237,9 @@ void CPm66::WeaponIdle( void )
 	ResetEmptySound( );
 
 	if ( m_flTimeWeaponIdle < UTIL_WeaponTimeBase() )
+	{
 		SendWeaponAnim( PM66_IDLE );
+		// a two-frame still: sent again only now and then (stock HL's idle time)
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
+	}
 }

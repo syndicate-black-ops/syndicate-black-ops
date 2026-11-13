@@ -178,7 +178,7 @@ void CHudGameTimer::LoadLayout()
 {
 	if (!g_pFullFileSystem || !g_pFullFileSystem->FileExists(GAMETIMER_RES))
 	{
-		sbo::ConsolePrint("Game timer: " GAMETIMER_RES " not found, using defaults\n");
+		sbo::DevPrint("Game timer: " GAMETIMER_RES " not found, using defaults\n");
 		return;
 	}
 

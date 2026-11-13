@@ -130,9 +130,14 @@ def setup_server(hlds_dir, srv_dir, hl_so, bsp, mapname, seq_text, steps_text, s
 
 
 def free_port(start=27961, end=28200):
-    """A UDP port nobody listens on: other test runs or servers may be up on this machine."""
+    """A UDP port nobody listens on: other test runs or servers may be up on this machine. The search starts at a
+    random port of the range, so two runs started together do not pick the same one."""
+    import random
     import socket
-    for port in range(start, end):
+    span = end - start
+    first = random.randrange(span)
+    for i in range(span):
+        port = start + (first + i) % span
         sk = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         try:
             sk.bind(('0.0.0.0', port))
@@ -144,8 +149,26 @@ def free_port(start=27961, end=28200):
     raise RuntimeError('no free UDP port in %d-%d' % (start, end))
 
 
+PORT_TAKEN = "Couldn't allocate dedicated server IP port"
+
+
 def run_server(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan=False, maxplayers=16, extra_args=()):
-    """Runs the server until test_quit (or the timeout). Returns (exit status, wall seconds)."""
+    """Runs the server until test_quit (or the timeout). Returns (exit status, wall seconds). A server that could not
+    bind its port (another run took it between free_port and the bind) is started again on another port."""
+    for attempt in range(3):
+        status, secs = _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan,
+                                        maxplayers, extra_args)
+        try:
+            taken = PORT_TAKEN in open(console_path, errors='replace').read()
+        except OSError:
+            taken = False
+        if not taken:
+            break
+        log('port taken by another run: starting the server again (%d)' % (attempt + 1))
+    return status, secs
+
+
+def _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan, maxplayers, extra_args):
     lib = timescale_lib(os.path.dirname(console_path)) if timescale != 1 else None
     args = ['./hlds_linux', '-game', 'syndicate', '-nomaster', '-port', str(free_port()), '+sv_lan', '1',
             '+maxplayers', str(maxplayers), '+sys_ticrate', '1000'] + list(extra_args) + ['+map', mapname]

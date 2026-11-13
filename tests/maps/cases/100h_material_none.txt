@@ -1,0 +1,13 @@
+# func_breakable material 9 (none, not in the FGD) breaks without gibs: nothing precached for it, no break-model
+# message, its target fires (1cc08291; 1.38 precached a garbage name)
+# covers: func_breakable.material
+map co_fuzz
+spawn func_breakable targetname br model *1 health 20 material 9 target br_out
+spawn trigger_relay targetname br_out target br_sink triggerstate 2
+activate
+connect 1 P1
+frames 3
+useclient 0 1
+frames 5
+expectn 1 Firing: (br_out)
+expectcount func_breakable 0

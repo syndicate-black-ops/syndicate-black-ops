@@ -1,0 +1,47 @@
+# master on the touch triggers (FGD "master"): a player touching trigger_once, trigger_multiple and trigger_teleport
+# while the master is shut: nothing fires, no teleport, and the trigger_once is still there; after the master opens
+# the same touches work (the player's origin is dumped: the teleport moves him only then)
+# covers: trigger_once.master trigger_multiple.master trigger_teleport.master trigger_teleport.target info_teleport_destination
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn trigger_once model *1 target once_out master lock
+spawn trigger_multiple model *2 target multi_out master lock
+spawn trigger_teleport model *3 target tele_dest master lock
+spawn info_teleport_destination targetname tele_dest origin "2000 2000 64"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark locked
+touchclient 2 1
+touchclient 3 1
+touchclient 4 1
+frames 3
+expectnot Firing: (once_out)
+expectnot Firing: (multi_out)
+expectcount trigger_once 1
+expectdump player origin=64.0 0.0
+mark open
+fire key
+frames 1
+touchclient 2 1
+touchclient 3 1
+frames 3
+expectn 1 Firing: (once_out)
+expectn 1 Firing: (multi_out)
+dumpclass player
+touchclient 4 1
+frames 2
+expectdump player origin=2000.0 2000.0

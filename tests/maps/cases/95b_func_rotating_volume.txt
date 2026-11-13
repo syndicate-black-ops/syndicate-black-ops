@@ -1,0 +1,10 @@
+# func_rotating Volume (FGD "Volume (10 = loudest)"): 5 plays its sound at half volume. develop reads the key the FGD
+# writes ("volume"); 1.38 read only "Volume", so every func_rotating played at full volume (merge 70147bc2)
+# covers: func_rotating.volume
+map co_fuzz
+brushsize 64 64 64
+spawn func_rotating targetname r_vol model *1 speed 100 spawnflags 1 sounds 1 volume 5
+activate
+connect 1 P1
+frames 30
+expect ch6 fans/fan1.wav vol=0.50 att=0.80 pitch=100

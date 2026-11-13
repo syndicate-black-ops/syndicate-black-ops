@@ -41,7 +41,7 @@ int CHud::UpdateClientData(client_data_t *cdata, float time)
 
 	Think();
 
-	cdata->fov = m_iFOV;
+	cdata->fov = m_iRenderFOV;	// SBO 2.0: m_iFOV, except for a spectator over a map overview (CHud::Think)
 	
 	v_idlescale = m_iConcussionEffect;
 

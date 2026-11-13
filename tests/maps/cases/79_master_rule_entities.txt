@@ -1,0 +1,36 @@
+# master on the rule point entities (FGD "master"): while the master (a multisource whose one member has not fired)
+# is shut, game_counter, game_counter_set, game_player_hurt and game_text ignore every call; once it
+# opens they work. Callers are the world here (the player-activator ones are below)
+# covers: game_counter.master game_counter_set.master game_player_hurt.master game_text.master multisource
+map co_fuzz
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn game_counter targetname c health 1 target c_hit master lock spawnflags 2
+spawn game_counter_set targetname cs target c2 frags 1 master lock
+spawn game_counter targetname c2 health 1 target c2_hit
+spawn game_player_hurt targetname ph target ph_out master lock
+spawn game_text targetname gt message master_text master lock spawnflags 1
+activate
+connect 1 P1
+frames 3
+mark locked
+fire c world
+fire cs world
+fire ph world
+fire gt world
+frames 2
+expectnot Firing: (c_hit)
+expectnot Firing: (c2_hit)
+expectnot Firing: (ph_out)
+expectnot MSTR 23 ->#1: master_text
+mark open
+fire key
+fire c world
+fire cs world
+fire ph world
+fire gt world
+frames 2
+expectn 1 Firing: (c_hit)
+expectn 1 Firing: (c2_hit)
+expectn 1 Firing: (ph_out)
+expectn 1 MSTR 23 ->#1: master_text

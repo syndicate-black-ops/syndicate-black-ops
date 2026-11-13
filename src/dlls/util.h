@@ -30,20 +30,32 @@ extern globalvars_t				*gpGlobals;
 #define STRING(offset)		(const char *)(gpGlobals->pStringBase + (int)offset)
 #define MAKE_STRING(str)	((int)str - (int)STRING(0))
 
+// SBO 2.0 (Half-Life Unified SDK UTIL_FindEntityByAccessor, docs/ENTITY_TRIGGERING.md): a classname, targetname or
+// target search for a name ending in '*' finds every entity whose key starts with the part before it ("room1_*");
+// other keys and names go to the engine's search
+#ifndef CLIENT_DLL
+edict_t *UTIL_FindEdictByString( edict_t *entStart, const char *pszKeyword, const char *pszValue );
+#else
+inline edict_t *UTIL_FindEdictByString( edict_t *entStart, const char *pszKeyword, const char *pszValue )
+{
+	return FIND_ENTITY_BY_STRING( entStart, pszKeyword, pszValue );
+}
+#endif
+
 inline edict_t *FIND_ENTITY_BY_CLASSNAME(edict_t *entStart, const char *pszName) 
 {
-	return FIND_ENTITY_BY_STRING(entStart, "classname", pszName);
+	return UTIL_FindEdictByString(entStart, "classname", pszName);
 }	
 
 inline edict_t *FIND_ENTITY_BY_TARGETNAME(edict_t *entStart, const char *pszName) 
 {
-	return FIND_ENTITY_BY_STRING(entStart, "targetname", pszName);
+	return UTIL_FindEdictByString(entStart, "targetname", pszName);
 }	
 
 // for doing a reverse lookup. Say you have a door, and want to find its button.
 inline edict_t *FIND_ENTITY_BY_TARGET(edict_t *entStart, const char *pszName) 
 {
-	return FIND_ENTITY_BY_STRING(entStart, "target", pszName);
+	return UTIL_FindEdictByString(entStart, "target", pszName);
 }	
 
 // Keeps clutter down a bit, when writing key-value pairs
@@ -224,7 +236,13 @@ extern float		UTIL_AngleDiff			( float destAngle, float srcAngle );
 extern CBaseEntity	*UTIL_FindEntityInSphere(CBaseEntity *pStartEntity, const Vector &vecCenter, float flRadius);
 extern CBaseEntity	*UTIL_FindEntityByString(CBaseEntity *pStartEntity, const char *szKeyword, const char *szValue );
 extern CBaseEntity	*UTIL_FindEntityByClassname(CBaseEntity *pStartEntity, const char *szName );
-extern CBaseEntity	*UTIL_FindEntityByTargetname(CBaseEntity *pStartEntity, const char *szName );
+// SBO 2.0 (Half-Life Unified SDK): "!activator" / "!caller" name pActivator / pCaller (one entity: NULL when pStartEntity
+// is set, or when that one was not given); another name starting with '!' finds nothing. Names ending in '*' match
+// every targetname starting with the part before it (UTIL_FindEdictByString).
+extern CBaseEntity	*UTIL_FindEntityByTargetname(CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );
+// TRUE when szName is a target selector ("!activator", "!caller", or another name starting with '!'); *ppEntity is the
+// entity it names (NULL: none, or not a known selector)
+extern BOOL			UTIL_TargetSelector( const char *szName, CBaseEntity *pActivator, CBaseEntity *pCaller, CBaseEntity **ppEntity );
 extern CBaseEntity	*UTIL_FindEntityGeneric(const char *szName, Vector &vecSrc, float flRadius );
 
 // returns a CBaseEntity pointer to a player by index.  Only returns if the player is spawned and connected
@@ -303,6 +321,14 @@ extern void			UTIL_BubbleTrail( Vector from, Vector to, int count );
 
 // allows precacheing of other entities
 extern void			UTIL_PrecacheOther( const char *szClassname );
+
+// SBO 2.1: the classes precached on this map (UTIL_PrecacheOther, UTIL_PrecacheOtherWeapon, the map's entities with
+// their own model). A key changed at run time that would make a new class (monstermaker "monstertype", a
+// game_player_equip item) is taken only for these: any other would be precached after the map loaded, which stops the
+// server on Valve's engines. Reset by worldspawn.
+extern void			UTIL_PrecachedClasses_Reset( void );
+extern void			UTIL_PrecachedClasses_Add( const char *szClassname );
+extern BOOL			UTIL_PrecachedClasses_Has( const char *szClassname );
 
 // SBO 2.0: TRUE when a model a mapper names in a key (monster_generic, cycler) cannot be used: none, the map editor's
 // placeholder (models/editor/, not shipped with the game) or a file the server does not have. Precaching such a name

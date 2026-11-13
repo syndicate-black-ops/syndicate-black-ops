@@ -17,6 +17,7 @@
 
 #include <math.h>
 #include <string>
+#include <vector>
 
 #include <Color.h>
 #include <vgui/VGUI2.h>
@@ -84,6 +85,8 @@ int TextWide(vgui2::HFont font, const std::wstring &text);
 //! Text with its top at y; cut with "..." to maxWide (0 = no limit). Returns the drawn width.
 int DrawText(vgui2::HFont font, Color color, int x, int y, const std::wstring &text, int maxWide = 0);
 int FontTall(vgui2::HFont font);
+//! Word-wrapped lines of text at most maxW wide (a word longer than the line is cut where it must; at most 16)
+std::vector<std::wstring> WrapLines(vgui2::HFont font, const std::string &utf8, int maxW);
 //! Text vertically centered in [y, y + h)
 int DrawTextMid(vgui2::HFont font, Color color, int x, int y, int h, const std::wstring &text, int maxWide = 0);
 //! Upper case with 0.04 em letter spacing (the designs' small headings)

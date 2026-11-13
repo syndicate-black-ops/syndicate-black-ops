@@ -118,6 +118,7 @@ public:
 	int MsgFunc_WeapPickup( const char *pszName, int iSize, void *pbuf );
 	int MsgFunc_ItemPickup( const char *pszName, int iSize, void *pbuf );
 	int MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf );
+	int MsgFunc_WeaponsHigh( const char *pszName, int iSize, void *pbuf );	// SBO 2.1: weapon ids 32..63
 
 	void SlotInput( int iSlot );
 	void _cdecl UserCmd_Slot1( void );
@@ -146,6 +147,7 @@ private:
 	int	m_iLastFOV;				// BugfixedHL-Rebased: gHUD.m_iFOV the crosshair was chosen for
 	int	m_iLastObserverMode;	// g_iUser1 the crosshair was chosen for
 	int	m_HUD_bucket0;
+	int	m_HUD_buckets[ MAX_WEAPON_SLOTS ];	// SBO 2.1: the top row sprite of each slot (bucket1 .. bucket9, bucket0 for 10); -1: none
 	int m_HUD_selection;
 
 };
@@ -732,6 +734,12 @@ public:
 	int		m_iKeyBits;
 	int		m_iHideHUDDisplay;
 	int		m_iFOV;
+	// SBO 2.0: the FOV the engine draws the frame with (HUD_UpdateClientData). It is m_iFOV, except for a spectator
+	// over a map overview: m_iFOV is then the spectator's own (the map is the main view), and the frame is drawn
+	// with the watched player's FOV while the first-person inset shows that player (CHud::Think). The overview
+	// keeps its own view at any frame FOV (V_GetMapFreePosition, V_GetMapChasePosition: OverviewFovScale)
+	int		m_iRenderFOV;
+	int		OwnFOV( void );	// the FOV m_iFOV has without a zoom: default_fov, 90 when it is 0
 	int		m_iSuppressedCaps;	// SBO 2.0 (Featureful "Capability"): PLAYER_SUPPRESS_* bits for the movement and weapon prediction
 	// SBO 2.0: a weapon zoom is active (scope overlay, zoomed crosshair). m_iFOV is the player's default_fov when not
 	// zoomed, so a default_fov below 90 is not a zoom; a zoom is a FOV below both 90 and default_fov
@@ -852,7 +860,19 @@ public:
 	// Screen information
 	SCREENINFO	m_scrinfo;
 
-	int	m_iWeaponBits;
+	int	m_iWeaponBits;		// weapon ids 0..30 and the suit (31): the client data (clientdata_t weapons)
+	// SBO 2.1 (Half-Life Unified SDK, HLU #98): weapon ids 32..63, bit (id - 32), from the server's WeaponsHigh
+	// message; cleared by ResetHUD (CHudAmmo::Reset)
+	unsigned int m_iWeaponBitsHigh = 0;
+	// SBO 2.1: whether he holds the weapon with this id (0..63)
+	bool HasWeaponBit( int iId ) const
+	{
+		if ( iId < 0 || iId >= MAX_WEAPONS )
+			return false;
+		return iId < 32 ? ( (unsigned int)m_iWeaponBits & ( 1u << iId ) ) != 0 : ( m_iWeaponBitsHigh & ( 1u << ( iId - 32 ) ) ) != 0;
+	}
+	// SBO 2.1: any weapon (ids 0..63), the suit not counted
+	bool HasAnyWeapon( void ) const { return ( (unsigned int)m_iWeaponBits & ~( 1u << WEAPON_SUIT ) ) != 0 || m_iWeaponBitsHigh != 0; }
 	int	m_fPlayerDead;
 	int m_iIntermission;
 
@@ -872,6 +892,7 @@ public:
 
 private:
 	cvar_t	*m_pCvarScale = nullptr;
+	cvar_t	*m_pCvarClientOS = nullptr;	// SBO 2.0: cl_sbo_os (client_os_shared.h), kept at the build's OS
 	bool	m_bShouldScale = false;
 	int		m_iWidth = 640;
 	int		m_iHeight = 480;

@@ -9,9 +9,14 @@
 #include	"player.h"
 #include	"gamerules.h"
 #include	"round_hooks.h"
+#include	"inventory.h"
 
 void RoundHooks_Reset( void )
 {
+	// SBO 2.0 inventory: personal items back to their placed spots, every player's list emptied
+	Inventory_RoundReset();
+
+
 	// every entity of the map. INDEXENT gives NULL for a free slot; Instance NULL for an edict without a class
 	// (a client slot nobody uses)
 	for ( int i = 1; i < gpGlobals->maxEntities; i++ )
@@ -37,9 +42,16 @@ static void RoundHooks_Fire( const char *pszEvent )
 	FireTargets( pszEvent, pWorld, pWorld, USE_TOGGLE, 0 );
 }
 
-void RoundHooks_Start( void )
+void RoundHooks_Start( int iRound )
 {
 	RoundHooks_Fire( ROUND_HOOK_START );
+
+	if ( iRound > 0 )
+	{
+		char szName[32];
+		snprintf( szName, sizeof( szName ), ROUND_HOOK_NUMBER, iRound );
+		RoundHooks_Fire( szName );
+	}
 }
 
 void RoundHooks_End( void )
@@ -57,6 +69,16 @@ void RoundHooks_End( void )
 	}
 
 	RoundHooks_Fire( ROUND_HOOK_END );
+}
+
+void RoundHooks_RoundFailed( void )
+{
+	RoundHooks_Fire( ROUND_HOOK_FAILED );
+}
+
+void RoundHooks_MissionEnd( BOOL bFailed )
+{
+	RoundHooks_Fire( bFailed ? ROUND_HOOK_MISSION_FAILED : ROUND_HOOK_MISSION_SUCCESS );
 }
 
 BOOL Logic_IsPlayerInPlay( CBaseEntity *pEntity )

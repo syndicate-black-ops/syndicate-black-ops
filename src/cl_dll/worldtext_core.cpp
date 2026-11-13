@@ -531,6 +531,7 @@ bool WT_ParseMain( const void *buf, int size, WTState &state )
 	state.flags = r.Byte();
 	state.id = r.Short();
 	state.text.clear();
+	state.parent = 0;
 	if ( r.bad )
 		return false;
 
@@ -555,6 +556,17 @@ bool WT_ParseMain( const void *buf, int size, WTState &state )
 		state.orientation = WORLDTEXT_ORIENT_FIXED;
 	if ( state.font >= WORLDTEXT_FONT_COUNT )
 		state.font = 0;
+
+	if ( state.flags & WORLDTEXT_FLAG_PARENT )
+	{
+		state.parent = r.Short() & 0xFFFF;
+		for ( int i = 0; i < 3; i++ )
+			state.localOrigin[i] = Finite( r.LongFloat(), -131072.0f, 131072.0f );
+		for ( int i = 0; i < 3; i++ )
+			state.localAngles[i] = ( r.Short() & 0xFFFF ) * ( 360.0f / 65536.0f );
+		if ( r.bad )
+			return false;
+	}
 
 	r.String( state.text, WORLDTEXT_MAX_TEXT );
 	return true;

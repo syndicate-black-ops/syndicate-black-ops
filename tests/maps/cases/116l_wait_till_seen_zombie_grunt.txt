@@ -1,0 +1,13 @@
+# monster_zombie_grunt flag 1 WaitTillSeen (FGD base Monster): it ignores a player until he looks at it: one in front of a player
+# who looks at it (east, +x) wakes (the flag is cleared), one behind his back stays asleep (the flag stays)
+# covers: monster_zombie_grunt:1
+map co_fuzz
+spawn monster_zombie_grunt targetname front spawnflags 1 angles "0 180 0" origin "700 0 0"
+spawn monster_zombie_grunt targetname back spawnflags 1 angles "0 0 0" origin "-700 0 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectfield front spawnflags 0
+expectfield back spawnflags 1

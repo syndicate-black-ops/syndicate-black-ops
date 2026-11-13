@@ -179,7 +179,8 @@ void CHandGrenade::WeaponIdle( void )
 		// player "shoot" animation
 		m_pPlayer->SetAnimation( PLAYER_ATTACK1 );
 
-		m_flReleaseThrow = 0;
+		// halflife-updated (halflife #2495): keep m_flReleaseThrow set, so the next WeaponIdle takes the "finished the
+		// throw" branch below and draws a new grenade instead of going straight to the idle animations.
 		m_flStartThrow = 0;
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.5;

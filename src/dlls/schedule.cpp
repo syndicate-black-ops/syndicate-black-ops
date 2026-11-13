@@ -146,6 +146,9 @@ void CBaseMonster :: NextScheduledTask ( void )
 
 	if ( FScheduleDone() )
 	{
+		// SBO 2.1 ("active_alert"): the roam after a fight is done
+		if ( m_pSchedule == CBaseMonster::GetScheduleOfType( SCHED_FREEROAM_ALERT ) )
+			Forget( bits_MEMORY_SHOULD_ROAM_IN_ALERT );
 		// just completed last task in schedule, so make it invalid by clearing it.
 		SetConditions( bits_COND_SCHEDULE_DONE );
 		//ClearSchedule();	
@@ -248,6 +251,9 @@ void CBaseMonster :: MaintainSchedule ( void )
 			}
 			if ( HasConditions( bits_COND_TASK_FAILED ) && m_MonsterState == m_IdealMonsterState )
 			{
+				// SBO 2.1 ("active_alert"): a roam that fails (no node to go to) is not tried again
+				if ( m_pSchedule == CBaseMonster::GetScheduleOfType( SCHED_FREEROAM_ALERT ) )
+					Forget( bits_MEMORY_SHOULD_ROAM_IN_ALERT );
 				if ( m_failSchedule != SCHED_NONE )
 					pNewSchedule = GetScheduleOfType( m_failSchedule );
 				else
@@ -1543,7 +1549,9 @@ Schedule_t *CBaseMonster :: GetSchedule ( void )
 				}
 				else if ( HasMemory( bits_MEMORY_SHOULD_ROAM_IN_ALERT ) )
 				{
-					Forget( bits_MEMORY_SHOULD_ROAM_IN_ALERT );
+					// SBO 2.1: the memory stays until the roam is done or fails (NextScheduledTask, MaintainSchedule): a
+					// roam a sound cuts short comes again at the next alert pick (Featureful forgot it here, so a Cop
+					// whose own answer to his gunfire, cover, failed stood for good)
 					return GetScheduleOfType( SCHED_FREEROAM_ALERT );
 				}
 			}

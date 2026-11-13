@@ -23,6 +23,7 @@ extern CVoiceGameMgr	g_VoiceGameMgr;
 
 extern int g_bChangeLevelTouched;
 extern int m_SpawnLocate;
+extern string_t g_iszSpawnSet;	// maprules.cpp: the named spawn set multispawn made active
 extern cvar_t timeleft, fragsleft;
 
 extern edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer );
@@ -60,7 +61,7 @@ static void BrLogRoundStart( void )
 	s_iRound++;
 	s_bRoundLogged = TRUE;
 	LogRoundEvent( "Round_Start", s_iRound, 0 );
-	RoundHooks_Start();	// SBO 2.0: game_round_start, the round's players spawned
+	RoundHooks_Start( s_iRound );	// SBO 2.0: game_round_start and game_round_<N>, the round's players spawned
 }
 
 static void BrLogRoundEnd( void )
@@ -171,6 +172,7 @@ CBr::CBr()
 	m_iRoundState = ROUND_PAUSE;
 	m_iNextRoundStep = -1;
 	m_SpawnLocate = 1;
+	g_iszSpawnSet = iStringNull;	// SBO 2.1: no named spawn set, with the rotation
 	s_iRound = 0;
 	s_bRoundLogged = FALSE;
 	s_bMapWinnerLogged = FALSE;
@@ -521,7 +523,7 @@ void CBr::WaitingSpawn( void )
 		if ( !pPlayer->m_bOutOfPlay )
 			continue;	// alive on the map already
 
-		if ( pPlayer->pev->weapons )
+		if ( pPlayer->HasAnyWeaponBits() )
 			pPlayer->RemoveAllItems( TRUE );
 
 		pPlayer->m_iSpawnMode = 2;
@@ -563,7 +565,7 @@ void CBr::CheckWho( void )
 
 		if ( IsRoundCandidate( pPlayer ) && pPlayer->m_bLoadoutReady == 1 )
 		{
-			if ( pPlayer->pev->weapons )
+			if ( pPlayer->HasAnyWeaponBits() )
 				pPlayer->RemoveAllItems( TRUE );
 
 			iSpawned++;
@@ -717,13 +719,16 @@ void CBr::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->m_iHideHUD &= ~HIDEHUD_HEALTH;
 		pPlayer->m_afPhysicsFlags &= ~PFLAG_OBSERVER;
 		pPlayer->m_bOutOfPlay = 0;
+		// SBO 2.0: walking only for a player who spawns alive (HL SDK / ReGameDLL): an observer keeps StartObserver's
+		// MOVETYPE_NONE and a waiting player the branch's, which the engine never pushes (SV_PushRotate turns a pushed
+		// client's view with a rotating brush)
+		pPlayer->pev->movetype = MOVETYPE_WALK;
 	}
 
 	if ( addDefault )
 		pPlayer->GiveNamedItem( "weapon_wong" );
 
 	pPlayer->m_iSpawnProtectTime = gpGlobals->time + 2;
-	pPlayer->pev->movetype = MOVETYPE_WALK;
 	pPlayer->pev->fov = pPlayer->m_iFOV = 0;	// SBO 2.0: the player's own FOV (default_fov), not 90
 	pPlayer->m_iArmorType = 0;
 	pPlayer->m_iCanCloak = 0;

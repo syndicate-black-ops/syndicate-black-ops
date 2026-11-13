@@ -1,0 +1,26 @@
+# monster_dark with TriggerCondition 4 (death) -> trigger_relay (toggle) -> game_counter limit 1 -> counted; killed by a trigger_hurt touch (dmg 1000, damagetype 4096)
+# covers: monster_dark monster_dark.triggercondition=4 monster_dark.triggertarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_dark targetname victim TriggerCondition 4 TriggerTarget died_relay origin "0 300 0" 
+spawn trigger_hurt dmg 1000000 damagetype 4096
+spawn trigger_relay targetname died_relay target died_sink triggerstate 2
+spawn game_counter targetname died_sink health 1 target counted
+spawn trigger_relay targetname counted target counted_sink triggerstate 2
+activate
+frames 20
+mark kill
+touchent 1 0
+frames 100
+dump 0
+expectn 1 Firing: (died_relay)
+expectn 1 Firing: (counted)

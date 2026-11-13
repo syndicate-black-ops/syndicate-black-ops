@@ -29,6 +29,7 @@
 #include "client_steam_context.h"
 #include "client_viewport.h"
 #include "sbo_bridge.h"
+#include "sbo_create_server.h"
 #include "sbo_loading_screen.h"
 #include "sbo_ui_style.h"
 
@@ -305,6 +306,7 @@ CSboLoadingScreen::CSboLoadingScreen(vgui2::Panel *pParent)
 
 void CSboLoadingScreen::OnTick()
 {
+	VGui2_CreateServer_ApplyPending();
 	Frame();
 }
 
@@ -542,7 +544,7 @@ void CSboLoadingScreen::Frame()
 		Release(true);
 		m_bFailed = true;
 		SetVisible(false);
-		sbo::ConsolePrint("Joining screen: not drawn, GameUI's loading window is shown for this connect\n");
+		sbo::DevPrint("Joining screen: not drawn, GameUI's loading window is shown for this connect\n");
 		return;
 	}
 	if (!IsVisible())
@@ -1115,6 +1117,7 @@ void CSboLoadingScreen::PaintDropped()
 void CSboLoadingScreen::Paint()
 {
 	m_nPaints++;
+	VGui2_CreateServer_ApplyPending(); // Create server's game cvars: the DLL is loaded, the server not yet spawned
 	// during the map load the engine paints without running frames: the dialog's texts are read here too
 	ReadDialog();
 	if (m_bDropped)

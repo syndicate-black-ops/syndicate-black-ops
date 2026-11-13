@@ -35,7 +35,7 @@ def grunt(t):
 
 
 @S.test('env_render fade 1 -> 3 over 2 s: half way the box is about 2x and bullets hit at 2x height', players=1,
-        doc=ER_DOC, size=TALL)
+        doc=ER_DOC, size=TALL, covers=('env_render', 'env_render.m_fScale', 'env_render.frags'))
 def fade_half_way(t):
     grunt(t)
     t.point('env_render', targetname='grow', target='cyc', spawnflags='15', m_fScale='3', frags='2')
@@ -58,7 +58,8 @@ def fade_half_way(t):
     t.expect.value('after', 'cyc', 'maxs', (48, 48, 216), tol=0.1)
 
 
-@S.test('env_render fade 3 -> 1 over 2 s: half way the box is about 2x', players=1, doc=ER_DOC, size=TALL)
+@S.test('env_render fade 3 -> 1 over 2 s: half way the box is about 2x', players=1, doc=ER_DOC, size=TALL,
+        covers=('env_render', 'env_render.m_fScale', 'env_render.frags'))
 def fade_shrink(t):
     t.point('cycler', at=(0, 100, 0), targetname='cyc', model='models/hgrunt.mdl', scale='3')
     t.point('env_render', targetname='shrink', target='cyc', spawnflags='15', m_fScale='1', frags='2')
@@ -79,7 +80,7 @@ def fade_shrink(t):
 
 
 @S.test('Scale changed on the same frame: the next bullet meets the new hitboxes (engine hitbox cache)', players=1,
-        doc='MODEL_SCALE.md#changing-it-while-the-map-runs', size=TALL)
+        doc='MODEL_SCALE.md#changing-it-while-the-map-runs', size=TALL, covers=('env_render', 'env_render.m_fScale'))
 def cache_same_frame(t):
     grunt(t)
     t.point('env_render', targetname='big', target='cyc', spawnflags='15', m_fScale='3')

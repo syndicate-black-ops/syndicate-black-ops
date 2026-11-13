@@ -21,7 +21,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 # Game version: shown in the client (Version tab) as <version>+<commit> and by the server's game_version cvar as
 # "<version>+<commit> <branch>", see cmake/sbo_version.cmake
-project(sbo VERSION 2.0.0 LANGUAGES C CXX)
+project(sbo VERSION 2.1.0 LANGUAGES C CXX)
 
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR "SBO's binaries must be 32-bit (x86). Got pointer size ${CMAKE_SIZEOF_VOID_P}.")
@@ -41,8 +41,8 @@ if(WIN32)
 endif()
 option(SBO_BUILD_CLIENT "Build the client (client.dll on Windows, client.so on Linux)" ON)
 option(SBO_BUILD_SERVER "Build the server (hl.dll on Windows, hl.so on Linux)" ON)
-# The test layer (test_* commands, trace; docs/dev/ENTITY_TESTS.md): OFF by default, so a plain build has none (owner
-# 2026-10-17); builds for the entity tests, scripted client tests and test_* on a server pass -DSBO_TEST_COMMANDS=ON.
+# The test layer (test_* commands, trace; docs/dev/ENTITY_TESTS.md): OFF by default, so a plain build has none;
+# builds for the entity tests, scripted client tests and test_* on a server pass -DSBO_TEST_COMMANDS=ON.
 # Release CI passes OFF explicitly; scripts/check_no_test_commands.sh checks the release binaries. A build directory
 # configured before this change keeps ON in its CMakeCache.txt until reconfigured with -DSBO_TEST_COMMANDS=OFF.
 option(SBO_TEST_COMMANDS "Compile in the test_* commands for the automated entity tests" OFF)

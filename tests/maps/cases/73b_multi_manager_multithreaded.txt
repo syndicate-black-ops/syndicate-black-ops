@@ -1,0 +1,21 @@
+# multi_manager flag 1 "multithreaded": every call runs in its own copy, so a second call while the first runs plays
+# the whole list again (the copies are removed when done); without the flag the second call is ignored
+# covers: multi_manager:1
+map co_fuzz
+spawn multi_manager targetname mm_thread spawnflags 1 th_a 0 th_b 2
+spawn multi_manager targetname mm_plain pl_a 0 pl_b 2
+activate
+frames 3
+fire mm_thread
+fire mm_plain
+frames 5
+fire mm_thread
+fire mm_plain
+frames 5
+count multi_manager
+frames 30
+expectn 2 Firing: (th_a)
+expectn 2 Firing: (th_b)
+expectn 1 Firing: (pl_a)
+expectn 1 Firing: (pl_b)
+expectcount multi_manager 2

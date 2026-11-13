@@ -24,6 +24,9 @@
 #include "aurora/particlemgr.h"
 #include "worldtext.h"
 #include "mirror.h"
+#include "overlay.h"
+#include "inventory.h"
+#include "colorcorrection.h"
 #include "map_music.h"
 #include "worldscreen/worldscreen.h"
 
@@ -130,6 +133,13 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	Aurora_Reset();
 	// SBO 2.0: new server/map: no env_mirror until the server's Mirror
 	Mirror_Reset();
+	// SBO 2.0: new server/map: no env_overlay until the server's Overlay
+	Overlay_Reset();
+	// SBO 2.0: new server/map, or fullupdate: no inventory items until the server's Inventory messages
+	Inventory_Reset();
+
+	// SBO 2.0: new server/map: no color_correction until the server's ColorCorr
+	ColorCorr_Reset();
 	// SBO 2.0: new server/map: no point_worldtext until the server's WorldText
 	WorldText_Reset();
 	// SBO 2.0: new server/map: the server's next MapMusic is run whatever it is

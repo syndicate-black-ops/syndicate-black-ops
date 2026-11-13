@@ -1,0 +1,15 @@
+# a master name that names no entity, or names an entity that is not a master (a trigger_relay): the entity works as
+# if it had no master, and the console says "Master was null or not a master!" (HL SDK UTIL_IsMasterTriggered)
+# covers: game_counter.master
+map co_fuzz
+spawn game_counter targetname c_missing health 1 target missing_hit master no_such_master spawnflags 2
+spawn trigger_relay targetname not_a_master
+spawn game_counter targetname c_notmaster health 1 target notmaster_hit master not_a_master spawnflags 2
+activate
+frames 3
+fire c_missing world
+fire c_notmaster world
+frames 1
+expectn 1 Firing: (missing_hit)
+expectn 1 Firing: (notmaster_hit)
+expectn 2 Master was null or not a master!

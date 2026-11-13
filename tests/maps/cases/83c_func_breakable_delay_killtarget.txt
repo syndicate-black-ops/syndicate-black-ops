@@ -1,0 +1,29 @@
+# func_breakable "delay" and "killtarget" (CBaseDelay keys): broken by a Use, it fires its target after the delay and
+# removes the killtarget then. The activator its targets get is NULL in the HL SDK, and 1.38's game_text crashed on a
+# NULL activator (see 71f_delay_null_activator_game_text); develop: nobody gets the text, the map goes on
+# covers: func_breakable.delay func_breakable.killtarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn func_breakable targetname br model *1 health 20 target br_gt killtarget br_victim delay 1 material 1
+spawn game_text targetname br_gt message breakable_text
+spawn info_target targetname br_victim
+activate
+connect 1 P1
+frames 3
+useclient 0 1
+frames 5
+expectnot Firing: (br_gt)
+expectcount info_target 1
+frames 10
+expectn 1 Firing: (br_gt)
+expectcount info_target 0
+expectnot MSTR 23 ->#1: breakable_text

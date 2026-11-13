@@ -46,6 +46,25 @@ int main(int argc, char **argv)
 		failed++;
 	}
 
+	// the header reader (the world screen editor's picture list): the tiny image, cut short, other types
+	{
+		int hw = 0, hh = 0, hb = 0, ht = 0;
+		if (!sbo_image::ReadTgaHeader(tiny, sizeof(tiny), hw, hh, hb, ht) || hw != 2 || hh != 2 || hb != 24 || ht != 2)
+		{
+			printf("FAIL: tiny header\n");
+			failed++;
+		}
+		uint8_t gray[sizeof(tiny)];
+		memcpy(gray, tiny, sizeof(tiny));
+		gray[2] = 3;
+		if (sbo_image::ReadTgaHeader(tiny, 17, hw, hh, hb, ht) || sbo_image::ReadTgaHeader(gray, sizeof(gray), hw, hh, hb, ht) ||
+		    sbo_image::ReadTgaHeader(nullptr, 18, hw, hh, hb, ht))
+		{
+			printf("FAIL: header of a cut or gray TGA accepted\n");
+			failed++;
+		}
+	}
+
 	srand(4242);
 	for (int i = 1; i < argc; i++)
 	{
@@ -74,6 +93,18 @@ int main(int argc, char **argv)
 		{
 			const size_t cut = (size_t)rand() % data.size();
 			decode(data.data(), cut, 512, 384, rgba, w, h);
+			int hw, hh, hb, ht;
+			sbo_image::ReadTgaHeader(data.data(), cut, hw, hh, hb, ht);
+		}
+		if (!jpeg)
+		{
+			// the header agrees with the decoder: a decoded TGA has a valid header
+			int hw, hh, hb, ht;
+			if (!sbo_image::ReadTgaHeader(data.data(), data.size(), hw, hh, hb, ht))
+			{
+				printf("FAIL: header refused for a decoded TGA: %s\n", argv[i]);
+				failed++;
+			}
 		}
 		// random bytes changed (header included): must not crash
 		for (int k = 0; k < 4; k++)
@@ -82,6 +113,8 @@ int main(int argc, char **argv)
 			for (int b = 0; b < 32; b++)
 				bad[(size_t)rand() % (b < 8 ? 18 : bad.size())] = (uint8_t)rand();
 			decode(bad.data(), bad.size(), 1 + rand() % 600, 1 + rand() % 600, rgba, w, h);
+			int hw, hh, hb, ht;
+			sbo_image::ReadTgaHeader(bad.data(), bad.size(), hw, hh, hb, ht);
 		}
 	}
 	if (decoded == 0)

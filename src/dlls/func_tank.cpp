@@ -15,6 +15,7 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#include "keyvalue.h"
 #include "effects.h"
 #include "weapons.h"
 #include "explode.h"
@@ -24,6 +25,7 @@
 #include "guide_entities.h"	// SBO 2.0: monster_target, scripted_tanksequence
 #include "locus.h"
 #include "round_hooks.h"
+#include "movewith.h"	// SBO 2.0: a tank on a moving parent aims in its own frame
 
 
 #define SF_TANK_ACTIVE			0x0001
@@ -61,6 +63,10 @@ public:
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void	Think( void );
 	void	TrackTarget( void );
+	// SBO 2.1: "firerate" / "firespread" changed at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue GetKeyValue( const char *keyName );
+	void	RuntimeKeyValueChanged( const char *keyName );
+	void	ApplyFireLimits( void );
 
 	virtual void Fire( const Vector &barrelEnd, const Vector &forward, entvars_t *pevAttacker );
 	virtual Vector UpdateTargetPosition( CBaseEntity *pTarget )
@@ -78,6 +84,9 @@ public:
 	inline void TankActivate( void ) { pev->spawnflags |= SF_TANK_ACTIVE; pev->nextthink = pev->ltime + 0.1; m_fireLast = 0; }
 	inline void TankDeactivate( void ) { pev->spawnflags &= ~SF_TANK_ACTIVE; m_fireLast = 0; StopRotSound(); }
 	inline BOOL CanFire( void ) { return (gpGlobals->time - m_lastSightTime) < m_persist; }
+	// SBO 2.1 (Spirit of Half-Life: On while active): In Use while a player controls it, On while it is active (it
+	// aims and fires by itself), Off while it is inactive
+	virtual STATE GetState( CBaseEntity *pActivator ) { return m_pController ? STATE_IN_USE : ( IsActive() ? STATE_ON : STATE_OFF ); }
 	BOOL		InRange( float range );
 
 	// Acquire a target. SBO 2.0: the tank scans the players itself (see FindTarget)
@@ -181,6 +190,7 @@ public:
 	string_t	m_iszFireMaster;
 	string_t	m_iszExtraBarrels;
 	int			m_iTankClass;
+	BOOL		m_bSpawned;		// SBO 2.1: "spritesmoke" / "spriteflash" can no longer change (they are precached)
 	inline BOOL HaveBullets( void ) { return m_bulletCount != 0; }
 	void		RemoveBullet( void );
 	void		TryFire( const Vector &barrelEnd, const Vector &forward, entvars_t *pevAttacker, CBaseEntity *pController );
@@ -227,6 +237,7 @@ TYPEDESCRIPTION	CFuncTank::m_SaveData[] =
 	DEFINE_FIELD( CFuncTank, m_iszFireMaster, FIELD_STRING ),
 	DEFINE_FIELD( CFuncTank, m_iszExtraBarrels, FIELD_STRING ),
 	DEFINE_FIELD( CFuncTank, m_iTankClass, FIELD_INTEGER ),
+	DEFINE_FIELD( CFuncTank, m_bSpawned, FIELD_BOOLEAN ),
 };
 
 IMPLEMENT_SAVERESTORE( CFuncTank, CBaseEntity );
@@ -256,6 +267,7 @@ static CFuncTank *GetFuncTankPointer( CBaseEntity *pEntity )
 void CFuncTank :: Spawn( void )
 {
 	Precache();
+	m_bSpawned = TRUE;
 
 	pev->movetype	= MOVETYPE_PUSH;  // so it doesn't get pushed by anything
 	pev->solid		= SOLID_BSP;
@@ -269,10 +281,7 @@ void CFuncTank :: Spawn( void )
 
 	m_sightOrigin = BarrelPosition(); // Point at the end of the barrel
 
-	if ( m_fireRate <= 0 )
-		m_fireRate = 1;
-	if ( m_spread > MAX_FIRING_SPREADS )
-		m_spread = 0;
+	ApplyFireLimits();
 
 	pev->oldorigin = pev->origin;
 
@@ -280,6 +289,41 @@ void CFuncTank :: Spawn( void )
 		m_bulletCount = -1;
 }
 
+
+// Spawn's limits (SBO 2.1: also after a run-time change): a rate of 0 or below would divide by zero (it never fired
+// again), a spread outside the table would read past it
+void CFuncTank :: ApplyFireLimits( void )
+{
+	if ( m_fireRate <= 0 )
+		m_fireRate = 1;
+	if ( m_spread < 0 || m_spread >= (int)MAX_FIRING_SPREADS )	// SBO 2.1: a value past the table (5) or below 0 read outside gTankSpread
+		m_spread = 0;
+}
+
+CKeyValue CFuncTank :: GetKeyValue( const char *keyName )
+{
+	CKeyValue keyvalue = g_emptyKeyValue;
+	if ( FStrEq( keyName, "firerate" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_FLOAT;
+		keyvalue.keyName = "firerate";
+		keyvalue.fVal = m_fireRate;
+		return keyvalue;
+	}
+	if ( FStrEq( keyName, "firespread" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "firespread";
+		keyvalue.iVal = m_spread;
+		return keyvalue;
+	}
+	return CBaseEntity::GetKeyValue( keyName );
+}
+
+void CFuncTank :: RuntimeKeyValueChanged( const char *keyName )
+{
+	ApplyFireLimits();
+}
 
 void CFuncTank :: Precache( void )
 {
@@ -367,14 +411,21 @@ void CFuncTank :: KeyValue( KeyValueData *pkvd )
 		m_iSmokeRenderMode = atoi(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
+	// SBO 2.1: the sprites are refused at run time (trigger_changevalue): the next shot would make a sprite not precached
 	else if (FStrEq(pkvd->szKeyName, "spritesmoke"))
 	{
-		m_iszSpriteSmoke = ALLOC_STRING(pkvd->szValue);
+		if ( m_bSpawned )
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else
+			m_iszSpriteSmoke = ALLOC_STRING(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "spriteflash"))
 	{
-		m_iszSpriteFlash = ALLOC_STRING(pkvd->szValue);
+		if ( m_bSpawned )
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else
+			m_iszSpriteFlash = ALLOC_STRING(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "rotatesound"))
@@ -450,9 +501,8 @@ BOOL CFuncTank :: OnControls( entvars_t *pevTest )
 	if ( !(pev->spawnflags & SF_TANK_CANCONTROL) )
 		return FALSE;
 
-	Vector offset = pevTest->origin - pev->origin;
-
-	if ( (m_vecControllerUsePos - pevTest->origin).Length() < 30 )
+	// SBO 2.0 movewith: on a moving parent the controller rides along: compare in the parent's frame
+	if ( (m_vecControllerUsePos - MoveWith_ToParentFrame( this, pevTest->origin )).Length() < 30 )
 		return TRUE;
 
 	return FALSE;
@@ -488,7 +538,7 @@ BOOL CFuncTank :: StartControl( CBasePlayer *pController )
 	}
 
 	m_pController->m_iHideHUD |= HIDEHUD_WEAPONS;
-	m_vecControllerUsePos = m_pController->pev->origin;
+	m_vecControllerUsePos = MoveWith_ToParentFrame( this, m_pController->pev->origin );	// SBO 2.0 movewith
 	
 	pev->nextthink = pev->ltime + 0.1;
 	
@@ -609,7 +659,10 @@ BOOL CFuncTank :: TargetVisible( edict_t *pTarget, const Vector &barrelEnd )
 // yaw range. The barrel offset is left out here.)
 BOOL CFuncTank :: TargetInYawRange( edict_t *pTarget )
 {
-	Vector angles = UTIL_VecToAngles( pTarget->v.origin - pev->origin );
+	// SBO 2.0 movewith: on a moving parent, the yaw range is around the base's own frame
+	Vector vecDir = pTarget->v.origin - pev->origin;
+	MoveWith_WorldToOwnDirection( this, vecDir, &vecDir );
+	Vector angles = UTIL_VecToAngles( vecDir );
 
 	return fabs( UTIL_AngleDistance( angles.y, m_yawCenter ) ) <= m_yawRange;
 }
@@ -686,11 +739,10 @@ edict_t *CFuncTank :: FindTarget( void )
 
 	// SBO 2.0 (Featureful monster_target): active monster_targets that count as a player or a player ally are
 	// candidates too, ranked the same way (none on a map without them: the list is empty)
-	CBaseEntity *pTargets[32];
-	int nTargets = GuideMonsterTargets_ForTank( pTargets, 32 );
-	for ( int t = 0; t < nTargets; t++ )
+	int iCursor = 0;
+	for ( CBaseEntity *pTarget = GuideMonsterTargets_NextForTank( iCursor ); pTarget; pTarget = GuideMonsterTargets_NextForTank( iCursor ) )
 	{
-		edict_t *pEdict = pTargets[t]->edict();
+		edict_t *pEdict = pTarget->edict();
 		int iRank;
 		if ( TargetVisible( pEdict, barrelEnd ) )
 			iRank = TargetInYawRange( pEdict ) ? 3 : 2;
@@ -778,11 +830,12 @@ BOOL CFuncTank :: InRange( float range )
 
 void CFuncTank :: Think( void )
 {
-	pev->avelocity = g_vecZero;
+	MoveWith_SetOwnAvelocity( this, g_vecZero );	// SBO 2.0 movewith: pev->avelocity unless a child
 	TrackTarget();
 	UpdateSpot();	// SBO 2.0 (Featureful flag 64)
 
-	if ( fabs(pev->avelocity.x) > 1 || fabs(pev->avelocity.y) > 1 )
+	Vector vecAvelocity = MoveWith_GetOwnAvelocity( this );
+	if ( fabs(vecAvelocity.x) > 1 || fabs(vecAvelocity.y) > 1 )
 		StartRotSound();
 	else
 		StopRotSound();
@@ -880,6 +933,22 @@ void CFuncTank::TrackTarget( void )
 
 	angles.x = -angles.x;
 
+	// SBO 2.0 movewith: on a moving parent the base turns with it: the aim (the player's view or the direction to the
+	// target, in world terms) is taken into the tank's own frame, where its center, ranges and current angles are
+	Vector vecOwnAngles = pev->angles;
+	MoveWith_GetOwnPose( this, NULL, &vecOwnAngles );
+	{
+		Vector vecAimForward, vecOwnForward;
+		UTIL_MakeVectorsPrivate( angles, vecAimForward, NULL, NULL );
+		if ( MoveWith_WorldToOwnDirection( this, vecAimForward, &vecOwnForward ) )
+		{
+			Vector vecOwnAim = UTIL_VecToAngles( vecOwnForward );
+			angles.x = -vecOwnAim.x;
+			angles.y = vecOwnAim.y;
+		}
+	}
+	Vector vecAvelocity = g_vecZero;
+
 	// Force the angles to be relative to the center position
 	angles.y = m_yawCenter + UTIL_AngleDistance( angles.y, m_yawCenter );
 	angles.x = m_pitchCenter + UTIL_AngleDistance( angles.x, m_pitchCenter );
@@ -900,12 +969,18 @@ void CFuncTank::TrackTarget( void )
 		m_lastSightTime = gpGlobals->time;
 
 	// Move toward target at rate or less
-	float distY = UTIL_AngleDistance( angles.y, pev->angles.y );
-	pev->avelocity.y = distY * 10;
-	if ( pev->avelocity.y > m_yawRate )
-		pev->avelocity.y = m_yawRate;
-	else if ( pev->avelocity.y < -m_yawRate )
-		pev->avelocity.y = -m_yawRate;
+	float distY = UTIL_AngleDistance( angles.y, vecOwnAngles.y );
+	// SBO 2.0 movewith: on a turning parent the aim sweeps round the base, and when it passes behind the gun the
+	// target goes from one end of the yaw range to the other. The shortest turn there goes through the arc behind the
+	// gun, where its barrel sweeps through its controller (the boat in co_movewith_test): the gun turns back through
+	// its range instead
+	if ( m_yawRange < 180 && MoveWith_IsChild( this ) )
+		distY = ( angles.y - m_yawCenter ) - ( fmodf( vecOwnAngles.y - m_yawCenter + 540.0f, 360.0f ) - 180.0f );
+	vecAvelocity.y = distY * 10;
+	if ( vecAvelocity.y > m_yawRate )
+		vecAvelocity.y = m_yawRate;
+	else if ( vecAvelocity.y < -m_yawRate )
+		vecAvelocity.y = -m_yawRate;
 
 	// Limit against range in x
 	if ( angles.x > m_pitchCenter + m_pitchRange )
@@ -914,13 +989,15 @@ void CFuncTank::TrackTarget( void )
 		angles.x = m_pitchCenter - m_pitchRange;
 
 	// Move toward target at rate or less
-	float distX = UTIL_AngleDistance( angles.x, pev->angles.x );
-	pev->avelocity.x = distX  * 10;
+	float distX = UTIL_AngleDistance( angles.x, vecOwnAngles.x );
+	vecAvelocity.x = distX  * 10;
 
-	if ( pev->avelocity.x > m_pitchRate )
-		pev->avelocity.x = m_pitchRate;
-	else if ( pev->avelocity.x < -m_pitchRate )
-		pev->avelocity.x = -m_pitchRate;
+	if ( vecAvelocity.x > m_pitchRate )
+		vecAvelocity.x = m_pitchRate;
+	else if ( vecAvelocity.x < -m_pitchRate )
+		vecAvelocity.x = -m_pitchRate;
+
+	MoveWith_SetOwnAvelocity( this, vecAvelocity );	// pev->avelocity unless a child
 
 	// SBO 2.0 (Featureful "extra_barrels"): the extra barrels take its angles (they do not think themselves)
 	if ( !FStringNull( m_iszExtraBarrels ) )
@@ -931,7 +1008,7 @@ void CFuncTank::TrackTarget( void )
 			CFuncTank *pBarrel = GetFuncTankPointer( pTry );
 			if ( pBarrel && pBarrel != this )
 			{
-				pBarrel->pev->angles = pev->angles;
+				MoveWith_AssignAngles( pBarrel, pev->angles );	// SBO 2.0 movewith: a child barrel keeps them on its parent
 				pBarrel->TankSpecialThink();
 				pev->nextthink = pev->ltime + 0.05;	// update sooner with barrels
 			}
@@ -1097,6 +1174,11 @@ void CFuncTank::UpdateSpot( void )
 // SBO 2.0: the Locus point of "m_iszLocusFire" goes with the tank
 void CFuncTank::UpdateOnRemove( void )
 {
+	// SBO 2.1 (Half-Life Unified SDK): a tank removed while a player mans it (killtarget) lets go of him first, so he
+	// gets his weapon and HUD back; he kept the hidden weapons and a pointer to the removed tank. Before the spot
+	// goes: letting go updates the laser spot.
+	StopControl();
+
 	if ( m_hSpot != NULL )	// SBO 2.0 (Featureful): and the laser spot
 		UTIL_Remove( m_hSpot );
 	if ( m_hFireProxy != NULL )
@@ -1453,11 +1535,9 @@ void CFuncTankLaser::Fire( const Vector &barrelEnd, const Vector &forward, entva
 				m_pLaser->TurnOn();
 				m_pLaser->pev->dmgtime = gpGlobals->time - 1.0;
 				// SBO 2.0 (Valve halflife#561, Featureful's CLaser::FireAtPoint attacker): the player at the controls
-				// is the attacker and this tank the inflictor (kill feed d_tanklaser); unmanned: the laser, as in HL
-				if ( pevAttacker != pev )
-					m_pLaser->FireAtPoint( tr, pevAttacker, pev );
-				else
-					m_pLaser->FireAtPoint( tr );
+				// is the attacker; unmanned: the laser, as in HL. This tank is the inflictor either way, so the kill
+				// feed sends "tanklaser", the turret icon (SboKillfeed_InflictorCode)
+				m_pLaser->FireAtPoint( tr, pevAttacker != pev ? pevAttacker : m_pLaser->pev, pev );
 				m_pLaser->pev->nextthink = 0;
 				RemoveBullet();
 			}
@@ -1576,6 +1656,8 @@ public:
 	virtual int	Restore( CRestore &restore );
 	static TYPEDESCRIPTION m_SaveData[];
 
+	// SBO 2.1 (Spirit of Half-Life): On while a player uses them to control the tank, Off otherwise
+	STATE GetState( CBaseEntity *pActivator ) { return m_pTank && m_pTank->Controller() ? STATE_ON : STATE_OFF; }
 	CFuncTank *m_pTank;
 };
 LINK_ENTITY_TO_CLASS( func_tankcontrols, CFuncTankControls );
@@ -1677,6 +1759,8 @@ public:
 	void KeyValue( KeyValueData *pkvd );
 	virtual int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 	CFuncTank *GetTank( void ) { return (CFuncTank *)(CBaseEntity *)m_hTank; }
+	// SBO 2.1 (Spirit of Half-Life): On while it runs (it has its tank), Off otherwise
+	STATE GetState( CBaseEntity *pActivator ) { return GetTank() ? STATE_ON : STATE_OFF; }
 
 	void StopSequence( void );
 	void FacingNotify( void );
@@ -1894,7 +1978,7 @@ void CFuncTank::StopSequence( void )
 {
 	StopRotSound();
 	pev->nextthink = 0;
-	pev->avelocity = g_vecZero;
+	MoveWith_SetOwnAvelocity( this, g_vecZero );	// SBO 2.0 movewith: pev->avelocity unless a child
 	m_hSequence = NULL;
 	m_hSequenceEnemy = NULL;
 	m_bSeqFire = FALSE;

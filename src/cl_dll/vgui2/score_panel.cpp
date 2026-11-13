@@ -55,6 +55,7 @@
 #include "sbo_bridge.h"
 #include "sbo_cvar.h"
 #include "vgui2_api.h"
+#include "hud_objectives.h"
 
 #define STEAM_PROFILE_URL "http://steamcommunity.com/profiles/"
 
@@ -649,11 +650,83 @@ void CScorePanel::OnThink()
 		}
 	}
 	m_iBadgeHoverClient = badgeHover;
+
+	// SBO 2.0 trigger_objective: the list under the players changed: the board's height again
+	if (m_iObjectivesRevision != Objectives_Revision())
+		Resize();
+}
+
+bool CScorePanel::GetObjectivesLineBounds(int &x, int &y, int &wide, int &tall)
+{
+	tall = Objectives_SummaryTall();
+	if (tall <= 0)
+		return false;
+	int lx, ly, lw, lt;
+	m_pPlayerList->GetPos(lx, ly);
+	m_pPlayerList->GetSize(lw, lt);
+	x = lx;
+	y = ly + lt + m_iBottomPadding;
+	wide = lw;
+	return true;
+}
+
+void CScorePanel::SetObjectivesOpen(bool bOpen)
+{
+	m_bObjectivesOpen = bOpen;
+	// the open list covers the players: their rows take no clicks meanwhile (a click there closes the list). Only
+	// the open list turns the rows' mouse off: the board's own mouse decides whether the cursor is on at all (this
+	// also runs when the board closes, with its mouse already off, and must not leave the rows dead for the next open)
+	m_pPlayerList->SetMouseInputEnabled(!bOpen);
+	if (bOpen)
+		m_pPlayerMenu->SetVisible(false);
+	Repaint();
+}
+
+void CScorePanel::OnMousePressed(vgui2::MouseCode code)
+{
+	int x, y, wide, tall;
+	if (code == vgui2::MOUSE_LEFT && GetObjectivesLineBounds(x, y, wide, tall))
+	{
+		int mx, my;
+		vgui2::input()->GetCursorPos(mx, my);
+		ScreenToLocal(mx, my);
+		const bool onLine = mx >= x && mx < x + wide && my >= y && my < y + tall;
+		const bool onList = m_bObjectivesOpen && mx >= x && mx < x + wide && my >= m_iObjectivesTop && my < y;
+		if (onLine || onList)
+		{
+			SetObjectivesOpen(!m_bObjectivesOpen);
+			return;
+		}
+	}
+	BaseClass::OnMousePressed(code);
+}
+
+// SBO 2.0 trigger_objective: the height the objective line takes under the player list, its gap included (0: none)
+int CScorePanel::ObjectivesTall()
+{
+	const int lineTall = Objectives_SummaryTall();
+	return lineTall > 0 ? lineTall + m_iBottomPadding : 0;
 }
 
 void CScorePanel::PostChildPaint()
 {
 	BaseClass::PostChildPaint();
+
+	// SBO 2.0 trigger_objective: one line under the player list: done / total, the newest active objective, how many
+	// more (docs/OBJECTIVES.md). With the mouse on, a click on it opens the full list upwards over the players.
+	{
+		int x, y, wide, tall;
+		if (GetObjectivesLineBounds(x, y, wide, tall))
+		{
+			Objectives_PaintSummary(x, y, wide, IsMouseInputEnabled() ? (m_bObjectivesOpen ? 2 : 1) : 0);
+			if (m_bObjectivesOpen)
+			{
+				int lx, ly;
+				m_pPlayerList->GetPos(lx, ly);
+				m_iObjectivesTop = Objectives_PaintFullListUp(x, y - 2, wide, y - 2 - ly);
+			}
+		}
+	}
 
 	const double now = vgui2::system()->GetCurrentTime();
 	int sizeIndex;
@@ -882,6 +955,7 @@ void CScorePanel::ShowPanel(bool state)
 		SetMouseInputEnabled(false);
 		SetKeyBoardInputEnabled(false);
 		m_pPlayerMenu->SetVisible(false);
+		SetObjectivesOpen(false); // SBO 2.0: the objective list opens closed every time
 		SetMuteHoverClient(0);
 		m_iIgnoreMuteClickThinks = 0;
 	}
@@ -1058,11 +1132,11 @@ bool CScorePanel::ShouldShowXP()
 
 bool CScorePanel::IsHunted(int client)
 {
-	// The server's ScoreInfo playerclass (SboScoreboard_GetClass): 1 while the player is the Hunted, in play (category
+	// The server's ScoreInfo playerclass (SboScoreboard_GetClass): bit 1 while the player is the Hunted, in play (category
 	// 1) or dead (category 2: the role stays after a suicide / a death by the world). Not a spectator (category 5):
 	// the role ends with spectating.
 	const sbo::ScorePlayer &sp = m_Players[client];
-	return sp.playerclass == 1 && (sp.teamnumber == SBO_TEAM_HUNTED || sp.teamnumber == SBO_TEAM_DEAD)
+	return (sp.playerclass & SBO_CLASS_HUNTED) && (sp.teamnumber == SBO_TEAM_HUNTED || sp.teamnumber == SBO_TEAM_DEAD)
 	    && sbo::IsBountyMap() && IsSboCategoryMode();
 }
 
@@ -1084,6 +1158,10 @@ void CScorePanel::GetTeamLabel(int nTeamID, wchar_t *buf, int bufSizeInBytes)
 	if (nTeamID == TEAM_SPECTATOR)
 	{
 		pszName = "#SBO_Scores_Spectators";
+	}
+	else if (nTeamID == GHOST_SECTION_ID)
+	{
+		pszName = "#SBO_Scores_Ghosts";
 	}
 	else
 	{
@@ -1118,6 +1196,10 @@ void CScorePanel::GetTeamLabel(int nTeamID, wchar_t *buf, int bufSizeInBytes)
 	else if (pszName[0] == '#' && nTeamID == TEAM_SPECTATOR)
 	{
 		V_wcsncpy(buf, L"Spectators", bufSizeInBytes);
+	}
+	else if (pszName[0] == '#' && nTeamID == GHOST_SECTION_ID)
+	{
+		V_wcsncpy(buf, L"Ghosts", bufSizeInBytes);
 	}
 	else
 	{
@@ -1360,6 +1442,7 @@ void CScorePanel::RefreshItems()
 		// lands in the right place (SectionedListPanel hides empty sections).
 		for (int team : s_SboCategoryOrder)
 			CreateSection(team);
+		CreateSection(GHOST_SECTION_ID); // last, below the Spectators: the slots not in the game (IsGhost)
 
 		// anything else the server numbered (none expected)
 		for (int i = 1; i <= MAX_TEAMS; i++)
@@ -1458,7 +1541,11 @@ void CScorePanel::CreateSection(int nTeamID)
 	else
 	{
 		// same colour as the team's names in chat / death notices (TEAM_SPECTATOR: the table's grey)
-		m_pPlayerList->SetSectionFgColor(nTeamID, TeamColor(nTeamID == TEAM_SPECTATOR ? -1 : nTeamID));
+		// SBO: Ghosts: the same grey, faded like their rows
+		Color color = TeamColor(nTeamID == TEAM_SPECTATOR || nTeamID == GHOST_SECTION_ID ? -1 : nTeamID);
+		if (nTeamID == GHOST_SECTION_ID)
+			color[3] = GHOST_ALPHA;
+		m_pPlayerList->SetSectionFgColor(nTeamID, color);
 	}
 
 	// Avatar
@@ -1597,7 +1684,9 @@ void CScorePanel::UpdateClientInfo(int client)
 
 	KeyValues *playerKv = new KeyValues("data");
 	char szName[128];
-	const bool bColorCodes = GetColorCodeAction() == ColorCodeAction::Handle;
+	// SBO: a ghost's row is plain grey: no colour codes
+	const bool bGhost = pd.nTeamID == GHOST_SECTION_ID;
+	const bool bColorCodes = !bGhost && GetColorCodeAction() == ColorCodeAction::Handle;
 
 	{
 		char buf[128];
@@ -1613,7 +1702,7 @@ void CScorePanel::UpdateClientInfo(int client)
 		// Name
 		// SBO: with the player's name colour (cvar namecolor) as colour codes: the name's uncoded text in it instead
 		// of the row colour, ^0 / ^9 in the name back to it (hud_colortext 1 only; CHudChat::GetColoredPlayerName)
-		const char *pszName = CHudChat::GetColoredPlayerName(client, GetDisplayName(sp, false));
+		const char *pszName = bGhost ? GetDisplayName(sp) : CHudChat::GetColoredPlayerName(client, GetDisplayName(sp, false));
 
 		// BHL: "^0" ends the name's colour codes, the tag keeps the row colour
 		if (sp.spectator)
@@ -1658,6 +1747,17 @@ void CScorePanel::UpdateClientInfo(int client)
 		{
 			playerKv->SetInt("ping", sp.ping);
 		}
+
+		// SBO: a ghost is not in the game: no score, deaths, XP or ping (a reused slot's last ScoreInfo, a lost
+		// client's last ping); the sort keys stay 0, so its rows go by name
+		if (bGhost)
+		{
+			playerKv->SetString("eff", "");
+			playerKv->SetString("frags", "");
+			playerKv->SetString("deaths", "");
+			playerKv->SetString("xp", "");
+			playerKv->SetString("ping", "");
+		}
 	}
 
 	if (pd.nItemID == -1)
@@ -1672,13 +1772,22 @@ void CScorePanel::UpdateClientInfo(int client)
 		m_pPlayerList->ModifyItem(pd.nItemID, pd.nTeamID, playerKv);
 	}
 
-	// Name colour = chat name colour (the team number can change without a section change in BHL grouping)
-	m_pPlayerList->SetItemFgColor(pd.nItemID, ClientColor(client));
+	// Name colour = chat name colour (the team number can change without a section change in BHL grouping);
+	// SBO: a ghost's row in the section's faded grey, its avatar faded too
+	Color rowColor = ClientColor(client);
+	if (bGhost)
+	{
+		rowColor = TeamColor(-1);
+		rowColor[3] = GHOST_ALPHA;
+	}
+	m_pPlayerList->SetItemFgColor(pd.nItemID, rowColor);
+	static_cast<CPlayerImage *>(m_pImageList->GetImage(client))
+	    ->SetColor(bGhost ? Color(255, 255, 255, GHOST_ALPHA) : Color(255, 255, 255, 255));
 
 	// SBO: the name cell: the row's font and colour, the column's width
 	CPlayerNameImage *pName = static_cast<CPlayerNameImage *>(m_pImageList->GetImage(MAX_PLAYERS + client));
 	pName->SetFont(GetNameFont());
-	pName->SetColor(ClientColor(client));
+	pName->SetColor(rowColor);
 	pName->SetName(szName, bColorCodes);
 	// SBO: a name with a badge leaves room for the badge after it (PostChildPaint)
 	pName->ResizeImageToContentMaxWidth(m_pPlayerList->GetColumnWidthBySection(pd.nTeamID, NAME_COLUMN)
@@ -1863,6 +1972,10 @@ void CScorePanel::UpdateScoresAndCounts()
 	if (m_IsTeamSectionCreated[TEAM_SPECTATOR])
 		fnUpdateTeamHeader(TEAM_SPECTATOR);
 
+	// SBO: Ghosts: "Ghosts (n)"
+	if (m_IsTeamSectionCreated[GHOST_SECTION_ID])
+		fnUpdateTeamHeader(GHOST_SECTION_ID);
+
 	// Update total player count: "Players: 5 / 32"
 	{
 		static wchar_t s_szDefault[] = L"Players: %s1 / %s2";
@@ -1939,6 +2052,12 @@ int CScorePanel::GetPlayerTeam(int client)
 		// a team
 		if (IsVirtualSlot(client))
 			return SBO_TEAM_SPECTATORS;
+		// a slot not in the game (connecting, reconnecting, connection lost): Ghosts, below every section; before
+		// this section existed a connecting player's team 0 put the row in the column header's section, above all
+		if (IsGhost(client))
+			return GHOST_SECTION_ID;
+		if (team == HEADER_SECTION_ID)
+			return SBO_TEAM_SPECTATORS; // HLTV (the engine's spectator flag): no category, never a ghost
 		return team;
 	}
 
@@ -1961,6 +2080,17 @@ bool CScorePanel::IsVirtualSlot(int client)
 	// only where the engine gives SteamIDs (HL25): elsewhere nobody has one and every new player would look virtual
 	return sp.connected && !sp.thisplayer && CClientSteamContext::IsSteamPipeEngine() && sp.teamnumber == 0 &&
 	       sp.teamname[0] == '\0' && GetValidSteamID64(sp) == 0;
+}
+
+bool CScorePanel::IsGhost(int client)
+{
+	const sbo::ScorePlayer &sp = m_Players[client];
+	if (!sp.connected || sp.spectator)
+		return false;
+	// every player in the game has a category name (SboScoreboard_TeamName: never "" but for HLTV): none yet = the
+	// server has not run his InitHUD (still connecting or downloading); a reused slot may still hold the last
+	// player's team number, so the name decides
+	return sp.teamname[0] == '\0' || (sp.playerclass & SBO_CLASS_LOST);
 }
 
 Color CScorePanel::GetPlayerBgColor(int client)
@@ -2228,6 +2358,7 @@ void CScorePanel::Resize()
 {
 	SizeMode mode = GetSizeMode();
 	const int screenHeight = GetScreenHeight();
+	m_iObjectivesRevision = Objectives_Revision();
 
 	// Returns true if scrollbar was enabled
 	auto fnUpdateSize = [&](int &height) {
@@ -2238,6 +2369,7 @@ void CScorePanel::Resize()
 
 		m_pPlayerList->GetPos(x, y);
 		addHeight = y + m_iBottomPadding; // Distance on the top and on the bottom of the player list
+		addHeight += ObjectivesTall(); // SBO 2.0: the objective list under the players
 		height += addHeight;
 		m_pPlayerList->GetContentSize(wide, tall);
 		listHeight = std::max((int)m_iMinHeight, tall);

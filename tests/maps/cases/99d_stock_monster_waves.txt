@@ -1,0 +1,50 @@
+# The stock maps' monster waves, with the makers' keys as co_escape and co_hellraiser ship them (their 1.38 lumps):
+# named makers with flag 1 Start ON make monsters from the map start, and the map's one trigger (a toggle) turns them
+# off. 1.38 made none (the Start ON bug, case 99b), so these waves never came.
+# co_escape: two makers "prison_marines" (monster_grunt_hunter, delay 10, max live 2, count 300), turned off by a
+# trigger_once. co_hellraiser: three makers "mons" (monster_hunter x2, monster_werewolf_hunter; delay 5 / 4 / 5, max
+# live 1, count -1; targets gho3 / gho2 / gho1, the lightning env_beams), turned off by multi_manager "sucemonrat"
+# (mons at 0.2 s), which turns on the "karma" trigger_hurt at 0.5 s (flags 2 Start Off + 8 No Clients, 1000 blast
+# damage over the makers' area): it kills the monsters that waited there.
+# covers: monstermaker:1 monstermaker.target monstermaker.delay
+map co_fuzz
+cvar mp_makermon 1
+cvar mp_speedmon 1
+spawn monstermaker targetname prison_marines monstertype monster_grunt_hunter delay 10 m_imaxlivechildren 2 monstercount 300 spawnflags 1 origin "0 1000 0"
+spawn monstermaker targetname prison_marines monstertype monster_grunt_hunter delay 10 m_imaxlivechildren 2 monstercount 300 spawnflags 1 origin "0 2000 0"
+spawn monstermaker targetname mons monstertype monster_hunter delay 5 m_imaxlivechildren 1 monstercount -1 target gho3 spawnflags 1 origin "1000 0 0"
+spawn monstermaker targetname mons monstertype monster_hunter delay 4 m_imaxlivechildren 1 monstercount -1 target gho2 spawnflags 1 origin "2000 0 0"
+spawn monstermaker targetname mons monstertype monster_werewolf_hunter delay 5 m_imaxlivechildren 1 monstercount -1 target gho1 spawnflags 1 origin "3000 0 0"
+spawn multi_manager targetname sucemonrat mons 0.2 karma 0.5
+spawn trigger_hurt targetname karma damagetype 64 delay 0.5 dmg 1000 spawnflags 10
+spawn trigger_relay targetname gho1 target gho1_sink triggerstate 2
+spawn trigger_relay targetname gho2 target gho2_sink triggerstate 2
+spawn trigger_relay targetname gho3 target gho3_sink triggerstate 2
+activate
+frames 2
+mark map_start
+expectcount monster_grunt_hunter 0
+expectcount monster_hunter 0
+mark waves_from_start
+frames 120
+expectcount monster_grunt_hunter 2
+expectcount monster_hunter 2
+expectcount monster_werewolf_hunter 1
+expect Firing: (gho1)
+expect Firing: (gho2)
+expect Firing: (gho3)
+mark triggers
+fire prison_marines
+fire sucemonrat
+frames 10
+touchclass 6 monster_hunter
+touchclass 6 monster_werewolf_hunter
+frames 30
+expectcount monster_grunt_hunter 2
+# karma killed the waiting hunters (their bodies are gone); turned off: no new monster after the trigger
+mark later
+frames 150
+expectcount monster_hunter 0
+expectcount monster_werewolf_hunter 0
+expectfield prison_marines nextthink 0
+expectfield mons nextthink 0

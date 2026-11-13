@@ -1,0 +1,36 @@
+# multispawn with a master (FGD "master"): called while the master is shut it does not move the spawns (the next round
+# still starts at info_player_deathmatch); after the master opens the same call moves them to info_player_go2
+# covers: multispawn.master
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn info_player_deathmatch origin "64 0 0"
+spawn info_player_go2 origin "1000 0 0"
+spawn multispawn targetname ms master lock
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn trigger_hurt model *1 dmg 100000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark locked
+fire ms world
+touchclient 5 1
+frames 150
+expectdump player origin=64.0 0.0
+mark open
+fire key
+fire ms world
+touchclient 5 1
+frames 150
+expectdump player origin=1000.0 0.0

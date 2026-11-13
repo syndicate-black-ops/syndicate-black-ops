@@ -49,6 +49,7 @@ set(SBO_CLIENT_SOURCES
   ${SBO_SRC_DIR}/cl_dll/death.cpp
   ${SBO_SRC_DIR}/cl_dll/demo.cpp
   ${SBO_SRC_DIR}/cl_dll/entity.cpp
+  ${SBO_SRC_DIR}/cl_dll/movewith_client.cpp
   ${SBO_SRC_DIR}/cl_dll/ev_common.cpp
   ${SBO_SRC_DIR}/cl_dll/events.cpp
   ${SBO_SRC_DIR}/cl_dll/flashlight.cpp
@@ -70,6 +71,17 @@ set(SBO_CLIENT_SOURCES
   ${SBO_SRC_DIR}/cl_dll/message.cpp
   ${SBO_SRC_DIR}/cl_dll/mirror.cpp
   ${SBO_SRC_DIR}/cl_dll/mirror_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/overview_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/overlay.cpp
+  ${SBO_SRC_DIR}/cl_dll/colorcorrection.cpp
+  ${SBO_SRC_DIR}/cl_dll/colorcorrection_core.cpp
+  ${SBO_SRC_DIR}/cl_dll/colorcorrection_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/colorcorrection_ops.cpp
+  ${SBO_SRC_DIR}/cl_dll/overlay_core.cpp
+  ${SBO_SRC_DIR}/cl_dll/objective_core.cpp
+  ${SBO_SRC_DIR}/cl_dll/overlay_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/inventory.cpp
+  ${SBO_SRC_DIR}/cl_dll/inventory_core.cpp
   ${SBO_SRC_DIR}/cl_dll/weapon_hand.cpp
   ${SBO_SRC_DIR}/cl_dll/render_fade.cpp
   ${SBO_SRC_DIR}/cl_dll/head_scale.cpp
@@ -77,10 +89,12 @@ set(SBO_CLIENT_SOURCES
   ${SBO_SRC_DIR}/cl_dll/objecthint.cpp
   ${SBO_SRC_DIR}/cl_dll/break_gibs.cpp
   ${SBO_SRC_DIR}/cl_dll/dlights.cpp
+  ${SBO_SRC_DIR}/cl_dll/light_origin.cpp
   ${SBO_SRC_DIR}/cl_dll/static_props.cpp
   ${SBO_SRC_DIR}/cl_dll/server_menu_preview.cpp
   ${SBO_SRC_DIR}/cl_dll/server_menu_preview_gl.cpp
   ${SBO_SRC_DIR}/cl_dll/map_music.cpp
+  ${SBO_SRC_DIR}/cl_dll/mover_prediction.cpp
   ${SBO_SRC_DIR}/cl_dll/parsemsg.cpp
   ${SBO_SRC_DIR}/cl_dll/particules.cpp
   ${SBO_SRC_DIR}/pm_shared/pm_debug.c
@@ -115,6 +129,9 @@ set(SBO_CLIENT_SOURCES
   # Spirit of Half-Life's Aurora particle systems (env_particle, docs/AURORA.md)
   ${SBO_SRC_DIR}/cl_dll/aurora/particlesys.cpp
   ${SBO_SRC_DIR}/cl_dll/aurora/particlemgr.cpp
+  # the in-game particle editor's preview and script document (particleeditorui, docs/AURORA.md "Editor")
+  ${SBO_SRC_DIR}/cl_dll/aurora/aurora_editor.cpp
+  ${SBO_SRC_DIR}/cl_dll/aurora/aurora_doc.cpp
   # point_worldtext (docs/POINT_WORLDTEXT.md)
   ${SBO_SRC_DIR}/cl_dll/worldtext.cpp
   ${SBO_SRC_DIR}/cl_dll/worldtext_core.cpp

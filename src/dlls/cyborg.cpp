@@ -354,6 +354,10 @@ void CCyborg :: DeathSound ( void )
 //=========================================================
 int CCyborg :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	if ( bitsDamageType & DMG_BLAST )
 		flDamage *= 10;
 
@@ -488,6 +492,9 @@ void CCyborg :: Look ( int iDistance )
 				 !FBitSet( pSightEnt->pev->spawnflags, SF_MONSTER_PRISONER )	&& 
 				 pSightEnt->pev->health > 0 )
 			{
+				// SBO 2.1: "prisonerto" / "ignoredby", as in CBaseMonster::Look (this Look left them out)
+				if ( LookSkips( pSightEnt ) )
+					continue;
 				// SBO 2.0: FL_NOTARGET entities are not seen, as in CBaseMonster::Look
 				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) )
 				{

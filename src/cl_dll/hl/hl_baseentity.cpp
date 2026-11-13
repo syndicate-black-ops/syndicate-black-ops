@@ -45,6 +45,7 @@ int CBaseEntity :: TakeHealth( float flHealth, int bitsDamageType ) { return 1; 
 int CBaseEntity :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType ) { return 1; }
 CBaseEntity *CBaseEntity::GetNextTarget( void ) { return NULL; }
 int CBaseEntity::Save( CSave &save ) { return 1; }
+BOOL EntvarsKeyNeedsPrecache( const char *keyName ) { return FALSE; }	// server only (util.cpp)
 CKeyValue CBaseEntity::GetKeyValue( const char *keyName ) { CKeyValue keyvalue; memset( &keyvalue, 0, sizeof( keyvalue ) ); return keyvalue; }	// server only (keyvalue.cpp)
 int CBaseEntity::Restore( CRestore &restore ) { return 1; }
 void CBaseEntity::SetObjectCollisionBox( void ) { }
@@ -206,6 +207,7 @@ BOOL CBaseMonster :: FGetNodeRoute ( Vector vecDest ) { return TRUE; }
 int CBaseMonster :: FindHintNode ( void ) { return NO_NODE; }
 void CBaseMonster::ReportAIState( void ) { }
 void CBaseMonster :: KeyValue( KeyValueData *pkvd ) { }
+void CBaseMonster :: RuntimeKeyValueChanged( const char *keyName ) { }	// server only (monsters.cpp)
 BOOL CBaseMonster :: FCheckAITrigger ( void ) { return FALSE; }
 int CBaseMonster :: CanPlaySequence( BOOL fDisregardMonsterState, int interruptLevel ) { return FALSE; }
 BOOL CBaseMonster :: FindLateralCover ( const Vector &vecThreat, const Vector &vecViewOffset ) { return FALSE; }
@@ -244,6 +246,7 @@ int CBaseMonster::Save( class CSave & ) { return 1; }
 int TrainSpeed(int iSpeed, int iMax) { 	return 0; }
 void CBasePlayer :: DeathSound( void ) { }
 int CBasePlayer :: TakeHealth( float flHealth, int bitsDamageType ) { return 0; }
+STATE CBasePlayer::GetState( CBaseEntity *pActivator ) { return STATE_OFF; }
 void CBasePlayer :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType) { }
 int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType ) { return 0; }
 void CBasePlayer::PackDeadPlayerItems( void ) { }

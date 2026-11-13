@@ -52,6 +52,8 @@ struct Object
 	void SetCurValue(const std::string &value);
 	//! The text sent to the engine for this object, e.g. `hostname "x"\n` (WriteToConfig)
 	std::string ConfigCommand() const;
+	//! The value part of ConfigCommand (the cvar's value as sent, without quotes)
+	std::string ConfigValue() const;
 	//! For a LIST: the row GameUI selects ((int) of the default as a number), clamped; -1 if no items
 	int ListRow() const;
 };

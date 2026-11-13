@@ -28,6 +28,9 @@ with open(os.path.join(_ROOT, 'gamedir', 'syndicate', MODEL), 'rb') as _f:
 
 
 def _patched(flags_off=False, numhitboxes=None):
+    # a checkout without Git LFS objects (the CI coverage gate) has only the LFS pointer: the gate reads no model data
+    if _CRATE.startswith(b'version https://git-lfs'):
+        return _CRATE
     b = bytearray(_CRATE)
     if flags_off:
         struct.pack_into('<i', b, 136, struct.unpack_from('<i', b, 136)[0] & ~512)
@@ -68,7 +71,8 @@ def standing_dist(x, y, z):
     return (x * x + y * y + z * z) ** 0.5
 
 
-@S.test('falls onto the low step: stands on the floor crates, below the top crate', players=1, doc=DOC, size=TALL)
+@S.test('falls onto the low step: stands on the floor crates, below the top crate', players=1, doc=DOC, size=TALL,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def fall_step(t):
     crate(t)
     fall_onto(t, (0, 40))
@@ -77,7 +81,8 @@ def fall_step(t):
     t.expect.value('end', 'mdl', 'solid', 2)        # SOLID_BBOX
 
 
-@S.test('on the low step, walks into the top crate: stops at its face', players=1, doc=DOC, size=TALL)
+@S.test('on the low step, walks into the top crate: stops at its face', players=1, doc=DOC, size=TALL,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def walk_on_step(t):
     crate(t)
     t.teleport('player1', (0, 60, STEP + 4), yaw=270)
@@ -90,7 +95,8 @@ def walk_on_step(t):
     t.expect.distance('end', 'mdl', 'player1', PLAYER_HALF - 1, PLAYER_HALF + 3)
 
 
-@S.test('walks in at the floor: stops at the floor crates', players=1, doc=DOC)
+@S.test('walks in at the floor: stops at the floor crates', players=1, doc=DOC,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def walk_in(t):
     crate(t)
     t.teleport('player1', (0, 200, 0), yaw=270)
@@ -103,7 +109,8 @@ def walk_in(t):
     t.expect.distance('end', 'mdl', 'player1', HALF_Y + PLAYER_HALF - 1, HALF_Y + PLAYER_HALF + 3)
 
 
-@S.test('turned 90: the low step turns with it', players=1, doc=DOC, size=TALL)
+@S.test('turned 90: the low step turns with it', players=1, doc=DOC, size=TALL,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def turned(t):
     crate(t, yaw=90)
     fall_onto(t, (-40, 0))          # model +Y turned 90 degrees: world -X
@@ -111,7 +118,8 @@ def turned(t):
     t.expect.distance('end', 'mdl', 'player1', d - 2, d + 2, flat=False)
 
 
-@S.test('the entity box covers the hitboxes (broad phase)', players=0, doc=DOC)
+@S.test('the entity box covers the hitboxes (broad phase)', players=0, doc=DOC,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def cover_box(t):
     crate(t)
     t.wait(0.3)
@@ -139,7 +147,8 @@ def slidebox_control(t):
     t.expect.distance('end', 'mdl', 'player1', d - 2, d + 2, flat=False)
 
 
-@S.test('model without flag 512: warning, the 20-unit box', players=0, doc=DOC)
+@S.test('model without flag 512: warning, the 20-unit box', players=0, doc=DOC,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def missing_flag(t):
     crate(t, model='models/et_crate_noflag.mdl')
     t.wait(0.3)
@@ -150,7 +159,8 @@ def missing_flag(t):
     t.expect.console('et_crate_noflag.mdl is not compiled for hitbox collision ($flags 512): the 20-unit box')
 
 
-@S.test('model with flag 512 and 0 hitboxes: warning, not solid', players=0, doc=DOC)
+@S.test('model with flag 512 and 0 hitboxes: warning, not solid', players=0, doc=DOC,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def zero_hitboxes(t):
     crate(t, model='models/et_crate_nohbox.mdl')
     t.wait(0.3)
@@ -159,7 +169,8 @@ def zero_hitboxes(t):
     t.expect.console('et_crate_nohbox.mdl has 0 hitboxes (1 to 128 work): not solid')
 
 
-@S.test('model with 129 hitboxes: warning, not solid', players=0, doc=DOC)
+@S.test('model with 129 hitboxes: warning, not solid', players=0, doc=DOC,
+        covers=('env_model', 'env_model:8', 'env_model.model'))
 def too_many_hitboxes(t):
     crate(t, model='models/et_crate_129.mdl')
     t.wait(0.3)
@@ -168,7 +179,8 @@ def too_many_hitboxes(t):
     t.expect.console('et_crate_129.mdl has 129 hitboxes (1 to 128 work): not solid')
 
 
-@S.test('initially off: not solid; on: SOLID_BBOX; off again: not solid', players=0, doc=DOC)
+@S.test('initially off: not solid; on: SOLID_BBOX; off again: not solid', players=0, doc=DOC,
+        covers=('env_model', 'env_model:1', 'env_model:8'))
 def on_off(t):
     crate(t, spawnflags='9')
     t.wait(0.3)
@@ -184,7 +196,8 @@ def on_off(t):
     t.expect.value('off2', 'mdl', 'solid', 0)
 
 
-@S.test('initially off: a player falls through it', players=1, doc=DOC, size=TALL)
+@S.test('initially off: a player falls through it', players=1, doc=DOC, size=TALL,
+        covers=('env_model', 'env_model:1', 'env_model:8'))
 def off_falls_through(t):
     crate(t, spawnflags='9')
     fall_onto(t, (0, 40))
@@ -192,7 +205,8 @@ def off_falls_through(t):
     t.expect.distance('end', 'mdl', 'player1', d - 2, d + 2, flat=False)
 
 
-@S.test('scale 2: collides at the unscaled size (warning)', players=1, doc=DOC, size=TALL)
+@S.test('scale 2: collides at the unscaled size (warning)', players=1, doc=DOC, size=TALL,
+        covers=('env_model', 'env_model:8', 'env_model.scale'))
 def scaled(t):
     crate(t, scale='2')
     fall_onto(t, (0, 40))
@@ -202,7 +216,7 @@ def scaled(t):
 
 
 @S.test('material Wood: the clients get its letter (entity state endpos W + tag), its hit sounds are precached',
-        players=0, doc=DOC)
+        players=0, doc=DOC, covers=('env_model', 'env_model:8', 'env_model.material=1'))
 def material_wood(t):
     crate(t, material='1')
     t.wait(0.3)
@@ -211,7 +225,7 @@ def material_wood(t):
     t.expect.precached('debris/wood1.wav', kind='sound')
 
 
-@S.test('no material key: Cinder Block (concrete, C)', players=0, doc=DOC)
+@S.test('no material key: Cinder Block (concrete, C)', players=0, doc=DOC, covers=('env_model', 'env_model:8'))
 def material_default(t):
     crate(t)
     t.wait(0.3)
@@ -219,7 +233,8 @@ def material_default(t):
     t.expect.value('s', 'mdl', 'endpos', (ord('C'), 4001, 0), tol=0.01)
 
 
-@S.test('without "Solid (model hitboxes)": no material sent', players=0, doc=DOC)
+@S.test('without "Solid (model hitboxes)": no material sent', players=0, doc=DOC,
+        covers=('env_model', 'env_model:4', 'env_model.material'))
 def material_not_solid(t):
     crate(t, spawnflags='4', material='2')
     t.wait(0.3)

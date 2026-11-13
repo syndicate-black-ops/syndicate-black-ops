@@ -35,6 +35,7 @@
 #include "r_studioint.h"
 #include "com_model.h"
 #include "worldscreen/worldscreen.h"	// WorldScreen_IsScreenFace
+#include "movewith_client.h"	// SBO 2.0: entity parenting
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -431,6 +432,7 @@ void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int 
 	
 		// Now add in all of the players.
 		gEngfuncs.pEventAPI->EV_SetSolidPlayers ( idx - 1 );	
+		MoveWith_EventPhysents();	// SBO 2.0 movewith: placed solid children where they are drawn
 
 		gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 		// halflife-updated (1c202f5, JoshA): PM_NORMAL as the server's hitbox test. With PM_STUDIO_BOX a shot that
@@ -1829,6 +1831,7 @@ void EV_TripmineFire( event_args_t *args )
 
 	// Now add in all of the players.
 	gEngfuncs.pEventAPI->EV_SetSolidPlayers ( idx - 1 );	
+	MoveWith_EventPhysents();	// SBO 2.0 movewith: placed solid children where they are drawn
 	gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 	gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc, vecSrc + forward * 128, PM_NORMAL, -1, &tr );
 
@@ -1880,6 +1883,7 @@ void EV_SnarkFire( event_args_t *args )
 
 	// Now add in all of the players.
 	gEngfuncs.pEventAPI->EV_SetSolidPlayers ( idx - 1 );	
+	MoveWith_EventPhysents();	// SBO 2.0 movewith: placed solid children where they are drawn
 	gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 	gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc + forward * 20, vecSrc + forward * 64, PM_NORMAL, -1, &tr );
 

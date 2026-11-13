@@ -1,0 +1,24 @@
+# multisource Used by an entity that is not a member (here the world, as a map's +use or a script can): as in 1.38 and
+# the HL SDK the call toggles the LAST member's slot (fix/multisource-delayed-use, dc450432 keeps 1.38's rule)
+# covers: multisource
+map co_fuzz
+spawn multisource targetname ms target ms_out
+spawn trigger_relay targetname m1 target ms triggerstate 2
+spawn trigger_relay targetname m2 target ms triggerstate 2
+activate
+frames 3
+fire m1
+frames 2
+expectnot Firing: (ms_out)
+mark nonmember_use
+useent 0 world
+frames 2
+expectn 1 Firing: (ms_out)
+mark nonmember_use_again
+useent 0 world
+frames 2
+expectn 1 Firing: (ms_out)
+mark m2_on
+fire m2
+frames 2
+expectn 2 Firing: (ms_out)

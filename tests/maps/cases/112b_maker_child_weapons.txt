@@ -1,0 +1,38 @@
+# monstermaker Children's weapons (FGD choices): every grunt child gets those weapon bits (pev->weapons: 1 9mmAR, 2
+# hand grenades, 4 grenade launcher, 8 shotgun; a dark grunt: 1 chaingun, 8 sniper)
+# covers: monstermaker.weapons monstermaker.weapons=1 monstermaker.weapons=3 monstermaker.weapons=5 monstermaker.weapons=8 monstermaker.weapons=10
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname g1 monstertype monster_human_grunt weapons 1 monstercount 1 netname gk1 delay 0.5 origin "0 500 0"
+spawn monstermaker targetname g3 monstertype monster_human_grunt weapons 3 monstercount 1 netname gk3 delay 0.5 origin "300 500 0"
+spawn monstermaker targetname g5 monstertype monster_human_grunt weapons 5 monstercount 1 netname gk5 delay 0.5 origin "600 500 0"
+spawn monstermaker targetname g8 monstertype monster_human_grunt weapons 8 monstercount 1 netname gk8 delay 0.5 origin "900 500 0"
+spawn monstermaker targetname g10 monstertype monster_human_grunt weapons 10 monstercount 1 netname gk10 delay 0.5 origin "1200 500 0"
+spawn monstermaker targetname d1 monstertype dark_grunt weapons 1 monstercount 1 netname dk1 delay 0.5 origin "0 900 0"
+spawn monstermaker targetname d8 monstertype dark_grunt weapons 8 monstercount 1 netname dk8 delay 0.5 origin "300 900 0"
+activate
+frames 10
+fire g1
+fire g3
+fire g5
+fire g8
+fire g10
+fire d1
+fire d8
+frames 30
+expectfield gk1 weapons 1
+expectfield gk3 weapons 3
+expectfield gk5 weapons 5
+expectfield gk8 weapons 8
+expectfield gk10 weapons 10
+expectfield dk1 weapons 1
+expectfield dk8 weapons 8

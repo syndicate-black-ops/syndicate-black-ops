@@ -9,10 +9,14 @@
 // The new value is computed from the target's current value (CBaseEntity::GetKeyValue, keyvalue.h) and written
 // with a key dispatch, as the map loader writes keys: an entvars field, a custom keyvalue or the class's KeyValue().
 //
-// SBO changes (marked "SBO" below): model and sound keys are refused (no precache at run time); integer division
+// SBO changes (marked "SBO" below): model and sound keys are refused (no precache at run time); a New value of three
+// numbers is a vector also when y and z are zero (SevenKewp read "64 0 0" as 64 64 64); integer division
 // and modulo by zero leave the value alone instead of crashing the server; values are cut to
 // KEYVALUE_MAX_VALUE_LEN; the trigonometric behaviour defaults to degrees when the key is missing (SevenKewp:
-// multipliers of zero); Opposing Force's class names are not among the named constants.
+// multipliers of zero); in degrees only sin / cos / tan / cot convert their input and arcsin / arccos / arctan /
+// arccot their output (SevenKewp converted both for every function: sin(30) gave 28.6); Opposing Force's class names
+// are not among the named constants; an operation other than Replace on a key the entity can't read (no GetKeyValue
+// answer) leaves the key alone (SevenKewp wrote the new value as it is).
 //=========================================================
 
 #include	"extdll.h"
@@ -120,8 +124,8 @@ public:
 	int m_iSrc;
 	const char *m_sSrc;
 
-	float m_trigIn;		// multiplier for trigonemtric function input values (degrees -> degrees/radians)
-	float m_trigOut;	// multiplier for trigonemtric function output values (radians -> degrees/radians)
+	float m_trigIn;		// multiplier for sin / cos / tan / cot input values (degrees -> radians, or 1)
+	float m_trigOut;	// multiplier for arcsin / arccos / arctan / arccot output values (radians -> degrees, or 1)
 
 	BOOL isCopyValue;	// this entitiy is a trigger_copyvalue not a trigger_changevalue
 	BOOL isActive;
@@ -287,14 +291,14 @@ int CTriggerChangeValue::OperateInteger( int sourceVal, int targetVal )
 	case CVAL_OP_CLEAR_BITS: return targetVal & ~sourceVal;
 	case CVAL_OP_MIN: return min( targetVal, sourceVal );
 	case CVAL_OP_MAX: return max( targetVal, sourceVal );
-	case CVAL_OP_SIN: return (int)( sin( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_COS: return (int)( cos( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_TAN: return (int)( tan( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_COT: return (int)( ( 1.0f / tan( sourceVal * m_trigIn ) ) * m_trigOut );
-	case CVAL_OP_ARCSIN: return (int)( asin( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_ARCCOS: return (int)( acos( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_ARCTAN: return (int)( atan( sourceVal * m_trigIn ) * m_trigOut );
-	case CVAL_OP_ARCCOT: return (int)( atan( 1.0f / ( sourceVal * m_trigIn ) ) * m_trigOut );
+	case CVAL_OP_SIN: return (int)sin( sourceVal * m_trigIn );
+	case CVAL_OP_COS: return (int)cos( sourceVal * m_trigIn );
+	case CVAL_OP_TAN: return (int)tan( sourceVal * m_trigIn );
+	case CVAL_OP_COT: return (int)( 1.0f / tan( sourceVal * m_trigIn ) );
+	case CVAL_OP_ARCSIN: return (int)( asin( (double)sourceVal ) * m_trigOut );
+	case CVAL_OP_ARCCOS: return (int)( acos( (double)sourceVal ) * m_trigOut );
+	case CVAL_OP_ARCTAN: return (int)( atan( (double)sourceVal ) * m_trigOut );
+	case CVAL_OP_ARCCOT: return (int)( atan( 1.0 / sourceVal ) * m_trigOut );
 	default:
 		ALERT( at_console, "%s \"%s\": invalid operation %d on integer value\n", STRING( pev->classname ),
 			STRING( pev->targetname ), m_iOperation );
@@ -334,14 +338,14 @@ float CTriggerChangeValue::OperateFloat( float sourceVal, float targetVal )
 	case CVAL_OP_CLEAR_BITS: return (float)( (int)targetVal & ~(int)sourceVal );
 	case CVAL_OP_MIN: return min( targetVal, sourceVal );
 	case CVAL_OP_MAX: return max( targetVal, sourceVal );
-	case CVAL_OP_SIN: return sin( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_COS: return cos( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_TAN: return tan( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_COT: return ( 1.0f / tan( sourceVal * m_trigIn ) ) * m_trigOut;
-	case CVAL_OP_ARCSIN: return asin( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_ARCCOS: return acos( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_ARCTAN: return atan( sourceVal * m_trigIn ) * m_trigOut;
-	case CVAL_OP_ARCCOT: return atan( 1.0f / ( sourceVal * m_trigIn ) ) * m_trigOut;
+	case CVAL_OP_SIN: return sin( sourceVal * m_trigIn );
+	case CVAL_OP_COS: return cos( sourceVal * m_trigIn );
+	case CVAL_OP_TAN: return tan( sourceVal * m_trigIn );
+	case CVAL_OP_COT: return 1.0f / tan( sourceVal * m_trigIn );
+	case CVAL_OP_ARCSIN: return asin( sourceVal ) * m_trigOut;
+	case CVAL_OP_ARCCOS: return acos( sourceVal ) * m_trigOut;
+	case CVAL_OP_ARCTAN: return atan( sourceVal ) * m_trigOut;
+	case CVAL_OP_ARCCOT: return atan( 1.0f / sourceVal ) * m_trigOut;
 	default:
 		ALERT( at_console, "%s \"%s\": invalid operation %d on float value\n", STRING( pev->classname ),
 			STRING( pev->targetname ), m_iOperation );
@@ -438,8 +442,12 @@ void CTriggerChangeValue::HandleTarget( CBaseEntity *pent )
 	}
 	else if ( m_iOperation != CVAL_OP_REPLACE )
 	{
-		ALERT( at_console, "%s \"%s\": keyvalue '%s' in entity '%s' can only be replaced\n", STRING( pev->classname ),
-			STRING( pev->targetname ), szKeyName, STRING( pent->pev->classname ) );
+		// SBO 2.1: the key's current value can't be read, so the operation has nothing to work on. SevenKewp warned
+		// and wrote the new value as it is ("wait" Add 5 set it to 5); the key is left alone.
+		ALERT( at_console, "%s \"%s\": key \"%s\" of %s \"%s\" can't be read, so only Replace works on it (nothing "
+			"changed)\n", STRING( pev->classname ), STRING( pev->targetname ), szKeyName, STRING( pent->pev->classname ),
+			STRING( pent->pev->targetname ) );
+		return;
 	}
 
 	// using this for private fields. SBO: KeyValue_DispatchRuntime refuses model and sound keys.
@@ -592,6 +600,26 @@ BOOL CTriggerChangeValue::LoadSpecialStaticValue( const char *val, int &specialV
 	return FALSE;
 }
 
+// SBO: TRUE when the text is exactly three numbers ("x y z"), read into vec
+static BOOL ReadThreeNumbers( const char *text, Vector &vec )
+{
+	const char *p = text;
+	for ( int i = 0; i < 3; i++ )
+	{
+		char *end;
+		double d = strtod( p, &end );
+		if ( end == p )
+			return FALSE;
+		vec[i] = (float)d;
+		p = end;
+		if ( i < 2 && *p != ' ' && *p != '\t' )
+			return FALSE;
+	}
+	while ( *p == ' ' || *p == '\t' )
+		p++;
+	return *p == 0;
+}
+
 BOOL CTriggerChangeValue::LoadSourceValues( void )
 {
 	// the source as text, until the keyvalues are sent
@@ -725,7 +753,10 @@ BOOL CTriggerChangeValue::LoadSourceValues( void )
 				}
 			}
 
-			m_vSrc = Vector( m_fSrc, m_fSrc, m_fSrc );
+			// SBO: three numbers are a vector also when y and z are zero ("64 0 0"; SevenKewp gave 64 64 64). One
+			// number goes to every part, as before.
+			if ( !ReadThreeNumbers( STRING( m_iszNewValue ), m_vSrc ) )
+				m_vSrc = Vector( m_fSrc, m_fSrc, m_fSrc );
 		}
 
 		m_sSrc = STRING( m_iszNewValue );
@@ -764,13 +795,10 @@ void CTriggerChangeValue::ChangeValues( void )
 	{
 		const char *target = STRING( pev->target );
 
-		if ( !strcmp( target, "!activator" ) )
+		CBaseEntity *pSelected;
+		if ( UTIL_TargetSelector( target, m_hActivator, m_hCaller, &pSelected ) )
 		{
-			HandleTarget( m_hActivator );
-		}
-		else if ( !strcmp( target, "!caller" ) )
-		{
-			HandleTarget( m_hCaller );
+			HandleTarget( pSelected );
 		}
 		else
 		{

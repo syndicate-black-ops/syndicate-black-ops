@@ -1,8 +1,8 @@
 # Writes the build-version header (cmake -P, run on every build by the sbo_version target in CMakeLists.txt).
 #   -DOUT=<header> -DVERSION=<x.y.z> -DSRC=<repo root>
 #
-# CI (CI_COMMIT_SHORT_SHA set):          SBO_VERSION_STRING "2.0.0+1a2b3c4d"
-# anything else (local build):            SBO_VERSION_STRING "2.0.0+dirty@HEAD-1a2b3c4d"
+# CI (CI_COMMIT_SHORT_SHA set):          SBO_VERSION_STRING "2.1.0+1a2b3c4d"
+# anything else (local build):            SBO_VERSION_STRING "2.1.0+dirty@HEAD-1a2b3c4d"
 # SBO_VERSION_BRANCH: CI: CI_COMMIT_REF_NAME (the branch or tag; else CI_COMMIT_BRANCH). Local: the branch HEAD points
 #   to ("feat/server-version"), "detached" for a detached HEAD, "unknown" without a .git. Characters other than
 #   letters, digits and "._/-" become "_" (the name ends up in cvars and the server name).

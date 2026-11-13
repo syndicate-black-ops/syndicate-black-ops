@@ -1,0 +1,58 @@
+# func_pushable flag 128 Breakable with the Breakable keys (FGD): Strength (health) 30: a 20 damage hit leaves it, a
+# second breaks it; Material type 2 Metal breaks with debris/bustmetal and metal gibs (TE_BREAKMODEL flag 2), 1 Wood
+# bustcrate / 8, 0 Glass bustglass / 1, 5 Ceiling Tile bustceiling / 0; Spawn On Break 0 leaves nothing, 1 a battery;
+# Explode Magnitude 60: an explosion (TE_EXPLOSION) where it breaks; Gibs Direction 0 Random: base velocity 0, 1
+# Relative to Attack: 200 units/s away from the hurt (south of it: about 0 200 0); Delay before fire 1: its target fires
+# 1 s after it breaks. Without flag 128 a pushable takes no damage and stays. 1.38 gave Gibs Direction 1 random gibs
+# (decision breakable-directed-gibs, as func_breakable case 94b)
+# covers: func_pushable func_pushable:128 func_pushable.health func_pushable.material func_pushable.material=0 func_pushable.material=1 func_pushable.material=2 func_pushable.material=5 func_pushable.spawnobject func_pushable.spawnobject=0 func_pushable.spawnobject=1 func_pushable.explodemagnitude func_pushable.explosion func_pushable.explosion=0 func_pushable.explosion=1 func_pushable.delay func_pushable.target
+map co_fuzz
+brushsize 64 64 64
+spawn func_pushable targetname metal model *1 spawnflags 128 health 30 material 2 delay 1 target metal_out origin "0 0 0"
+spawn trigger_hurt model *2 dmg 40 damagetype 0 origin "0 -100 0"
+spawn trigger_relay targetname metal_out target metal_sink
+spawn func_pushable targetname wood model *3 spawnflags 128 health 10 material 1 spawnobject 1 explosion 1 origin "1000 0 0"
+spawn trigger_hurt model *4 dmg 40 damagetype 0 origin "1000 -100 0"
+spawn func_pushable targetname glass model *5 spawnflags 128 health 10 material 0 spawnobject 0 explodemagnitude 60 origin "2000 0 0"
+spawn func_pushable targetname tile model *6 spawnflags 128 health 10 material 5 explosion 0 origin "3000 0 0"
+spawn func_pushable targetname solid model *7 health 10 material 2 origin "4000 0 0"
+activate
+connect 1 P1
+frames 3
+mark metal
+touchent 1 0
+frames 6
+expectcount func_pushable 5
+expectnot ch2 debris/bustmetal
+touchent 1 0
+frames 1
+expectn 1 ch2 debris/bustmetal
+expectre MSG svc23 ->area: 108 .* 0 0 0 10 \d+ \d+ 25 2$
+expectcount func_pushable 4
+expectnot Firing: (metal_out)
+frames 11
+expectn 1 Firing: (metal_out)
+mark wood
+touchent 4 3
+frames 3
+expectn 1 ch2 debris/bustcrate
+expectcount item_battery 1
+expectre MSG svc23 ->area: 108 .* 0 199\.\d+ [\d.]+ 10 \d+ \d+ 25 8$
+mark glass
+touchent 1 5
+frames 6
+expectn 1 ch2 debris/bustglass
+expectre MSG svc23 ->area: 3 
+expectcount item_battery 1
+mark tile
+touchent 1 6
+frames 6
+expectn 1 ch2 debris/bustceiling
+expectre MSG svc23 ->area: 108 .* 0 0 0 10 \d+ \d+ 25 0$
+mark solid
+touchent 1 7
+frames 6
+touchent 1 7
+frames 6
+expectcount func_pushable 1
+expectdump solid health=10.0

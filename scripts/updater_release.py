@@ -21,11 +21,19 @@
       the public key as the 64 hex digits CMake's SBO_UPDATE_PUBKEY takes
   updater_release.py zip <folder> -o <zip>
       a zip of <folder>'s contents (deflate), for test releases
-  updater_release.py publish <tag> <dir> --notes NOTES.md [--prerelease] [--title T] [--repo owner/name]
+  updater_release.py publish <tag> <dir> [--notes NOTES.md] [--prerelease] [--title T] [--repo owner/name]
       a draft release <tag> with every sbo-*.zip, SHA256SUMS, manifest.json and manifest.json.sig in <dir>; once
       every asset is on it (name and size checked) it is published in one step and marked Latest
       (releases/latest/download/... points at it); a --prerelease is never Latest; --repo defaults to
       SBO_UPDATE_REPO in src/cl_dll/updater/updater.cmake (the one place the repository is named)
+      the release text is the tag's section of CHANGELOG.md (see notes), or the file --notes names
+  updater_release.py notes <version> [--no-link] [--repo owner/name]
+      prints a version's section of CHANGELOG.md: the text under "## [x.y.z]" without the heading, then a line
+      linking the full changelog on GitHub (--no-link leaves it out); "v2.1.0" and "2.1.0" both work, and a
+      pre-release (2.1.0-rc1) without its own section takes 2.1.0's; fails when the section is missing or empty
+  updater_release.py check-changelog
+      CHANGELOG.md parses: valid version headings, newest first, no empty groups or sections, and the newest version
+      equals project(VERSION) in CMakeLists.txt
 
 Files players edit keep their changes on update (keep_user_changes): KEEP_USER_CHANGES below.
 """
@@ -261,6 +269,121 @@ def cmd_zip(a):
     print("%s: %d files" % (a.out, n))
 
 
+CHANGELOG = os.path.join(ROOT, "CHANGELOG.md")
+# "## [2.1.0]" or "## [2.0.0] - 2026-11-06"
+SECTION_RE = re.compile(r"^## \[([^\]]*)\](?: - (\d{4}-\d{2}-\d{2}))?\s*$")
+GROUPS = ("New", "Changed", "Fixed", "Removed", "For mappers", "For server operators")
+
+
+def parse_changelog(text):
+    """[(version, date or None, body lines)] in file order; raises ValueError on a malformed file."""
+    sections, cur = [], None
+    for n, line in enumerate(text.splitlines(), 1):
+        if line.startswith("## "):
+            m = SECTION_RE.match(line)
+            if not m or not VERSION_RE.match(m.group(1)):
+                raise ValueError("line %d: bad version heading %r (\"## [x.y.z]\" or \"## [x.y.z] - YYYY-MM-DD\")" % (n, line))
+            cur = (m.group(1), m.group(2), [])
+            sections.append(cur)
+        elif line.startswith("# ") and sections:
+            raise ValueError("line %d: a second title inside the changelog" % n)
+        elif cur:
+            cur[2].append(line)
+    return sections
+
+
+def version_key(v):
+    m = VERSION_RE.match(v)
+    return (int(m.group(1)), int(m.group(2)), int(m.group(3)), m.group(4) is None, m.group(4) or "")
+
+
+def check_changelog_text(text, version=None):
+    """Problems found in a changelog text ([] = fine); version: the version the build packages."""
+    try:
+        sections = parse_changelog(text)
+    except ValueError as e:
+        return [str(e)]
+    errs = []
+    if not sections:
+        return ["no version sections"]
+    seen = set()
+    for i, (v, _, body) in enumerate(sections):
+        if v in seen:
+            errs.append("[%s]: listed twice" % v)
+        seen.add(v)
+        if i and version_key(v) >= version_key(sections[i - 1][0]):
+            errs.append("[%s]: not older than [%s] above it (newest first)" % (v, sections[i - 1][0]))
+        group, entries, any_entry = None, 0, False
+        for line in body + ["### <end>"]:
+            if line.startswith("### "):
+                if group is not None and entries == 0:
+                    errs.append("[%s]: empty group %r" % (v, group))
+                group, entries = line[4:].strip(), 0
+                if group != "<end>" and group not in GROUPS:
+                    errs.append("[%s]: unknown group %r (one of: %s)" % (v, group, ", ".join(GROUPS)))
+            elif line.startswith("- "):
+                if group is None:
+                    errs.append("[%s]: an entry before the first group" % v)
+                entries += 1
+                any_entry = True
+            elif line.strip() and not line.startswith("  "):
+                errs.append("[%s]: not an entry or a group heading: %r" % (v, line))
+        if not any_entry:
+            errs.append("[%s]: no entries" % v)
+    if version is not None and sections[0][0] != version:
+        errs.append("the newest section is [%s], the build packages %s (project(VERSION) in CMakeLists.txt)" %
+                    (sections[0][0], version))
+    return errs
+
+
+def project_version():
+    with open(os.path.join(ROOT, "CMakeLists.txt")) as f:
+        m = re.search(r"^project\(\s*\w+\s+VERSION\s+(\d+\.\d+\.\d+)", f.read(), re.M)
+    if not m:
+        die("no project(... VERSION x.y.z) in CMakeLists.txt")
+    return m.group(1)
+
+
+def changelog_notes(version, repo=None, link=True, path=None):
+    """The release text for <version>: its CHANGELOG.md section without the heading, plus a full-changelog link."""
+    path = path or CHANGELOG
+    version = version[1:] if version.startswith("v") else version
+    check_version(version)
+    try:
+        with open(path, encoding="utf-8") as f:
+            sections = parse_changelog(f.read())
+    except OSError as e:
+        die("cannot read %s: %s" % (path, e))
+    except ValueError as e:
+        die("%s: %s" % (path, e))
+    found = dict((v, body) for v, _, body in sections)
+    body = found.get(version)
+    if body is None and "-" in version:
+        body = found.get(version.split("-", 1)[0])  # a pre-release uses its release's section
+    if body is None:
+        die("%s has no section \"## [%s]\"; add the release's changes there (or pass --notes)" % (path, version))
+    text = "\n".join(body).strip("\n")
+    if not any(line.startswith("- ") for line in body):
+        die("the section \"## [%s]\" in %s is empty" % (version, path))
+    if link:
+        text += "\n\n[Full changelog](https://github.com/%s/blob/main/CHANGELOG.md)" % (repo or default_repo())
+    return text + "\n"
+
+
+def cmd_notes(a):
+    sys.stdout.write(changelog_notes(a.version, a.repo, not a.no_link))
+
+
+def cmd_check_changelog(a):
+    with open(CHANGELOG, encoding="utf-8") as f:
+        errs = check_changelog_text(f.read(), project_version())
+    for e in errs:
+        sys.stderr.write("CHANGELOG.md: %s\n" % e)
+    if errs:
+        sys.exit(1)
+    print("CHANGELOG.md: ok (newest [%s])" % project_version())
+
+
 def default_repo():
     with open(os.path.join(ROOT, "src/cl_dll/updater/updater.cmake")) as f:
         m = re.search(r'set\(SBO_UPDATE_REPO "([^"]*)"', f.read())
@@ -282,12 +405,22 @@ def cmd_publish(a):
         die("tag %s does not match the manifest's version %s" % (a.tag, m["version"]))
     if m["zip"] not in names:
         die("the manifest names %s, which is not in %s" % (m["zip"], a.dir))
+    notes = a.notes
+    if not notes:
+        # the tag's CHANGELOG.md section, checked before anything is created
+        tmp = tempfile.NamedTemporaryFile("w", suffix=".md", delete=False, encoding="utf-8")
+        with tmp:
+            tmp.write(changelog_notes(a.tag, repo))
+        notes = tmp.name
     # a draft first (invisible to players and to releases/latest), every asset uploaded and checked, then published
     # in one step: a release is never visible without its assets
     cmd = ["gh", "release", "create", a.tag, "--repo", repo, "--draft", "--title", a.title or m["version"],
-           "--notes-file", a.notes] + (["--prerelease"] if a.prerelease else []) + files
+           "--notes-file", notes] + (["--prerelease"] if a.prerelease else []) + files
     print("gh release create %s --repo %s --draft (%s)" % (a.tag, repo, ", ".join(names)))
-    if subprocess.run(cmd).returncode != 0:
+    rc = subprocess.run(cmd).returncode
+    if notes != a.notes:
+        os.unlink(notes)
+    if rc != 0:
         die("gh release create failed; the draft (if any) stays unpublished")
     r = subprocess.run(["gh", "release", "view", a.tag, "--repo", repo, "--json", "assets"], capture_output=True, text=True)
     if r.returncode != 0:
@@ -321,9 +454,13 @@ def main():
     s = sub.add_parser("verify"); s.add_argument("manifest"); s.add_argument("sig"); s.add_argument("--pubkey", required=True)
     s.set_defaults(fn=cmd_verify)
     s = sub.add_parser("zip"); s.add_argument("folder"); s.add_argument("-o", "--out", required=True); s.set_defaults(fn=cmd_zip)
-    s = sub.add_parser("publish"); s.add_argument("tag"); s.add_argument("dir"); s.add_argument("--notes", required=True)
+    s = sub.add_parser("publish"); s.add_argument("tag"); s.add_argument("dir")
+    s.add_argument("--notes", help="release text file (default: the tag's section of CHANGELOG.md)")
     s.add_argument("--prerelease", action="store_true"); s.add_argument("--title"); s.add_argument("--repo")
     s.set_defaults(fn=cmd_publish)
+    s = sub.add_parser("notes"); s.add_argument("version"); s.add_argument("--no-link", action="store_true")
+    s.add_argument("--repo"); s.set_defaults(fn=cmd_notes)
+    s = sub.add_parser("check-changelog"); s.set_defaults(fn=cmd_check_changelog)
     a = p.parse_args()
     a.fn(a)
 

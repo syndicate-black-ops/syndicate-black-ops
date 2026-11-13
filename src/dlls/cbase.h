@@ -98,6 +98,19 @@ extern void ResetGlobalState( void );
 
 typedef enum { USE_OFF = 0, USE_ON = 1, USE_SET = 2, USE_TOGGLE = 3 } USE_TYPE;
 
+// SBO 2.1, from Spirit of Half-Life (util.h STATE): the state an entity is in, read by multi_watcher and
+// watcher_count (state_logic.cpp, docs/STATE_LOGIC.md "Entity states"). Masters still pass or lock by IsTriggered.
+typedef enum
+{
+	STATE_OFF = 0,	// disabled, inactive, invisible, closed, dead
+	STATE_TURN_ON,	// opening, spinning up, on its way
+	STATE_ON,		// enabled, active, visible, open, alive
+	STATE_TURN_OFF,	// closing, spinning down, dying
+	STATE_IN_USE,	// a player is using it (a charger, a func_tank, a momentary_rot_button)
+} STATE;
+
+extern const char *GetStringForState( STATE state );
+
 extern void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 typedef void (CBaseEntity::*BASEPTR)(void);
@@ -195,6 +208,10 @@ public:
 	// it was stored. For entities whose clients must learn of it (point_worldtext); entvars keys such as "message"
 	// never reach the class's KeyValue.
 	virtual void	RuntimeKeyValueChanged( const char *keyName ) {}
+	// SBO 2.1: TRUE when a key written at run time names a model or sound the engine would need precached, so
+	// KeyValue_DispatchRuntime refuses it. A class that keeps something else in an entvars sound field (calc_ratio's
+	// "noise" is a number) answers FALSE for that key.
+	virtual BOOL	RuntimeKeyNeedsPrecache( const char *keyName ) { return EntvarsKeyNeedsPrecache( keyName ); }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	virtual int		ObjectCaps( void ) { return FCAP_ACROSS_TRANSITION; }
@@ -431,6 +448,11 @@ public:
 	virtual BOOL IsTinyCreature( void ) { return FALSE; }
 	virtual BOOL ShouldCollide( CBaseEntity *pOther ) { return TRUE; }
 
+	// SBO 2.1, from Spirit of Half-Life (CBaseEntity::GetState): the entity's state (docs/STATE_LOGIC.md).
+	// The default: a master (FCAP_MASTER) is On while it passes for pActivator, every other entity is Off. Only
+	// multi_watcher and watcher_count read it; UTIL_IsMasterTriggered keeps asking IsTriggered.
+	virtual STATE GetState( CBaseEntity *pActivator ) { return ( ObjectCaps() & FCAP_MASTER ) && IsTriggered( pActivator ) ? STATE_ON : STATE_OFF; }
+
 	// SBO 2.0 object hints: the template the mapper's "objecthint" key names (Featureful's m_objectHint)
 	string_t m_objectHint;
 	float m_flObjectHintDistance;	// "objecthint_distance": scan distance in units, 0: the template's
@@ -441,7 +463,7 @@ public:
 	//We use this variables to store each ammo count.
 	// SBO: only ammo_rockets is left (server TabulateAmmo / UpdateClientData).
 	// TEMP: the other SDK names alias it so SDK files (hl_weapons.cpp, crossbow.cpp, mp5.cpp)
-	// still compile until their owners update them. Remove the aliases then.
+	// still compile until they are updated. Remove the aliases then.
 	union
 	{
 		int ammo_rockets;
@@ -518,7 +540,7 @@ void PlayLockSounds(entvars_t *pev, locksound_t *pls, int flocked, int fbutton);
 // MultiSouce
 //
 
-#define MAX_MULTI_TARGETS	16 // maximum number of targets a single multi_manager entity may be assigned.
+#define MAX_MULTI_TARGETS	64 // maximum number of targets a single multi_manager entity may be assigned (SBO 2.1, Half-Life Unified SDK; 16 before)
 #define MS_MAX_TARGETS 32
 
 class CMultiSource : public CPointEntity
@@ -552,6 +574,7 @@ public:
 	float		m_flDelay;
 	int			m_iszKillTarget;
 	EHANDLE		m_hActivator;	// SBO 2.0 (Featureful c0d5b843): moved here from CBaseToggle; a delayed use keeps its activator
+	EHANDLE		m_hDelayedCaller;	// SBO 2.1: on a DelayedUse, the entity whose delay made it (multisource finds the member by it)
 
 	virtual void	KeyValue( KeyValueData* pkvd);
 	virtual int		Save( CSave &save );
@@ -560,6 +583,7 @@ public:
 	static	TYPEDESCRIPTION m_SaveData[];
 	// common member functions
 	void SUB_UseTargets( CBaseEntity *pActivator, USE_TYPE useType, float value );
+	void SUB_KillTargets( CBaseEntity *pActivator );
 	void EXPORT DelayThink( void );
 };
 
@@ -639,6 +663,18 @@ public:
 	static	TYPEDESCRIPTION m_SaveData[];
 
 	virtual int		GetToggleState( void ) { return m_toggle_state; }
+	// SBO 2.1 (Spirit of Half-Life CBaseToggle::GetState): m_toggle_state as a state: at the top On, at the bottom
+	// Off, going up Turn On, going down Turn Off. Doors, buttons and plats use it; other toggles have their own.
+	STATE ToggleStateAsState( void )
+	{
+		switch ( m_toggle_state )
+		{
+		case TS_AT_TOP:		return STATE_ON;
+		case TS_GOING_UP:	return STATE_TURN_ON;
+		case TS_GOING_DOWN:	return STATE_TURN_OFF;
+		default:			return STATE_OFF;
+		}
+	}
 	virtual float	GetDelay( void ) { return m_flWait; }
 
 	// common member functions
@@ -649,6 +685,12 @@ public:
 	BOOL IsLockedByMaster( void );
 
 	virtual CBaseToggle *MyTogglePointer( void ) { return this; }
+
+	// SBO 2.0 mover prediction (docs/MOVER_PREDICTION.md): the velocity this mover will have after it reaches
+	// m_vecFinalDest, if it goes straight on without stopping (a func_train passing a corner); FALSE if it stops there
+	virtual BOOL MoverNextVelocity( Vector &vecVelocity ) { return FALSE; }
+	// and whether its turning (avelocity) ends there too (func_platrot, a func_train turning at a turn speed that stops)
+	virtual BOOL MoverTurnEndsAtStop( void ) { return FALSE; }
 
 	// HL25: monsters use this, but so could buttons for instance
 	virtual void PlaySentence( const char *pszSentence, float duration, float volume, float attenuation );
@@ -806,6 +848,8 @@ public:
 	void EXPORT ButtonBackHome( void );
 	void EXPORT ButtonUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	virtual int		TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
+	// SBO 2.1 (Spirit of Half-Life CBaseToggle::GetState): pressed On, out Off, going in Turn On, coming back Turn Off
+	virtual STATE GetState( CBaseEntity *pActivator ) { return ToggleStateAsState(); }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	
@@ -857,6 +901,10 @@ public:
 	float	m_flToggleAgainTime;
 	string_t m_iszLockedSoundOverride;
 	string_t m_iszUnlockedSoundOverride;
+	// SBO 2.1 (Featureful, Half-Life Unified SDK names instead of numbers): "locked_sentence_override" /
+	// "unlocked_sentence_override" sentence group names instead of the numbered sentences
+	string_t m_iszLockedSentenceOverride;
+	string_t m_iszUnlockedSentenceOverride;
 	int		m_iDirectUse;	// SBO 2.0 (Featureful 49f7d337): "directuse" (PLAYER_USE_POLICY_*)
 	USE_TYPE ButtonUseType( BOOL fReturning );
 	void	OnLocked( void );

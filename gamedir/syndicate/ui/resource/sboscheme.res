@@ -17,7 +17,7 @@ Scheme
 		// HUD text menu (radio, server and plugin menus)
 		"HudMenu.TextColor"		"47 145 60 255"		// text lines (title), default color and \w
 		"HudMenu.ItemColor"		"47 145 60 255"		// numbered item lines, default color and \w
-		"HudMenu.BoxColor"		"47 145 60 15"		// rounded background box
+		"HudMenu.BoxColor"		"8 24 10 230"		// rounded background box (a nearly opaque dark green, so the lines read over a bright scene)
 		"HudMenu.SelectedColor"	"150 255 160 255"	// the chosen item while it flashes
 		"HudMenu.SelectedBgColor"	"47 145 60 70"	// bar behind the chosen item
 		// color codes sent by the server and plugins

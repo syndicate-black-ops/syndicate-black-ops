@@ -82,6 +82,36 @@ bool ClaimRepaint(int slot, bool hasContent, double lastRender);
 void SendCommand(int slot, const char *command);
 //! printf to the console (gEngfuncs.Con_Printf).
 void Printf(const char *fmt, ...);
+//! A note, not an error: printed with worldscreen_debug 1 or more, else only with developer 1 or 2 (Con_DPrintf).
+void DebugPrintf(const char *fmt, ...);
+
+// The world screen editor (vgui2/sbo_worldscreen_editor.cpp): which screen to preview a layout on, and the preview.
+//! The nearest active panel screen whose front side the ray (unit dir) hits, at any distance; -1 if none.
+int EditorSlotAt(const float *eye, const float *dir);
+//! The screen in the middle of the view (EditorSlotAt along the view), -1 if none.
+int EditorSlotInView();
+//! The screen under a point of the game's screen (pixels), -1 if none.
+int EditorSlotAtScreenPoint(int x, int y);
+//! The slot's layout name ("" for a free slot or a movie screen) and entity index (0 for a free slot).
+const char *EditorSlotPanel(int slot);
+int EditorSlotEntity(int slot);
+//! The world under a point of the game's screen (pixels): the point hit and the surface's normal (unit, toward the
+//! eye). False when nothing is hit within 8192 units.
+bool EditorTraceWall(int x, int y, float *point, float *normal);
+//! A vgui_screen's origin (lower-left corner, 1 unit in front of the surface) and angles for a screen of width x
+//! height units centered on point, flat on the surface with that normal (on a floor or ceiling: turned with the view)
+void EditorWallPlace(const float *point, const float *normal, float width, float height, float *origin, float *angles);
+//! The editor's own screen, only in this game (no entity, nothing sent to the server): placed (or moved) like a
+//! vgui_screen at origin (lower-left corner) / angles / width / height, showing layoutText; its slot, or -1 when every
+//! slot is taken. Removed by EditorRemoveLocal and with every map change (WorldScreen_Reset).
+int EditorPlaceLocal(const float *origin, const float *angles, float width, float height, const char *panelName,
+    const char *layoutText);
+void EditorRemoveLocal();
+//! Its slot, -1 if none
+int EditorLocalSlot();
+//! Shows the slot's screen built from layoutText (a layout's whole text) instead of its file; nullptr or "": from
+//! its file again. False when the slot shows no panel or the text has no layout.
+bool EditorPreview(int slot, const char *layoutText);
 } // namespace worldscreen
 
 //-----------------------------------------------------------------------------
@@ -92,6 +122,10 @@ bool VGui2_WorldScreen_Init();
 //! Builds slot's panel from ui/scripts/screens/<panelName>.res (replacing an older one); pixel size from the
 //! layout's "WorldScreen" section. False: no VGUI2 or no layout file (the screen is not shown).
 bool VGui2_WorldScreen_Create(int slot, const char *panelName, int &pixelWide, int &pixelTall);
+//! The same from a layout's text instead of its file (the world screen editor's preview); nullptr or "": from the
+//! file. False: no VGUI2, or no layout in the text / no file.
+bool VGui2_WorldScreen_CreateFromText(int slot, const char *panelName, const char *layoutText, int &pixelWide,
+    int &pixelTall);
 //! Removes slot's panel.
 void VGui2_WorldScreen_Remove(int slot);
 //! Number of renders of slot's panel so far (status).

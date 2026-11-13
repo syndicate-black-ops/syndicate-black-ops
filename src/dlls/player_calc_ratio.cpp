@@ -10,8 +10,9 @@
 // SBO changes (marked "SBO" below):
 //   * The player must be in play (round_hooks.h Logic_IsPlayerInPlay): never a spectator, a dead player or one
 //     waiting for a round (Featureful: the activator when it is a player).
-//   * "Inventory item count" (4) and its key item_name are not offered: SBO has no inventory items. The type fails
-//     like an unknown one.
+//   * "Inventory item count" (4), key item_name: the count of that item in the player's own inventory
+//     (inventory.cpp; the shared pool is not counted); as a fraction 1 while he has any, else 0 (Featureful: of the
+//     item's maximum from its JSON spec, which SBO has not).
 //   * Maxima from SBO: armor MAX_NORMAL_BATTERY (100, the batteries' cap); ammo the weapons' carry limit
 //     (MaxAmmoCarry); maximum speed is the player's current pev->maxspeed, its fraction of the player's speed level
 //     (m_iSboSpeed, 300 for a new player). Featureful: MaxArmor, GetMaxAmmo, its speed override.
@@ -25,6 +26,7 @@
 #include	"weapons.h"
 #include	"items.h"
 #include	"round_hooks.h"
+#include	"inventory.h"
 
 enum
 {
@@ -66,6 +68,11 @@ void CPlayerCalcRatio::KeyValue( KeyValueData *pkvd )
 	else if ( FStrEq( pkvd->szKeyName, "value_notion" ) )
 	{
 		pev->button = atoi( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else if ( FStrEq( pkvd->szKeyName, "item_name" ) )
+	{
+		pev->netname = ALLOC_STRING( pkvd->szValue );
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq( pkvd->szKeyName, "ammo_name" ) )
@@ -166,7 +173,19 @@ float CPlayerCalcRatio::CalcParam( int paramType, CBasePlayer *pPlayer, BOOL isF
 			return CalcRatio_Fraction( currentMaxSpeed, pPlayer->m_iSboSpeed, success );
 		return currentMaxSpeed;
 	}
-	case PLAYER_CALC_INVENTORY_ITEM:	// SBO: no inventory items
+	case PLAYER_CALC_INVENTORY_ITEM:
+	{
+		if ( FStringNull( pev->netname ) || !STRING( pev->netname )[0] )
+		{
+			ALERT( at_console, "Requesting player's inventory item via %s, but the item name is not specified\n", STRING( pev->classname ) );
+			success = FALSE;
+			return 0.0f;
+		}
+		const int count = Inventory_Count( pPlayer, STRING( pev->netname ) );
+		if ( isFraction )
+			return count > 0 ? 1.0f : 0.0f;
+		return (float)count;
+	}
 	default:
 		ALERT( at_console, "Unknown player calc parameter %d in %s!\n", paramType, STRING( pev->classname ) );
 		success = FALSE;

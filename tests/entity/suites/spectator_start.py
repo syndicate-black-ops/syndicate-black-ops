@@ -54,7 +54,8 @@ def no_point(t):
 
 
 @S.test('nobody to watch, one point with a target: the joiner\'s eyes on it, looking at the target (45 down); '
-        '"spectate" from the menus: a roaming observer at the point', doc=DOC)
+        '"spectate" from the menus: a roaming observer at the point', doc=DOC,
+        covers=('info_intermission', 'info_intermission.target'))
 def point_target(t):
     # the target 128 east and 128 below the point: yaw 0, pitch 45 down
     t.point('info_target', targetname='look', at=(0, 0, 72))
@@ -85,7 +86,8 @@ def point_target(t):
     t.wait(0.3)
 
 
-@S.test('nobody to watch, one point without a target: the view along its angles (20 225 0)', doc=DOC)
+@S.test('nobody to watch, one point without a target: the view along its angles (20 225 0)', doc=DOC,
+        covers=('info_intermission', 'info_intermission.angles'))
 def point_angles(t):
     t.point('info_target', targetname='spot', at=(100, 100, 180))
     make_point(t, 'pb', (100, 100, 180), angles='20 225 0')
@@ -103,7 +105,8 @@ def point_angles(t):
     t.wait(0.3)
 
 
-@S.test('two points: each start picks one at random (six joins: both are used)', doc=DOC)
+@S.test('two points: each start picks one at random (six joins: both are used)', doc=DOC,
+        covers=('info_intermission', 'info_intermission.angles'))
 def random_pick(t):
     # both points 150 from "mid", at the same height: a joiner is 150 from mid either way
     t.point('info_target', targetname='mid', at=(0, 0, 150))
@@ -132,7 +135,7 @@ def random_pick(t):
 
 
 @S.test('a living player to watch: the joiner stays at its spawn point; "spectate" follows the living player',
-        doc=DOC)
+        doc=DOC, covers=('info_intermission',))
 def someone_to_watch(t):
     t.point('info_target', targetname='spot', at=(0, 0, 200))
     make_point(t, 'pc', (0, 0, 200), angles='0 90 0')

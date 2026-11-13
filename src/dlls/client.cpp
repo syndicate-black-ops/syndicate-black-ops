@@ -36,6 +36,7 @@
 #include "game.h"
 #include "customentity.h"
 #include "sbo_test.h"	// SBO_TEST_COMMANDS builds: the test layer (docs/dev/ENTITY_TESTS.md)
+#include "cheat_commands.h"	// SBO 2.0: cheat_* / ent_* / npc_create (sv_cheats)
 #include "weapons.h"
 #include "weaponinfo.h"
 #include "usercmd.h"
@@ -43,14 +44,19 @@
 #include "pm_shared.h"	// OBS_* spectator modes
 #include "tutor.h"
 #include "game_messagebox.h"
+#include "env_overlay.h"	// SBO 2.0: env_overlay
 #include "semiclip.h"
+#include "movewith.h"	// SBO 2.0: entity parenting
 #include "map_compat.h"	// SBO 2.0
 #include "render_fade.h"	// SBO 2.0
+#include "effects.h"	// SoHL env_sky: the sky room's entities (EnvSky_IsSkyEntity)
 
 extern BOOL g_bAlwaysSend[ MAX_EDICTS ];	// SBO 2.0: env_model.cpp
 #include "vgui_screen.h"	// SBO 2.0: world screens
 #include "version_gate.h"	// SBO 2.0: the version gate
+#include "client_info.h"	// SBO 2.0: per-player client info (version, engine, renderer) for the server log
 #include "gmmode.h"
+#include "inventory.h"	// SBO 2.0 inventory
 
 #ifndef _WIN32
 #define _snprintf snprintf
@@ -540,7 +546,11 @@ void ClientDisconnect( edict_t *pEntity )
 	SboScoreboard_ClientDisconnected( pEntity );	// chat-vgui2: clear the scoreboard entry
 	Tutor_ClientDisconnected( pEntity );	// CS:CZ tutor window: the slot's queue and env_tutor show counts
 	MsgBox_ClientDisconnected( pEntity );	// game_messagebox: the slot's open boxes
+	Overlay_ClientDisconnected( pEntity );	// SBO 2.0: env_overlay: the slot's channels
 	Semiclip_ClientDisconnect( pEntity );	// SBO 2.0 semiclip: the slot's state
+	ClientInfo_ClientDisconnect( pEntity );	// SBO 2.0 client info: the next client in this slot starts clean
+	if ( pEntity->pvPrivateData )	// SBO 2.0 inventory: his items go back to their placed spots
+		Inventory_ClientDisconnected( GetClassPtr((CBasePlayer *)&pEntity->v) );
 
 	// SBO 2.0 spectator mode: the next client in this slot starts clean; the player's identity stays remembered for
 	// a reconnect (Spectate_Remember)
@@ -678,6 +688,10 @@ void ClientPutInServer( edict_t *pEntity )
 
 	Tutor_ClientPutInServer( pPlayer );	// CS:CZ tutor window (before Spawn)
 	MsgBox_ClientPutInServer( pPlayer );	// game_messagebox: no open boxes on a new connection / map
+	Overlay_ClientPutInServer( pPlayer );	// SBO 2.0: env_overlay: nothing shown on a new connection / map
+	Inventory_ClientPutInServer( pPlayer );	// SBO 2.0 inventory: a new client holds nothing
+	ClientInfo_ClientPutInServer( pEntity );	// SBO 2.0: client version, then the engine / renderer queries (bots: bot)
+
 
 	// spectator modes: a new client is a target again (ReGameDLL_CS ClientPutInServer), and starts observing in
 	// the mode SBO 1.38 always used (the halflife SDK 2.3 sets OBS_ROAMING at the first InitHUD)
@@ -848,7 +862,7 @@ void Host_Say( edict_t *pEntity, int teamonly )
 		return;
 	}
 
-	// SBO 2.0 GM mode: /gmspawn and /gmmenu open a Game Master's menu (the owner's GM mode plugin: the main menu;
+	// SBO 2.0 GM mode: /gmspawn and /gmmenu open a Game Master's menu (the GM mode plugin: the main menu;
 	// here the quick menu); like a command, the line isn't shown
 	if ( player->m_bGameMaster && ( !stricmp( p, "/gmspawn" ) || !stricmp( p, "/gmmenu" ) ) )
 	{
@@ -995,6 +1009,10 @@ void ClientCommand( edict_t *pEntity )
 			GmMode_Notice( GetClassPtr((CBasePlayer *)pev), "Spectators can't be Game Master: say /spectate to join the game first." );
 		return;
 	}
+
+	// SBO 2.0: cheat_* / ent_* / npc_create, sv_cheats 1 only (cheat_commands.cpp, Half-Life Unified SDK)
+	if ( Cheat_ClientCommand( GetClassPtr((CBasePlayer *)pev), pcmd ) )
+		return;
 
 	if ( FStrEq(pcmd, "say" ) )
 	{
@@ -1210,14 +1228,18 @@ void ServerDeactivate( void )
 	// Peform any shutdown operations here...
 	Tutor_ServerDeactivate();	// CS:CZ tutor window (env_tutor)
 	MsgBox_ServerDeactivate();	// game_messagebox: the players' open boxes
+	Cheat_ServerDeactivate();	// SBO 2.0: ent_create / npc_create: the next map's precaches (cheat_commands.cpp)
+	Overlay_ServerDeactivate();	// SBO 2.0: env_overlay: the players' channels
 	WorldText_Reset();		// SBO 2.0: point_worldtext: the map's texts (point_worldtext.cpp)
 	KeyValue_ClearCustom();	// the map's custom keyvalues (keyvalue.cpp)
 	MapCompat_MapUnloaded();	// SBO 2.0: the next map's keys go through maps/map_compat.txt again
 	RenderFade_Reset();		// SBO 2.0: env_render fades of the map
 	EnvStatic_Reset();		// SBO 2.0: env_static props of the map
 	memset( g_bAlwaysSend, 0, sizeof( g_bAlwaysSend ) );	// SBO 2.0: env_model "Always send" of the map
+	EnvSky_ClearEntities();	// SBO 2.0: the entities of the map's 3D sky (effects.cpp)
 	Semiclip_ServerDeactivate();	// SBO 2.0 semiclip
 	KillFeedIcons_Reset();	// SBO 2.0: plugins' killfeed icons (killfeed_icons.cpp): set again on the next map
+	MoveWith_ServerDeactivate();	// SBO 2.0 movewith
 	SBO_TEST_CALL( Test_ServerDeactivate() );
 	//
 }
@@ -1234,6 +1256,9 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 
 	// SBO 2.0: env_particle measures its offset from its target before the target's Activate moves it (func_train)
 	EnvParticle_ServerActivate();
+
+	// SBO 2.0 movewith: links from the editor positions, before Activate moves parents (func_train, func_tracktrain)
+	MoveWith_ServerActivate();
 
 	// Clients have not been initialized yet
 	for ( i = 0; i < edictCount; i++ )
@@ -1258,7 +1283,9 @@ void ServerActivate( edict_t *pEdictList, int edictCount, int clientMax )
 		}
 	}
 
-	// Link user messages here to make sure first client can get them...
+	MoveWith_PostActivate();	// SBO 2.0 movewith: children to where Activate put their parents
+
+	// The user messages are registered in GameDLLInit (SBO 2.1); this finds them registered
 	LinkUserMessages();
 
 	Semiclip_ServerActivate();	// SBO 2.0 semiclip: mp_semiclip_time runs from the map start
@@ -1318,8 +1345,33 @@ void ParmsChangeLevel( void )
 //
 // GLOBALS ASSUMED SET:  g_ulFrameCount
 //
+// pushers the engine blocked (DispatchBlocked) this server frame or the one before: the engine puts a blocked pusher
+// back but leaves its velocity, so the clients would predict it moving through what blocks it. Frames are counted in
+// StartFrame; a mark holds the edict's serial number, so a new entity in the slot is not taken for the old one.
+static int s_iMoverFrame = 1;
+static int s_iMoverBlockedFrame[ MAX_EDICTS ];
+static int s_iMoverBlockedSerial[ MAX_EDICTS ];
+
+void MoverPrediction_Blocked( edict_t *pent )
+{
+	int i = pent ? ENTINDEX( pent ) : 0;
+	if ( i <= 0 || i >= MAX_EDICTS )
+		return;
+	s_iMoverBlockedFrame[ i ] = s_iMoverFrame;
+	s_iMoverBlockedSerial[ i ] = pent->serialnumber;
+}
+
+static BOOL MoverPrediction_IsBlocked( edict_t *pent )
+{
+	int i = ENTINDEX( pent );
+	return i > 0 && i < MAX_EDICTS && s_iMoverBlockedSerial[ i ] == pent->serialnumber
+		&& s_iMoverBlockedFrame[ i ] >= s_iMoverFrame - 1;
+}
+
 void StartFrame( void )
 {
+	s_iMoverFrame++;	// SBO 2.0 mover prediction: blocked pushers are marked per frame
+
 	// SBO: a saved game was loaded (a one-player session, "maxplayers 1": load, quick load, or the engine's "reload"
 	// finding a save). It holds none of SBO's state, so start the map again, the way the map cycle changes maps.
 	if ( g_fSaveRestored )
@@ -1343,6 +1395,11 @@ void StartFrame( void )
 	Semiclip_StartFrame();	// SBO 2.0 semiclip: its cvars changed
 	RenderFade_Frame();	// SBO 2.0: env_render scale fades: the box follows the drawn scale
 	GmMode_StartFrame();	// SBO 2.0 GM mode: weapon drops and teleporters on moving platforms
+	ClientInfo_Frame();	// SBO 2.0 client info: the log line for a player whose answers did not all come
+
+	// SBO 2.0 movewith: steer the children for this frame, before the engine moves anything (also during the
+	// intermission: the map keeps moving)
+	MoveWith_StartFrame();
 
 	if ( g_fGameOver )
 		return;
@@ -1352,6 +1409,7 @@ void StartFrame( void )
 
 	Tutor_StartFrame();	// CS:CZ tutor window: the players' env_tutor queues
 	MsgBox_StartFrame();	// game_messagebox: autoclose distance
+	Overlay_StartFrame();	// SBO 2.0: env_overlay: players leaving / entering play
 
 	gpGlobals->teamplay = teamplay.value;
 	g_ulFrameCount++;
@@ -1690,6 +1748,87 @@ static bool ScaledUpStudioModel( const edict_t *ent, int player )
 }
 
 /*
+=================
+MoverPrediction_FillState
+
+SBO 2.0 mover prediction (docs/MOVER_PREDICTION.md): what the clients need to place a moving MOVETYPE_PUSH entity at
+the time their commands will run on the server. Only in the state sent to the client, never in pev. These
+entity_state_t fields are otherwise unused for non-players (delta.lst encodes them for this):
+  basevelocity  linear velocity
+  startpos      angular velocity
+  impacttime    linear stop: the stop point (m_vecFinalDest) dotted with the direction of motion
+  starttime     angular stop (only without linear motion): the angle still to turn on the axis that turns fastest
+  iuser1        MOVER_STOP_LINEAR / MOVER_STOP_ANGULAR: which stop is valid; both: the turn ends at the linear stop
+A pusher the engine blocked this frame or the last sends nothing: it stands.
+  endpos        velocity after the linear stop point, when the mover goes straight on (a func_train at a corner)
+starttime and impacttime are never both non-zero, so the engine's parametric movement (and Entity_Encode's origin
+skip for it) never applies. The values change only when a move starts or stops, so they cost bytes only then.
+=================
+*/
+#define MOVER_STOP_LINEAR	1
+#define MOVER_STOP_ANGULAR	2
+
+// also called by the test layer (sbo_test.cpp, test_snap ... mover)
+void MoverPrediction_FillState( struct entity_state_s *state, edict_t *ent )
+{
+	if ( ent->v.movetype != MOVETYPE_PUSH )
+		return;
+
+	// a movewith child: its velocity is movewith's steering and a child mover's stop is in its parent's frame; the
+	// client predicts it through its parent (sent on it), or not at all (sent with its world pose)
+	if ( MoveWith_IsChild( ent ) )
+		return;
+
+	if ( ent->v.velocity == g_vecZero && ent->v.avelocity == g_vecZero )
+		return;
+
+	// blocked: it stands where it is (the fields stay 0: no motion, no stop)
+	if ( MoverPrediction_IsBlocked( ent ) )
+		return;
+
+	// these fields mean the move now (whatever pev holds there), and never all of the engine's parametric set
+	state->basevelocity = ent->v.velocity;
+	state->startpos = ent->v.avelocity;
+	state->endpos = g_vecZero;
+	state->impacttime = 0;
+	state->starttime = 0;
+	state->iuser1 = 0;
+
+	CBaseEntity *pEntity = CBaseEntity::Instance( ent );
+	CBaseToggle *pToggle = pEntity ? pEntity->MyTogglePointer() : NULL;
+	if ( !pToggle )
+		return;
+
+	if ( ent->v.velocity != g_vecZero && pToggle->m_pfnThink == static_cast <void (CBaseEntity::*)(void)> ( &CBaseToggle::LinearMoveDone ) )
+	{
+		// LinearMoveDone puts it exactly at m_vecFinalDest (an angular motion goes on: a func_train with avelocity)
+		state->impacttime = DotProduct( pToggle->m_vecFinalDest, ent->v.velocity.Normalize() );
+		state->iuser1 = MOVER_STOP_LINEAR;
+		// a turn that ends at the linear stop (func_platrot, a turning func_train that stops at its corner)
+		if ( ent->v.avelocity != g_vecZero && pToggle->MoverTurnEndsAtStop() )
+			state->iuser1 |= MOVER_STOP_ANGULAR;
+
+		Vector vecNext;
+		if ( pToggle->MoverNextVelocity( vecNext ) )
+			state->endpos = vecNext;
+	}
+	else if ( ent->v.velocity == g_vecZero && pToggle->m_pfnThink == static_cast <void (CBaseEntity::*)(void)> ( &CBaseToggle::AngularMoveDone ) )
+	{
+		int axis = 0;
+		for ( int i = 1; i < 3; i++ )
+		{
+			if ( fabs( ent->v.avelocity[i] ) > fabs( ent->v.avelocity[axis] ) )
+				axis = i;
+		}
+
+		// the angle still to turn on that axis (signed), not the stop angle: a turn of more than 360 degrees stops
+		// where it should
+		state->starttime = pToggle->m_vecFinalAngle[axis] - ent->v.angles[axis];
+		state->iuser1 = MOVER_STOP_ANGULAR;
+	}
+}
+
+/*
 AddToFullPack
 
 Return 1 if the entity state has been filled in for the ent and the entity will be propagated to the client, 0 otherwise
@@ -1737,14 +1876,24 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 
 	// Ignore if not the host and not touching a PVS/PAS leaf
 	// If pSet is NULL, then the test will always succeed and the entity will be added to the update
+	// SoHL 1.9 (g-cont): an entity in the sky room of the 3D sky (env_sky) goes to every player, whatever his PVS;
+	// the client draws it in the sky only (kRenderFxSkyEntityBit, below). One the player's own PVS reaches (he is in
+	// the sky room) is an ordinary entity for him. The spectator proxy (no pSet) gets every entity: the sky's are
+	// marked for its viewers too.
+	bool bSkyEntity = false;
 	if ( ent != host )
 	{
 		// SBO 2.0: env_model "Always send" (env_model.cpp g_bAlwaysSend; Featureful's EFLAG_ALWAYS_SEND)
-		if ( !ENGINE_CHECK_VISIBILITY( (const struct edict_s *)ent, pSet ) && !ScaledUpStudioModel( ent, player )
-			&& !g_bAlwaysSend[ e ] && !GmMode_PipSend( ent, host ) )
+		if ( !ENGINE_CHECK_VISIBILITY( (const struct edict_s *)ent, pSet ) )
 		{
-			return 0;
+			bSkyEntity = EnvSky_IsSkyEntity( e, ent );
+
+			if ( !bSkyEntity && !ScaledUpStudioModel( ent, player ) && !g_bAlwaysSend[ e ]
+				&& !GmMode_PipSend( ent, host ) )
+				return 0;
 		}
+		else if ( !pSet )
+			bSkyEntity = EnvSky_IsSkyEntity( e, ent );
 	}
 
 
@@ -1848,6 +1997,8 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 	state->rendermode    = ent->v.rendermode;
 	state->renderamt     = ent->v.renderamt; 
 	state->renderfx      = ent->v.renderfx;
+	if ( bSkyEntity )
+		state->renderfx |= kRenderFxSkyEntityBit;	// SoHL 1.9 env_sky: drawn in the 3D sky (above)
 	state->rendercolor.r = ent->v.rendercolor.x;
 	state->rendercolor.g = ent->v.rendercolor.y;
 	state->rendercolor.b = ent->v.rendercolor.z;
@@ -1906,6 +2057,16 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 	Semiclip_AddToFullPack( state, e, ent, host, player );
 	GmMode_AddToFullPack( state, e, host );	// SBO 2.0 GM mode: the selected NPCs' glow, for their Game Master
 
+	// SBO 2.0 movewith: a child the client places on its parent gets its local pose and the parent (iuser4)
+	if ( !player )
+		MoveWith_AddToFullPack( state, e, ent, host, pSet );
+
+	// SBO 2.0 mover prediction: the move of a pusher (door, plat, train, rotating). After movewith: a child the client
+	// places on its parent (iuser4 set) carries its local pose and is predicted through its parent; FillState leaves
+	// out every linked movewith child, also one sent with its world pose
+	if ( !player && ent->v.movetype == MOVETYPE_PUSH && !state->iuser4 )
+		MoverPrediction_FillState( state, ent );
+
 	return 1;
 }
 
@@ -1963,6 +2124,8 @@ void CreateBaseline( int player, int eindex, struct entity_state_s *baseline, st
 		baseline->solid			= entity->v.solid;
 		baseline->framerate		= entity->v.framerate;
 		baseline->gravity		= entity->v.gravity;
+
+		MoveWith_CreateBaseline( baseline, entity );	// SBO 2.0 movewith: a placed child as it is sent
 	}
 }
 
@@ -2231,7 +2394,7 @@ int GetWeaponData( struct edict_s *player, struct weapon_data_s *info )
 	
 	ItemInfo II;
 
-	memset( info, 0, 32 * sizeof( weapon_data_t ) );
+	memset( info, 0, MAX_WEAPONS * sizeof( weapon_data_t ) );	// SBO 2.1: the engine's 64 entries (local_state_t)
 
 	if ( !pl )
 		return 1;
@@ -2253,7 +2416,7 @@ int GetWeaponData( struct edict_s *player, struct weapon_data_s *info )
 					memset( &II, 0, sizeof( II ) );
 					gun->GetItemInfo( &II );
 
-					if ( II.iId >= 0 && II.iId < 32 )
+					if ( II.iId >= 0 && II.iId < MAX_WEAPONS )
 					{
 						item = &info[ II.iId ];
 					 	
@@ -2261,8 +2424,10 @@ int GetWeaponData( struct edict_s *player, struct weapon_data_s *info )
 						item->m_iClip					= gun->m_iClip;
 
 						item->m_flTimeWeaponIdle		= max( gun->m_flTimeWeaponIdle, -0.001 );
-						item->m_flNextPrimaryAttack		= max( gun->m_flNextPrimaryAttack, -0.001 );
-						item->m_flNextSecondaryAttack	= max( gun->m_flNextSecondaryAttack, -0.001 );
+						// halflife #3252: the attack timers as the server has them (down to -1 s), so the client's
+						// prediction knows how late a shot is (FireLateness) and counts the next one as the server does
+						item->m_flNextPrimaryAttack		= max( gun->m_flNextPrimaryAttack, -1.0 );
+						item->m_flNextSecondaryAttack	= max( gun->m_flNextSecondaryAttack, -1.0 );
 						item->m_fInReload				= gun->m_fInReload;
 						item->m_fInSpecialReload		= gun->m_fInSpecialReload;
 						item->fuser1					= max( gun->pev->fuser1, -0.001 );
@@ -2281,7 +2446,7 @@ int GetWeaponData( struct edict_s *player, struct weapon_data_s *info )
 		}
 	}
 #else
-	memset( info, 0, 32 * sizeof( weapon_data_t ) );
+	memset( info, 0, MAX_WEAPONS * sizeof( weapon_data_t ) );	// SBO 2.1: the engine's 64 entries (local_state_t)
 #endif
 	return 1;
 }
@@ -2302,9 +2467,10 @@ void UpdateClientData ( const struct edict_s *ent, int sendweapons, struct clien
 	CBasePlayer *	pl	= ( CBasePlayer *) CBasePlayer::Instance( pev );
 	entvars_t *		pevOrg = NULL;
 
-	// SBO 2.0 impulse 212: a max speed the game wrote since PreThink is not sent, the fast one is (player.cpp)
+	// SBO 2.0 player_speed and the cheat speeds (impulse 212, cheat_speed): a max speed the game wrote since PreThink
+	// is not sent as it is, the one with the override and the cheat is (player.cpp ApplySpeedOverride)
 	if ( pl )
-		pl->FastMoveUpdate();
+		pl->ApplySpeedOverride();
 
 	// halflife SDK 2.3: if user is spectating different player in First person, override some vars, so the client
 	// sees the target's view (origin, view height, punch, health, view model, fov) on any engine. Only a player
@@ -2424,6 +2590,9 @@ This is the time to examine the usercmd for anything extra.  This call happens e
 */
 void CmdStart( const edict_t *player, const struct usercmd_s *cmd, unsigned int random_seed )
 {
+#ifdef SBO_TEST_COMMANDS
+	MoveWith_TraceCmd( (edict_t *)player, 0, cmd ? cmd->msec : 0 );	// test_mw_trace: the usercmd's own move
+#endif
 	entvars_t *pev = (entvars_t *)&player->v;
 	CBasePlayer *pl = ( CBasePlayer *) CBasePlayer::Instance( pev );
 
@@ -2436,6 +2605,8 @@ void CmdStart( const edict_t *player, const struct usercmd_s *cmd, unsigned int 
 	}
 
 	pl->random_seed = random_seed;
+
+	MoveWith_CmdStart( (edict_t *)player );	// SBO 2.0 movewith: a chain rider's own ground back before it moves
 
 	pl->AfkCheckInput( cmd );	// SBO 2.0: mp_afk_time, mp_afk_spectate_time
 	pl->TeleportCheckCmd( cmd );	// SBO 2.0 seamless trigger_teleport: a move sent before the turn
@@ -2450,6 +2621,9 @@ Each cmdstart is exactly matched with a cmd end, clean up any group trace flags,
 */
 void CmdEnd ( const edict_t *player )
 {
+#ifdef SBO_TEST_COMMANDS
+	MoveWith_TraceCmd( (edict_t *)player, 1, 0 );
+#endif
 	entvars_t *pev = (entvars_t *)&player->v;
 	CBasePlayer *pl = ( CBasePlayer *) CBasePlayer::Instance( pev );
 

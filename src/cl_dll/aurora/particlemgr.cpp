@@ -20,6 +20,7 @@
 #include "particlemgr.h"
 #include "particlesys.h"
 #include "aurora_shared.h"
+#include "aurora_editor.h"
 
 extern vec3_t v_origin;							// view.cpp: the origin of the view being drawn
 void HUD_GetEffectAngles( float *angles );		// tri.cpp: its angles
@@ -84,7 +85,7 @@ static AuroraScript *Aurora_GetScript( const char *szName )
 	}
 	else
 	{
-		gEngfuncs.Con_Printf( "Aurora: particle script %s not found, the effect is not shown\n", name.c_str() );
+		gEngfuncs.Con_DPrintf( "Aurora: particle script %s not found, the effect is not shown\n", name.c_str() );
 	}
 
 	s_Scripts.push_back( script );
@@ -404,6 +405,8 @@ void Aurora_DrawFrame( void )
 		flFrameTime = 0;
 	else if ( flFrameTime > 0.1f )
 		flFrameTime = 0.1f;
+
+	AuroraEditor_Frame();	// the particle editor's preview (built and placed here: the view is known)
 
 	if ( !g_ParticleSystems.m_pFirstSystem )
 		return;

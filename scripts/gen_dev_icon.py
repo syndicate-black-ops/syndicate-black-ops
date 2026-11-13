@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Developer scoreboard icon: the robot's face from the owner's Steam avatar.
+"""Developer scoreboard icon: the robot's face from the developer's Steam avatar.
 
 The scoreboard shows this icon on the developer's row (src/cl_dll/vgui2/score_panel.cpp, docs/dev/SCOREBOARD_PORT.md).
 They are client-local TGAs loaded by the VGUI2 scoreboard (scorepanel.res "dev_icon16".."dev_icon64"), not
@@ -9,9 +9,11 @@ Steps (all deterministic: same source, same bytes):
   1. cut the head out of sdk/spritesrc/devicon/avatar.png: in a box around the head, every light pixel reachable
      from the box's edge without crossing the black outline is background; the head is the largest remaining
      region (outline included), with its holes filled;
-  2. face.png: the head leveled (TILT), on transparency, centered on a square canvas (FACE_SIZE), with a dark rim around the
-     outline so it stands out on the dark scoreboard (kept in sdk/spritesrc/devicon/ as the master);
-  3. the game files: ui/gfx/dev_icon16/24/32/64.tga (32-bit, uncompressed, alpha): 32 and 64 downscaled from
+  2. face.png: the head leveled (TILT), on transparency, centered on a square canvas (FACE_SIZE) (kept in
+     sdk/spritesrc/devicon/ as the master; RIM > 0 adds a dark rim, off since it showed as a black outline);
+  3. the game files: ui/gfx/dev_icon16/24/32/64.tga (32-bit, uncompressed, alpha, made ready for the game's texture
+     drawing by alpha_test_ready: the scoreboard draws textures filtered and without blending, so a see-through
+     pixel's color would be filtered into the edge and a faint pixel drawn solid): 32 and 64 downscaled from
      face.png, 16 and 24 drawn for that size (PIXEL_ART: the same head, traced pixel by pixel);
      the scoreboard draws the largest one that fits the row at its own size;
   4. --preview <dir>: the icon at 16, 24, 32 and 48 pixels on the scoreboard's background color (48: the 64 one
@@ -86,7 +88,7 @@ TILT = 7.2         # degrees clockwise that level the head (the slope of CUT_LIN
 DARK = 96          # a pixel with max(R, G, B) below this is outline
 FACE_SIZE = 256    # master canvas
 FACE_MARGIN = 4    # transparent pixels around the head on the master (before the rim)
-RIM = 4            # dark rim around the head on the master, pixels
+RIM = 0            # dark rim around the head on the master, pixels (0: none; it drew as a black outline in the game)
 
 # Scoreboard background (scorepanel.res "bgcolor_override" 0 0 0 64) over a dark game scene, and the row of the
 # local player (clientscheme ThisPlayerBgColor), for the preview
@@ -207,10 +209,47 @@ def make_face():
          "-background", "none", "-virtual-pixel", "transparent", "-filter", "Lanczos", "+distort", "SRT", str(TILT),
          "-trim", "+repage", "-resize", f"{inner}x{inner}",
          "-background", "none", "-gravity", "center", "-extent", f"{FACE_SIZE}x{FACE_SIZE}",
-         "(", "+clone", "-alpha", "extract", "-morphology", "Dilate", f"Disk:{RIM}",
-         "-background", "rgb(8,8,8)", "-alpha", "shape", ")",
-         "+swap", "-compose", "over", "-composite",
+         *(["(", "+clone", "-alpha", "extract", "-morphology", "Dilate", f"Disk:{RIM}",
+            "-background", "rgb(8,8,8)", "-alpha", "shape", ")",
+            "+swap", "-compose", "over", "-composite"] if RIM > 0 else []),
          "-define", "png:exclude-chunks=date,time", "-strip", FACE], data=bytes(out))
+
+
+def alpha_test_ready(rgba, w, h, cell=0):
+    """The picture as the game draws it right: the client's VGUI2 surface draws a TGA filtered and without blending
+    (a pixel is drawn or not, docs/dev/SCOREBOARD_PORT.md "Badge edges"). So every pixel is made fully opaque (alpha
+    128 and up) or fully see-through, and the see-through ones get the color of the opaque pixels next to them (grown
+    outwards a few pixels): filtering at the edge then mixes in the art's own colors, not the black of the empty
+    pixels, which drew a dark fringe. cell > 0: a sheet of cell x cell frames, colors never cross a frame's edge."""
+    px = bytearray(rgba)
+    for i in range(0, len(px), 4):
+        px[i + 3] = 255 if px[i + 3] >= 128 else 0
+    filled = [px[i + 3] == 255 for i in range(0, len(px), 4)]
+    for _ in range(4):
+        grow = []
+        for y in range(h):
+            for x in range(w):
+                k = y * w + x
+                if filled[k]:
+                    continue
+                acc = [0, 0, 0]
+                n = 0
+                for dy in (-1, 0, 1):
+                    for dx in (-1, 0, 1):
+                        nx, ny = x + dx, y + dy
+                        if not (0 <= nx < w and 0 <= ny < h) or not filled[ny * w + nx]:
+                            continue
+                        if cell and (nx // cell != x // cell or ny // cell != y // cell):
+                            continue
+                        j = (ny * w + nx) * 4
+                        acc = [acc[c] + px[j + c] for c in range(3)]
+                        n += 1
+                if n:
+                    grow.append((k, [v // n for v in acc]))
+        for k, rgb in grow:
+            px[k * 4:k * 4 + 3] = bytes(rgb)
+            filled[k] = True
+    return bytes(px)
 
 
 def write_tga(path, w, h, rgba):
@@ -244,13 +283,13 @@ def make_tgas():
     for size in TGA_SIZES:
         path = os.path.join(OUT_DIR, f"dev_icon{size}.tga")
         if size in PIXEL_ART:
-            write_tga(path, size, size, pixel_art(size))
+            write_tga(path, size, size, alpha_test_ready(pixel_art(size), size, size))
             print("wrote", os.path.relpath(path, ROOT))
             continue
         # Lanczos, then a light unsharp mask: the glasses' frame and lenses stay apart at 16 and 24 pixels
         raw = run(["convert", FACE, "-filter", "Lanczos", "-resize", f"{size}x{size}",
                    "-unsharp", "0x0.75+1.2+0", "-depth", "8", "rgba:-"])
-        write_tga(path, size, size, raw)
+        write_tga(path, size, size, alpha_test_ready(raw, size, size))
         print("wrote", os.path.relpath(path, ROOT))
 
 

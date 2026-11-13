@@ -1,4 +1,4 @@
-"""monster_cyberminotor (Minos) AI, src/dlls/minotaure.cpp (fix/minos-ai; the owner's minos_fix plugin ported):
+"""monster_cyberminotor (Minos) AI, src/dlls/minotaure.cpp (fix/minos-ai; the minos_fix plugin ported):
 - gun position: GetGunPosition is the model's muzzle (attachment 0) at any yaw (1.38: a world-axis offset, right
   only at yaw 90), so his shells, bullets and CheckRangeAttack1's trace start at his gun;
 - targeting: BestVisibleEnemy picks among the entities he can see (FVisible); seeing nobody he keeps the last player
@@ -48,7 +48,8 @@ def remove(t, *names):
     t.wait(0.2)
 
 
-@S.test('gun position: at yaw 0, 90, 180 and 270 his gun (shot, shell and trace start) is at the muzzle', size=ROOM)
+@S.test('gun position: at yaw 0, 90, 180 and 270 his gun (shot, shell and trace start) is at the muzzle', size=ROOM,
+        covers=('monster_cyberminotor',))
 def gun_at_muzzle(t):
     yaws = (0, 90, 180, 270)
     for i, yaw in enumerate(yaws):
@@ -71,7 +72,7 @@ def walled(t):
 
 
 @S.test('targeting: a monster_human_grunt behind a wall, a player in view: Minos fights the player', players=1,
-        size=ROOM)
+        size=ROOM, covers=('monster_cyberminotor',))
 def targets_player_in_view(t):
     walled(t)
     tough(t)
@@ -89,7 +90,7 @@ def targets_player_in_view(t):
 
 
 @S.test('targeting: the player hides: Minos keeps him about 5 s, then the game\'s own choice (the grunt)', players=1,
-        size=ROOM)
+        size=ROOM, covers=('monster_cyberminotor',))
 def keeps_last_player(t):
     walled(t)
     # the hiding place: east of a second wall, sealed by the first
@@ -112,7 +113,8 @@ def keeps_last_player(t):
     remove(t, 'minos', 'grunt')
 
 
-@S.test('targeting (control): a grunt in view and no player in the room: Minos fights the grunt', size=ROOM)
+@S.test('targeting (control): a grunt in view and no player in the room: Minos fights the grunt', size=ROOM,
+        covers=('monster_cyberminotor',))
 def targets_grunt_in_view(t):
     maker(t, 'minos', 'monster_cyberminotor', (-150, -150, 0), 45)
     maker(t, 'grunt', 'monster_human_grunt', (150, 150, 0), 225)
@@ -124,7 +126,7 @@ def targets_grunt_in_view(t):
 
 
 @S.test('under fire: hit every 0.1 s (one hit per think), Minos still fires at the player within 8 s', players=1,
-        size=ROOM)
+        size=ROOM, covers=('monster_cyberminotor',))
 def fires_under_fire(t):
     tough(t)
     # yaw 90 toward the player: the 1.38 gun offset is right at this heading. A regression guard, not a test of the
@@ -146,7 +148,7 @@ def fires_under_fire(t):
 
 
 @S.test('damage conditions: cleared after each think, also while he flinches (CBaseMonster::RunAI)', players=1,
-        size=ROOM)
+        size=ROOM, covers=('monster_cyberminotor',))
 def damage_conditions_cleared(t):
     # the first hit interrupts his range attack and he flinches (SCHED_SMALL_FLINCH, which damage does not
     # interrupt, about 3 s); the hits during the flinch set the bits again. 1.38 left them set until the next

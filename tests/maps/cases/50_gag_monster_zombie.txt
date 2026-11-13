@@ -1,0 +1,20 @@
+# monster_zombie with Gag (spawnflags 2) at #A and without at #B, a player connected (in their PVS), 120 s idle: count CHAN_VOICE sounds per monster
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_zombie targetname gagged spawnflags 2 origin "0 300 0"
+spawn monster_zombie targetname talker spawnflags 0 origin "0 -300 0"
+activate
+connect 1 P1
+frames 1200
+dumpclass monster_zombie
+soundcount gagged 2
+soundcount talker 2

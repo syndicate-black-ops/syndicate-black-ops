@@ -1,0 +1,24 @@
+# worldspawn keys (FGD worldspawn): MaxRange 8192 -> sv_zmax 8192 (the distance players see); skyname night ->
+# sv_skyname night; sounds 7 -> the CD track (gpGlobals->cdAudioTrack, sent by the engine); startdark 1 -> v_dark 1
+# (the fade-in the client reads); gametitle 1 -> a GameTitle message to the first player who spawns, once; newunit 1
+# -> sv_newunit 1; defaultteam 1 -> mp_defaultteam 1; WaveHeight 10 -> sv_wateramp 1.25 (the engine water amplitude: the height / 8)
+# covers: worldspawn worldspawn.maxrange worldspawn.skyname worldspawn.sounds worldspawn.startdark worldspawn.startdark=1 worldspawn.gametitle worldspawn.gametitle=1 worldspawn.newunit worldspawn.newunit=1 worldspawn.defaultteam worldspawn.defaultteam=1 worldspawn.waveheight
+map co_fuzz MaxRange 8192 skyname night sounds 7 startdark 1 gametitle 1 newunit 1 defaultteam 1 WaveHeight 10
+activate
+expectcvar sv_zmax 8192
+expectcvar sv_skyname night
+expectfield globals cdAudioTrack 7
+expectcvar v_dark 1
+expectcvar sv_newunit 1
+expectcvar mp_defaultteam 1
+expectcvar sv_wateramp 1.25
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 30
+expectn 1 MSG GameTitle ->#1: 0
+connect 2 P2
+frames 3
+cmd 2 item 1
+frames 30
+expectnot MSG GameTitle ->#2

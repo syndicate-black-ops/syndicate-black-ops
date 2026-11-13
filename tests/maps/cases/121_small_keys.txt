@@ -1,0 +1,32 @@
+# Keys the 1.38 maps set (FGD): worldspawn "Map Description / Title" (message) is the world's message (the engine sends
+# it to joining clients as the map title); func_conveyor flag 2 Not Solid: not solid (0), without it solid (BSP 4);
+# func_rot_button "Delay before trigger" 1: its target fires 1 s after it is pressed (0: at once); env_beam Start Frame
+# 3 and Frame Rate 32: each strike (TE_BEAMPOINTS) carries start frame 3 and frame rate 32
+# covers: worldspawn.message func_conveyor:2 func_rot_button.delay env_beam.framestart env_beam.framerate
+map co_fuzz message "Test Map Title"
+brushsize 64 64 64
+spawn func_conveyor targetname cv_ns model *1 speed 100 spawnflags 2
+spawn func_conveyor targetname cv model *2 speed 100
+spawn func_rot_button targetname rb1 model *3 target rb1_out delay 1 speed 900 distance 90 wait 5 origin "0 500 0"
+spawn func_rot_button targetname rb0 model *4 target rb0_out delay 0 speed 900 distance 90 wait 5 origin "0 700 0"
+spawn trigger_relay targetname rb1_out target sink1
+spawn trigger_relay targetname rb0_out target sink0
+spawn info_target targetname bs origin "0 0 100"
+spawn info_target targetname be origin "0 200 100"
+spawn env_beam targetname fb LightningStart bs LightningEnd be renderamt 100 rendercolor "0 0 255" life 0.5 BoltWidth 10 texture sprites/laserbeam.spr StrikeTime 1 framestart 3 framerate 32 spawnflags 1
+activate
+connect 1 P1
+frames 3
+expectfield world message "Test Map Title"
+expectfield cv_ns solid 0
+expectfield cv solid 4
+mark press
+useclient 2 1
+useclient 3 1
+frames 2
+expectn 1 Firing: (rb0_out)
+expectnot Firing: (rb1_out)
+frames 10
+expectn 1 Firing: (rb1_out)
+frames 10
+expectre MSG svc23 ->all: 0 0 0 100 0 200 100 \d+ 3 32 5 10 0 0 0 255 100 0

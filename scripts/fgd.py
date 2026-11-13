@@ -15,10 +15,19 @@ check fails (exit 1, one line per problem) on:
     ignored_key     a key the code accepts and throws away
     key_case        a key spelled with other letter case than the code compares with
     missing_key     a key the entity's own code reads that the class does not offer
+    missing_field   an entity field a mapper sets as a key (speed, dmg, message, health, frags, netname, noise...)
+                    that the entity's code reads, not assigned first by its Spawn / Precache or filled by its
+                    KeyValue from another key, and that the class does not offer
+    missing_flag    a spawnflag bit the entity's code tests on its own spawnflags (its class chain: the methods its
+                    code can run) that neither the class nor its bases offer (editors merge the bases' flags)
     missing_class   a code classname with no FGD class
     asset           a studio()/iconsprite()/sprite() file that is neither in gamedir/syndicate/ nor in the list
                     of stock Half-Life files
     asset_case      such a file whose name differs in letter case
+    left_out_flag   a spawnflag bit the rules file lists as left out ("left_out_flags": unused bits, a reason each)
+                    that the class or a class based on it offers
+    left_out_key    a key or a choice value the rules file lists as left out ("left_out_keys": "class.key" or
+                    "class.key=value", a reason each) that the class or a class based on it offers
     stale_rule      an entry of the rules file that no longer matches anything
 
 Known deviations live in scripts/fgd_rules.json: "accepted" entries (a reason each) are silent,
@@ -32,7 +41,9 @@ are removed: <dir>/syndicate/dark.fgd (the old name) and the editor files of an 
 gets gamedir/syndicate_addon/readme.txt. <dir> must contain syndicate/liblist.gam.
 
 Python 3 standard library only. The code scan is regex based (KeyValue comparisons, class
-declarations), not a C++ parser. Spawnflag bits are not checked.
+declarations), not a C++ parser. Spawnflag tests are "pev->spawnflags & X" and "FBitSet( pev->spawnflags, X )"
+with X a number or a #define / const int; a base class method counts when the chain can reach it (see _reached).
+Choice values are checked only against "left_out_keys".
 """
 
 import argparse
@@ -267,6 +278,17 @@ def effective_props(classes, name):
     return out
 
 
+def effective_flags(classes, name):
+    """The spawnflag bits (strings) the editor offers on the class: the editors merge the spawnflags lists of the
+    class and all its bases (trigger_once's own 8 plus Trigger's 1, 2, 4 and Appearflags' 2048)."""
+    out = collections.OrderedDict()
+    for cname in base_chain(classes, name):
+        prop = classes[cname]["props"].get("spawnflags")
+        if prop and prop["choices"]:
+            out.update(prop["choices"])
+    return out
+
+
 def effective_helpers(classes, name):
     out = []
     for cname in base_chain(classes, name):
@@ -288,6 +310,139 @@ _INLINE_KV = re.compile(r'\bKeyValue\s*\(\s*KeyValueData[^)]*\)\s*\{')
 _KEY = re.compile(r'(?:FStrEq|FStrnEq|strcmp|stricmp|strncmp|strnicmp|_stricmp)\s*\(\s*'
                   r'(?:pkvd\s*->\s*szKeyName|szKeyName|pszKey|key)\s*,\s*"([^"]*)"')
 _ENTVAR = re.compile(r'DEFINE_ENTITY_(?:FIELD|GLOBAL_FIELD)\w*\s*\(\s*(\w+)')
+_DEFINE = re.compile(r'^[ \t]*#[ \t]*define[ \t]+(\w+)[ \t]+([^\n]+)$', re.M)
+_CONST = re.compile(r'\bconst\s+int\s+(\w+)\s*=\s*([^;]+);')
+# a test of the entity's own spawnflags: "pev->spawnflags & X" (not "&=") or "FBitSet( pev->spawnflags, X )";
+# another entity's ("pOther->pev->spawnflags") is that entity's business
+_OWN_FLAGS = r'(?<![\w>.])pev\s*->\s*spawnflags'
+_FLAG_AND = re.compile(_OWN_FLAGS + r'\s*&(?![&=])\s*')
+_FLAG_BITSET = re.compile(r'\bFBitSet\s*\(\s*' + _OWN_FLAGS + r'\s*,\s*')
+_FLAG_EXPR = re.compile(r'\(|\)|\||<<|0[xX][0-9a-fA-F]+[uUlL]*|\d+[uUlL]*|\w+|\s+')
+
+
+def _flag_operand(text, pos, constants):
+    """The bits of the operand at text[pos] (up to a ')' that closes nothing, '&&', '||', '?', ',', ';' or '=='):
+    a set of ints, or None when a name in it is not a known constant."""
+    depth = 0
+    out = []
+    while pos < len(text):
+        if text.startswith(("&&", "||", "==", "!="), pos) or text[pos] in "?,;:" \
+                or (text[pos] == ")" and depth == 0):
+            break
+        m = _FLAG_EXPR.match(text, pos)
+        if not m:
+            return None
+        tok = m.group(0)
+        if tok == "(":
+            depth += 1
+        elif tok == ")":
+            depth -= 1
+        if not tok.isspace():
+            out.append(tok)
+        pos = m.end()
+    expr = []
+    for tok in out:
+        if re.match(r'\d|0[xX]', tok):
+            expr.append(str(int(tok.rstrip("uUlL"), 0)))
+        elif re.match(r'\w', tok):
+            if tok not in constants:
+                return None
+            expr.append(str(constants[tok]))
+        else:
+            expr.append(tok)
+    try:
+        value = eval(" ".join(expr), {"__builtins__": {}})
+    except Exception:
+        return None
+    if not isinstance(value, int) or value <= 0:
+        return None
+    return set(1 << i for i in range(32) if value & (1 << i))
+
+
+# entity fields a mapper sets as keys (the engine fills them by name) that an entity's code reads: "pev->speed" not
+# followed by an assignment
+MAPPER_FIELDS = ("speed", "dmg", "message", "health", "frags", "armorvalue", "max_health", "netname", "noise",
+                 "noise1", "noise2", "noise3", "impulse")
+_FIELD_READ = re.compile(r'(?<![\w>.])pev\s*->\s*(' + "|".join(MAPPER_FIELDS) +
+                         r')\b(?!\s*(?:=(?!=)|\+=|-=|\*=|/=|\|=|&=))')
+_CALLS = re.compile(r'(?:\b(\w+)\s*::\s*)?\b(\w+)\s*\(|&\s*(\w+)\s*::\s*(\w+)')
+_VIRTUAL = re.compile(r'\bvirtual\b[^;{(]*?\b(\w+)\s*\(')
+
+
+def _reached(chain, methods, virtuals, scopes=None):
+    """(class, method) pairs of the entity's class chain (most derived first) its code can run: every method of
+    the entity's own class, the virtual methods the chain does not override (the engine and the framework call
+    them), the methods those call or hand out (SetTouch( &CBaseTrigger::HurtTouch )), and the inline code of
+    each class body (method None). A method of a base class that nothing in the chain calls is left out, so a
+    base class's code for other entities (CBaseToggle::AxisDir for rotating entities) does not count.
+    scopes: class -> method: that class's virtual methods count only when the rest of the chain calls the method
+    (CBaseMonster's AI runs only after MonsterInit; scripted_sequence and cycler derive from it and never call it)."""
+    scopes = scopes or {}
+    seen = _reach(chain, methods, virtuals, set(c for c in chain if c in scopes))
+    late = set(c for c in chain if c in scopes and (c, scopes[c]) not in seen)
+    return _reach(chain, methods, virtuals, late) if late != set(c for c in chain if c in scopes) else seen
+
+
+def _reach(chain, methods, virtuals, unseeded):
+    owner = {}
+    for c in chain:
+        for name in methods.get(c, {}):
+            owner.setdefault(name, c)
+    todo = [(chain[0], name) for name in methods.get(chain[0], {})] if chain else []
+    todo += [(c, name) for name, c in owner.items() if name in virtuals and c not in unseeded]
+    seen = set((c, None) for c in chain if c not in unseeded)
+    while todo:
+        c, name = todo.pop()
+        if (c, name) in seen:
+            continue
+        seen.add((c, name))
+        for qual, call, aqual, aname in methods.get(c, {}).get(name, ()):
+            if aname:
+                qual, call = aqual, aname
+            definer = [x for x in chain[chain.index(qual):] if call in methods.get(x, {})] if qual in chain else []
+            if definer:
+                todo.append((definer[0], call))
+            elif call in owner:
+                todo.append((owner[call], call))
+    return sorted(seen, key=lambda x: (chain.index(x[0]), x[1] or ""))
+
+
+def _constants(files):
+    """Integer #defines and const ints of the code: name -> value (an expression of numbers, '|', '<<'
+    and other such names)."""
+    raw = {}
+    for text in files.values():
+        for m in _DEFINE.finditer(text):
+            raw.setdefault(m.group(1), m.group(2).strip())
+        for m in _CONST.finditer(text):
+            raw.setdefault(m.group(1), m.group(2).strip())
+    values = {}
+    for _ in range(4):
+        for name, expr in raw.items():
+            if name in values:
+                continue
+            bits = _flag_operand(expr + ";", 0, values)
+            if bits:
+                values[name] = sum(bits)
+    return values
+
+
+def _flag_reads(body, constants):
+    """[(bit, the operand's text)] the code tests on its own spawnflags, and the operands it could not resolve."""
+    reads = []
+    unresolved = []
+    for rx in (_FLAG_AND, _FLAG_BITSET):
+        for m in rx.finditer(body):
+            stop = re.search(r'[;\n]', body[m.end():])
+            text = body[m.end():m.end() + (stop.start() if stop else 80)].strip()
+            bits = _flag_operand(body, m.end(), constants)
+            if bits is None:
+                unresolved.append(text[:60])
+                continue
+            name = re.match(r'\(?\s*(\w+)', text)
+            for bit in bits:
+                reads.append((bit, name.group(1) if name else str(bit)))
+    return reads, unresolved
 
 
 def _block_end(text, start):
@@ -333,10 +488,11 @@ def dispatch_keys(files):
     return keys
 
 
-def scan_code(src_dir):
-    """Returns (entities, entvars). entities: classname -> dict(cls, file, keys, ignored);
+def scan_code(src_dir, flag_scopes=None, field_skip=None):
+    """Returns (entities, entvars). entities: classname -> dict(cls, file, keys, ignored, flags);
     keys: key -> the C++ class of the entity's chain that reads it; ignored: keys a handler only
-    marks as handled. entvars: lower-case names of the entity fields the engine fills by name."""
+    marks as handled; flags: spawnflag bit -> (the C++ class of the chain that tests it, the operand's name).
+    entvars: lower-case names of the entity fields the engine fills by name."""
     files = {}
     for root, dirs, names in os.walk(src_dir):
         dirs.sort()
@@ -354,6 +510,32 @@ def scan_code(src_dir):
     parents = {}
     keys = {}
     ignored = {}
+    flags = {}          # (class, method or None for the class body's inline code) -> {bit: where}
+    methods = {}        # class -> {method: [names the body calls or takes the address of]}
+    virtuals = set()    # method names declared virtual in some class
+    constants = _constants(files)
+
+    fields = {}         # (class, method) -> {entity field: where}
+    spawn_set = {}      # class -> fields its Spawn assigns before reading them
+
+    def add_flags(cls, method, text, where):
+        reads, _ = _flag_reads(text, constants)
+        for bit, operand in reads:
+            flags.setdefault((cls, method), {}).setdefault(bit, "%s, %s" % (operand, where))
+        for m in _FIELD_READ.finditer(text):
+            fields.setdefault((cls, method), {}).setdefault(m.group(1), where)
+        # a field KeyValue fills from another key name ("m_iMode" into pev->impulse) is that key's
+        for f in MAPPER_FIELDS:
+            if (method == "KeyValue" and re.search(r'(?<![\w>.])pev\s*->\s*%s\s*=(?!=)' % f, text)) or \
+                    re.search(r'(?<![\w>.])pev\s*->\s*%s\s*=[^;]*pkvd\s*->\s*szValue' % f, text):
+                spawn_set.setdefault(cls, set()).add(f)
+        if method in ("Spawn", "Precache"):
+            # a field Spawn assigns before it reads it is the entity's own state, not a key (pev->health = 100)
+            for f in MAPPER_FIELDS:
+                w = re.search(r'(?<![\w>.])pev\s*->\s*%s\s*=(?!=)' % f, text)
+                first_read = min([m.start() for m in _FIELD_READ.finditer(text) if m.group(1) == f] or [len(text)])
+                if w and w.start() < first_read:
+                    spawn_set.setdefault(cls, set()).add(f)
 
     def add_keys(cls, text):
         matches = list(_KEY.finditer(text))
@@ -385,8 +567,15 @@ def scan_code(src_dir):
             body = text[m.end() - 1:_block_end(text, m.end() - 1)]
             if "szKeyName" in body or m.group(2) in ("KeyValue", "ApplyKey"):
                 add_keys(m.group(1), body)
+            add_flags(m.group(1), m.group(2), body, "%s::%s, %s" % (m.group(1), m.group(2), name))
+            methods.setdefault(m.group(1), {})[m.group(2)] = _CALLS.findall(body)
         for m in _CLASS_BODY.finditer(text):
             body = text[m.end() - 1:_block_end(text, m.end() - 1)]
+            add_flags(m.group(1), None, body, "%s, %s" % (m.group(1), name))
+            virtuals.update(_VIRTUAL.findall(body))
+            # inline methods: their names, so a call reaches the class body's code
+            for mm in re.finditer(r'\b(\w+)\s*\([^;{}()]*\)\s*(?:const\s*)?\{', body[1:]):
+                methods.setdefault(m.group(1), {}).setdefault(mm.group(1), [])
             for mm in _INLINE_KV.finditer(body):
                 add_keys(m.group(1), body[mm.end() - 1:_block_end(body, mm.end() - 1)])
 
@@ -408,13 +597,26 @@ def scan_code(src_dir):
     for name, (cls, fname) in links.items():
         ent_keys = {}
         ent_ignored = set()
+        ent_flags = {}
+        ent_fields = {}
+        for c, method in _reached(chain(cls, []), methods, virtuals, flag_scopes):
+            for bit, where in sorted(flags.get((c, method), {}).items()):
+                ent_flags.setdefault(bit, (c, where))
+            if c in (field_skip or ()):
+                continue
+            for field, where in sorted(fields.get((c, method), {}).items()):
+                ent_fields.setdefault(field, (c, where))
+        for c in chain(cls, []):
+            for f in spawn_set.get(c, ()):
+                ent_fields.pop(f, None)
         for c in chain(cls, []):
             for key in sorted(keys.get(c, ())):
                 if key not in ent_keys:
                     ent_keys[key] = c
                     if key in ignored.get(c, ()):
                         ent_ignored.add(key)
-        entities[name] = dict(cls=cls, file=fname, keys=ent_keys, ignored=ent_ignored)
+        entities[name] = dict(cls=cls, file=fname, keys=ent_keys, ignored=ent_ignored, flags=ent_flags,
+                              fields=ent_fields)
     return entities, entvars
 
 
@@ -446,7 +648,7 @@ def find_problems(classes, duplicates, entities, entvars, rules):
     for line, text in duplicates:
         problems.append(("duplicate", text.split(":")[0], "line %d: %s" % (line, text)))
 
-    tool_keys = rules["tool_keys"]["keys"]
+    tool_keys = rules["tool_keys"]["keys"] + rules.get("dispatch_keys", {}).get("keys", [])
     shared = set(rules["shared_code_classes"]["classes"])
     concrete = [n for n, c in classes.items() if c["kind"] != "baseclass"]
     by_lower = {n.lower(): n for n in entities}
@@ -478,6 +680,22 @@ def find_problems(classes, duplicates, entities, entvars, rules):
             else:
                 problems.append(("unread_key", ident, "not read by %s's KeyValue chain, not an entity field"
                                  % ent["cls"]))
+        offered = effective_flags(classes, name)
+        chain_names = base_chain(classes, name)
+        for bit in sorted(ent["flags"]):
+            reader, where = ent["flags"][bit]
+            if str(bit) in offered:
+                continue
+            left_out = [c for c in chain_names if "%s:%d" % (c, bit) in rules.get("left_out_flags", {})]
+            if left_out:
+                continue
+            problems.append(("missing_flag", "%s:%d" % (name, bit), "the code tests it (%s), the FGD does not "
+                             "offer it" % where))
+        for field in sorted(ent.get("fields", {})):
+            if field not in props:
+                reader, where = ent["fields"][field]
+                problems.append(("missing_field", "%s.%s" % (name, field), "the code reads pev->%s (%s), the FGD does "
+                                 "not offer the key" % (field, where)))
         for key in sorted(ent["keys"]):
             reader = ent["keys"][key]
             if key in ent["ignored"] or reader in shared or key.lower() in props:
@@ -501,6 +719,43 @@ def find_problems(classes, duplicates, entities, entvars, rules):
         if pat not in used_hidden:
             reason = "an FGD class exists" if pat in have else "no such classname in src/dlls"
             problems.append(("stale_rule", "not_for_mappers:" + pat, reason))
+
+    for ident in sorted(rules.get("left_out_flags", {})):
+        name, _, bit = ident.partition(":")
+        if name not in classes:
+            problems.append(("stale_rule", "left_out_flags:" + ident, "no such FGD class"))
+            continue
+        for other in sorted(classes):
+            if name not in base_chain(classes, other):
+                continue
+            if bit in effective_flags(classes, other):
+                problems.append(("left_out_flag", "%s:%s" % (other, bit), "the FGD offers it; fgd_rules.json "
+                                 "left_out_flags: %s" % rules["left_out_flags"][ident]))
+
+    # FGD items that do something only under the teamplay rules: kept in the FGD as they are, listed so the reason is
+    # on record; an entry the FGD no longer has is stale
+    for ident in sorted(rules.get("teamplay_only", {}).get("items", {})):
+        name, sep, bit = ident.partition(":")
+        if not sep:
+            name, _, key = ident.partition(".")
+        if name not in classes or (sep and bit not in effective_flags(classes, name)) or \
+                (not sep and key.lower() not in effective_props(classes, name)):
+            problems.append(("stale_rule", "teamplay_only:" + ident, "the FGD does not offer it"))
+
+    for ident in sorted(rules.get("left_out_keys", {})):
+        target, _, value = ident.partition("=")
+        name, _, key = target.partition(".")
+        if name not in classes:
+            problems.append(("stale_rule", "left_out_keys:" + ident, "no such FGD class"))
+            continue
+        for other in sorted(classes):
+            if name not in base_chain(classes, other):
+                continue
+            prop = effective_props(classes, other).get(key.lower())
+            if prop is None or (value and not (prop["choices"] and value in prop["choices"])):
+                continue
+            problems.append(("left_out_key", "%s.%s%s" % (other, prop["name"], "=" + value if value else ""),
+                             "the FGD offers it; fgd_rules.json left_out_keys: %s" % rules["left_out_keys"][ident]))
 
     local = file_index(GAME_DIR)
     local_lower = {p.lower(): p for p in local}
@@ -540,7 +795,8 @@ def cmd_check(args):
         print("parse: sdk/%s: %s" % (FGD_NAME, err))
         print("fgd check: FAILED (1 problem)")
         return 1
-    entities, entvars = scan_code(SRC_DIR)
+    entities, entvars = scan_code(SRC_DIR, rules["flag_scopes"]["classes"],
+                                  set(rules["shared_code_classes"]["classes"]))
     problems = find_problems(classes, duplicates, entities, entvars, rules)
 
     accepted = rules.get("accepted", {})

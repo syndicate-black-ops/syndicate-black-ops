@@ -1,0 +1,36 @@
+# Dead monsters (FGD): Pose picks the corpse's sequence: monster_scientist_dead 0 On back, 1 On Stomach, 2 Sitting,
+# 4 Table1 (sequences 37 / 38 / 39 / 40 of scientist.mdl); monster_hgrunt_dead 0 On stomach, 1 On side, 2 Seated
+# (48 / 49 / 50) with Body 0 Grunt / 1 Commander with Gun, 2 Grunt / 3 Commander no Gun (body groups 0 / 1 / 8 / 9:
+# the gun group's empty hand); monster_barney_dead 0 On back, 1 On side, 2 On stomach (35 / 36 /
+# 37). "Preview Sequence" is for the editor only: a corpse whose sequence key names another pose still lies in its Pose
+# covers: monster_scientist_dead monster_scientist_dead.pose=0 monster_scientist_dead.pose=1 monster_scientist_dead.pose=2 monster_scientist_dead.pose=4 monster_scientist_dead.sequence monster_scientist_dead.sequence=37 monster_scientist_dead.sequence=38 monster_scientist_dead.sequence=39 monster_scientist_dead.sequence=40 monster_scientist_dead.body=0 monster_scientist_dead.body=1 monster_hgrunt_dead monster_hgrunt_dead.pose=0 monster_hgrunt_dead.pose=1 monster_hgrunt_dead.pose=2 monster_hgrunt_dead.body monster_hgrunt_dead.body=0 monster_hgrunt_dead.body=1 monster_hgrunt_dead.body=2 monster_hgrunt_dead.body=3 monster_barney_dead monster_barney_dead.pose=0 monster_barney_dead.pose=1 monster_barney_dead.pose=2 monster_barney_dead.sequence monster_barney_dead.sequence=36
+map co_fuzz
+spawn monster_scientist_dead targetname s0 pose 0 body 0 sequence 40 origin "0 100 0"
+spawn monster_scientist_dead targetname s1 pose 1 body 1 sequence 37 origin "100 100 0"
+spawn monster_scientist_dead targetname s2 pose 2 body 0 sequence 38 origin "200 100 0"
+spawn monster_scientist_dead targetname s4 pose 4 body 1 sequence 39 origin "300 100 0"
+spawn monster_hgrunt_dead targetname g0 pose 0 body 0 origin "0 300 0"
+spawn monster_hgrunt_dead targetname g1 pose 1 body 1 origin "100 300 0"
+spawn monster_hgrunt_dead targetname g2 pose 2 body 2 origin "200 300 0"
+spawn monster_hgrunt_dead targetname g3 pose 0 body 3 origin "300 300 0"
+spawn monster_barney_dead targetname b0 pose 0 sequence 36 origin "0 500 0"
+spawn monster_barney_dead targetname b1 pose 1 origin "100 500 0"
+spawn monster_barney_dead targetname b2 pose 2 sequence 36 origin "200 500 0"
+activate
+frames 5
+expectfield s0 sequence 37
+expectfield s1 sequence 38
+expectfield s2 sequence 39
+expectfield s4 sequence 40
+expectfield s0 body 0
+expectfield s1 body 1
+expectfield g0 sequence 48
+expectfield g1 sequence 49
+expectfield g2 sequence 50
+expectfield g0 body 0
+expectfield g1 body 1
+expectfield g2 body 8
+expectfield g3 body 9
+expectfield b0 sequence 35
+expectfield b1 sequence 36
+expectfield b2 sequence 37

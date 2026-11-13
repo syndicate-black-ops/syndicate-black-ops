@@ -25,6 +25,7 @@
 #include "event_api.h"
 #include "entity_types.h"
 #include "r_efx.h"
+#include "movewith_client.h"	// SBO 2.0: entity parenting
 
 extern BEAM *pBeam;
 extern BEAM *pBeam2;
@@ -57,6 +58,7 @@ void UpdateBeams ( void )
 					
 	// Now add in all of the players.
 	gEngfuncs.pEventAPI->EV_SetSolidPlayers ( idx - 1 );	
+	MoveWith_EventPhysents();	// SBO 2.0 movewith: placed solid children where they are drawn
 
 	gEngfuncs.pEventAPI->EV_SetTraceHull( 2 );
 	gEngfuncs.pEventAPI->EV_PlayerTrace( vecSrc, vecEnd, PM_STUDIO_BOX, -1, &tr );

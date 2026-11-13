@@ -2,7 +2,8 @@
 //
 // Purpose: The chat input's color picker: the collapsed round swatch left of the prompt and the popup it opens
 //          (a "Chat" / "Name" switch for the edited setting, color wheel, brightness bar, "None" and the ^1..^8
-//          presets).
+//          presets). The tool windows' color fields (CSboColorSwatch, controls/sbo_value_controls.h) use the same wheel
+//          and bar as a plain color picker (IChatColorPickerHost::IsPlainColorPicker): any color, no chat rows.
 //
 // The wheel is a port of BugfixedHL-Rebased's color picker (src/game/client/gameui/options/color_picker.{h,cpp} and
 // options/colorpicker/): its HSV <-> RGB conversion, the picker panel + bar panel pair (two of the HSV axes on a
@@ -42,6 +43,8 @@ void RGBtoHSV(Color rgb, float &hue, float &sat, float &val);
 //! brightness floor (greys), so the bar doesn't offer them.
 constexpr int MAX_LEVEL = 15;
 constexpr int MIN_LEVEL = 5;
+//! Brightness levels of a plain color picker (IChatColorPickerHost::IsPlainColorPicker): 0 (black) .. PLAIN_MAX_LEVEL
+constexpr int PLAIN_MAX_LEVEL = 100;
 
 class CWheelPanel;
 class CBrightnessPanel;
@@ -79,6 +82,10 @@ public:
 	virtual bool HasPickerTargets() { return false; }
 	virtual ChatColorTarget GetPickerTarget() { return ChatColorTarget::Chat; }
 	virtual void SetPickerTarget(ChatColorTarget target) {}
+	//! A plain color (the tool windows' color fields): any color from black to white, the brightness bar in
+	//! PLAIN_MAX_LEVEL steps and no brightness floor, and only the wheel and the bar (no chat rows: the switch, the
+	//! circle right of it, None and the ^1..^8 presets)
+	virtual bool IsPlainColorPicker() { return false; }
 };
 
 //! The name of a color as the picker's tooltips show it ("Red", "^x4AF", "None (default color)")
@@ -140,8 +147,16 @@ public:
 
 	//! The color of a wheel / bar position: brightness floor applied (exactly the color the wheel shows there)
 	static ChatColor MakeColor(float hue, float sat, int level);
+	//! The color of a position as this picker shows it (a plain picker: no floor, levels 0..PLAIN_MAX_LEVEL)
+	ChatColor MakePickerColor(float hue, float sat, int level) const;
+	//! The color a swatch or the bar draws for a picker color
+	Color GetDisplayColor(const ChatColor &color) const;
 	//! The selected position's color
-	ChatColor GetPickedColor() const { return MakeColor(m_flHue, m_flSat, m_iLevel); }
+	ChatColor GetPickedColor() const { return MakePickerColor(m_flHue, m_flSat, m_iLevel); }
+	//! The bar's levels: MIN_LEVEL..MAX_LEVEL, a plain picker 0..PLAIN_MAX_LEVEL
+	int GetMinLevel() const;
+	int GetMaxLevel() const;
+	bool IsPlain() const { return Host()->IsPlainColorPicker(); }
 
 	//! Drag feedback from the wheel / bar: previews the picked color; bSelect (button released) selects it
 	void OnPicked(vgui2::Panel *pSource, bool bSelect);

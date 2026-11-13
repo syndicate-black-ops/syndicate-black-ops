@@ -12,39 +12,27 @@ CBaseEntity *CBaseLogic::FindLogicEntity( CBaseEntity *pStart, string_t targetna
 	if ( FStringNull( targetname ) )
 		return NULL;
 
-	if ( !strcmp( STRING( targetname ), "!activator" ) )
+	const char *szName = STRING( targetname );
+	CBaseEntity *pSelected;
+
+	// "!activator" / "!caller" (UTIL_TargetSelector); SevenKewp: worldspawn when this entity has none
+	if ( ( !strcmp( szName, "!activator" ) || !strcmp( szName, "!caller" ) )
+		&& UTIL_TargetSelector( szName, m_hActivator, m_hCaller, &pSelected ) )
 	{
 		if ( pStart )
 			return NULL;	// prevent infinite loops
 
-		CBaseEntity *pActivator = m_hActivator;
-		if ( !pActivator )
+		if ( !pSelected )
 		{
-			ALERT( at_console, "%s \"%s\": failed to find !activator. Using worldspawn instead.\n",
-				STRING( pev->classname ), STRING( pev->targetname ) );
+			ALERT( at_console, "%s \"%s\": failed to find %s. Using worldspawn instead.\n",
+				STRING( pev->classname ), STRING( pev->targetname ), szName );
 			return CBaseEntity::Instance( ENT( 0 ) );
 		}
 
-		return pActivator;
+		return pSelected;
 	}
 
-	if ( !strcmp( STRING( targetname ), "!caller" ) )
-	{
-		if ( pStart )
-			return NULL;	// prevent infinite loops
-
-		CBaseEntity *pCaller = m_hCaller;
-		if ( !pCaller )
-		{
-			ALERT( at_console, "%s \"%s\": failed to find !caller. Using worldspawn instead.\n",
-				STRING( pev->classname ), STRING( pev->targetname ) );
-			return CBaseEntity::Instance( ENT( 0 ) );
-		}
-
-		return pCaller;
-	}
-
-	return UTIL_FindEntityByTargetname( pStart, STRING( targetname ) );
+	return UTIL_FindEntityByTargetname( pStart, szName );
 }
 
 void CBaseLogic::FireLogicTargets( const char *targetName, USE_TYPE useType, float value )
@@ -57,15 +45,11 @@ void CBaseLogic::FireLogicTargets( const char *targetName, USE_TYPE useType, flo
 	CBaseEntity *pActivator = m_hActivator;
 	CBaseEntity *pCaller = m_hCaller;
 
-	if ( !strcmp( targetName, "!activator" ) )
+	CBaseEntity *pSelected;
+	if ( UTIL_TargetSelector( targetName, pActivator, pCaller, &pSelected ) )
 	{
-		if ( pActivator )
-			pActivator->Use( pActivator, this, useType, value );
-	}
-	else if ( !strcmp( targetName, "!caller" ) )
-	{
-		if ( pCaller )
-			pCaller->Use( pActivator, this, useType, value );
+		if ( pSelected )
+			pSelected->Use( pActivator, this, useType, value );
 	}
 	else
 	{
@@ -82,11 +66,11 @@ int CBaseLogic::FloatToInteger( float f, int flt2str_mode )
 {
 	switch ( flt2str_mode )
 	{
-	case FLT2STR_ROUND:	return (int)( f + 0.5f );
+	case FLT2STR_ROUND:	return (int)floor( f + 0.5f );	// SBO 2.0: halves up, negatives too (-1.7: -2)
 	case FLT2STR_CEIL:	return (int)ceil( f );
 	case FLT2STR_FLOOR:
 	default:
-		return (int)f;
+		return (int)floor( f );	// SBO 2.0: down, negatives too (-1.5: -2)
 	}
 }
 
@@ -120,9 +104,9 @@ void CBaseLogic::FloatToString( float f, int flt2str_mode, char *out )
 	case FLT2STR_3DP:	snprintf( out, LOGIC_STRING_LEN, "%.3f", f ); break;
 	case FLT2STR_2DP:	snprintf( out, LOGIC_STRING_LEN, "%.2f", f ); break;
 	case FLT2STR_1DP:	snprintf( out, LOGIC_STRING_LEN, "%.1f", f ); break;
-	case FLT2STR_ROUND:	snprintf( out, LOGIC_STRING_LEN, "%d", (int)( f + 0.5f ) ); break;
+	case FLT2STR_ROUND:	snprintf( out, LOGIC_STRING_LEN, "%d", (int)floor( f + 0.5f ) ); break;
 	case FLT2STR_CEIL:	snprintf( out, LOGIC_STRING_LEN, "%d", (int)ceil( f ) ); break;
-	case FLT2STR_FLOOR:	snprintf( out, LOGIC_STRING_LEN, "%d", (int)f ); break;
+	case FLT2STR_FLOOR:	snprintf( out, LOGIC_STRING_LEN, "%d", (int)floor( f ) ); break;
 	case FLT2STR_6DP:
 	default:
 		snprintf( out, LOGIC_STRING_LEN, "%f", f );

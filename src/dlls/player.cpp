@@ -39,12 +39,27 @@
 #include "hltv.h"
 #include "tutor.h"
 #include "game_messagebox.h"
+#include "env_overlay.h"	// SBO 2.0: env_overlay
+#include "overlay_shared.h"
+#include "objective_shared.h"	// SBO 2.0: trigger_objective
+#include "colorcorrection.h"	// SBO 2.0: color_correction
+#include "colorcorrection_shared.h"
 #include "game_timer.h"
 #include "triggers.h"	// ReGameDLL_CS: CClientFog (env_fog)
 #include "effects.h"	// SoHL: EnvSky_SendState (env_sky)
 #include "objecthint.h"	// SBO 2.0: object hints
 #include "server_menu_shared.h"	// SBO 2.0: server menus (the message name)
 #include "gmmode.h"	// SBO 2.0 Game Master mode
+#include "round_hooks.h"	// SBO 2.0: Logic_IsPlayerInPlay
+
+// SBO 2.1 (docs/STATE_LOGIC.md "Entity states"): a player is On while in play, and Off while dead, a spectator or the
+// Game Master, so they never count for multi_watcher or watcher_count
+STATE CBasePlayer::GetState( CBaseEntity *pActivator )
+{
+	return Logic_IsPlayerInPlay( this ) ? STATE_ON : STATE_OFF;
+}
+#include "inventory.h"	// SBO 2.0 inventory (item_pickup, player_inventory)
+#include "movewith.h"	// SBO 2.0: entity parenting
 
 // #define DUCKFIX
 
@@ -58,6 +73,7 @@ int loca;				// SBO: last hit group location (TraceAttack)
 extern int m_Mode;
 extern cvar_t junior;
 extern DLL_GLOBAL int		g_iSkillLevel, gDisplayTitle;
+extern DLL_GLOBAL string_t	g_iszChapterTitle;	// world.cpp: worldspawn "chaptertitle"
 
 
 BOOL gInitHUD = TRUE;
@@ -66,6 +82,7 @@ extern void CopyToBodyQue(entvars_t* pev);
 extern void respawn(entvars_t *pev, BOOL fCopyCorpse);
 extern Vector VecBModelOrigin(entvars_t *pevBModel );
 extern int m_SpawnLocate;
+extern string_t g_iszSpawnSet;	// maprules.cpp: the named spawn set multispawn made active
 extern edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer );
 extern void Spectate_CheckPendingId( CBasePlayer *pPlayer );	// client.cpp
 extern void Spectate_MenuConfirmed( CBasePlayer *pPlayer );	// client.cpp
@@ -130,11 +147,13 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	DEFINE_FIELD( CBasePlayer, m_iWeaponFlash, FIELD_INTEGER ),
 	DEFINE_FIELD( CBasePlayer, m_fLongJump, FIELD_BOOLEAN ),
 	DEFINE_FIELD( CBasePlayer, m_fInitHUD, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CBasePlayer, m_bChapterTitleShown, FIELD_BOOLEAN ),	// SBO 2.0: once per map
 	DEFINE_FIELD( CBasePlayer, m_tbdPrev, FIELD_TIME ),
 
 	DEFINE_FIELD( CBasePlayer, m_pTank, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBasePlayer, m_iHideHUD, FIELD_INTEGER ),
 	DEFINE_FIELD( CBasePlayer, m_iFOV, FIELD_INTEGER ),
+	DEFINE_FIELD( CBasePlayer, m_iWeaponBitsHigh, FIELD_INTEGER ),	// SBO 2.1: weapon ids 32..63 (m_iClientWeaponBitsHigh: resent after ResetHUD)
 	
 	//DEFINE_FIELD( CBasePlayer, m_fDeadTime, FIELD_FLOAT ), // only used in multiplayer games
 	//DEFINE_FIELD( CBasePlayer, m_fGameHUDInitialized, FIELD_INTEGER ), // only used in multiplayer games
@@ -177,6 +196,7 @@ int gmsgResetHUD = 0;
 int gmsgInitHUD = 0;
 int gmsgShowGameTitle = 0;
 int gmsgCurWeapon = 0;
+int gmsgWeaponsHigh = 0;
 int gmsgHealth = 0;
 int gmsgDamage = 0;
 int gmsgBattery = 0;
@@ -225,6 +245,7 @@ int gmsgSboXP = 0;	// chat-vgui2: coop XP for the VGUI2 scoreboard (SboScoreboar
 int gmsgRoundStatus = 0;	// SBO 2.0: the loadout menu's round line (RoundStatus_Update, coop.cpp)
 int gmsgHeavyLimit = 0;	// SBO 2.0: the loadout menu's heavy weapon team limits (HeavyLimit_Update, coop.cpp)
 int gmsgCapability = 0;	// SBO 2.0 (Featureful): the player's suppressed capabilities (UpdateClientData)
+int gmsgCheats = 0;	// SBO 2.1: the server's sv_cheats value (UpdateClientData; the in-game editors need 2)
 int gmsgServerMenu = 0;	// SBO 2.0: plugins' server menus (server_menu_api.amxx sends it; docs/SERVER_MENUS.md)
 int gmsgSboModeInfo = 0;	// SBO 2.0: scoreboard round / frag limit line (SboModeInfo_*, multiplay_gamerules.cpp)
 int gmsgRoundTime = 0;	// SBO 2.0: spectator timer (RoundTime_*, multiplay_gamerules.cpp)
@@ -241,6 +262,9 @@ int gmsgFog = 0;		// ReGameDLL_CS: env_fog
 int gmsgFogZone = 0;	// PROTOTYPE: the env_fogzone list for the client (triggers.cpp FogZone_Send)
 int gmsgGameTimer = 0;	// SBO 2.0: game_timer (game_timer.cpp)
 int gmsgMirror = 0;		// SBO 2.0: env_mirror (env_mirror.cpp)
+int gmsgObjective = 0;	// SBO 2.0: trigger_objective (trigger_objective.cpp; game_shared/objective_shared.h)
+int gmsgOverlay = 0;	// SBO 2.0: env_overlay (env_overlay.cpp; plugins may send it: docs/ENV_OVERLAY.md)
+int gmsgColorCorr = 0;	// SBO 2.0: color_correction / color_correction_volume (colorcorrection.cpp)
 int gmsgWScreen = 0;	// SBO 2.0: vgui_screen (vgui_screen.cpp)
 int gmsgSeqSpeak = 0;	// SBO 2.0: trigger_sequence, a sentence for the clients' sentence player (trigger_sequence.cpp)
 int gmsgSetSky = 0;		// SoHL: env_sky (effects.cpp)
@@ -252,13 +276,15 @@ int gmsgViewModel = 0;	// SBO 2.0: halflife issue #199, the view model's render 
 int gmsgRenderFade = 0;	// SBO 2.0: env_render fades drawn by the clients (render_fade.cpp)
 int gmsgHeadScale = 0;	// SBO 2.0: a player's head scale (head_scale.cpp)
 int gmsgKfIcon = 0;	// SBO 2.0: a killfeed icon set by a plugin (killfeed_icons.cpp)
+int gmsgInventory = 0;	// SBO 2.0: an inventory item's count (inventory.cpp, game_shared/inventory_shared.h)
 int gmsgBreakModel = 0;	// SBO 2.0: break gibs with a model scale (func_break.cpp CBreakable::BreakModel; Featureful's name)
+int gmsgLightOrigin = 0;	// SBO 2.0: info_light_origin, a model entity's light point (light_origin.cpp)
 int gmsgObjectHint = 0;	// SBO 2.0: object hints, sent to each living player (objecthint.cpp; Featureful's name)
 int gmsgKeyedDLight = 0;	// SBO 2.0: env_dlight lights on the clients (env_dlight.cpp)
 int gmsgStaticProp = 0;	// SBO 2.0: env_static props drawn by the clients (env_static.cpp)
 int gmsgMapMusic = 0;	// SBO 2.0: ambient_music, the track the clients' MP3 player plays (sound.cpp)
 int gmsgPlayVideo = 0;	// SBO 2.0: game_playvideo, Aura's full-screen video (maprules.cpp)
-int gmsgWeatherVol = 0;	// SBO 2.0: func_rainvolume / func_snowvolume (triggers.cpp CWeatherVolume)
+int gmsgWeatherVol = 0;	// SBO 2.0: env_rain / env_snow and func_rainvolume / func_snowvolume (triggers.cpp)
 
 
 
@@ -295,6 +321,7 @@ void LinkUserMessages( void )
 	gmsgServerName = REG_USER_MSG( "ServerName", -1 );
 	gmsgAmmoPickup = REG_USER_MSG( "AmmoPickup", 2 );
 	gmsgWeapPickup = REG_USER_MSG( "WeapPickup", 1 );
+	gmsgWeaponsHigh = REG_USER_MSG( "WeaponsHigh", 4 );	// SBO 2.1 (Half-Life Unified SDK "Weapons"): long m_iWeaponBitsHigh, weapon ids 32..63
 	gmsgItemPickup = REG_USER_MSG( "ItemPickup", -1 );
 	gmsgHideWeapon = REG_USER_MSG( "HideWeapon", 1 );
 	gmsgSetFOV = REG_USER_MSG( "SetFOV", 1 );
@@ -317,6 +344,7 @@ void LinkUserMessages( void )
 	gmsgSboXP = REG_USER_MSG( "SboXP", 5 );		// chat-vgui2: byte client, long XP (coop scoreboard)
 	gmsgRoundStatus = REG_USER_MSG( "RoundStatus", 3 );	// SBO 2.0: byte state, short seconds (the loadout menu's NEXT ROUND IN)
 	gmsgCapability = REG_USER_MSG( "Capability", 4 );	// SBO 2.0 (Featureful): long PLAYER_SUPPRESS_* bits
+	gmsgCheats = REG_USER_MSG( "Cheats", 1 );	// SBO 2.1: byte sv_cheats (0..255); the engine itself tells clients only 0 or 1
 	gmsgHeavyLimit = REG_USER_MSG( "HeavyLimit", 4 );	// SBO 2.0: byte grenade launchers taken, byte max, byte nuclear launchers taken, byte max (the loadout menu's FULL)
 	// SBO 2.0: server menus (game_shared/server_menu_shared.h): the game never sends it; registered here so that AMX Mod X
 	// plugins can (Metamod only knows the messages the game DLL registers, so a plugin's own RegUserMsg cannot be sent)
@@ -324,7 +352,7 @@ void LinkUserMessages( void )
 	gmsgSboModeInfo = REG_USER_MSG( "SboModeInfo", 5 );	// SBO 2.0: byte type, short value1, short value2 (scoreboard)
 	gmsgPlayerAfk = REG_USER_MSG( "PlayerAfk", 2 );	// SBO 2.0: byte client, byte 1 = AFK sign on / 0 = off
 	gmsgRoundTime = REG_USER_MSG( "RoundTime", 5 );	// SBO 2.0: long seconds, byte mode (spectator timer; CS's name)
-	gmsgSpecHealth2 = REG_USER_MSG( "SpecHealth2", 8 );	// SBO 2.0: byte player, short health, short armor, byte weapon, byte flags, byte BR wins (CS's name)
+	gmsgSpecHealth2 = REG_USER_MSG( "SpecHealth2", 10 );	// SBO 2.0: byte player, short health, short armor, byte weapon, byte flags, byte BR wins, short view model (CS's name)
 	gmsgSboDeathMsg = REG_USER_MSG( "SboDeathMsg", -1 );	// chat-vgui2: NPC kill feed entries (SboKillfeed_*)
 	// CS:CZ tutor window (env_tutor; tutor.cpp). TutorPart: the start of a text too long for one TutorText
 	// (a message name has at most 11 characters: REG_USER_MSG).
@@ -338,19 +366,23 @@ void LinkUserMessages( void )
 	gmsgMessageBox = REG_USER_MSG( "MessageBox", -1 );
 	gmsgMsgBoxPart = REG_USER_MSG( "MsgBoxPart", -1 );
 	gmsgReceiveW = REG_USER_MSG( "ReceiveW", 1 );	// ReGameDLL_CS (client.cpp): weather type, 0 none, 1 rain, 2 snow
-	gmsgWeatherVol = REG_USER_MSG( "WeatherVol", 31 );	// SBO 2.0: a rain / snow volume (triggers.cpp CWeatherVolume::Send)
+	gmsgWeatherVol = REG_USER_MSG( "WeatherVol", 39 );	// SBO 2.0: a rain / snow, whole-map or volume (triggers.cpp CWeatherBase::Send)
 	gmsgFogZone = REG_USER_MSG( "FogZone", 21 );	// PROTOTYPE: byte index, byte flags, 6 coords, 3 bytes color, float density
 	gmsgFog = REG_USER_MSG( "Fog", 7 );		// ReGameDLL_CS (client.cpp): env_fog colour (3 bytes) and density (float)
 	gmsgGameTimer = REG_USER_MSG( "GameTimer", -1 );	// SBO 2.0: game_timer state (game_timer.cpp SendState)
 	gmsgMirror = REG_USER_MSG( "Mirror", -1 );	// SBO 2.0: env_mirror state (env_mirror.cpp SendState)
+	gmsgObjective = REG_USER_MSG( OBJECTIVE_MSG_NAME, -1 );	// SBO 2.0: trigger_objective (game_shared/objective_shared.h)
+	gmsgOverlay = REG_USER_MSG( OVERLAY_MSG_NAME, -1 );	// SBO 2.0: env_overlay (game_shared/overlay_shared.h)
+	gmsgColorCorr = REG_USER_MSG( COLORCORR_MSG_NAME, -1 );	// SBO 2.0: color correction (game_shared/colorcorrection_shared.h)
 	gmsgWScreen = REG_USER_MSG( "WScreen", -1 );	// SBO 2.0: vgui_screen world screens (vgui_screen.cpp)
 	gmsgSeqSpeak = REG_USER_MSG( "SeqSpeak", -1 );	// SBO 2.0: one string, a sentence of at most 120 characters (game_shared/sequence_speak.h)
 	gmsgMapMusic = REG_USER_MSG( "MapMusic", -1 );	// SBO 2.0: state, serial, path of at most 63 characters (game_shared/map_music_shared.h)
-	gmsgKeyedDLight = REG_USER_MSG( "KeyedDLight", -1 );	// SBO 2.0: env_dlight, at most 16 bytes (game_shared/dlight_shared.h)
+	gmsgKeyedDLight = REG_USER_MSG( "KeyedDLight", -1 );	// SBO 2.0: env_dlight / env_elight, at most 17 bytes (game_shared/dlight_shared.h)
 	gmsgStaticProp = REG_USER_MSG( "StaticProp", -1 );	// SBO 2.0: env_static, at most 36 bytes + a model name (game_shared/static_props_shared.h)
 	gmsgRenderFade = REG_USER_MSG( "RenderFade", -1 );	// SBO 2.0: env_render fade, at most 31 bytes (game_shared/render_fade_shared.h)
 	gmsgHeadScale = REG_USER_MSG( "HeadScale", 3 );	// SBO 2.0: player index, head scale (game_shared/head_scale_shared.h)
 	gmsgPlayVideo = REG_USER_MSG( "PlayVideo", -1 );	// SBO 2.0: two names in video/, at most 116 bytes (game_shared/video_shared.h)
+	gmsgLightOrigin = REG_USER_MSG( "LightOrigin", 10 );	// SBO 2.0: info_light_origin (game_shared/light_origin_shared.h)
 	gmsgObjectHint = REG_USER_MSG( "ObjectHint", -1 );	// SBO 2.0: object hint, at most 84 bytes (game_shared/objecthint_shared.h)
 	gmsgSetSky = REG_USER_MSG( "SetSky", 8 );	// SoHL 1.8 (LRC, AJH): env_sky mode, sky camera (3 coords), scale
 	gmsgMatFile = REG_USER_MSG( "MatFile", -1 );	// SBO 2.0: string, the map's materials file ("" none), < 64 bytes
@@ -364,6 +396,8 @@ void LinkUserMessages( void )
 	gmsgViewModel = REG_USER_MSG( "ViewModel", -1 );
 	gmsgBreakModel = REG_USER_MSG( "BreakModel", -1 );	// SBO 2.0: TE_BREAKMODEL's fields + short scale * 100 (Featureful 0a0160c4)
 	gmsgKfIcon = REG_USER_MSG( "KfIcon", -1 );	// SBO 2.0: a killfeed icon, at most 98 bytes (game_shared/killfeed_icons_shared.h)
+	gmsgInventory = REG_USER_MSG( INVENTORY_MSG_NAME, -1 );	// SBO 2.0: an inventory item, at most 67 bytes (game_shared/inventory_shared.h)
+
 	gmsgGmMode = REG_USER_MSG( "GmMode", -1 );	// SBO 2.0: byte state, byte event, byte entry, string label (game_shared/gm_catalog.h)
 	gmsgGmEntry = REG_USER_MSG( "GmEntry", -1 );	// SBO 2.0: byte entry, byte variant + 1, byte slot, short seconds, string text (game_shared/gm_catalog.h)
 	gmsgGmStatus = REG_USER_MSG( "GmStatus", 23 );	// SBO 2.0: game_shared/gm_catalog.h
@@ -435,7 +469,7 @@ void CBasePlayer::ShowMenu( int bitsValidSlots, int nDisplayTime, BOOL fNeedMore
 
 void ShowVGUI( CBasePlayer *pPlayer, int iMenu )
 {
-	// SBO 2.0 GM mode: no game window over a Game Master but the GM intro / help (19), as the owner's GM mode plugin
+	// SBO 2.0 GM mode: no game window over a Game Master but the GM intro / help (19), as the GM mode plugin
 	// (message_vgui_menu: every VGUIMenu blocked while in GM mode)
 	if ( pPlayer->m_bGameMaster && iMenu != 19 )
 		return;
@@ -595,7 +629,9 @@ void CBasePlayer :: DeathSound( void )
 	// water death sounds
 	if (pev->waterlevel == 3)
 	{
-		EMIT_SOUND(ENT(pev), CHAN_VOICE, "player/h2odeath.wav", 1, ATTN_NONE);
+		// player/h2odeath.wav is not precached: emitting it plays nothing and the engine prints
+		// "SV_BuildSoundMsg: player/h2odeath.wav not precached", so no sound is emitted here
+		// EMIT_SOUND(ENT(pev), CHAN_VOICE, "player/h2odeath.wav", 1, ATTN_NONE);
 		return;
 	}
 
@@ -819,6 +855,8 @@ int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 	// SBO: armor types. loca is the hit group TraceAttack recorded: 1 head, 2 chest, 3 stomach, 4 arms, 5 legs.
 	// The player models have no back hit group: the chest (Spine2/Spine3/Neck) and stomach (Pelvis/Spine1)
 	// hitboxes cover the back as well, so "torso, stomach and back" is loca 2 and 3.
+	const float flArmorBefore = pev->armorvalue;	// SBO 2.0 cheat_infinitearmor: given back after the switch
+
 	switch ( m_iArmorType )
 	{
 	case 1:
@@ -973,6 +1011,11 @@ int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 		}
 		break;
 	}
+
+	// SBO 2.0 cheat_infinitearmor (Half-Life Unified SDK, cheat_commands.cpp): the armor absorbed its part of the
+	// damage above and isn't used up
+	if ( m_bCheatInfiniteArmor )
+		pev->armorvalue = flArmorBefore;
 
 	// this cast to INT is critical!!! If a player ends up with 0.5 health, the engine will get that
 	// as an int (zero) and think the player is dead! (this will incite a clientside screentilt, etc)
@@ -1319,6 +1362,8 @@ void CBasePlayer::PackDeadPlayerItems( void )
 
 void CBasePlayer::RemoveAllItems( BOOL removeSuit )
 {
+	Inventory_Strip( this );	// SBO 2.0 inventory: every strip sends his items back to their placed spots
+
 	if (m_pActiveItem)
 	{
 		ResetAutoaim( );
@@ -1357,6 +1402,7 @@ void CBasePlayer::RemoveAllItems( BOOL removeSuit )
 		pev->weapons = 0;
 	else
 		pev->weapons &= ~WEAPON_ALLWEAPONS;
+	m_iWeaponBitsHigh = 0;	// SBO 2.1: weapon ids 32..63
 
 	for ( i = 0; i < MAX_AMMO_SLOTS;i++)
 		m_rgAmmo[i] = 0;
@@ -1381,6 +1427,8 @@ entvars_t *g_pevLastInflictor;  // Set in combat.cpp.  Used to pass the damage i
 void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 {
 	CSound *pSound;
+
+	Inventory_PlayerKilled( this );	// SBO 2.0 inventory: his items drop where he died (before any strip)
 
 	// Holster weapon immediately, to allow it to cleanup
 	if ( m_pActiveItem )
@@ -1727,6 +1775,11 @@ void CBasePlayer::WaterMove()
 		// stop restoring damage while underwater
 		m_bitsDamageType &= ~DMG_DROWNRECOVER;
 		m_rgbTimeBasedDamage[itbd_DrownRecover] = 0;
+
+		// SBO 2.0 cheat_infiniteair (Half-Life Unified SDK, cheat_commands.cpp): the air never runs out (HLU skips the
+		// drowning; refilling it also keeps the gasp sounds and the HUD's air as for a fresh breath)
+		if ( m_bCheatInfiniteAir )
+			pev->air_finished = gpGlobals->time + AIRTIME;
 
 		if (pev->air_finished < gpGlobals->time)		// drown!
 		{
@@ -2347,10 +2400,9 @@ void CBasePlayer::UpdateStatusBar()
 
 void CBasePlayer::PreThink(void)
 {
-	FastMoveUpdate();	// SBO 2.0 impulse 212: before this frame's movement
-
 	// SBO 2.0 (Featureful player_capabilities): "Attack" off, the attack buttons do nothing this frame (the client's
-	// prediction drops them too, hl_weapons.cpp). player_speed: the max speed of this frame's movement.
+	// prediction drops them too, hl_weapons.cpp). player_speed and the cheat speeds (impulse 212, cheat_speed): the
+	// max speed of this frame's movement.
 	if ( m_iSuppressedCaps & PLAYER_SUPPRESS_ATTACK )
 		pev->button &= ~( IN_ATTACK | IN_ATTACK2 );
 	ApplySpeedOverride();
@@ -2678,7 +2730,7 @@ void CBasePlayer::CheckTimeBasedDamage()
 		return;
 
 	// only check for time based damage approx. every 2 seconds
-	if (abs((int)(gpGlobals->time - m_tbdPrev)) < 2.0)
+	if (fabs(gpGlobals->time - m_tbdPrev) < 2.0)
 		return;
 	
 	m_tbdPrev = gpGlobals->time;
@@ -3601,7 +3653,8 @@ pt_end:
 				if ( gun && gun->UseDecrement() )
 				{
 					gun->m_flNextPrimaryAttack		= max( gun->m_flNextPrimaryAttack - gpGlobals->frametime, -1.0 );
-					gun->m_flNextSecondaryAttack	= max( gun->m_flNextSecondaryAttack - gpGlobals->frametime, -0.001 );
+					// halflife #3252: down to -1 s like the primary's, so a secondary shot's lateness is known (FireLateness)
+					gun->m_flNextSecondaryAttack	= max( gun->m_flNextSecondaryAttack - gpGlobals->frametime, -1.0 );
 
 					if ( gun->m_flTimeWeaponIdle != 1000 )
 					{
@@ -3691,6 +3744,83 @@ static const char *SpawnClassForLocate( int iSpawnLocate )
 	}
 }
 
+// SBO 2.1: named spawn sets (multispawn "Spawn set"). A set is every spawn point of the five classes above whose name
+// (targetname) is the set's name. While a set is active, players spawn only at its points; while none is, the rotation
+// above runs as in SBO 1.38, but a named info_player_deathmatch belongs to its set only (unless every
+// info_player_deathmatch has a name).
+static BOOL IsSpawnPointClass( CBaseEntity *pEnt )
+{
+	for ( int i = 1; i <= 5; i++ )
+	{
+		if ( FClassnameIs( pEnt->pev, SpawnClassForLocate( i ) ) )
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static BOOL HasSpawnName( CBaseEntity *pEnt )
+{
+	return !FStringNull( pEnt->pev->targetname ) && STRING( pEnt->pev->targetname )[0];
+}
+
+// what picks the spawn points: a named set, or the rotation's class (skipping named spots or not)
+struct SpawnSetFilter
+{
+	const char	*pszSet;
+	const char	*pszClass;
+	BOOL		bSkipNamed;
+};
+
+static BOOL InSpawnSet( CBaseEntity *pEnt, const SpawnSetFilter &f )
+{
+	if ( f.pszSet )
+		return IsSpawnPointClass( pEnt ) && FStrEq( STRING( pEnt->pev->targetname ), f.pszSet );
+	return FClassnameIs( pEnt->pev, f.pszClass ) && !( f.bSkipNamed && HasSpawnName( pEnt ) );
+}
+
+// the next spot of the set after pStart (NULL: the first), in entity order as UTIL_FindEntityByClassname; NULL after
+// the last one
+static CBaseEntity *NextSpawnSpot( CBaseEntity *pStart, const SpawnSetFilter &f )
+{
+	edict_t *pent = pStart ? pStart->edict() : NULL;
+	while ( 1 )
+	{
+		pent = f.pszSet ? FIND_ENTITY_BY_TARGETNAME( pent, f.pszSet ) : FIND_ENTITY_BY_CLASSNAME( pent, f.pszClass );
+		if ( FNullEnt( pent ) )
+			return NULL;
+
+		CBaseEntity *pEnt = CBaseEntity::Instance( pent );
+		if ( pEnt && InSpawnSet( pEnt, f ) )
+			return pEnt;
+	}
+}
+
+BOOL SpawnSet_HasSpots( const char *pszSet )
+{
+	SpawnSetFilter f = { pszSet, NULL, FALSE };
+	return pszSet && pszSet[0] && NextSpawnSpot( NULL, f ) != NULL;
+}
+
+static SpawnSetFilter ActiveSpawnSet( void )
+{
+	SpawnSetFilter f = { NULL, SpawnClassForLocate( m_SpawnLocate ), FALSE };
+
+	// the named set, if it has spawn points (else the rotation: multispawn printed a developer message)
+	if ( !FStringNull( g_iszSpawnSet ) && SpawnSet_HasSpots( STRING( g_iszSpawnSet ) ) )
+	{
+		f.pszSet = STRING( g_iszSpawnSet );
+		return f;
+	}
+
+	// a named info_player_deathmatch is skipped, as long as an unnamed one is left
+	if ( FStrEq( f.pszClass, "info_player_deathmatch" ) )
+	{
+		SpawnSetFilter unnamed = { NULL, f.pszClass, TRUE };
+		f.bSkipNamed = NextSpawnSpot( NULL, unnamed ) != NULL;
+	}
+	return f;
+}
+
 /*
 ============
 EntSelectSpawnPoint
@@ -3717,8 +3847,9 @@ edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer )
 	else if ( g_pGameRules->IsDeathmatch() )
 	{
 		// SBO: every game mode (co_, br_, dm) runs here, as gpGlobals->coop is 0. The active spawn set is
-		// chosen by m_SpawnLocate (multispawn moves co-op on to info_player_go2..go5).
-		const char *pszSpawnClass = SpawnClassForLocate( m_SpawnLocate );
+		// chosen by m_SpawnLocate (multispawn moves co-op on to info_player_go2..go5), or (SBO 2.1) it is the named
+		// set a multispawn with a "Spawn set" made active.
+		const SpawnSetFilter set = ActiveSpawnSet();
 
 		// HL25: pick the start spot over the whole spawn set. The first spawn on a map (and, for SBO, the first one
 		// after multispawn moved to another set) no longer only uses the first 5 spots of the set; after that, step
@@ -3726,14 +3857,14 @@ edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer )
 		int nNumRandomSpawnsToTry = 10;
 
 		pSpot = g_pLastSpawn;
-		if ( FNullEnt( pSpot ) || !FClassnameIs( pSpot->pev, pszSpawnClass ) )
+		if ( FNullEnt( pSpot ) || !InSpawnSet( pSpot, set ) )
 		{
 			int nNumSpawnPoints = 0;
-			CBaseEntity *pEnt = UTIL_FindEntityByClassname( NULL, pszSpawnClass );
+			CBaseEntity *pEnt = NextSpawnSpot( NULL, set );
 			while ( pEnt != NULL )
 			{
 				nNumSpawnPoints++;
-				pEnt = UTIL_FindEntityByClassname( pEnt, pszSpawnClass );
+				pEnt = NextSpawnSpot( pEnt, set );
 			}
 			// HL25 uses RANDOM_LONG(1, count - 1) here, which never picks the last spot and is invalid for a set
 			// of one; RANDOM_LONG(1, count) from the start of the list picks any spot of the set.
@@ -3745,10 +3876,10 @@ edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer )
 		if ( nNumRandomSpawnsToTry > 1 )
 		{
 			for ( int i = RANDOM_LONG( 1, nNumRandomSpawnsToTry - 1 ); i > 0; i-- )
-				pSpot = UTIL_FindEntityByClassname( pSpot, pszSpawnClass );
+				pSpot = NextSpawnSpot( pSpot, set );
 		}
 		if ( FNullEnt( pSpot ) )  // skip over the null point
-			pSpot = UTIL_FindEntityByClassname( pSpot, pszSpawnClass );
+			pSpot = NextSpawnSpot( pSpot, set );
 
 		CBaseEntity *pFirstSpot = pSpot;
 
@@ -3762,7 +3893,7 @@ edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer )
 				{
 					if ( pSpot->pev->origin == Vector( 0, 0, 0 ) )
 					{
-						pSpot = UTIL_FindEntityByClassname( pSpot, pszSpawnClass );
+						pSpot = NextSpawnSpot( pSpot, set );
 						continue;
 					}
 
@@ -3771,7 +3902,7 @@ edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer )
 				}
 			}
 			// increment pSpot
-			pSpot = UTIL_FindEntityByClassname( pSpot, pszSpawnClass );
+			pSpot = NextSpawnSpot( pSpot, set );
 		} while ( pSpot != pFirstSpot ); // loop if we're not back to the start
 
 		// we haven't found a place to spawn yet, so spawn at the first spawn point
@@ -3847,7 +3978,11 @@ void CBasePlayer::Spawn( void )
 	m_flSpeedApplied = -1;
 	m_bFlashlightFlicker = FALSE;
 	m_bFlickerDark = FALSE;
-	m_bFastMove = FALSE;	// SBO 2.0: impulse 212 ends at respawn
+	m_bFastMove = FALSE;	// SBO 2.0: the cheats end at respawn (impulse 212, cheat_commands.cpp)
+	m_flFastMoveScale = 0;
+	m_bCheatUnkillable = FALSE;
+	m_bCheatInfiniteAir = FALSE;
+	m_bCheatInfiniteArmor = FALSE;
 	g_engfuncs.pfnSetClientMaxspeed( edict(), 300 );
 
 	// SBO: drop the morph powers
@@ -3953,7 +4088,7 @@ void CBasePlayer::Spawn( void )
 	// SBO: the map's particle emitters, again with every spawn (the client starts its list over)
 	SendParticleEmitters();
 
-	// SBO 2.0: meteo_particules (1.38 rain/snow) is now a CS 1.6 weather entity (meteoentity.cpp, SendWeatherInfo)
+	// SBO 2.0: meteo_particules (1.38 rain/snow) is now a CS 1.6 weather entity (meteoentity.cpp, WeatherVol_SendAll)
 }
 
 /*
@@ -4075,6 +4210,7 @@ void CBasePlayer :: Precache( void )
 
 	m_iClientBattery = -1;
 	m_iClientSuppressedCaps = -1;	// SBO 2.0 (Featureful): the Capability message again
+	m_iClientCheats = -1;	// SBO 2.1: the Cheats message again
 
 	m_iTrain |= TRAIN_NEW;	// halflife-updated (halflife #3064): keep the train state so the train HUD is restored
 
@@ -4517,7 +4653,9 @@ void CBasePlayer :: FlashlightTurnOn( void )
 
 	if ( (pev->weapons & (1<<WEAPON_SUIT)) )
 	{
-		EMIT_SOUND_DYN( ENT(pev), CHAN_WEAPON, SOUND_FLASHLIGHT_ON, 1.0, ATTN_NORM, 0, PITCH_NORM );
+		// SBO 2.0: the click plays on CHAN_ITEM (ReGameDLL), so it never replaces the held weapon's CHAN_WEAPON
+		// sound (the chainsaw's running loop, which a toggle on CHAN_WEAPON stopped for good)
+		EMIT_SOUND_DYN( ENT(pev), CHAN_ITEM, SOUND_FLASHLIGHT_ON, 1.0, ATTN_NORM, 0, PITCH_NORM );
 		SetBits(pev->effects, EF_DIMLIGHT);
 		MESSAGE_BEGIN( MSG_ONE, gmsgFlashlight, NULL, pev );
 		WRITE_BYTE(1);
@@ -4532,7 +4670,7 @@ void CBasePlayer :: FlashlightTurnOn( void )
 
 void CBasePlayer :: FlashlightTurnOff( void )
 {
-	EMIT_SOUND_DYN( ENT(pev), CHAN_WEAPON, SOUND_FLASHLIGHT_OFF, 1.0, ATTN_NORM, 0, PITCH_NORM );
+	EMIT_SOUND_DYN( ENT(pev), CHAN_ITEM, SOUND_FLASHLIGHT_OFF, 1.0, ATTN_NORM, 0, PITCH_NORM );	// SBO 2.0: CHAN_ITEM, as in FlashlightTurnOn
     ClearBits(pev->effects, EF_DIMLIGHT);
 	m_bFlickerDark = FALSE;	// SBO 2.0: player_flicker
 	MESSAGE_BEGIN( MSG_ONE, gmsgFlashlight, NULL, pev );
@@ -4560,6 +4698,7 @@ void CBasePlayer :: ForceClientDllUpdate( void )
 	m_iClientHealth  = -1;
 	m_iClientBattery = -1;
 	m_iClientSuppressedCaps = -1;	// SBO 2.0 (Featureful): the Capability message again
+	m_iClientCheats = -1;	// SBO 2.1: the Cheats message again
 	// halflife-updated (HLU #147): the client's ResetHUD clears the hidden HUD parts and the ammo counts,
 	// resend them too (fullupdate used to leave the HUD hidden or the ammo at 0)
 	m_iClientHideHUD = -1;
@@ -4590,7 +4729,9 @@ void CBasePlayer :: ForceClientDllUpdate( void )
 		g_pGameRules->ResendHUD( this );
 		SendParticleEmitters();
 		SendQueue_StartAll( this );	// SBO 2.0: the env_particle systems, env_static props, point_worldtext texts, world screens (a demo started mid-map gets them)
+		MoveWith_ClientHUDInit();	// SBO 2.0 movewith: looping sounds of moving ambient_generics
 		MsgBox_SendAll( this );	// game_messagebox: the open boxes (the client replaces a box it has)
+		Overlay_SendAll( this );	// SBO 2.0: env_overlay: what the player's channels show (the client replaces a channel)
 	}
 }
 
@@ -4746,31 +4887,19 @@ void CBasePlayer :: UpdateFogZone( void )
 =========================================================
 SendWeatherInfo
 
-ReGameDLL_CS (regamedll/dlls/player.cpp): tells the client the map's weather, drawn by the client (cs16-client
-environment.cpp) around the view. Sent with every HUD (re)initialisation (UpdateClientData).
+ReGameDLL_CS (regamedll/dlls/player.cpp): the map's weather, drawn by the client (cs16-client environment.cpp) around
+the view. Sent with every HUD (re)initialisation (UpdateClientData).
 
-SBO 2.0: a map without weather sends 0 (none), which the client's ReceiveW (cs16-client: weather type 0 removes the
-rain and the snow and forgets the saved weather) already reads. ReGameDLL sends nothing then, so the client's only
-way to drop the previous map's rain was its own reset on the new map (playtest 2026-10-17: the showcase's rain
-stayed on co_aemos).
+SBO 2.0: ReceiveW 0 (none), which drops the whole-map weather the client has (the previous map's too: playtest
+2026-10-17, the showcase's rain stayed on co_aemos). The map's env_rain / env_snow follow right after it, each with
+its keys, in the WeatherVol message the rain and snow volumes use (triggers.cpp WeatherVol_SendAll). ReGameDLL sends
+ReceiveW 1 (rain) or 2 (snow) with CS's settings; the client still reads that.
 =========================================================
 */
 void CBasePlayer :: SendWeatherInfo( void )
 {
-	int iWeather;
-
-	/* Rain */
-	if ( UTIL_FindEntityByClassname( NULL, "env_rain" ) || UTIL_FindEntityByClassname( NULL, "func_rain" ) )
-		iWeather = 1;
-	/* Snow */
-	else if ( UTIL_FindEntityByClassname( NULL, "env_snow" ) || UTIL_FindEntityByClassname( NULL, "func_snow" ) )
-		iWeather = 2;
-	/* None */
-	else
-		iWeather = 0;
-
 	MESSAGE_BEGIN( MSG_ONE, gmsgReceiveW, NULL, pev );
-		WRITE_BYTE( iWeather );
+		WRITE_BYTE( 0 );
 	MESSAGE_END();
 }
 
@@ -4960,21 +5089,22 @@ void CBasePlayer::CheatImpulseCommands( int iImpulse )
 		CLIENT_PRINTF( edict(), print_console, ( pev->flags & FL_NOTARGET ) ? "notarget ON\n" : "notarget OFF\n" );
 		break;
 
-	// SBO 2.0: max speed 2000 toggle, for getting around a map quickly. On: the current max speed is kept as the
-	// normal speed and FastMoveUpdate holds the player at 2000. Off: the normal speed is back, i.e. the speed the
-	// game's own code has set last (a weapon switch, zoom or leg hit while fast counts). Ends on its own at death
-	// and when spectating (FastMoveUpdate), and Spawn clears it like godmode / notarget / noclip.
+	// SBO 2.0: max speed 2000 toggle, for getting around a map quickly. On: ApplySpeedOverride holds the player at
+	// 2000 (it replaces a cheat_speed multiplier). Off: the normal speed is back, i.e. the speed the game's own code
+	// has set last (a weapon switch, zoom or leg hit while fast counts). Ends on its own at death and when
+	// spectating (ApplySpeedOverride), and Spawn clears it like godmode / notarget / noclip.
 	case 212:
-		if ( m_bFastMove )
+		if ( m_bFastMove && m_flFastMoveScale <= 0 )
 		{
-			FastMoveOff();
+			m_bFastMove = FALSE;
+			ApplySpeedOverride();
 			CLIENT_PRINTF( edict(), print_console, "speed 2000 OFF\n" );
 		}
 		else
 		{
 			m_bFastMove = TRUE;
-			m_flFastMoveNormalSpeed = pev->maxspeed;
-			FastMoveUpdate();
+			m_flFastMoveScale = 0;
+			ApplySpeedOverride();
 			CLIENT_PRINTF( edict(), print_console, "speed 2000 ON\n" );
 		}
 		break;
@@ -5277,6 +5407,7 @@ void CBasePlayer :: UpdateClientData( void )
 		// ResetHUD: StartObserver asks for one without a respawn, and an observer who already had the same parts
 		// hidden (a waiting player starting to spectate) got its HUD back
 		m_iClientHideHUD = -1;
+		m_iClientWeaponBitsHigh = 0;	// SBO 2.1: the client's ResetHUD clears its weapon ids 32..63 too
 
 		if ( !m_fGameHUDInitialized )
 		{
@@ -5298,6 +5429,9 @@ void CBasePlayer :: UpdateClientData( void )
 			// player was loading) again
 			MsgBox_SendAll( this );
 
+			// SBO 2.0: env_overlay: the client cleared its overlays on InitHUD; the player's channels again
+			Overlay_SendAll( this );
+
 			// SBO 2.0: the map's particle emitters for a client that joined: the ones Spawn sent from ClientPutInServer
 			// didn't reach it, and a spectator or a player waiting in the menus isn't spawned again
 			SendParticleEmitters();
@@ -5306,6 +5440,9 @@ void CBasePlayer :: UpdateClientData( void )
 			// (vgui_screen, with their control changes so far; the client cleared its own at this InitHUD), a few at
 			// a time (client_sendqueue.h)
 			SendQueue_StartAll( this );
+
+			// SBO 2.0 movewith: and the looping sounds of ambient_generics that move with a parent (movewith.cpp)
+			MoveWith_ClientHUDInit();
 
 			if ( g_pGameRules->IsMultiplayer() )
 			{
@@ -5347,9 +5484,10 @@ void CBasePlayer :: UpdateClientData( void )
 		// SBO 2.0: the fog of the env_fogzone the player is in comes first.
 		SendFog();
 		FogZone_Send( this );	// PROTOTYPE: the env_fogzone list (the client draws the zones)
+		ColorCorr_SendAll( this );	// SBO 2.0: color_correction / color_correction_volume (the client forgets its list)
 
-		SendWeatherInfo();	// ReGameDLL_CS
-		WeatherVol_SendAll( this );	// SBO 2.0: func_rainvolume / func_snowvolume
+		SendWeatherInfo();	// ReGameDLL_CS: ReceiveW 0, then the map's weather:
+		WeatherVol_SendAll( this );	// SBO 2.0: env_rain / env_snow and func_rainvolume / func_snowvolume
 
 		GameTimer_SendAll( this );	// SBO 2.0: the map's game_timer entities shown in the HUD
 
@@ -5357,6 +5495,16 @@ void CBasePlayer :: UpdateClientData( void )
 		// above on a client's first HUD of the map) cleared it: sent here, a player who joins later has it too.
 		EnvSky_SendState( this );
 		Mirror_SendAll( this );	// SBO 2.0: the map's active env_mirror entities (env_mirror.cpp)
+	}
+
+	// SBO 2.0: the map's chapter title (worldspawn "chaptertitle", world.cpp), once per player and map, when the
+	// player first enters the game: spawned in play, spectating or as Game Master. Not before (a player still in the
+	// menus is an observer, and the ResetHUD of the spawn would clear it); after this frame's ResetHUD, if any.
+	if ( g_iszChapterTitle && !m_bChapterTitleShown && m_fGameHUDInitialized
+		&& ( m_bSpectating || m_bGameMaster || Logic_IsPlayerInPlay( this ) ) )
+	{
+		m_bChapterTitleShown = TRUE;
+		UTIL_ShowMessage( STRING( g_iszChapterTitle ), this );
 	}
 
 	// SBO 2.0: env_particle systems, env_static props, point_worldtext texts, world screens still to send to this
@@ -5375,13 +5523,17 @@ void CBasePlayer :: UpdateClientData( void )
 	if ( m_bLoadoutJoinPending )
 		LoadoutJoin();
 
-	if ( m_iHideHUD != m_iClientHideHUD )
+	// SBO 2.0: a trigger_camera with "Hide HUD and crosshair" (SF_CAMERA_HIDE_HUD) that has the view hides the whole
+	// HUD while it has it. Worked out here from the view entity, so every way the view comes back (the camera's end,
+	// death, observing, a respawn, the round end, the camera removed) gives the HUD back; m_iHideHUD is the game rules'
+	const int iHideHUD = m_iHideHUD | ( CameraWithFlag( SF_CAMERA_HIDE_HUD ) ? HIDEHUD_ALL : 0 );
+	if ( iHideHUD != m_iClientHideHUD )
 	{
 		MESSAGE_BEGIN( MSG_ONE, gmsgHideWeapon, NULL, pev );
-			WRITE_BYTE( m_iHideHUD );
+			WRITE_BYTE( iHideHUD );
 		MESSAGE_END();
 
-		m_iClientHideHUD = m_iHideHUD;
+		m_iClientHideHUD = iHideHUD;
 	}
 
 	if ( m_iFOV != m_iClientFOV )
@@ -5425,6 +5577,34 @@ void CBasePlayer :: UpdateClientData( void )
 		m_iClientSuppressedCaps = m_iSuppressedCaps;
 		MESSAGE_BEGIN( MSG_ONE, gmsgCapability, NULL, pev );
 			WRITE_LONG( m_iSuppressedCaps );
+		MESSAGE_END();
+	}
+
+	// SBO 2.1: the server's sv_cheats value as it is. The engine's own svc_sendextrainfo tells the client only whether
+	// it is 0, and the client's in-game editors need 2 (SboToolsAllowed, sbo_tool_window.cpp)
+	static cvar_t *s_pSvCheats = NULL;
+	if ( !s_pSvCheats )
+		s_pSvCheats = CVAR_GET_POINTER( "sv_cheats" );
+	if ( gmsgCheats && s_pSvCheats )
+	{
+		const int iCheats = s_pSvCheats->value <= 0 ? 0 : ( s_pSvCheats->value >= 255 ? 255 : (int)s_pSvCheats->value );
+		if ( iCheats != m_iClientCheats )
+		{
+			m_iClientCheats = iCheats;
+			MESSAGE_BEGIN( MSG_ONE, gmsgCheats, NULL, pev );
+				WRITE_BYTE( iCheats );
+			MESSAGE_END();
+		}
+	}
+
+	// SBO 2.1 (Half-Life Unified SDK, HLU #98): weapon ids 32..63; ids 0..31 reach the client in the client data
+	// (clientdata_t weapons). Sent after ResetHUD above, which clears them on the client
+	if ( m_iWeaponBitsHigh != m_iClientWeaponBitsHigh )
+	{
+		m_iClientWeaponBitsHigh = m_iWeaponBitsHigh;
+
+		MESSAGE_BEGIN( MSG_ONE, gmsgWeaponsHigh, NULL, pev );
+			WRITE_LONG( m_iWeaponBitsHigh );
 		MESSAGE_END();
 	}
 
@@ -5994,7 +6174,7 @@ void CBasePlayer::DropPlayerItem ( char *pszItemName )
 
 			UTIL_MakeVectors ( pev->angles ); 
 
-			pev->weapons &= ~(1<<pWeapon->m_iId);// take item off hud
+			ClearWeaponBit( pWeapon->m_iId );// take item off hud (SBO 2.1: ids 32..63 too)
 
 			CWeaponBox *pWeaponBox = (CWeaponBox *)CBaseEntity::Create( "weaponbox", pev->origin + gpGlobals->v_forward * 10, pev->angles, edict() );
 			pWeaponBox->pev->angles.x = 0;
@@ -6167,10 +6347,20 @@ void CBasePlayer::SetSpeedOverride( float value, BOOL absolute )
 // its max speed; both movement codes cap it by sv_maxspeed). The game sets pev->maxspeed in many places (weapons,
 // zooms, level-ups, leg hits): a value other than the last one applied here is the game's new speed, kept as the
 // base the override is applied to. Not for the dead and observers (their speed is not the alive speed).
+// The cheat speeds (impulse 212, cheat_speed) come last, on top of player_speed, capped at FASTMOVE_MAXSPEED. Runs
+// in PreThink (before the server's movement) and UpdateClientData (before pev->maxspeed is sent to the client's
+// prediction), so neither side moves a frame at a speed the game wrote in between.
+#define FASTMOVE_MAXSPEED	2000
+
 void CBasePlayer::ApplySpeedOverride( void )
 {
 	if ( pev->maxspeed != m_flSpeedApplied )
 		m_flSpeedBase = pev->maxspeed;
+
+	// a cheat speed is over at death and when spectating (the dead don't move, observers have sv_spectatormaxspeed)
+	if ( m_bFastMove && ( !IsAlive() || IsObserver() || ( m_afPhysicsFlags & PFLAG_OBSERVER ) ) )
+		m_bFastMove = FALSE;
+
 	float flSpeed = m_flSpeedBase;
 	if ( m_flSpeedOverride > 0 && flSpeed > 0 && IsAlive() && !IsObserver() )
 	{
@@ -6181,9 +6371,30 @@ void CBasePlayer::ApplySpeedOverride( void )
 		if ( flSpeed < 1.0f )
 			flSpeed = 1.0f;	// 0 would be the engine's "no limit" (Featureful keeps 1 too)
 	}
+	if ( m_bFastMove )
+	{
+		if ( m_flFastMoveScale <= 0 )
+			flSpeed = FASTMOVE_MAXSPEED;	// impulse 212
+		else if ( flSpeed > 0 )
+		{
+			flSpeed *= m_flFastMoveScale;	// cheat_speed
+			if ( flSpeed > FASTMOVE_MAXSPEED )
+				flSpeed = FASTMOVE_MAXSPEED;
+			if ( flSpeed < 1.0f )
+				flSpeed = 1.0f;
+		}
+	}
 	if ( flSpeed != pev->maxspeed )
 		g_engfuncs.pfnSetClientMaxspeed( edict(), flSpeed );
 	m_flSpeedApplied = pev->maxspeed;
+}
+
+// SBO 2.0 cheat_speed <n> (cheat_commands.cpp, sv_cheats): n times the normal speed; 1 ends it and impulse 212
+void CBasePlayer::CheatSpeed( float flScale )
+{
+	m_bFastMove = flScale != 1.0f;
+	m_flFastMoveScale = flScale;
+	ApplySpeedOverride();
 }
 
 // SBO 2.0 (Featureful player_flicker)
@@ -6251,46 +6462,6 @@ void CBasePlayer::SboLevelPenalty( void )
 	if ( m_iSboMaxSpeed < SBO_MIN_MAXSPEED )
 		m_iSboMaxSpeed = SBO_MIN_MAXSPEED;
 	ResetMaxSpeed();
-}
-
-// SBO 2.0 impulse 212 (CheatImpulseCommands): the fast max speed. pev->maxspeed is the only speed the movement
-// code knows (PM_CheckParamters: min( sv_maxspeed, clientmaxspeed ); the client clips its move commands to it in
-// CL_CreateMove), and SBO's speed code writes it directly in many places (DefaultDeploy, the sniper zooms, leg hits,
-// falls, the medikit, the modes' loadouts, ResetMaxSpeed). Those are left as they are: a value other than the fast
-// one found here was written by them since the last check, so it becomes the normal speed and the fast one is put
-// back. Runs in PreThink (before the server's movement) and UpdateClientData (before pev->maxspeed is sent to the
-// client's prediction), so neither side moves a frame at the written speed.
-#define FASTMOVE_MAXSPEED	2000
-
-void CBasePlayer::FastMoveUpdate( void )
-{
-	if ( !m_bFastMove )
-		return;
-
-	// dead or spectating: over (the dead don't move, observers have sv_spectatormaxspeed)
-	if ( !IsAlive() || IsObserver() || ( m_afPhysicsFlags & PFLAG_OBSERVER ) )
-	{
-		FastMoveOff();
-		return;
-	}
-
-	if ( pev->maxspeed != FASTMOVE_MAXSPEED )
-	{
-		m_flFastMoveNormalSpeed = pev->maxspeed;
-		g_engfuncs.pfnSetClientMaxspeed( edict(), FASTMOVE_MAXSPEED );
-	}
-}
-
-void CBasePlayer::FastMoveOff( void )
-{
-	if ( !m_bFastMove )
-		return;
-
-	m_bFastMove = FALSE;
-
-	// a speed written since the last FastMoveUpdate is already the normal one
-	if ( pev->maxspeed == FASTMOVE_MAXSPEED )
-		g_engfuncs.pfnSetClientMaxspeed( edict(), m_flFastMoveNormalSpeed );
 }
 
 void CBasePlayer::Cloak( void )

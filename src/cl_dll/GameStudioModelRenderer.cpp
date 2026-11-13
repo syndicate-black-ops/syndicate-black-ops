@@ -28,6 +28,8 @@
 #include "GameStudioModelRenderer.h"
 #define SBO_SERVER_MENU_PREVIEW_ENGINE
 #include "server_menu_preview.h"	// SBO 2.0: server menus' model preview
+#include "view.h"	// SoHL env_sky: EnvSky_IsSkyEntity
+#include "colorcorrection.h"	// SBO 2.0: color_correction
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -80,16 +82,28 @@ R_StudioDrawModel
 */
 int R_StudioDrawModel( int flags )
 {
-	// SoHL 1.8: none in the env_sky sky room pass (see R_StudioDrawPlayer); this includes the view model
-	if ( gHUD.m_bSkyDrawPass )
+	cl_entity_t *pEnt = IEngineStudio.GetCurrentEntity();
+
+	// SoHL 1.8 (StudioDrawModel: only kRenderFxEntInPVS models while the sky is drawn): in the env_sky sky room pass
+	// only the models in the sky room (view.cpp EnvSky_AddEntity), none of those around the view (see
+	// R_StudioDrawPlayer), nor the view model; and the view does not draw the sky room's (they are in the sky)
+	if ( gHUD.m_bSkyDrawPass != EnvSky_IsSkyEntity( pEnt ) )
 		return 0;
 
 	// SBO 2.0: server menus' model preview (server_menu_preview.h): its entity, and no view model in front of it
-	cl_entity_t *pEnt = IEngineStudio.GetCurrentEntity();
 	if ( ServerMenuPreview_IsEntity( pEnt ) )
 		return g_StudioRenderer.StudioDrawPreview( flags );
 	if ( pEnt == gEngfuncs.GetViewModel() && ServerMenuPreview_HidesViewModel() )
 		return 0;
+
+	// SBO 2.0: color_correction grades the view right after its view model, the last of its 3D drawing (the HUD, the
+	// crosshair and the screen fades come later and keep their colors)
+	if ( pEnt == gEngfuncs.GetViewModel() && ( flags & STUDIO_RENDER ) )
+	{
+		const int iResult = g_StudioRenderer.StudioDrawModel( flags );
+		ColorCorr_AfterViewModel();
+		return iResult;
+	}
 
 	return g_StudioRenderer.StudioDrawModel( flags );
 }

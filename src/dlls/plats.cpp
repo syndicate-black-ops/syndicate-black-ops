@@ -286,6 +286,10 @@ public:
 	virtual void HitBottom( void );
 	void KeyValue( KeyValueData *pkvd );
 
+	// SBO 2.1 (Spirit of Half-Life CBaseToggle::GetState): at the top On, at the bottom Off, going up Turn On, going
+	// down Turn Off (func_platrot, func_trackchange and func_trackautochange too)
+	virtual STATE GetState( CBaseEntity *pActivator ) { return ToggleStateAsState(); }
+
 	// SBO 2.0, from Featureful (CFuncPlat): Fire On targets when it starts opening (going up) / closing (going down)
 	// and when it is open (at the top) / closed (at the bottom)
 	string_t m_iszFireOnOpening, m_iszFireOnClosing, m_iszFireOnOpened, m_iszFireOnClosed;
@@ -609,6 +613,7 @@ public:
 	virtual void	HitBottom( void );
 	
 	void			RotMove( Vector &destAngle, float time );
+	virtual BOOL	MoverTurnEndsAtStop( void ) { return TRUE; }	// SBO 2.0 mover prediction: HitTop / HitBottom stop the turn
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -730,6 +735,8 @@ public:
 
 	void EXPORT Wait( void );
 	virtual void EXPORT Next( void );	// SBO 2.0: virtual for env_modeltrain
+	// SBO 2.1 (Spirit of Half-Life): On while it moves, Off while it stands (stopped, or waiting at a path_corner)
+	virtual STATE GetState( CBaseEntity *pActivator ) { return pev->velocity != g_vecZero ? STATE_ON : STATE_OFF; }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -751,6 +758,20 @@ public:
 	// as in Half-Life.
 	BOOL		m_iObeyTriggerMode;
 	int			m_iPitch;	// SBO 2.0, from Featureful: "soundpitch" of the move sound (0: normal)
+
+	// SBO 2.0, as Spirit of Half-Life's path_corner "turnspeed": the yaw rate (degrees a second) the last path_corner
+	// with a "New Train rot. Speed" (yaw_speed, not 0) set; the train turns at it while it moves. 0: no corner set one,
+	// avelocity is left as it is (Half-Life)
+	float		m_flTurnSpeed;
+	void		StopTurning( void ) { if ( m_flTurnSpeed != 0 ) pev->avelocity.y = 0; }
+
+	// SBO 2.0 mover prediction (docs/MOVER_PREDICTION.md): the next segment's velocity, worked out once per segment in
+	// Next() (not saved: Next() sets it again)
+	BOOL MoverNextVelocity( Vector &vecVelocity );
+	BOOL MoverTurnEndsAtStop( void ) { return m_flTurnSpeed != 0 && !m_fMoverNextVelocity; }	// OnStop -> StopTurning
+	void MoverPredictNext( CBaseEntity *pTarg, const Vector &vecDest );
+	Vector		m_vecMoverNextVelocity;
+	BOOL		m_fMoverNextVelocity;
 };
 
 
@@ -761,6 +782,7 @@ TYPEDESCRIPTION	CFuncTrain::m_SaveData[] =
 	DEFINE_FIELD( CFuncTrain, m_pevCurrentTarget, FIELD_EVARS ),
 	DEFINE_FIELD( CFuncTrain, m_activated, FIELD_BOOLEAN ),
 	DEFINE_FIELD( CFuncTrain, m_iObeyTriggerMode, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CFuncTrain, m_flTurnSpeed, FIELD_FLOAT ),
 };
 
 IMPLEMENT_SAVERESTORE( CFuncTrain, CBasePlatTrain );
@@ -889,6 +911,10 @@ void CFuncTrain :: Next( void )
         pev->speed = m_pevCurrentTarget->speed;
 		ALERT( at_aiconsole, "Train %s speed to %4.2f\n", STRING(pev->targetname), pev->speed );
 	}
+	// SBO 2.0 (Spirit of Half-Life path_corner "turnspeed"): "New Train rot. Speed" sets the turn rate as "New Train
+	// Speed" sets the speed; 0 leaves it as it is
+	if ( m_pevCurrentTarget && m_pevCurrentTarget->yaw_speed != 0 )
+		m_flTurnSpeed = m_pevCurrentTarget->yaw_speed;
 	m_pevCurrentTarget = pTarg->pev;// keep track of this since path corners change our target for us.
 
     pev->enemy = pTarg->edict();//hack
@@ -913,9 +939,57 @@ void CFuncTrain :: Next( void )
 			EMIT_SOUND_DYN( ENT(pev), CHAN_STATIC, (char*)STRING(pev->noiseMovement), m_volume, SoundAttenuation(), 0, m_iPitch > 0 ? m_iPitch : PITCH_NORM );
 		ClearBits(pev->effects, EF_NOINTERP);
 		SetMoveDone( &CFuncTrain::Wait );
+		if ( m_flTurnSpeed != 0 )	// SBO 2.0 (Spirit): turns while it moves
+			pev->avelocity.y = m_flTurnSpeed;
+		// SBO 2.0 mover prediction: before LinearMove: an already reached corner runs Wait() / Next() again from
+		// inside it, which sets its own
+		MoverPredictNext( pTarg, DestinationVector(pTarg->pev) );
 		LinearMove (DestinationVector(pTarg->pev), pev->speed);
 		OnStartMoving();	// SBO 2.0 (Featureful)
 	}
+}
+
+/*
+=================
+CFuncTrain :: MoverPredictNext
+
+SBO 2.0 mover prediction: what Wait() and Next() will do when the train reaches pTarg (at vecDest). If it goes straight
+on to the next corner, that segment's velocity is sent to the clients (endpos in AddToFullPack's state) so they don't
+stop the train at the corner. A wait, a retrigger corner, a teleport corner or the end of the path is a stop.
+=================
+*/
+void CFuncTrain :: MoverPredictNext( CBaseEntity *pTarg, const Vector &vecDest )
+{
+	m_fMoverNextVelocity = FALSE;
+
+	if ( m_flWait != 0 || FBitSet( pTarg->pev->spawnflags, SF_TRAIN_WAIT_RETRIGGER ) || FBitSet( pev->spawnflags, SF_TRAIN_WAIT_RETRIGGER ) )
+		return;
+
+	if ( FStringNull( pTarg->pev->target ) )
+		return;
+
+	edict_t *pentNext = FIND_ENTITY_BY_TARGETNAME( NULL, STRING( pTarg->pev->target ) );
+	if ( FNullEnt( pentNext ) || FBitSet( pentNext->v.spawnflags, SF_CORNER_TELEPORT ) )
+		return;
+
+	// Next() copies the corner's speed when it is set
+	float flSpeed = ( pTarg->pev->speed != 0 ) ? pTarg->pev->speed : pev->speed;
+	Vector vecDelta = pentNext->v.origin - (pev->mins + pev->maxs) * 0.5 - vecDest;
+	float flLength = vecDelta.Length();
+	if ( flLength <= 0 || flSpeed <= 0 )
+		return;
+
+	m_vecMoverNextVelocity = vecDelta * ( flSpeed / flLength );
+	m_fMoverNextVelocity = TRUE;
+}
+
+BOOL CFuncTrain :: MoverNextVelocity( Vector &vecVelocity )
+{
+	if ( !m_fMoverNextVelocity || m_pfnCallWhenMoveDone != static_cast <void (CBaseToggle::*)(void)> ( &CFuncTrain::Wait ) )
+		return FALSE;
+
+	vecVelocity = m_vecMoverNextVelocity;
+	return TRUE;
 }
 
 
@@ -1049,6 +1123,7 @@ void CFuncTrain::OverrideReset( void )
 // place for what Use, Wait and Next each did.
 void CFuncTrain::OnStop( void )
 {
+	StopTurning();	// SBO 2.0 (Spirit): a stopped train does not turn
 	if ( pev->noiseMovement )
 		STOP_SOUND( edict(), CHAN_STATIC, (char*)STRING(pev->noiseMovement) );
 	if ( pev->noiseStopMoving )
@@ -2116,7 +2191,9 @@ public:
 	CPathTrack		*m_trackTop;
 	CPathTrack		*m_trackBottom;
 
-	CFuncTrackTrain	*m_train;
+	EHANDLE			m_hTrain;
+	// NULL once the train is removed (killtarget): every use treats that as no train
+	CFuncTrackTrain	*Train( void ) { return (CFuncTrackTrain *)(CBaseEntity *)m_hTrain; }
 
 	int				m_trackTopName;
 	int				m_trackBottomName;
@@ -2131,7 +2208,7 @@ TYPEDESCRIPTION	CFuncTrackChange::m_SaveData[] =
 {
 	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_trackTop, FIELD_CLASSPTR ),
 	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_trackBottom, FIELD_CLASSPTR ),
-	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_train, FIELD_CLASSPTR ),
+	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_hTrain, FIELD_EHANDLE ),
 	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_trackTopName, FIELD_STRING ),
 	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_trackBottomName, FIELD_STRING ),
 	DEFINE_GLOBAL_FIELD( CFuncTrackChange, m_trainName, FIELD_STRING ),
@@ -2237,8 +2314,8 @@ void CFuncTrackChange :: Find( void )
 			target = FIND_ENTITY_BY_TARGETNAME( NULL, STRING(m_trainName) );
 			if ( !FNullEnt(target) )
 			{
-				m_train = CFuncTrackTrain::Instance( FIND_ENTITY_BY_TARGETNAME( NULL, STRING(m_trainName) ) );
-				if ( !m_train )
+				m_hTrain = CFuncTrackTrain::Instance( FIND_ENTITY_BY_TARGETNAME( NULL, STRING(m_trainName) ) );
+				if ( !Train() )
 				{
 					ALERT( at_error, "Can't find train for track change! %s\n", STRING(m_trainName) );
 					return;
@@ -2268,20 +2345,21 @@ void CFuncTrackChange :: Find( void )
 TRAIN_CODE CFuncTrackChange :: EvaluateTrain( CPathTrack *pcurrent )
 {
 	// Go ahead and work, we don't have anything to switch, so just be an elevator
-	if ( !pcurrent || !m_train )
+	CFuncTrackTrain *pTrain = Train();
+	if ( !pcurrent || !pTrain )
 		return TRAIN_SAFE;
 
-	if ( m_train->m_ppath == pcurrent || (pcurrent->m_pprevious && m_train->m_ppath == pcurrent->m_pprevious) ||
-		 (pcurrent->m_pnext && m_train->m_ppath == pcurrent->m_pnext) )
+	if ( pTrain->m_ppath == pcurrent || (pcurrent->m_pprevious && pTrain->m_ppath == pcurrent->m_pprevious) ||
+		 (pcurrent->m_pnext && pTrain->m_ppath == pcurrent->m_pnext) )
 	{
-		if ( m_train->pev->speed != 0 )
+		if ( pTrain->pev->speed != 0 )
 			return TRAIN_BLOCKING;
 
-		Vector dist = pev->origin - m_train->pev->origin;
+		Vector dist = pev->origin - pTrain->pev->origin;
 		float length = dist.Length2D();
-		if ( length < m_train->m_length )		// Empirically determined close distance
+		if ( length < pTrain->m_length )		// Empirically determined close distance
 			return TRAIN_FOLLOWING;
-		else if ( length > (150 + m_train->m_length) )
+		else if ( length > (150 + pTrain->m_length) )
 			return TRAIN_SAFE;
 
 		return TRAIN_BLOCKING;
@@ -2293,17 +2371,21 @@ TRAIN_CODE CFuncTrackChange :: EvaluateTrain( CPathTrack *pcurrent )
 
 void CFuncTrackChange :: UpdateTrain( Vector &dest )
 {
+	CFuncTrackTrain *pTrain = Train();
+	if ( !pTrain )
+		return;
+
 	float time = (pev->nextthink - pev->ltime);
 
-	m_train->pev->velocity = pev->velocity;
-	m_train->pev->avelocity = pev->avelocity;
-	m_train->NextThink( m_train->pev->ltime + time, FALSE );
+	pTrain->pev->velocity = pev->velocity;
+	pTrain->pev->avelocity = pev->avelocity;
+	pTrain->NextThink( pTrain->pev->ltime + time, FALSE );
 
 	// Attempt at getting the train to rotate properly around the origin of the trackchange
 	if ( time <= 0 )
 		return;
 
-	Vector offset = m_train->pev->origin - pev->origin;
+	Vector offset = pTrain->pev->origin - pev->origin;
 	Vector delta = dest - pev->angles;
 	// Transform offset into local coordinates
 	UTIL_MakeInvVectors( delta, gpGlobals );
@@ -2313,7 +2395,7 @@ void CFuncTrackChange :: UpdateTrain( Vector &dest )
 	local.z = DotProduct( offset, gpGlobals->v_up );
 
 	local = local - offset;
-	m_train->pev->velocity = pev->velocity + (local * (1.0/time));
+	pTrain->pev->velocity = pev->velocity + (local * (1.0/time));
 }
 
 void CFuncTrackChange :: GoDown( void )
@@ -2328,9 +2410,14 @@ void CFuncTrackChange :: GoDown( void )
 	// If ROTMOVE, move & rotate
 	if ( FBitSet( pev->spawnflags, SF_TRACK_DONT_MOVE ) )
 	{
+		// SBO 2.0: the move sound, Fire On Start and Close Start, as CFuncPlat::GoDown (Half-Life turned in silence)
+		if ( pev->noiseMovement )
+			EMIT_SOUND( ENT( pev ), CHAN_STATIC, (char *)STRING( pev->noiseMovement ), m_volume, SoundAttenuation() );
 		SetMoveDone( &CFuncTrackChange::CallHitBottom );
 		m_toggle_state = TS_GOING_DOWN;
 		AngularMove( m_start, pev->speed );
+		OnStartMoving();
+		FireOn( m_iszFireOnClosing, m_bFireOnClosingState );
 	}
 	else
 	{
@@ -2344,7 +2431,8 @@ void CFuncTrackChange :: GoDown( void )
 	if ( m_code == TRAIN_FOLLOWING )
 	{
 		UpdateTrain( m_start );
-		m_train->m_ppath = NULL;
+		if ( Train() )
+			Train()->m_ppath = NULL;
 	}
 }
 
@@ -2363,9 +2451,14 @@ void CFuncTrackChange :: GoUp( void )
 	UpdateAutoTargets( TS_GOING_UP );
 	if ( FBitSet( pev->spawnflags, SF_TRACK_DONT_MOVE ) )
 	{
+		// SBO 2.0: the move sound, Fire On Start and Open Start, as CFuncPlat::GoUp (Half-Life turned in silence)
+		if ( pev->noiseMovement )
+			EMIT_SOUND( ENT( pev ), CHAN_STATIC, (char *)STRING( pev->noiseMovement ), m_volume, SoundAttenuation() );
 		m_toggle_state = TS_GOING_UP;
 		SetMoveDone( &CFuncTrackChange::CallHitTop );
 		AngularMove( m_end, pev->speed );
+		OnStartMoving();
+		FireOn( m_iszFireOnOpening, m_bFireOnOpeningState );
 	}
 	else
 	{
@@ -2381,7 +2474,8 @@ void CFuncTrackChange :: GoUp( void )
 	if ( m_code == TRAIN_FOLLOWING )
 	{
 		UpdateTrain( m_end );
-		m_train->m_ppath = NULL;
+		if ( Train() )
+			Train()->m_ppath = NULL;
 	}
 }
 
@@ -2441,10 +2535,10 @@ void CFuncTrackChange :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 void CFuncTrackChange :: HitBottom( void )
 {
 	CFuncPlatRot :: HitBottom();
-	if ( m_code == TRAIN_FOLLOWING )
+	if ( m_code == TRAIN_FOLLOWING && Train() )
 	{
 //		UpdateTrain();
-		m_train->SetTrack( m_trackBottom );
+		Train()->SetTrack( m_trackBottom );
 	}
 	SetThink( NULL );
 	pev->nextthink = -1;
@@ -2461,10 +2555,10 @@ void CFuncTrackChange :: HitBottom( void )
 void CFuncTrackChange :: HitTop( void )
 {
 	CFuncPlatRot :: HitTop();
-	if ( m_code == TRAIN_FOLLOWING )
+	if ( m_code == TRAIN_FOLLOWING && Train() )
 	{
 //		UpdateTrain();
-		m_train->SetTrack( m_trackTop );
+		Train()->SetTrack( m_trackTop );
 	}
 	
 	// Don't let the plat go back down
@@ -2506,8 +2600,9 @@ void CFuncTrackAuto :: UpdateAutoTargets( int toggleState )
 	if ( pTarget )
 	{
 		ClearBits( pTarget->pev->spawnflags, SF_PATH_DISABLED );
-		if ( m_code == TRAIN_FOLLOWING && m_train && m_train->pev->speed == 0 )
-			m_train->Use( this, this, USE_ON, 0 );
+		CFuncTrackTrain *pTrain = Train();
+		if ( m_code == TRAIN_FOLLOWING && pTrain && pTrain->pev->speed == 0 )
+			pTrain->Use( this, this, USE_ON, 0 );
 	}
 
 	if ( pNextTarget )
@@ -2530,7 +2625,8 @@ void CFuncTrackAuto :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_T
 	else
 		pTarget = NULL;
 
-	if ( FClassnameIs( pActivator->pev, "func_tracktrain" ) )
+	// No activator (trigger_auto, timers): not the train, same as any other activator
+	if ( pActivator && FClassnameIs( pActivator->pev, "func_tracktrain" ) )
 	{
 		m_code = EvaluateTrain( pTarget );
 		// Safe to fire?
@@ -2547,7 +2643,8 @@ void CFuncTrackAuto :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_T
 	{
 		if ( pTarget )
 			pTarget = pTarget->GetNext();
-		if ( pTarget && m_train->m_ppath != pTarget && ShouldToggle( useType, m_targetState ) )
+		// No train (Find failed or the train was removed): not on that path
+		if ( pTarget && ( !Train() || Train()->m_ppath != pTarget ) && ShouldToggle( useType, m_targetState ) )
 		{
 			if ( m_targetState == TS_AT_TOP )
 				m_targetState = TS_AT_BOTTOM;
@@ -2591,6 +2688,9 @@ public:
 
 	static	TYPEDESCRIPTION m_SaveData[];
 
+	// SBO 2.1: On from its start until it stops (triggered off, shot down or at the end of its path), also while it
+	// waits at a corner; it is a monster to the game, but dead or alive does not apply
+	virtual STATE	GetState( CBaseEntity *pActivator ) { return m_on ? STATE_ON : STATE_OFF; }
 private:
 	BOOL			m_on;
 };
@@ -2707,6 +2807,7 @@ void CGunTarget::Stop( void )
 	pev->velocity = g_vecZero;
 	pev->nextthink = 0;
 	pev->takedamage = DAMAGE_NO;
+	m_on = FALSE;		// SBO 2.1: off, so the next trigger (On / Toggle) starts it
 }
 
 
@@ -2743,9 +2844,176 @@ void CGunTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 		if ( m_hTargetEnt == NULL )
 			return;
 		pev->health = pev->max_health;
-		Next();
+		m_on = TRUE;	// SBO 2.1: on, so Off / Toggle stop it
+		Next();			// (Stop sets it FALSE again if there is no next path_corner)
 	}
 }
 
 
 
+
+
+//=========================================================
+// train_setspeed -- changes a moving func_tracktrain's speed, at once or in steps of 0.1 s over a time
+//
+// SBO 2.1, from Spirit of Half-Life 1.9 (SpiritSource/dlls/triggers.cpp CTrainSetSpeed). SBO: the train is looked up
+// when it is triggered (Spirit: once at spawn), the ramp ends exactly on the speed (Spirit stopped within 1 unit and
+// could step past it), a new speed of 0 stops the train as its own Off does (sound off), "target" fires when the
+// speed is reached for an instant change too, and the ramp stops when the train is stopped or gone.
+//=========================================================
+
+#define TRAINSETSPEED_INSTANT	0
+#define TRAINSETSPEED_RAMP		1
+#define TRAINSETSPEED_MAX		2000
+
+class CTrainSetSpeed : public CPointEntity
+{
+public:
+	void	Spawn( void );
+	void	KeyValue( KeyValueData *pkvd );
+	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void	EXPORT RampThink( void );
+	int		ObjectCaps( void ) { return CPointEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+
+	virtual int		Save( CSave &save );
+	virtual int		Restore( CRestore &restore );
+	static	TYPEDESCRIPTION m_SaveData[];
+
+	CFuncTrackTrain *FindTrain( void );
+	void	SetTrainSpeed( CFuncTrackTrain *pTrain, float flSpeed );
+	void	Reached( void );
+
+	int			m_iMode;
+	float		m_flTime;
+	float		m_flInterval;	// speed added every 0.1 s while it ramps
+	float		m_flSpeed;		// the speed it sets, clamped
+	EHANDLE		m_hTrain;
+	EHANDLE		m_hActivator;
+};
+
+LINK_ENTITY_TO_CLASS( train_setspeed, CTrainSetSpeed );
+
+TYPEDESCRIPTION CTrainSetSpeed::m_SaveData[] =
+{
+	DEFINE_FIELD( CTrainSetSpeed, m_iMode, FIELD_INTEGER ),
+	DEFINE_FIELD( CTrainSetSpeed, m_flTime, FIELD_FLOAT ),
+	DEFINE_FIELD( CTrainSetSpeed, m_flInterval, FIELD_FLOAT ),
+	DEFINE_FIELD( CTrainSetSpeed, m_flSpeed, FIELD_FLOAT ),
+	DEFINE_FIELD( CTrainSetSpeed, m_hTrain, FIELD_EHANDLE ),
+	DEFINE_FIELD( CTrainSetSpeed, m_hActivator, FIELD_EHANDLE ),
+};
+
+IMPLEMENT_SAVERESTORE( CTrainSetSpeed, CPointEntity );
+
+void CTrainSetSpeed::KeyValue( KeyValueData *pkvd )
+{
+	if ( FStrEq( pkvd->szKeyName, "time" ) )
+	{
+		m_flTime = atof( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else if ( FStrEq( pkvd->szKeyName, "mode" ) )
+	{
+		m_iMode = atoi( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else if ( FStrEq( pkvd->szKeyName, "train" ) )
+	{
+		pev->netname = ALLOC_STRING( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CPointEntity::KeyValue( pkvd );
+}
+
+void CTrainSetSpeed::Spawn( void )
+{
+	CPointEntity::Spawn();
+	if ( m_flTime <= 0 )
+		m_flTime = 10;
+	m_flSpeed = pev->speed;
+	if ( m_flSpeed > TRAINSETSPEED_MAX )
+		m_flSpeed = TRAINSETSPEED_MAX;
+	else if ( m_flSpeed < -TRAINSETSPEED_MAX )
+		m_flSpeed = -TRAINSETSPEED_MAX;
+}
+
+// the first func_tracktrain with the name in "train"
+CFuncTrackTrain *CTrainSetSpeed::FindTrain( void )
+{
+	CBaseEntity *pEntity = NULL;
+	while ( !FStringNull( pev->netname ) && ( pEntity = UTIL_FindEntityByTargetname( pEntity, STRING( pev->netname ) ) ) != NULL )
+	{
+		if ( FClassnameIs( pEntity->pev, "func_tracktrain" ) )
+			return (CFuncTrackTrain *)pEntity;
+	}
+	return NULL;
+}
+
+// a running train takes the speed at its next move (Next: velocity, sound pitch); 0 stops it as its Off does
+void CTrainSetSpeed::SetTrainSpeed( CFuncTrackTrain *pTrain, float flSpeed )
+{
+	if ( flSpeed == 0 )
+		pTrain->Use( this, this, USE_OFF, 0 );
+	else
+		pTrain->pev->speed = flSpeed;
+}
+
+void CTrainSetSpeed::Reached( void )
+{
+	SetThink( NULL );
+	pev->nextthink = 0;
+	if ( !FStringNull( pev->target ) )
+		FireTargets( STRING( pev->target ), m_hActivator, this, USE_TOGGLE, 0 );
+}
+
+void CTrainSetSpeed::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
+{
+	CFuncTrackTrain *pTrain = FindTrain();
+	if ( !pTrain )
+	{
+		ALERT( at_console, "train_setspeed \"%s\": no func_tracktrain named \"%s\"\n", STRING( pev->targetname ), STRING( pev->netname ) );
+		return;
+	}
+	if ( pTrain->pev->speed == 0 )
+		return;	// a stopped train stays stopped (Spirit)
+
+	m_hTrain = pTrain;
+	m_hActivator = pActivator;
+
+	if ( m_iMode == TRAINSETSPEED_RAMP )
+	{
+		m_flInterval = ( m_flSpeed - pTrain->pev->speed ) / ( m_flTime / 0.1f );
+		SetThink( &CTrainSetSpeed::RampThink );
+		pev->nextthink = gpGlobals->time + 0.1;
+	}
+	else
+	{
+		SetThink( NULL );	// a ramp of this entity in progress ends
+		SetTrainSpeed( pTrain, m_flSpeed );
+		Reached();
+	}
+}
+
+void CTrainSetSpeed::RampThink( void )
+{
+	CFuncTrackTrain *pTrain = (CFuncTrackTrain *)(CBaseEntity *)m_hTrain;
+	if ( !pTrain || pTrain->pev->speed == 0 )
+	{
+		SetThink( NULL );	// the train is gone or was stopped: the ramp ends, nothing fires
+		return;
+	}
+
+	float flNew = pTrain->pev->speed + m_flInterval;
+	if ( flNew == 0 )
+		flNew += m_flInterval;	// never 0 on the way: a train at speed 0 stops for good (CFuncTrackTrain::Next)
+	if ( m_flInterval == 0 || ( m_flInterval > 0 && flNew >= m_flSpeed ) || ( m_flInterval < 0 && flNew <= m_flSpeed ) )
+	{
+		SetTrainSpeed( pTrain, m_flSpeed );
+		Reached();
+		return;
+	}
+
+	pTrain->pev->speed = flNew;
+	pev->nextthink = gpGlobals->time + 0.1;
+}

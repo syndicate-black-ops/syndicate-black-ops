@@ -1,0 +1,29 @@
+# coop, mp_hardcore left at its default (100 since 4755c07b: the whole team must die for a round to fail): two players
+# in a round, one is killed: the round goes on; the second is killed: FAILED ROUND
+# covers: trigger_hurt
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn trigger_hurt dmg 100000 damagetype 0
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 1 item 1
+cmd 2 item 1
+frames 260
+mark one_dead
+touchclient 0 1
+frames 60
+expectnot FAILED ROUND
+mark both_dead
+touchclient 0 2
+frames 60
+expectn 1 FAILED ROUND

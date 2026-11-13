@@ -98,6 +98,9 @@ public:
 	
 	static CFuncTrackTrain *Instance( edict_t *pent );
 
+	// SBO 2.1: On while it moves (any speed, forward or back), Off while it stands
+	virtual STATE GetState( CBaseEntity *pActivator ) { return pev->speed != 0 ? STATE_ON : STATE_OFF; }
+
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	
@@ -210,6 +213,7 @@ public:
 	Vector		m_vSurfaceNormal;
 	Vector		m_vVehicleDirection;
 	EHANDLE		m_hDriver;
+	int			m_iCollisionCount;		// SBO 2.0 (ReGameDLL REGAMEDLL_FIXES): bounces in a row; the third stops the vehicle
 
 	// SBO 2.0, from Featureful (dlls/vehicle.cpp, Half-Life 1 SDK license): no map has a func_vehicle
 	float		m_reverseSpeed;			// "reverse_speed": top speed backwards; 0: 0.35 x speed (Half-Life)

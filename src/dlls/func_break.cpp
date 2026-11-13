@@ -108,10 +108,28 @@ void CBreakable::KeyValue( KeyValueData* pkvd )
 	}
 	else if (FStrEq(pkvd->szKeyName, "spawnobject") )
 	{
+		pkvd->fHandled = TRUE;
+		// SBO 2.1: the object is precached with the breakable, so it can't change once the map runs (Create would
+		// precache a class nothing loaded: the engine stops the map)
+		if ( pev->modelindex )
+		{
+			ALERT( at_console, "Key \"spawnobject\" of %s \"%s\" can't be changed at run time (it would need a precache)\n",
+				STRING( pev->classname ), STRING( pev->targetname ) );
+			return;
+		}
+		// SBO 2.1 (Half-Life Unified SDK): the class name of the item to spawn on break, or a number of the list
+		const char *p = pkvd->szValue;
+		while ( *p >= '0' && *p <= '9' )
+			p++;
+		if ( *p || p == pkvd->szValue )
+		{
+			m_iszSpawnObject = pkvd->szValue[0] ? ALLOC_STRING( pkvd->szValue ) : 0;
+			return;
+		}
 		int object = atoi( pkvd->szValue );
+		m_iszSpawnObject = 0;
 		if ( object > 0 && object < ARRAYSIZE(pSpawnObjects) )
 			m_iszSpawnObject = MAKE_STRING( pSpawnObjects[object] );
-		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "explodemagnitude") )
 	{
@@ -392,6 +410,19 @@ void CBreakable::Precache( void )
 
 	m_idShard = pGibName ? PRECACHE_MODEL( (char *)pGibName ) : 0;
 
+	// SBO 2.1 (Half-Life Unified SDK): only items, weapons and ammo can be spawned (HLU's item dictionary; here the
+	// item_ / weapon_ / ammo_ classes), not monsters or anything else
+	if ( m_iszSpawnObject )
+	{
+		const char *szObject = STRING( m_iszSpawnObject );
+		if ( strnicmp( szObject, "item_", 5 ) && strnicmp( szObject, "weapon_", 7 ) && strnicmp( szObject, "ammo_", 5 ) )
+		{
+			ALERT( at_error, "%s:%d:%s: Cannot spawn entity \"%s\": not an item\n", STRING( pev->classname ),
+				entindex(), STRING( pev->targetname ), szObject );
+			m_iszSpawnObject = 0;
+		}
+	}
+
 	// Precache the spawn item's data
 	if ( m_iszSpawnObject )
 		UTIL_PrecacheOther( (char *)STRING( m_iszSpawnObject ) );
@@ -670,6 +701,7 @@ char CBreakable::MaterialBustSound( edict_t *pEdict, Materials m_Material, float
 
 	switch (m_Material)
 	{
+	case matUnbreakableGlass:	// only func_breakable_effect gets here (a func_breakable of it never breaks)
 	case matGlass:
 		switch ( RANDOM_LONG(0,1) )
 		{

@@ -1,0 +1,97 @@
+# Tier 5. Locked / Unlocked Sound and Sentence (FGD LockedSounds) and Sounds on func_rot_button: with its master
+# locked, a player using it hears the Locked Sound (buttons/button<N>.wav, 12 latchlocked1) and the Locked Sentence
+# (the first of its group, logged as "!<index>" in sound/sentences.txt: 2 ND, 3 NF, 4 NFIRE, 5 NCHEM, 6 NRAD,
+# 7 NCON, 8 NH, 9 NG); with the master open the Unlocked Sound (13 latchunlocked1, 14 lightswitch2) and Sentence
+# (2 ED, 3 EF, 4 EFIRE, 5 ECHEM, 6 ERAD, 7 ECON, 8 EH) and its Sounds (22 lever2, 24 lever4, 25 lever5); value 0
+# (None): no sound and no sentence
+# covers: func_rot_button.locked_sound=0 func_rot_button.locked_sound=8 func_rot_button.locked_sound=10 func_rot_button.locked_sound=11 func_rot_button.locked_sound=12 func_rot_button.locked_sentence=0 func_rot_button.locked_sentence=2 func_rot_button.locked_sentence=3 func_rot_button.locked_sentence=4 func_rot_button.locked_sentence=5 func_rot_button.locked_sentence=6 func_rot_button.locked_sentence=7 func_rot_button.locked_sentence=8 func_rot_button.locked_sentence=9 func_rot_button.unlocked_sound=0 func_rot_button.unlocked_sound=1 func_rot_button.unlocked_sound=4 func_rot_button.unlocked_sound=5 func_rot_button.unlocked_sound=6 func_rot_button.unlocked_sound=7 func_rot_button.unlocked_sound=8 func_rot_button.unlocked_sound=9 func_rot_button.unlocked_sound=10 func_rot_button.unlocked_sound=13 func_rot_button.unlocked_sound=14 func_rot_button.unlocked_sentence=0 func_rot_button.unlocked_sentence=2 func_rot_button.unlocked_sentence=3 func_rot_button.unlocked_sentence=4 func_rot_button.unlocked_sentence=5 func_rot_button.unlocked_sentence=6 func_rot_button.unlocked_sentence=7 func_rot_button.unlocked_sentence=8 func_rot_button.sounds=22 func_rot_button.sounds=24 func_rot_button.sounds=25
+map co_fuzz
+cvar mp_easymode 1
+cvar mp_hardcore 100
+brushsize 64 64 64
+spawn multisource targetname ms
+spawn trigger_relay targetname key target ms triggerstate 1
+spawn func_rot_button model *1 master ms wait -1 distance 90 speed 900 locked_sound 8 locked_sentence 2 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *2 master ms wait -1 distance 90 speed 900 locked_sound 10 locked_sentence 3 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *3 master ms wait -1 distance 90 speed 900 locked_sound 11 locked_sentence 4 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *4 master ms wait -1 distance 90 speed 900 locked_sound 12 locked_sentence 5 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *5 master ms wait -1 distance 90 speed 900 locked_sound 8 locked_sentence 6 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *6 master ms wait -1 distance 90 speed 900 locked_sound 10 locked_sentence 7 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *7 master ms wait -1 distance 90 speed 900 locked_sound 11 locked_sentence 8 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *8 master ms wait -1 distance 90 speed 900 locked_sound 12 locked_sentence 9 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *9 master ms wait -1 distance 90 speed 900 locked_sound 0 locked_sentence 0 unlocked_sound 0 unlocked_sentence 0
+spawn func_rot_button model *10 master ms wait -1 distance 90 speed 900 unlocked_sound 1 unlocked_sentence 2 locked_sound 0 locked_sentence 0 sounds 22
+spawn func_rot_button model *11 master ms wait -1 distance 90 speed 900 unlocked_sound 4 unlocked_sentence 3 locked_sound 0 locked_sentence 0 sounds 24
+spawn func_rot_button model *12 master ms wait -1 distance 90 speed 900 unlocked_sound 5 unlocked_sentence 4 locked_sound 0 locked_sentence 0 sounds 25
+spawn func_rot_button model *13 master ms wait -1 distance 90 speed 900 unlocked_sound 6 unlocked_sentence 5 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *14 master ms wait -1 distance 90 speed 900 unlocked_sound 7 unlocked_sentence 6 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *15 master ms wait -1 distance 90 speed 900 unlocked_sound 8 unlocked_sentence 7 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *16 master ms wait -1 distance 90 speed 900 unlocked_sound 9 unlocked_sentence 8 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *17 master ms wait -1 distance 90 speed 900 unlocked_sound 10 unlocked_sentence 2 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *18 master ms wait -1 distance 90 speed 900 unlocked_sound 13 unlocked_sentence 3 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *19 master ms wait -1 distance 90 speed 900 unlocked_sound 14 unlocked_sentence 4 locked_sound 0 locked_sentence 0 sounds 21
+spawn func_rot_button model *20 master ms wait -1 distance 90 speed 900 unlocked_sound 0 unlocked_sentence 0 locked_sound 0 locked_sentence 0 sounds 21
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark locked
+useclient 2 1
+useclient 3 1
+useclient 4 1
+useclient 5 1
+useclient 6 1
+useclient 7 1
+useclient 8 1
+useclient 9 1
+useclient 10 1
+frames 2
+expectn 2 ch3 buttons/button10.wav vol=
+expectn 2 ch3 buttons/button11.wav vol=
+expectn 2 ch3 buttons/button8.wav vol=
+expectn 2 ch3 buttons/latchlocked1.wav vol=
+expectn 1 ch2 !268 vol=
+expectn 1 ch2 !283 vol=
+expectn 1 ch2 !289 vol=
+expectn 1 ch2 !291 vol=
+expectn 1 ch2 !293 vol=
+expectn 1 ch2 !295 vol=
+expectn 1 ch2 !300 vol=
+expectn 1 ch2 !297 vol=
+mark unlock
+fire key
+frames 70
+mark unlocked
+useclient 11 1
+useclient 12 1
+useclient 13 1
+useclient 14 1
+useclient 15 1
+useclient 16 1
+useclient 17 1
+useclient 18 1
+useclient 19 1
+useclient 20 1
+useclient 21 1
+frames 2
+expectn 1 ch3 buttons/button1.wav vol=
+expectn 3 ch3 buttons/button10.wav vol=
+expectn 1 ch3 buttons/button4.wav vol=
+expectn 1 ch3 buttons/button5.wav vol=
+expectn 1 ch3 buttons/button6.wav vol=
+expectn 1 ch3 buttons/button7.wav vol=
+expectn 3 ch3 buttons/button8.wav vol=
+expectn 1 ch3 buttons/button9.wav vol=
+expectn 1 ch3 buttons/latchunlocked1.wav vol=
+expectn 1 ch3 buttons/lightswitch2.wav vol=
+expectn 2 ch2 !276 vol=
+expectn 2 ch2 !286 vol=
+expectn 2 ch2 !290 vol=
+expectn 1 ch2 !292 vol=
+expectn 1 ch2 !294 vol=
+expectn 1 ch2 !296 vol=
+expectn 1 ch2 !302 vol=
+expect buttons/lever2.wav
+expect buttons/lever4.wav
+expect buttons/lever5.wav

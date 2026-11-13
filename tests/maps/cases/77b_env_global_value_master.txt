@@ -1,0 +1,28 @@
+# env_global Featureful additions (docs/STATE_LOGIC.md "env_global as a master", docs/FEATUREFUL_OPTIONS.md): Trigger
+# Mode 5 "Set state: obey use type" (On: on, Off: off, Toggle: toggle) and flag 4 "Act as Master" (the env_global's
+# own name passes as a master while its state is On); a game_counter mastered by it counts only then. 1.38 has
+# neither (mode 5 toggles there; its env_global is no master, so the counter always counts)
+# covers: env_global.triggermode=5 env_global:4 game_counter.master
+map co_fuzz
+spawn env_global targetname gm globalstate gs5 triggermode 5 spawnflags 4
+spawn trigger_relay targetname set_on target gm triggerstate 1
+spawn trigger_relay targetname set_off target gm triggerstate 0
+spawn game_counter targetname c health 1 target c_hit master gm spawnflags 2
+activate
+frames 3
+mark locked
+fire c
+frames 1
+expectnot Firing: (c_hit)
+mark on
+fire set_on
+fire set_on
+fire c
+frames 1
+expectn 1 Firing: (c_hit)
+mark off
+fire set_off
+fire set_off
+fire c
+frames 1
+expectn 1 Firing: (c_hit)

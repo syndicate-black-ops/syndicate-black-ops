@@ -17,7 +17,8 @@
 //   Content      r_detailtextures; original models `_sethdmodels`, addons folder `_setaddons_folder`, then
 //                `_restart`; the content lock (GameUI's password store, violence_* 0 / 1)
 //   Chat         SBO's Advanced > Chat: hud_chat_fontsize, hud_colortext 1/2, hud_saytext_sound, hud_saytext_time
-//   General      cl_discord_rpc, cl_experimental_menus, cl_new_ingame_menus, the version and the update check
+//   General      cl_discord_rpc, cl_righthand, hud_objectives, cl_experimental_menus, cl_new_ingame_menus, the version
+//                and the update check
 //=================================================================//
 
 #include <math.h>
@@ -1104,7 +1105,7 @@ public:
 		if (!v || m_bTesting || !v->StartVoiceTweakMode())
 			return;
 		m_bTesting = true;
-		sbo::ConsolePrint("Microphone test: voice tweak mode started\n");
+		sbo::DevPrint("Microphone test: voice tweak mode started\n");
 		m_flSavedVolume = v->GetControlFloat(VOICE_MIC_VOLUME);
 		m_flSavedBoost = v->GetControlFloat(VOICE_MIC_BOOST);
 		m_flSavedScale = CvarF("voice_scale");
@@ -1128,7 +1129,7 @@ public:
 		if (!m_bTesting || !v)
 			return;
 		v->EndVoiceTweakMode();
-		sbo::ConsolePrint("Microphone test: voice tweak mode ended\n");
+		sbo::DevPrint("Microphone test: voice tweak mode ended\n");
 		// GameUI restores the values from before the test (the dialog's Apply writes the chosen ones)
 		v->SetControlFloat(VOICE_MIC_VOLUME, m_flSavedVolume);
 		v->SetControlFloat(VOICE_MIC_BOOST, m_flSavedBoost);
@@ -1972,6 +1973,11 @@ void CSboOptionsWindow::BuildGeneral()
 	// Advanced dialog)
 	p->AddCard("Weapons", 0);
 	p->Add(new CSboCvarToggle(p, "Left-handed weapons", "cl_righthand"))->tooltip = "Holds your weapon on the left side of the screen";
+	// hud_objectives (hud_objectives.cpp, docs/OBJECTIVES.md): 0 hidden, 1 compact, 2 full. Checked for 1 and 2;
+	// checking writes 1 only when it was 0, unchecking writes 0 (a toggle is applied only when it changed)
+	p->AddCard("HUD", 0);
+	p->Add(new CSboCvarToggle(p, "Enable on-screen objectives", "hud_objectives"))->tooltip =
+	    "The map's objective list at the top left; the objectives key switches it between short, full and hidden";
 	p->AddCard("Menus", 0);
 	p->Add(new CSboCvarToggle(p, "New GameUI menus", "cl_experimental_menus"));
 	p->AddText("Use the new server browser, joining screen and settings windows");

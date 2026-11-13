@@ -27,6 +27,7 @@
 #include	"saverestore.h"
 #include	"worldtext_shared.h"
 #include	"client_sendqueue.h"
+#include	"movewith.h"
 
 #include	<string.h>
 
@@ -55,6 +56,8 @@ struct worldtext_t
 	int			orientation;
 	int			font;
 	int			flags;		// WORLDTEXT_FLAG_RAINBOW, WORLDTEXT_FLAG_CENTER
+	int			ent;		// a text with a parent (movewith): its entity index and serial number, read when sent
+	int			serial;
 };
 
 static worldtext_t s_Texts[ WORLDTEXT_MAX_ENTRIES ];
@@ -106,6 +109,32 @@ static int BuildText( const worldtext_t &t, char *pszOut )
 	return n;
 }
 
+// A text with a parent the clients receive (movewith, docs/MOVEWITH.md): its parent and local pose, and its world
+// pose now (the clients draw it there until they have the parent). FALSE: drawn where the table says.
+static BOOL TextLink( const worldtext_t &t, int &iParent, Vector &localOrigin, Vector &localAngles, Vector &origin,
+	Vector &angles )
+{
+	if ( !t.ent )
+		return FALSE;
+	edict_t *pent = INDEXENT( t.ent );
+	if ( !pent || pent->free || pent->serialnumber != t.serial )
+		return FALSE;
+	CBaseEntity *pEntity = CBaseEntity::Instance( pent );
+	if ( !pEntity || !MoveWith_ClientLink( pEntity, &iParent, &localOrigin, &localAngles ) )
+		return FALSE;
+	origin = pent->v.origin;
+	angles = pent->v.angles;
+	return TRUE;
+}
+
+// the text bytes "WorldText" holds (the rest goes first in pieces)
+static int MainTextBytes( const worldtext_t &t )
+{
+	int iParent;
+	Vector lo, la, o, a;
+	return WORLDTEXT_MAIN_TEXT_BYTES - ( TextLink( t, iParent, lo, la, o, a ) ? WORLDTEXT_PARENT_BYTES : 0 );
+}
+
 static int MessageSize( int i )
 {
 	const worldtext_t &t = s_Texts[i];
@@ -114,11 +143,12 @@ static int MessageSize( int i )
 
 	char szText[ WORLDTEXT_MAX_TEXT ];
 	int len = BuildText( t, szText );
-	int size = WORLDTEXT_HEADER_BYTES + 1 + len;
-	if ( len > WORLDTEXT_MAIN_TEXT_BYTES )
+	const int main = MainTextBytes( t );
+	int size = WORLDTEXT_HEADER_BYTES + ( WORLDTEXT_MAIN_TEXT_BYTES - main ) + 1 + len;
+	if ( len > main )
 	{
 		// the pieces: each with its short and terminator
-		int parts = ( len - WORLDTEXT_MAIN_TEXT_BYTES + WORLDTEXT_PART_BYTES - 1 ) / WORLDTEXT_PART_BYTES;
+		int parts = ( len - main + WORLDTEXT_PART_BYTES - 1 ) / WORLDTEXT_PART_BYTES;
 		size += parts * ( 2 + 1 );
 	}
 	return size;
@@ -160,14 +190,19 @@ static void SendTo( int i, CBasePlayer *pPlayer )
 	int len = BuildText( t, szText );
 	const char *pszEnd = szText;
 
-	// the start of a long text in pieces; the last piece (at most WORLDTEXT_MAIN_TEXT_BYTES) goes in "WorldText"
-	if ( len > WORLDTEXT_MAIN_TEXT_BYTES )
+	int iParent = 0;
+	Vector localOrigin, localAngles, origin = t.origin, angles = t.angles;
+	const BOOL bLinked = TextLink( t, iParent, localOrigin, localAngles, origin, angles );
+	const int main = WORLDTEXT_MAIN_TEXT_BYTES - ( bLinked ? WORLDTEXT_PARENT_BYTES : 0 );
+
+	// the start of a long text in pieces; the last piece (at most `main` bytes) goes in "WorldText"
+	if ( len > main )
 	{
 		int left = len;
 		char szPart[ WORLDTEXT_PART_BYTES + 1 ];
-		while ( left > WORLDTEXT_MAIN_TEXT_BYTES )
+		while ( left > main )
 		{
-			int n = left - WORLDTEXT_MAIN_TEXT_BYTES;
+			int n = left - main;
 			if ( n > WORLDTEXT_PART_BYTES )
 				n = WORLDTEXT_PART_BYTES;
 			memcpy( szPart, pszEnd, n );
@@ -184,14 +219,14 @@ static void SendTo( int i, CBasePlayer *pPlayer )
 	}
 
 	MESSAGE_BEGIN( MSG_ONE, gmsgWorldText, NULL, pPlayer->pev );
-		WRITE_BYTE( WORLDTEXT_FLAG_ON | t.flags );
+		WRITE_BYTE( WORLDTEXT_FLAG_ON | t.flags | ( bLinked ? WORLDTEXT_FLAG_PARENT : 0 ) );
 		WRITE_SHORT( i );
-		WRITE_LONG( FloatBits( t.origin.x ) );
-		WRITE_LONG( FloatBits( t.origin.y ) );
-		WRITE_LONG( FloatBits( t.origin.z ) );
-		WRITE_SHORT( AngleShort( t.angles.x ) );
-		WRITE_SHORT( AngleShort( t.angles.y ) );
-		WRITE_SHORT( AngleShort( t.angles.z ) );
+		WRITE_LONG( FloatBits( origin.x ) );
+		WRITE_LONG( FloatBits( origin.y ) );
+		WRITE_LONG( FloatBits( origin.z ) );
+		WRITE_SHORT( AngleShort( angles.x ) );
+		WRITE_SHORT( AngleShort( angles.y ) );
+		WRITE_SHORT( AngleShort( angles.z ) );
 		WRITE_LONG( FloatBits( t.size ) );
 		WRITE_LONG( FloatBits( t.spacingX ) );
 		WRITE_LONG( FloatBits( t.spacingY ) );
@@ -201,6 +236,16 @@ static void SendTo( int i, CBasePlayer *pPlayer )
 		WRITE_BYTE( t.color[3] );
 		WRITE_BYTE( t.orientation );
 		WRITE_BYTE( t.font );
+		if ( bLinked )
+		{
+			WRITE_SHORT( iParent );
+			WRITE_LONG( FloatBits( localOrigin.x ) );
+			WRITE_LONG( FloatBits( localOrigin.y ) );
+			WRITE_LONG( FloatBits( localOrigin.z ) );
+			WRITE_SHORT( AngleShort( localAngles.x ) );
+			WRITE_SHORT( AngleShort( localAngles.y ) );
+			WRITE_SHORT( AngleShort( localAngles.z ) );
+		}
 		WRITE_STRING( pszEnd );
 	MESSAGE_END();
 }
@@ -414,8 +459,14 @@ void CPointWorldText::Spawn( void )
 	s_Texts[ m_iEntry - 1 ].used = TRUE;
 	Store();
 
+	// a text with a parent keeps its edict: movewith places it, and it is sent with its parent (TextLink)
+	if ( MoveWith_HasParentKey( edict() ) )
+	{
+		s_Texts[ m_iEntry - 1 ].ent = entindex();
+		s_Texts[ m_iEntry - 1 ].serial = edict()->serialnumber;
+	}
 	// a text nobody can trigger or change needs no edict: the table has it (env_static's unnamed props do the same)
-	if ( FStringNull( pev->targetname ) || !STRING( pev->targetname )[0] )
+	else if ( FStringNull( pev->targetname ) || !STRING( pev->targetname )[0] )
 	{
 		s_iUnnamed++;
 		m_iEntry = 0;

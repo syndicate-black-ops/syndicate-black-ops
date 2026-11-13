@@ -196,7 +196,7 @@ void CNm33::PrimaryAttack()
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usNm33, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.1;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 	m_fFired = 1;
 }
 
@@ -252,5 +252,9 @@ void CNm33::WeaponIdle( void )
 	m_fFired = 0;
 
 	if ( m_flTimeWeaponIdle < UTIL_WeaponTimeBase() )
+	{
 		SendWeaponAnim( NM33_IDLE );
+		// a two-frame still: sent again only now and then (stock HL's idle time)
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
+	}
 }

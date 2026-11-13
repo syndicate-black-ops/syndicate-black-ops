@@ -1,0 +1,42 @@
+# "Damage inflicted when blocked" (FGD dmg) on func_rotating, func_door_rotating and func_water (a door): a player
+# blocking the mover takes that damage (crush) each time it is blocked; func_door_rotating and func_water with dmg 0
+# hurt nobody (a func_rotating always calls the damage: 0 takes nothing)
+# covers: func_rotating.dmg func_door_rotating.dmg func_water.dmg
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+brushsize 64 64 64
+spawn func_rotating targetname rot model *1 speed 100 spawnflags 1 dmg 10
+spawn func_door_rotating targetname drot model *2 speed 45 distance 90 dmg 25
+spawn func_water targetname wat model *3 speed 100 dmg 30
+spawn func_door_rotating targetname drot0 model *4 speed 45 distance 90 dmg 0
+spawn func_water targetname wat0 model *5 speed 100 dmg 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark blocked
+expectdump player health=100.0
+blockclient 0 1
+frames 1
+expectdump player health=90.0
+blockclient 1 1
+frames 1
+expectdump player health=65.0
+blockclient 2 1
+frames 1
+expectdump player health=35.0
+mark zero
+blockclient 3 1
+blockclient 4 1
+frames 1
+expectdump player health=35.0

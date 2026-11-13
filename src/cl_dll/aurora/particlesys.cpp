@@ -30,6 +30,7 @@
 //    system stops for good once its emitter is in empty / water / solid) are read.
 
 #include <math.h>	// before cl_util.h (its fabs macro)
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -66,12 +67,20 @@ int g_iAuroraAllocatedParticles = 0;
 // set by the manager while it builds a system from a script it has built one from before: the script's problems
 // were printed then (a Spawn Use emitter triggered again and again would flood the console otherwise)
 bool g_bAuroraQuiet = false;
+AuroraWarnSink g_pfnAuroraWarnSink = NULL;
 
 static void Aurora_Warn( const char *szFile, const char *szText, const char *szWhat )
 {
+	if ( g_pfnAuroraWarnSink )
+	{
+		char szLine[256];
+		snprintf( szLine, sizeof( szLine ), "%s%s", szText, szWhat ? szWhat : "" );
+		g_pfnAuroraWarnSink( szLine );
+		return;
+	}
 	if ( g_bAuroraQuiet )
 		return;
-	gEngfuncs.Con_Printf( "Aurora: %s: %s%s\n", szFile, szText, szWhat ? szWhat : "" );
+	gEngfuncs.Con_DPrintf( "Aurora: %s: %s%s\n", szFile, szText, szWhat ? szWhat : "" );
 }
 
 #define AURORA_MAX_TOKEN	1024

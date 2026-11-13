@@ -98,7 +98,7 @@ CHudDeathNoticePanel::CHudDeathNoticePanel(vgui2::Panel *pParent)
 	if (g_pFullFileSystem && g_pFullFileSystem->FileExists(KILLFEED_RES))
 		LoadControlSettings(KILLFEED_RES);
 	else
-		sbo::ConsolePrint("Kill feed: " KILLFEED_RES " not found, using defaults\n");
+		sbo::DevPrint("Kill feed: " KILLFEED_RES " not found, using defaults\n");
 
 	SetVisible(true);
 }
@@ -341,6 +341,22 @@ static int GmTopOffset()
 	int x = 0, y = 0;
 	CHudDeathNoticePanel::Get()->LocalToScreen(x, y);
 	return top > y ? top - y : 0;
+}
+
+void CHudDeathNoticePanel::GetRowsBottom(int &screenY, int &screenRight)
+{
+	int x = 0, y = GmTopOffset();
+	if (m_iEntryCount > 0 && hud_deathnotice_vgui.GetBool() && sbo::KillFeedShouldDraw())
+	{
+		UpdateRowTall();
+		y += m_iEntryCount * (m_iRowTall + m_iVMargin);
+	}
+	int right = GetWide();
+	LocalToScreen(x, y);
+	int rightY = 0;
+	LocalToScreen(right, rightY);
+	screenY = y;
+	screenRight = right;
 }
 
 void CHudDeathNoticePanel::PaintBackground()

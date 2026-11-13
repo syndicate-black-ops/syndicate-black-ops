@@ -42,6 +42,9 @@ public:
 	int	 DamageDecal( int bitsDamageType );
 
 	void EXPORT		Die( void );
+	// SBO 2.1: On while it is whole, Off once it broke (it is removed a moment later). Spirit of Half-Life gave only
+	// a respawning breakable a state
+	virtual STATE	GetState( CBaseEntity *pActivator ) { return m_fBroken ? STATE_OFF : STATE_ON; }
 	virtual int		ObjectCaps( void ) { return (CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION); }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );

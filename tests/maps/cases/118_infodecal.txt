@@ -1,0 +1,18 @@
+# infodecal (FGD): without a name it puts its decal (texture) on the world as the map starts (a static decal, sent to
+# every client that joins) and removes itself; with a name it waits until triggered, then sprays the decal
+# (TE_BSPDECAL, temp entity 13, at its origin) and removes itself
+# covers: infodecal infodecal.texture
+map co_fuzz
+spawn infodecal texture {shot1 origin "100 200 300"
+spawn infodecal targetname named texture {blood1 origin "400 500 600"
+activate
+frames 3
+expectre STATICDECAL 100.0 200.0 300.0 decal=1 
+expectnotre STATICDECAL 400.0
+expectcount infodecal 1
+expectnotre MSG svc23 ->\w+: 13 
+mark fire
+fire named
+frames 3
+expectre MSG svc23 ->\w+: 13 400 500 600 1 
+expectcount infodecal 0

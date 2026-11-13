@@ -26,6 +26,7 @@
 #include "saverestore.h"
 #include "doors.h"
 #include "soundradius.h"	// SBO 2.0 (Featureful): env_spark "soundradius"
+#include "movewith.h"	// SBO 2.1: momentary_rot_button turns in its parent's frame
 
 
 #define SF_BUTTON_DONTMOVE		1
@@ -178,7 +179,7 @@ void CEnvGlobal::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 	if ( gGlobalState.EntityInTable( m_globalstate ) )
 		gGlobalState.EntitySetState( m_globalstate, newState );
 	else
-		gGlobalState.EntityAdd( m_globalstate, gpGlobals->mapname, newState );
+		gGlobalState.EntityAdd( m_globalstate, gpGlobals->mapname, newState, m_initialvalue );	// SBO 2.0: with the Initial Value
 }
 
 
@@ -241,18 +242,30 @@ void CMultiSource::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 			break;
 	}
 
-	// if we didn't find it, report error and leave
-	// SBO 2.0: the HL SDK's test (i > m_iTotal) was never true: a Use by a non-member toggled the last member's
-	// state (and, without members, the int before m_rgTriggered). No stock or custom map relies on it (scan 2026-10-16).
-	if ( i == m_iTotal )
+	// SBO 2.1: a member with a delay fires through a temporary DelayedUse entity; that Use toggles the member's own slot
+	// (Half-Life and 1.38 toggled the last member's slot)
+	if ( i == m_iTotal && pCaller && FClassnameIs( pCaller->pev, "DelayedUse" ) )
 	{
-		ALERT(at_console, "MultiSrc:Used by non member %s.\n", pCaller ? STRING(pCaller->pev->classname) : "(none)");
-		return;	
+		CBaseEntity *pDelayedCaller = ( (CBaseDelay *)pCaller )->m_hDelayedCaller;
+		if ( pDelayedCaller )
+		{
+			for ( i = 0; i < m_iTotal; i++ )
+			{
+				if ( m_rgEntities[i] == pDelayedCaller )
+					break;
+			}
+		}
 	}
+
+	// A caller that is not a member toggles the last member's slot (Half-Life, 1.38).
+	// A multisource without members has no slot to toggle; it still checks IsTriggered below.
+	if ( i == m_iTotal )
+		i = m_iTotal - 1;
 
 	// CONSIDER: a Use input to the multisource always toggles.  Could check useType for ON/OFF/TOGGLE
 
-	m_rgTriggered[i] ^= 1;
+	if ( i >= 0 )
+		m_rgTriggered[i] ^= 1;
 
 	// 
 	if ( IsTriggered( pActivator ) )
@@ -302,7 +315,7 @@ void CMultiSource::Register(void)
 
 	// search for all entities which target this multisource (pev->targetname)
 
-	pentTarget = FIND_ENTITY_BY_STRING(NULL, "target", STRING(pev->targetname));
+	pentTarget = FIND_ENTITY_BY_TARGET( NULL, STRING(pev->targetname));
 
 	while (!FNullEnt(pentTarget) && (m_iTotal < MS_MAX_TARGETS))
 	{
@@ -310,7 +323,7 @@ void CMultiSource::Register(void)
 		if ( pTarget )
 			m_rgEntities[m_iTotal++] = pTarget;
 
-		pentTarget = FIND_ENTITY_BY_STRING( pentTarget, "target", STRING(pev->targetname));
+		pentTarget = FIND_ENTITY_BY_TARGET( pentTarget, STRING(pev->targetname));
 	}
 
 	pentTarget = FIND_ENTITY_BY_STRING(NULL, "classname", "multi_manager");
@@ -339,6 +352,8 @@ TYPEDESCRIPTION CBaseButton::m_SaveData[] =
 	DEFINE_FIELD( CBaseButton, m_bUnlockedSentence, FIELD_CHARACTER ),
 	DEFINE_FIELD( CBaseButton, m_strChangeTarget, FIELD_STRING ),
 	DEFINE_FIELD( CBaseButton, m_iDirectUse, FIELD_INTEGER ),
+	DEFINE_FIELD( CBaseButton, m_iszLockedSentenceOverride, FIELD_STRING ),	// SBO 2.1
+	DEFINE_FIELD( CBaseButton, m_iszUnlockedSentenceOverride, FIELD_STRING ),
 //	DEFINE_FIELD( CBaseButton, m_ls, FIELD_??? ),   // This is restored in Precache()
 };
 	
@@ -349,7 +364,9 @@ void CBaseButton::Precache( void )
 {
 	char *pszSound;
 
-	if ( FBitSet ( pev->spawnflags, SF_BUTTON_SPARK_IF_OFF ) )// this button should spark in OFF state
+	// SBO 2.0 (Featureful CBaseButton::IsSparkingButton): func_rot_button's X Axis spawnflag overlaps with this one
+	// and a rotating button never sparks (ButtonReturn), so it loads no spark sounds.
+	if ( !FClassnameIs( pev, "func_rot_button" ) && FBitSet ( pev->spawnflags, SF_BUTTON_SPARK_IF_OFF ) )// this button should spark in OFF state
 	{
 		PRECACHE_SOUND ("buttons/spark1.wav");
 		PRECACHE_SOUND ("buttons/spark2.wav");
@@ -417,6 +434,12 @@ void CBaseButton::Precache( void )
 	
 		default: m_ls.sUnlockedSentence = 0; break;
 	}
+
+	// SBO 2.1 (Featureful): sentence group names (sentences.txt) instead of the numbered sentences
+	if ( !FStringNull( m_iszLockedSentenceOverride ) && STRING( m_iszLockedSentenceOverride )[0] )
+		m_ls.sLockedSentence = m_iszLockedSentenceOverride;
+	if ( !FStringNull( m_iszUnlockedSentenceOverride ) && STRING( m_iszUnlockedSentenceOverride )[0] )
+		m_ls.sUnlockedSentence = m_iszUnlockedSentenceOverride;
 }
 
 //
@@ -463,6 +486,8 @@ void CBaseButton::KeyValue( KeyValueData *pkvd )
 	else if (FStrEq(pkvd->szKeyName, "wait_toggle"))			{ m_flWaitToggle = atof(pkvd->szValue); pkvd->fHandled = TRUE; }
 	else if (FStrEq(pkvd->szKeyName, "locked_sound_override"))	{ m_iszLockedSoundOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
 	else if (FStrEq(pkvd->szKeyName, "unlocked_sound_override"))	{ m_iszUnlockedSoundOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
+	else if (FStrEq(pkvd->szKeyName, "locked_sentence_override"))	{ m_iszLockedSentenceOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }	// SBO 2.1
+	else if (FStrEq(pkvd->szKeyName, "unlocked_sentence_override"))	{ m_iszUnlockedSentenceOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
 	else if (FStrEq(pkvd->szKeyName, "directuse"))				{ m_iDirectUse = atoi(pkvd->szValue); pkvd->fHandled = TRUE; }
 	else 
 		CBaseToggle::KeyValue( pkvd );
@@ -553,9 +578,16 @@ void CBaseButton::Spawn( )
 	//determine sounds for buttons
 	//a sound of 0 should not make a sound
 	//----------------------------------------------------
-	pszSound = ButtonSound( m_sounds );
-	PRECACHE_SOUND(pszSound);
-	pev->noise = ALLOC_STRING(pszSound);
+	// SBO 2.1 (Featureful, Half-Life Unified SDK names instead of numbers): "noise", a sound file, instead of the
+	// numbered "sounds"; empty: the number
+	if ( !FStringNull( pev->noise ) && STRING( pev->noise )[0] )
+		PRECACHE_SOUND( (char *)STRING( pev->noise ) );
+	else
+	{
+		pszSound = ButtonSound( m_sounds );
+		PRECACHE_SOUND(pszSound);
+		pev->noise = ALLOC_STRING(pszSound);
+	}
 
 	Precache();
 
@@ -951,9 +983,20 @@ void CRotButton::Spawn( void )
 	//determine sounds for buttons
 	//a sound of 0 should not make a sound
 	//----------------------------------------------------
-	pszSound = ButtonSound( m_sounds );
-	PRECACHE_SOUND(pszSound);
-	pev->noise = ALLOC_STRING(pszSound);
+	// SBO 2.1 (Featureful, Half-Life Unified SDK names instead of numbers): "noise", a sound file, instead of the
+	// numbered "sounds"; empty: the number
+	if ( !FStringNull( pev->noise ) && STRING( pev->noise )[0] )
+		PRECACHE_SOUND( (char *)STRING( pev->noise ) );
+	else
+	{
+		pszSound = ButtonSound( m_sounds );
+		PRECACHE_SOUND(pszSound);
+		pev->noise = ALLOC_STRING(pszSound);
+	}
+
+	// SBO 2.0 (Featureful 814a09dd): the locked / unlocked sounds and sentences (and their overrides) are set up in
+	// CBaseButton::Precache, which a rotating button never ran, so it played none of them.
+	Precache();
 
 	// set the axis of rotation
 	CBaseToggle::AxisDir( pev );
@@ -1031,6 +1074,27 @@ public:
 	void	PlaySound( void );
 	void	UpdateTarget( float value );
 
+	// SBO 2.1: In Use while a player turns it, Turn Off while it returns by itself, Off at its start position, On
+	// anywhere else (Spirit of Half-Life gave it no state of its own)
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		if ( m_lastUsed )
+			return STATE_IN_USE;
+		if ( m_pfnThink == static_cast<BASEPTR>( &CMomentaryRotButton::Return ) )
+			return STATE_TURN_OFF;
+		return OwnAngles() == m_start ? STATE_OFF : STATE_ON;
+	}
+
+	// SBO 2.1 movewith: as a child it turns about its own axis on its parent (its angles and turning are its own,
+	// relative to the parent, as a rotating door's); otherwise pev->angles / pev->avelocity
+	Vector	OwnAngles( void )
+	{
+		Vector vecAngles;
+		return MoveWith_GetOwnPose( this, NULL, &vecAngles ) ? vecAngles : pev->angles;
+	}
+	void	SetOwnTurn( const Vector &vecAvelocity ) { MoveWith_SetOwnAvelocity( this, vecAvelocity ); }
+	void	SetOwnAngles( const Vector &vecAngles ) { MoveWith_SetOwnAngles( this, vecAngles ); }
+
 	static CMomentaryRotButton *Instance( edict_t *pent ) { return (CMomentaryRotButton *)GET_PRIVATE(pent);};
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -1088,9 +1152,16 @@ void CMomentaryRotButton::Spawn( void )
 	UTIL_SetOrigin(pev, pev->origin);
 	SET_MODEL(ENT(pev), STRING(pev->model) );
 
-	char *pszSound = ButtonSound( m_sounds );
-	PRECACHE_SOUND(pszSound);
-	pev->noise = ALLOC_STRING(pszSound);
+	// SBO 2.1 (Featureful, Half-Life Unified SDK names instead of numbers): "noise", a sound file, instead of the
+	// numbered "sounds"; empty: the number
+	if ( !FStringNull( pev->noise ) && STRING( pev->noise )[0] )
+		PRECACHE_SOUND( (char *)STRING( pev->noise ) );
+	else
+	{
+		char *pszSound = ButtonSound( m_sounds );
+		PRECACHE_SOUND(pszSound);
+		pev->noise = ALLOC_STRING(pszSound);
+	}
 	m_lastUsed = 0;
 }
 
@@ -1120,13 +1191,17 @@ void CMomentaryRotButton::PlaySound( void )
 // current, not future position.
 void CMomentaryRotButton::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
-	pev->ideal_yaw = CBaseToggle::AxisDelta( pev->spawnflags, pev->angles, m_start ) / m_flMoveDistance;
+	// SBO 2.0 (Featureful, Spirit): a locked master keeps the handle still and its target unchanged
+	if ( IsLockedByMaster() )
+		return;
+
+	pev->ideal_yaw = CBaseToggle::AxisDelta( pev->spawnflags, OwnAngles(), m_start ) / m_flMoveDistance;
 
 	UpdateAllButtons( pev->ideal_yaw, 1 );
 
 	// SBO 2.0 (Featureful a522ae20, Valve HL SDK): Calculate destination angle and use it to predict value, this
 	// prevents sending target in wrong direction on retriggering
-	Vector dest = pev->angles + pev->avelocity * ( pev->nextthink - pev->ltime );
+	Vector dest = OwnAngles() + MoveWith_GetOwnAvelocity( this ) * ( pev->nextthink - pev->ltime );
 	float value1 = CBaseToggle::AxisDelta( pev->spawnflags, dest, m_start ) / m_flMoveDistance;
 	UpdateTarget( value1 );
 }
@@ -1138,7 +1213,7 @@ void CMomentaryRotButton::UpdateAllButtons( float value, int start )
 	for (;;)
 	{
 
-		pentTarget = FIND_ENTITY_BY_STRING(pentTarget, "target", STRING(pev->target));
+		pentTarget = FIND_ENTITY_BY_TARGET( pentTarget, STRING(pev->target));
 		if (FNullEnt(pentTarget))
 			break;
 
@@ -1170,14 +1245,14 @@ void CMomentaryRotButton::UpdateSelf( float value )
 	pev->nextthink = pev->ltime + 0.1;
 	if ( m_direction > 0 && value >= 1.0 )
 	{
-		pev->avelocity = g_vecZero;
-		pev->angles = m_end;
+		SetOwnTurn( g_vecZero );
+		SetOwnAngles( m_end );
 		return;
 	}
 	else if ( m_direction < 0 && value <= 0 )
 	{
-		pev->avelocity = g_vecZero;
-		pev->angles = m_start;
+		SetOwnTurn( g_vecZero );
+		SetOwnAngles( m_start );
 		return;
 	}
 	
@@ -1190,7 +1265,7 @@ void CMomentaryRotButton::UpdateSelf( float value )
 	else
 		pev->nextthink += 0.1;
 	
-	pev->avelocity = (m_direction * pev->speed) * pev->movedir;
+	SetOwnTurn( (m_direction * pev->speed) * pev->movedir );
 	SetThink( &CMomentaryRotButton::Off );
 }
 
@@ -1215,7 +1290,11 @@ void CMomentaryRotButton::UpdateTarget( float value )
 
 void CMomentaryRotButton::Off( void )
 {
-	pev->avelocity = g_vecZero;
+	// SBO 2.1 (Half-Life Unified SDK): the turning sound stops when the button is let go; it played on to its end
+	if ( pev->noise )
+		STOP_SOUND( ENT(pev), CHAN_VOICE, (char*)STRING(pev->noise) );
+
+	SetOwnTurn( g_vecZero );
 	m_lastUsed = 0;
 	if ( FBitSet( pev->spawnflags, SF_PENDULUM_AUTO_RETURN ) && m_returnSpeed > 0 )
 	{
@@ -1229,7 +1308,7 @@ void CMomentaryRotButton::Off( void )
 
 void CMomentaryRotButton::Return( void )
 {
-	float value = CBaseToggle::AxisDelta( pev->spawnflags, pev->angles, m_start ) / m_flMoveDistance;
+	float value = CBaseToggle::AxisDelta( pev->spawnflags, OwnAngles(), m_start ) / m_flMoveDistance;
 
 	UpdateAllButtons( value, 0 );	// This will end up calling UpdateSelfReturn() n times, but it still works right
 	if ( value > 0 )
@@ -1241,14 +1320,14 @@ void CMomentaryRotButton::UpdateSelfReturn( float value )
 {
 	if ( value <= 0 )
 	{
-		pev->avelocity = g_vecZero;
-		pev->angles = m_start;
+		SetOwnTurn( g_vecZero );
+		SetOwnAngles( m_start );
 		pev->nextthink = -1;
 		SetThink( NULL );
 	}
 	else
 	{
-		pev->avelocity = -m_returnSpeed * pev->movedir;
+		SetOwnTurn( -m_returnSpeed * pev->movedir );
 		pev->nextthink = pev->ltime + 0.1;
 	}
 }
@@ -1268,6 +1347,8 @@ public:
 	void	EXPORT SparkStop(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void	EXPORT SparkCyclic(CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void	EXPORT SparkWait(void);
+	// SBO 2.1 (Spirit of Half-Life): On while it sparks (Cyclic: from a spark until it may spark again), Off otherwise
+	STATE	GetState( CBaseEntity *pActivator ) { return m_pfnThink != NULL ? STATE_ON : STATE_OFF; }
 	void	MakeSpark(void);
 	void	KeyValue(KeyValueData *pkvd);
 	
@@ -1449,10 +1530,34 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	int TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType );
 	int	ObjectCaps( void );
-	
+	void KeyValue( KeyValueData *pkvd );
+
+	virtual int	Save( CSave &save );
+	virtual int	Restore( CRestore &restore );
+	static	TYPEDESCRIPTION m_SaveData[];
+
+	string_t m_sMaster;	// SBO 2.0: "master", as on func_button
 };
 
 LINK_ENTITY_TO_CLASS( button_target, CButtonTarget );
+
+TYPEDESCRIPTION CButtonTarget::m_SaveData[] =
+{
+	DEFINE_FIELD( CButtonTarget, m_sMaster, FIELD_STRING ),
+};
+
+IMPLEMENT_SAVERESTORE( CButtonTarget, CBaseEntity );
+
+void CButtonTarget::KeyValue( KeyValueData *pkvd )
+{
+	if ( FStrEq( pkvd->szKeyName, "master" ) )
+	{
+		m_sMaster = ALLOC_STRING( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CBaseEntity::KeyValue( pkvd );
+}
 
 void CButtonTarget::Spawn( void )
 {
@@ -1468,6 +1573,10 @@ void CButtonTarget::Spawn( void )
 void CButtonTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	if ( !ShouldToggle( useType, (int)pev->frame ) )
+		return;
+	// SBO 2.0: while its master is locked it is not turned on (shot, +use or triggered); turning it off still
+	// works, as a locked func_button with Toggle that is pushed in still comes back out and fires its target
+	if ( !pev->frame && !UTIL_IsMasterTriggered( m_sMaster, pActivator ) )
 		return;
 	pev->frame = 1-pev->frame;
 	if ( pev->frame )

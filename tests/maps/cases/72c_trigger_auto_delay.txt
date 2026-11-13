@@ -1,0 +1,13 @@
+# trigger_auto with a delay: its target fires that long after the map start, not before; its killtarget is removed
+# at the same moment (the DelayedUse carries it)
+# covers: trigger_auto.delay trigger_auto.killtarget
+map co_fuzz
+spawn trigger_auto target auto_late delay 2 killtarget auto_victim
+spawn info_target targetname auto_victim
+activate
+frames 15
+expectnot Firing: (auto_late)
+expectcount info_target 1
+frames 15
+expectn 1 Firing: (auto_late)
+expectcount info_target 0

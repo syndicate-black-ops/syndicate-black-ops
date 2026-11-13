@@ -10,7 +10,8 @@ transparent margin). The scoreboard picks the frame from the clock and draws tha
 Steps (deterministic: same source, same bytes):
   1. the source's frames, coalesced (ImageMagick), and its frame time; every frame must have the same time;
   2. each frame downscaled (Lanczos) to 16, 24, 32 and 64 pixels;
-  3. ui/gfx/<name><size>.tga: the sheet (32-bit, uncompressed, alpha, as the other ui/gfx TGAs);
+  3. ui/gfx/<name><size>.tga: the sheet (32-bit, uncompressed, alpha, as the other ui/gfx TGAs; made ready for the
+     game's drawing by gen_dev_icon.alpha_test_ready: opaque or see-through pixels, edge colors grown outwards);
   4. --preview <dir>: <dir>/<name>_sizes.png, the first frames at each size on the scoreboard's background color.
 
 Prints each badge's frame count and frame time: the BADGES row in score_panel.cpp must use the same numbers.
@@ -29,7 +30,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from gen_dev_icon import write_tga  # noqa: E402
+from gen_dev_icon import alpha_test_ready, write_tga  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_DIR = os.path.join(ROOT, "sdk", "spritesrc", "badges")
@@ -105,7 +106,7 @@ def main():
             count = len(frames)
             w, h, sheet = make_sheet(frames, size)
             path = os.path.join(OUT_DIR, f"badge_{name}{size}.tga")
-            write_tga(path, w, h, sheet)
+            write_tga(path, w, h, alpha_test_ready(sheet, w, h, size))
             print(f"{os.path.relpath(path, ROOT)}  {w}x{h}")
         print(f"{name}: {count} frames, {ms} ms per frame")
         if a.preview:

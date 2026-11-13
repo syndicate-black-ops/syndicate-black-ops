@@ -82,7 +82,13 @@ void CItem::TouchOrUse( CBaseEntity *pOther )
 
 	CBasePlayer *pPlayer = (CBasePlayer *)pOther;
 
+	// SBO 2.0: taken already in this frame (UTIL_Remove only marks it): two players pressing +use on a "USE only"
+	// item in the same frame both got it
+	if ( FBitSet( pev->flags, FL_KILLME ) )
+		return;
+
 	// ok, a player is touching this item, but can he have it?
+
 	if ( !g_pGameRules->CanHaveItem( pPlayer, this ) )
 	{
 		// no? Ignore the touch.

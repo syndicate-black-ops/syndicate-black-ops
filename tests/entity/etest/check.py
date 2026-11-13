@@ -76,6 +76,25 @@ class Run:
         return t0, t1, out
 
 
+
+def _save_text(h):
+    """A saved field's hex as text: absent (zero), a string, or 4-byte words as int / float."""
+    if h is None:
+        return '0'
+    raw = bytes.fromhex(h)
+    t = raw.rstrip(b'\0')
+    if t and all(32 <= c < 127 for c in t) and (len(raw) % 4 or len(t) > 3):
+        return json.dumps(t.decode())
+    if len(raw) % 4 == 0:
+        import struct
+        out = []
+        for i in range(0, len(raw), 4):
+            iv, = struct.unpack('<i', raw[i:i + 4])
+            fv, = struct.unpack('<f', raw[i:i + 4])
+            out.append(str(iv) if abs(iv) < 1 << 20 else '%g' % fv)
+        return ','.join(out)
+    return h
+
 def ent_matches(ent, spec):
     """ent: {"i","c","n"} from the trace. spec: a resolved reference (prefixed name, playerN, @class, #i, world)."""
     if spec is None:
@@ -206,18 +225,31 @@ def check_test(test, run):
                 msg = 'order %s before %s: %s never fired' % (x['first'], x['then'], x['first'] if not fa else x['then'])
             elif fa[0] > fb[0]:
                 msg = 'order: %s (%.3f) fired after %s (%.3f)' % (x['first'], fa[0], x['then'], fb[0])
+            elif x.get('gap') and not x['gap'][0] - 0.05 <= fb[0] - fa[0] <= x['gap'][1] + 0.05:
+                msg = 'order: %s fired %.3f s after %s, expected %g-%g s' % (x['then'], fb[0] - fa[0], x['first'],
+                                                                            x['gap'][0], x['gap'][1])
         elif k == 'value_any':
             spec = ref(x['ent'])
             got = []
             for lab in x['labels']:
                 hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == '%s:%s' % (test.id, lab) and e.get('ent')
                        and ent_matches(e['ent'], spec)]
-                got.append(hit[0]['v'].get(x['field'], '<missing>') if hit else '<no snapshot>')
-            want = x['expected'] if isinstance(x['expected'], list) else [x['expected']]
-            seen = [g for g in got if g in want]
+                fname, _, comp = x['field'].partition('.')
+                g = hit[0]['v'].get(fname, '<missing>') if hit else '<no snapshot>'
+                if comp and isinstance(g, list) and comp in 'xyz':
+                    g = g['xyz'.index(comp)]      # 'origin.x': one component, as value does
+                got.append(g)
+            op = x.get('op', '==')
+            if op == '==':
+                want = x['expected'] if isinstance(x['expected'], list) else [x['expected']]
+                seen = [g for g in got if g in want]
+            else:
+                cmp = {'<': lambda a: a < x['expected'], '<=': lambda a: a <= x['expected'],
+                       '>': lambda a: a > x['expected'], '>=': lambda a: a >= x['expected']}[op]
+                seen = [g for g in got if isinstance(g, (int, float)) and cmp(g)]
             if not seen:
-                msg = '%s.%s never %s in %s: %s' % (spec, x['field'], json.dumps(x['expected']), ', '.join(x['labels']),
-                                                   json.dumps(got))
+                msg = '%s.%s never %s%s in %s: %s' % (spec, x['field'], '' if op == '==' else op + ' ',
+                                                     json.dumps(x['expected']), ', '.join(x['labels']), json.dumps(got))
             else:
                 r.notes.append('%s.%s %s at %s' % (x['ent'], x['field'], json.dumps(seen[0]),
                                                    x['labels'][got.index(seen[0])]))
@@ -229,13 +261,23 @@ def check_test(test, run):
                 msg = 'no snapshot %s' % x['label']
             else:
                 hit = [s for s in snaps if s.get('ent') and ent_matches(s['ent'], spec)]
+                if x.get('where'):
+                    hit = [s for s in hit if all(s['v'].get(wk) == wv for wk, wv in x['where'].items())]
                 if not hit:
-                    msg = 'snapshot %s: no entity %s' % (x['label'], spec)
+                    msg = 'snapshot %s: no entity %s%s' % (x['label'], spec,
+                                                            ' with %s' % json.dumps(x['where']) if x.get('where') else '')
                 else:
                     fname, _, comp = x['field'].partition('.')
                     got = hit[0]['v'].get(fname, '<missing>')
                     if comp and isinstance(got, list) and comp in 'xyz':
                         got = got['xyz'.index(comp)]
+                    elif fname == 'save' and comp and isinstance(got, dict):
+                        # 'save.<field>': one saved field (snapshot field 'save'), as an int when it is one
+                        got = _save_text(got.get(comp))
+                        try:
+                            got = int(got)
+                        except ValueError:
+                            pass
                     op = x.get('op', '==')
                     if op == '!=':
                         if got == x['expected']:
@@ -270,10 +312,33 @@ def check_test(test, run):
                                                                              x['lo'], x['hi'])
                 else:
                     r.notes.append('distance %s - %s at %s: %.1f' % (x['a'], x['b'], x['label'], dist))
+        elif k == 'distance_any':
+            got = []
+            for lab in x['labels']:
+                label = '%s:%s' % (test.id, lab)
+                pos = []
+                for r_ in (x['a'], x['b']):
+                    spec = ref(r_)
+                    hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == label and e.get('ent')
+                           and ent_matches(e['ent'], spec) and 'origin' in e['v']]
+                    pos.append(hit[0]['v']['origin'] if hit else None)
+                if None in pos:
+                    got.append(None)
+                    continue
+                d = [pos[0][i] - pos[1][i] for i in range(2 if x['flat'] else 3)]
+                got.append(sum(c * c for c in d) ** 0.5)
+            seen = [(lab, g) for lab, g in zip(x['labels'], got) if g is not None and x['lo'] <= g <= x['hi']]
+            if not seen:
+                msg = 'distance %s - %s never %g to %g in %s: %s' % (
+                    ref(x['a']), ref(x['b']), x['lo'], x['hi'], ', '.join(x['labels']),
+                    json.dumps([None if g is None else round(g, 1) for g in got]))
+            else:
+                r.notes.append('distance %s - %s at %s: %.1f' % (x['a'], x['b'], seen[0][0], seen[0][1]))
         elif k == 'damaged':
             spec = ref(x['ent'])
             m = [e for e in ev if e['ev'] == 'damage' and ent_matches(e['ent'], spec) and timed(e, x)
-                 and (x['attacker'] is None or ent_matches(e['attacker'], ref(x['attacker'])))]
+                 and (x['attacker'] is None or ent_matches(e['attacker'], ref(x['attacker'])))
+                 and (x.get('type') is None or (e.get('type', 0) & x['type']) == x['type'])]
             msg = count_check('damage to %s%s' % (spec, ' by %s' % x['attacker'] if x['attacker'] else ''), m, x)
             if msg:
                 msg += _when(x)
@@ -309,11 +374,13 @@ def check_test(test, run):
             spec = ref(x['ent'])
             pos = []
             for lab in (x['label1'], x['label2']):
+                fld = x.get('field') or 'origin'
                 hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == '%s:%s' % (test.id, lab) and e.get('ent')
-                       and ent_matches(e['ent'], spec) and 'origin' in e['v']]
-                pos.append(hit[0]['v']['origin'] if hit else None)
+                       and ent_matches(e['ent'], spec) and isinstance(e['v'].get(fld), list)]
+                pos.append(hit[0]['v'][fld] if hit else None)
             if None in pos:
-                msg = 'moved %s: no origin snapshot %s' % (spec, x['label1'] if pos[0] is None else x['label2'])
+                msg = 'moved %s: no %s snapshot %s' % (spec, x.get('field') or 'origin',
+                                                      x['label1'] if pos[0] is None else x['label2'])
             else:
                 d = [b - a for a, b in zip(pos[0], pos[1])]
                 n = 2 if x['flat'] else 3
@@ -329,6 +396,58 @@ def check_test(test, run):
                                                                    x['label2'], x['delta'])
                 else:
                     r.notes.append('%s moved [%.1f, %.1f, %.1f]' % (x['ent'], d[0], d[1], d[2]))
+        elif k == 'still_offset':
+            cspec, pspec = ref(x['child']), ref(x['parent'])
+            still, worst, wlab = 0, 0.0, None
+            for lab in x['labels']:
+                full = '%s:%s' % (test.id, lab)
+                ph = [e for e in ev if e['ev'] == 'snap' and e['label'] == full and e.get('ent')
+                      and ent_matches(e['ent'], pspec)]
+                ch = [e for e in ev if e['ev'] == 'snap' and e['label'] == full and e.get('ent')
+                      and ent_matches(e['ent'], cspec)]
+                if not ph or not ch or not isinstance(ph[0]['v'].get('velocity'), list):
+                    continue
+                if any(abs(v) > 1e-3 for v in ph[0]['v']['velocity']):
+                    continue
+                still += 1
+                po, co = ph[0]['v']['origin'], ch[0]['v']['origin']
+                gap = max(abs(co[i] - po[i] - x['offset'][i]) for i in range(3))
+                if gap > worst:
+                    worst, wlab = gap, lab
+            if still < x['min_still']:
+                msg = 'still_offset %s on %s: %d snapshots with the parent still, at least %d expected' % (
+                    cspec, pspec, still, x['min_still'])
+            elif worst > x['tol']:
+                msg = '%s is %.3f off its place on %s (still) at %s, at most %g expected' % (cspec, worst, pspec, wlab,
+                                                                                         x['tol'])
+            else:
+                r.notes.append('%s on %s: at most %.3f off over %d still snapshots' % (x['child'], x['parent'], worst,
+                                                                                    still))
+        elif k == 'max_rate':
+            # consecutive snapshots of a vector field: how fast it changed, by the snapshots' game times
+            spec = ref(x['ent'])
+            pts = []
+            for lab in x['labels']:
+                hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == '%s:%s' % (test.id, lab) and e.get('ent')
+                       and ent_matches(e['ent'], spec) and isinstance(e['v'].get(x['field']), list)]
+                if hit:
+                    pts.append((hit[0]['t'], hit[0].get('f'), hit[0].get('dt'), hit[0]['v'][x['field']]))
+            worst, at = 0.0, None
+            for (t1, f1, _, a), (t2, f2, dt2, b) in zip(pts, pts[1:]):
+                d = sum((q - p) ** 2 for p, q in zip(a, b)) ** 0.5
+                # one frame apart: that frame's length (what a mover moved by); else the game times between them
+                span = dt2 if f1 is not None and f2 == f1 + 1 and dt2 else t2 - t1
+                if span > 0:
+                    rate = d / span
+                    if rate > worst:
+                        worst, at = rate, t1
+            if len(pts) < 2:
+                msg = 'max_rate %s: fewer than 2 %s snapshots' % (spec, x['field'])
+            elif worst > x['rate']:
+                msg = '%s.%s changed at %.1f units/s at t=%.3f, at most %g expected' % (spec, x['field'], worst, at,
+                                                                                       x['rate'])
+            else:
+                r.notes.append('%s.%s at most %.1f units/s over %d snapshots' % (x['ent'], x['field'], worst, len(pts)))
         elif k == 'same':
             spec = ref(x['ent'])
             vals = []
@@ -339,6 +458,46 @@ def check_test(test, run):
             if vals[0] != vals[1]:
                 msg = '%s.%s changed: %s at %s, %s at %s' % (spec, x['field'], json.dumps(vals[0]), x['label1'],
                                                              json.dumps(vals[1]), x['label2'])
+        elif k == 'aisound':
+            spec = ref(x['ent'])
+            hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == '%s:%s' % (test.id, x['label'])
+                   and e.get('ent') and ent_matches(e['ent'], spec)]
+            if not hit or 'aisounds' not in hit[0]['v']:
+                msg = 'snapshot %s: no aisounds' % x['label']
+            else:
+                m = [a for a in hit[0]['v']['aisounds'] if a['type'] == x['type'] and (
+                     x['pos'] is None or all(abs(a['pos'][i] - x['pos'][i]) <= x['tol'] for i in range(3)))]
+                msg = count_check('AI sound type %d%s' % (x['type'], ' at %s' % x['pos'] if x['pos'] else ''), m, x)
+                if msg:
+                    msg += '; alive: %s' % json.dumps(hit[0]['v']['aisounds'])
+        elif k == 'save_same':
+            def saved(r):
+                spec = ref(r)
+                hit = [e for e in ev if e['ev'] == 'snap' and e['label'] == '%s:%s' % (test.id, x['label'])
+                       and e.get('ent') and ent_matches(e['ent'], spec)]
+                return hit[0]['v'].get('save') if hit else None
+            a, b = saved(x['ent1']), saved(x['ent2'])
+            if x.get('differ') and a is not None and b is None:
+                pass    # ent2 is gone: it differs
+            elif a is None or b is None:
+                msg = 'no saved fields of %s' % (x['ent1'] if a is None else x['ent2'])
+            else:
+                skip = set(x['ignore'])
+                if x['noise']:
+                    n1, n2 = saved(x['noise'][0]), saved(x['noise'][1])
+                    for n in (n1, n2):
+                        if n is not None:
+                            skip |= {f for f in set(n) | set(b) if n.get(f) != b.get(f)}
+                # a name starting with a capital is a block header (CSave::WriteFields' class name: the count of
+                # fields written), not a field
+                diff = sorted(f for f in set(a) | set(b)
+                              if f not in skip and not f[:1].isupper() and a.get(f) != b.get(f))
+                if x.get('differ'):
+                    if not diff:
+                        msg = 'saved fields are the same with the key and without it'
+                elif diff:
+                    msg = 'saved fields differ (with the keys, without): ' + '; '.join(
+                        '%s %s / %s' % (f, _save_text(a.get(f)), _save_text(b.get(f))) for f in diff)
         elif k == 'msg':
             to = ref(x['to']) if x['to'] else None
             m = []
@@ -359,6 +518,27 @@ def check_test(test, run):
                 seen = [decode.decode(e['name'], bytes.fromhex(e['hex']), e['type']) for e in ev if e['ev'] == 'msg'
                         and _msg_is(e, x['name']) and timed(e, x)]
                 msg += _when(x) + ('; sent: %s' % json.dumps(seen[:4]) if seen else '')
+        elif k == 'spread':
+            pos = []
+            for e in ev:
+                if e['ev'] != 'msg' or not timed(e, x) or not _msg_is(e, x['name']):
+                    continue
+                d = decode.decode(e['name'], bytes.fromhex(e['hex']), e['type'])
+                if d is None or 'pos' not in d:
+                    continue
+                if x['fields'] and any(not _close(d.get(fk), _model_ref(e, fv), 0.01) for fk, fv in x['fields'].items()):
+                    continue
+                pos.append(d['pos'])
+            far = max([sum((a - b) ** 2 for a, b in zip(p_, x['center'])) ** 0.5 for p_ in pos] or [0.0])
+            if len(pos) < x['min']:
+                msg = 'message %s%s: %d with a position, expected at least %d' % (
+                    x['name'], ' %s' % json.dumps(x['fields']) if x['fields'] else '', len(pos), x['min']) + _when(x)
+            elif not x['lo'] <= far <= x['hi']:
+                msg = 'message %s: farthest of %d positions %.1f from %s, expected %g to %g' % (
+                    x['name'], len(pos), far, x['center'], x['lo'], x['hi']) + _when(x)
+            else:
+                msg = None
+                r.notes.append('spread %s: farthest %.1f of %d positions' % (x['name'], far, len(pos)))
         elif k == 'sound':
             spec = ref(x['ent']) if x['ent'] else None
             kinds = {None: ('sound', 'ambient'), True: ('ambient',), False: ('sound',)}[x.get('ambient')]
@@ -367,11 +547,13 @@ def check_test(test, run):
                  and (spec is None or ent_matches(e['ent'], spec))
                  and (not x.get('flags') or (e.get('flags', 0) & x['flags']) == x['flags'])
                  and (x.get('attn') is None or abs(e.get('attn', -1) - x['attn']) < 0.01)
+                 and (x.get('chan') is None or e.get('chan') == x['chan'])
                  and (x.get('vol') is None or x['vol'][0] <= e.get('vol', -1) <= x['vol'][1])
                  and (x.get('pitch') is None or (e.get('pitch') == x['pitch'] if not isinstance(x['pitch'], (list, tuple))
                                                      else x['pitch'][0] <= (e.get('pitch') or 0) <= x['pitch'][1]))]
             msg = count_check('%s %s%s%s%s' % ({None: 'sound', True: 'ambient sound', False: 'entity sound'}[x.get('ambient')],
-                                                x['sample'], ' flags %d' % x['flags'] if x.get('flags') else '',
+                                                x['sample'] + (' chan %d' % x['chan'] if x.get('chan') is not None else ''),
+                                                ' flags %d' % x['flags'] if x.get('flags') else '',
                                                 ' attn %g' % x['attn'] if x.get('attn') is not None else '',
                                                 ' vol %s' % list(x['vol']) if x.get('vol') else ''), m, x)
         elif k == 'setview':
@@ -384,6 +566,16 @@ def check_test(test, run):
             m = [e for e in ev if e['ev'] == 'clcmd' and timed(e, x) and x['text'] in e['cmd']
                  and (spec is None or ent_matches(e['ent'], spec))]
             msg = count_check('client command "%s" to %s' % (x['text'], spec or 'any player'), m, x)
+        elif k == 'lightstyle':
+            m = [e for e in ev if e['ev'] == 'lightstyle' and timed(e, x)
+                 and (x['pattern'] is None or e['pattern'] == x['pattern'])
+                 and (x['style'] is None or (e['style'] in x['style'] if isinstance(x['style'], (list, tuple))
+                                             else e['style'] == x['style']))]
+            msg = count_check('light style %s set to "%s"' % (x['style'] if x['style'] is not None else 'any',
+                                                              x['pattern'] if x['pattern'] is not None else '*'), m, x)
+            if msg:
+                seen = [(e['style'], e['pattern']) for e in ev if e['ev'] == 'lightstyle' and timed(e, x)]
+                msg += _when(x) + ('; set: %s' % json.dumps(seen[:8]) if seen else '')
         elif k == 'event':
             spec = ref(x['ent']) if x['ent'] else None
 
@@ -405,12 +597,44 @@ def check_test(test, run):
                 msg += '; played: %s' % json.dumps(seen[:6]) if seen else ''
         elif k == 'spawned':
             spec = ref(x['ent'])
-            m = [e for e in ev if e['ev'] == 'spawn' and ent_matches(e['ent'], spec)]
+            m = [e for e in ev if e['ev'] == 'spawn' and ent_matches(e['ent'], spec) and timed(e, x)]
             msg = count_check('spawned %s' % spec, m, x)
+            if msg and x.get('within') is not None:
+                msg += _when(x)
+        elif k == 'waited':
+            done = [e for e in ev if e['ev'] == 'wait_done' and e.get('cond') == x['cond']]
+            late = [e for e in ev if e['ev'] == 'wait_timeout' and e.get('cond') == x['cond']]
+            if late or not done:
+                msg = 'wait for %s: %s' % (x['cond'], 'timed out' if late else 'never ended')
+        elif k == 'edicts':
+            counts = []
+            for lab in (x['label1'], x['label2']):
+                f = mark_frame.get(lab)
+                if f is None:
+                    counts.append(None)
+                    continue
+                live = set()
+                for e in run.events:
+                    if e['f'] > f:
+                        break
+                    if e['ev'] in ('exists', 'spawn'):
+                        live.add(e['ent']['i'])
+                    elif e['ev'] == 'remove':
+                        live.discard(e['i'])
+                counts.append(len(live))
+            if None in counts:
+                msg = 'edicts: no mark %s' % (x['label1'] if counts[0] is None else x['label2'])
+            elif not x['lo'] <= counts[1] - counts[0] <= x['hi']:
+                msg = 'edicts: %d at %s, %d at %s (difference %+d, expected %+d to %+d)' % (
+                    counts[0], x['label1'], counts[1], x['label2'], counts[1] - counts[0], x['lo'], x['hi'])
+            else:
+                r.notes.append('edicts: %d at %s, %d at %s' % (counts[0], x['label1'], counts[1], x['label2']))
         elif k == 'removed':
             spec = ref(x['ent'])
-            m = [e for e in ev if e['ev'] == 'remove' and ent_matches(e['ent'], spec)]
+            m = [e for e in ev if e['ev'] == 'remove' and ent_matches(e['ent'], spec) and timed(e, x)]
             msg = count_check('removed %s' % spec, m, x)
+            if msg:
+                msg += _when(x)
         elif k == 'present':
             spec = ref(x['ent'])
             m = [e for e in run.events if e['ev'] in ('exists', 'spawn') and ent_matches(e['ent'], spec)
@@ -426,7 +650,10 @@ def check_test(test, run):
                  and (x['res'] is None or e['kind'] == x['res'])]
             msg = count_check('precache %s%s' % (x['res'] + ' ' if x['res'] else '', x['name']), m, x)
         elif k == 'console':
-            if x['text'] not in run.console:
+            if x.get('absent'):
+                if x['text'] in run.console:
+                    msg = 'the console printed "%s"' % x['text']
+            elif x['text'] not in run.console:
                 msg = 'the console never printed "%s"' % x['text']
         elif k == 'kv_handled':
             spec = ref(x['ent'])

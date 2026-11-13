@@ -1,0 +1,15 @@
+# a func_breakable broken twice in the same frame (two Uses, as an explosion's damage and a trigger can) dies once: its
+# spawnobject is made once and its target fired once (74c5ad52, halflife-updated: Die returns once the breakable is
+# not solid; 1.38 spawned a second item and fired again)
+# covers: func_breakable.spawnobject func_breakable.target
+map co_fuzz
+spawn func_breakable targetname br model *1 health 20 spawnobject 1 target br_out material 1
+spawn trigger_relay targetname br_out target br_sink triggerstate 2
+activate
+connect 1 P1
+frames 3
+useclient 0 1
+useclient 0 1
+frames 5
+expectn 1 Firing: (br_out)
+expectcount item_battery 1

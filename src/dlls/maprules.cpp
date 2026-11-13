@@ -28,12 +28,14 @@
 #include "gamerules.h"
 #include "maprules.h"
 #include "cbase.h"
+#include "keyvalue.h"
 #include "player.h"
 #include "video_shared.h"	// game_shared: game_playvideo names
 
 extern int gmsgPlayVideo;	// player.cpp: game_playvideo
 #include "weapons.h"		// SBO 2.0: game_player_settings
 #include "round_hooks.h"	// SBO 2.0: Logic_IsPlayerInPlay
+#include "game.h"			// SBO 2.0: game_player_settings (mp_XP)
 
 class CRuleEntity : public CBaseEntity
 {
@@ -58,6 +60,9 @@ int g_bMissionOutcomePending = 0;
 int g_bMissionFailed = 0;
 
 int m_SpawnLocate;	// SBO: multispawn rotation (global .bss, owned here)
+// SBO 2.1: the named spawn set a multispawn with a "Spawn set" made active (player.cpp EntSelectSpawnPoint); iStringNull:
+// none, the rotation above picks the spawn points. Reset with m_SpawnLocate, by the game rules at map start.
+string_t g_iszSpawnSet;
 
 TYPEDESCRIPTION	CRuleEntity::m_SaveData[] = 
 {
@@ -258,16 +263,43 @@ void CMissionFail::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 
 //
 // CMultiSpawn / multispawn	-- SBO: moves the coop spawn location on to the next set
+//	SBO 2.1: with a "Spawn set" (spawnset), makes the spawn points with that name the active set instead; empty: the
+//	rotation info_player_deathmatch, go2 .. go5 as in SBO 1.38 (and no named set is active any more).
 //
 class CMultiSpawn : public CRulePointEntity
 {
 public:
+	void	KeyValue( KeyValueData *pkvd );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	virtual int		Save( CSave &save );
+	virtual int		Restore( CRestore &restore );
+	static	TYPEDESCRIPTION m_SaveData[];
 private:
+	string_t	m_iszSpawnSet;
 };
 
 LINK_ENTITY_TO_CLASS( multispawn, CMultiSpawn );
 
+TYPEDESCRIPTION	CMultiSpawn::m_SaveData[] = 
+{
+	DEFINE_FIELD( CMultiSpawn, m_iszSpawnSet, FIELD_STRING ),
+};
+
+IMPLEMENT_SAVERESTORE( CMultiSpawn, CRulePointEntity );
+
+extern BOOL SpawnSet_HasSpots( const char *pszSet );	// player.cpp
+
+// also at run time (trigger_changevalue: KeyValue_DispatchRuntime); an empty value: the rotation again
+void CMultiSpawn::KeyValue( KeyValueData *pkvd )
+{
+	if ( FStrEq( pkvd->szKeyName, "spawnset" ) )
+	{
+		m_iszSpawnSet = pkvd->szValue[0] ? ALLOC_STRING( pkvd->szValue ) : iStringNull;
+		pkvd->fHandled = TRUE;
+	}
+	else
+		CRulePointEntity::KeyValue( pkvd );
+}
 
 void CMultiSpawn::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
@@ -276,6 +308,17 @@ void CMultiSpawn::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE u
 
 	if ( m_Mode == MODE_COOP )
 	{
+		// SBO 2.1: a named set; the rotation stays where it is, for a multispawn without a set
+		if ( !FStringNull( m_iszSpawnSet ) )
+		{
+			g_iszSpawnSet = m_iszSpawnSet;
+			if ( !SpawnSet_HasSpots( STRING( m_iszSpawnSet ) ) )
+				ALERT( at_console, "multispawn \"%s\": no spawn point is named \"%s\"; players spawn as if no spawn set "
+					"were active\n", STRING( pev->targetname ), STRING( m_iszSpawnSet ) );
+			return;
+		}
+
+		g_iszSpawnSet = iStringNull;
 		switch ( m_SpawnLocate )
 		{
 		case 1:
@@ -866,6 +909,8 @@ void CGameCounterSet::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 class CGamePlayerEquip : public CRulePointEntity
 {
 public:
+	void		Spawn( void );
+	void		Precache( void );
 	void		KeyValue( KeyValueData *pkvd );
 	void		Touch( CBaseEntity *pOther );
 	void		Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
@@ -878,9 +923,25 @@ private:
 
 	string_t	m_weaponNames[MAX_EQUIP];
 	int			m_weaponCount[MAX_EQUIP];
+	BOOL		m_bSpawned;		// SBO 2.1: items are precached; a new one is taken only if this map precached its class
 };
 
 LINK_ENTITY_TO_CLASS( game_player_equip, CGamePlayerEquip );
+
+void CGamePlayerEquip::Spawn( void )
+{
+	Precache();
+	m_bSpawned = TRUE;
+	CRulePointEntity::Spawn();
+}
+
+// SBO 2.1: every item it gives, as GiveNamedItem's spawn would at the first equip. Half-Life precached none: an item
+// the map had not placed (item_battery on a map without batteries) stopped the server on the first equip
+void CGamePlayerEquip::Precache( void )
+{
+	for ( int i = 0; i < MAX_EQUIP && m_weaponNames[i]; i++ )
+		UTIL_PrecacheOther( STRING( m_weaponNames[i] ) );
+}
 
 #define EQUIP_MAX_COUNT	100	// items of one kind per game_player_equip key (well above the maps' 20)
 
@@ -907,6 +968,14 @@ void CGamePlayerEquip::KeyValue( KeyValueData *pkvd )
 				char tmp[128];
 
 				UTIL_StripToken( pkvd->szKeyName, tmp, sizeof( tmp ) );
+
+				// SBO 2.1: at run time (trigger_changevalue) only an item whose class this map has precached (util.h)
+				if ( m_bSpawned && !UTIL_PrecachedClasses_Has( tmp ) )
+				{
+					KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+					pkvd->fHandled = TRUE;
+					break;
+				}
 
 				m_weaponNames[i] = ALLOC_STRING(tmp);
 				m_weaponCount[i] = atoi(pkvd->szValue);
@@ -964,6 +1033,10 @@ void CGamePlayerEquip::EquipPlayer( CBaseEntity *pEntity )
 
 void CGamePlayerEquip::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
+	// SBO 2.0: the master locks Use too (Half-Life checked it only in Touch): a locked master gives nothing
+	if ( !CanFireForActivator( pActivator ) )
+		return;
+
 	EquipPlayer( pActivator );
 }
 
@@ -1387,6 +1460,11 @@ void CGamePlayVideo::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 // may start with '=' set, '+' add, '-' subtract, '<' set if higher, '>' set if lower; no prefix sets a value above 0.
 // Left out (SBO has no such system): suit and suit light, armor maximum and strength, Featureful's canisters, and
 // the singleplayer "equip at spawn".
+// SBO keys: "level" and "xp" change the co-op level and XP with the same prefixes (no prefix sets). The level is
+// the game's own (m_iSboSpeed, the scoreboard's); "xp" is the XP toward the next level (m_iXP: a level-up at 5000,
+// with mp_XP 1, as monster damage gives). Both keep the scoreboard XP (m_iSboTotalXP) in step the way the game does
+// (PlayerSettings_ChangeLevel, PlayerSettings_ChangeXP), and the scoreboard updates at once. A value with a
+// prefix needs it before any sign: "=-5" sets level -5, "-5" takes five levels.
 //=========================================================
 #define PLAYERSETTINGS_MAX_WEAPONS	32
 
@@ -1416,6 +1494,8 @@ private:
 	short	m_weaponSettings[PLAYERSETTINGS_MAX_WEAPONS];
 	float	m_health, m_maxHealth, m_armor;
 	short	m_healthSetting, m_maxHealthSetting, m_armorSetting;
+	float	m_level, m_xp;					// SBO: co-op level and XP
+	short	m_levelSetting, m_xpSetting;	// VALUE_SETTING_DEFAULT: key not set (no prefix reads as '=')
 	BOOL	m_allowOverheal, m_allowOvercharge;
 	int		m_longjump;
 };
@@ -1481,6 +1561,17 @@ void CGamePlayerSettings::KeyValue( KeyValueData *pkvd )
 	else if ( FStrEq( pkvd->szKeyName, "longjump" ) )
 	{
 		m_longjump = atoi( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
+	else if ( FStrEq( pkvd->szKeyName, "level" ) || FStrEq( pkvd->szKeyName, "xp" ) )
+	{
+		const BOOL level = FStrEq( pkvd->szKeyName, "level" );
+		float value;
+		short setting = ParseValue( pkvd->szValue, value );
+		if ( setting == VALUE_SETTING_DEFAULT )
+			setting = pkvd->szValue[0] ? VALUE_SETTING_SET : VALUE_SETTING_DEFAULT;	// no prefix: set ("" = unset)
+		( level ? m_level : m_xp ) = (float)(int)value;
+		( level ? m_levelSetting : m_xpSetting ) = setting;
 		pkvd->fHandled = TRUE;
 	}
 	else if ( !strncmp( pkvd->szKeyName, "weapon_", 7 ) )
@@ -1603,6 +1694,63 @@ static float PlayerSettings_Apply( short setting, float current, float value, BO
 	}
 }
 
+// SBO: the co-op level (the scoreboard's: (m_iSboSpeed - 300) / 5; negative levels allowed, docs/dev/SCOREBOARD_PORT.md
+// "Negative levels") changed by a number of levels. Up: CBasePlayer::SboLevelUp per level (level speed +5, spawn
+// health +2, the speed at once). Down: the reverse, as the teamkill penalty takes levels (SboLevelPenalty: the level
+// speed lost above -40 off the current speed, never under SBO_MIN_MAXSPEED, a Game Master keeps his), spawn health -2
+// per level, never under 10. The scoreboard XP follows by 5000 per level, as the penalty's does (CCoop SboKillPenalty).
+#define PLAYERSETTINGS_LEVEL_LIMIT		10000	// levels -10000..10000 (the scoreboard's ScoreInfo score is a short)
+#define PLAYERSETTINGS_XP_PER_LEVEL		5000	// a monster level-up (SBO_XP_GAIN's lvl)
+#define PLAYERSETTINGS_SPAWN_HEALTH_MIN	10		// as the penalty's (coop.cpp SBO_PENALTY_HEALTH_MIN)
+
+static int PlayerSettings_Level( CBasePlayer *player )
+{
+	return ( player->m_iSboSpeed - 300 ) / 5;
+}
+
+static void PlayerSettings_ChangeLevel( CBasePlayer *player, int levels )
+{
+	for ( int i = 0; i < levels; i++ )
+		player->SboLevelUp();
+
+	if ( levels < 0 )
+	{
+		int iOldLevelSpeed = SboLevelSpeed( player->m_iSboSpeed );
+		player->m_iSboSpeed += levels * 5;
+		player->m_iSboHealth += levels * 2;
+		if ( player->m_iSboHealth < PLAYERSETTINGS_SPAWN_HEALTH_MIN )
+			player->m_iSboHealth = PLAYERSETTINGS_SPAWN_HEALTH_MIN;
+		if ( player->m_bGameMaster != 1 )
+		{
+			player->m_iSboMaxSpeed -= iOldLevelSpeed - SboLevelSpeed( player->m_iSboSpeed );
+			if ( player->m_iSboMaxSpeed < SBO_MIN_MAXSPEED )
+				player->m_iSboMaxSpeed = SBO_MIN_MAXSPEED;
+			player->ResetMaxSpeed();
+		}
+	}
+
+	player->m_iSboTotalXP += levels * PLAYERSETTINGS_XP_PER_LEVEL;
+}
+
+// SBO: the XP toward the next level (m_iXP) set to a value, never below 0 (taking XP takes no level). The scoreboard
+// XP changes by the same amount, as a gain adds it (SBO_XP_GAIN). With mp_XP 1 every full 5000 is a level-up (the
+// rest stays), as monster damage gives one; with mp_XP 0 there are no level-ups (the game's rule).
+static void PlayerSettings_ChangeXP( CBasePlayer *player, int xp )
+{
+	if ( xp < 0 )
+		xp = 0;
+	player->m_iSboTotalXP += xp - player->m_iXP;
+	player->m_iXP = xp;
+
+	if ( XP.value != 1 )
+		return;
+	while ( player->m_iXP >= PLAYERSETTINGS_XP_PER_LEVEL )
+	{
+		player->m_iXP -= PLAYERSETTINGS_XP_PER_LEVEL;
+		player->SboLevelUp();
+	}
+}
+
 void CGamePlayerSettings::EquipPlayer( CBasePlayer *player )
 {
 	// max health first: a lower one clamps the health (unless overheal is allowed)
@@ -1646,6 +1794,22 @@ void CGamePlayerSettings::EquipPlayer( CBasePlayer *player )
 		if ( armor < 0 )
 			armor = 0;
 		player->pev->armorvalue = armor;
+	}
+
+	if ( m_levelSetting != VALUE_SETTING_DEFAULT || m_xpSetting != VALUE_SETTING_DEFAULT )
+	{
+		if ( m_levelSetting != VALUE_SETTING_DEFAULT )
+		{
+			int level = PlayerSettings_Level( player );
+			int target = (int)PlayerSettings_Apply( m_levelSetting, (float)level, m_level, TRUE );
+			// never past the limits (a level already past one, from penalties, is not pulled back)
+			target = max( min( level, -PLAYERSETTINGS_LEVEL_LIMIT ), min( max( level, PLAYERSETTINGS_LEVEL_LIMIT ), target ) );
+			if ( target != level )
+				PlayerSettings_ChangeLevel( player, target - level );
+		}
+		if ( m_xpSetting != VALUE_SETTING_DEFAULT )
+			PlayerSettings_ChangeXP( player, (int)PlayerSettings_Apply( m_xpSetting, (float)player->m_iXP, m_xp, TRUE ) );
+		SboScoreboard_Update( player );	// ScoreInfo (the level) and SboXP now, not at the next frame's check
 	}
 
 	if ( m_longjump > 0 && !player->m_fLongJump )
@@ -1696,7 +1860,7 @@ void CGamePlayerSettings::EquipPlayer( CBasePlayer *player )
 					CBasePlayerItem *pNext = pItem->m_pNext;
 					if ( FClassnameIs( pItem->pev, szWeapon ) )
 					{
-						player->pev->weapons &= ~( 1 << pItem->m_iId );
+						player->ClearWeaponBit( pItem->m_iId );	// SBO 2.1: ids 32..63 too
 						pItem->DestroyItem();
 					}
 					pItem = pNext;

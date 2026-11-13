@@ -75,4 +75,8 @@ def make(writer, fixture):
 
 for w in WRITERS:
     for f in FIXTURES:
-        S.test('%s retargets %s' % (w, f), doc='TRIGGER_CHANGEVALUE.md#limits-and-what-is-not-safe')(make(w, f))
+        S.test('%s retargets %s' % (w, f), doc='TRIGGER_CHANGEVALUE.md#limits-and-what-is-not-safe',
+               covers=(w, f, f + '.target') + ((w + '.target', w + '.m_iszValueName', w + '.m_iszNewValue')
+                                               if w == 'trigger_changevalue' else
+                                               (w + '.netname', w + '.m_iszSrcValueName', w + '.target',
+                                                w + '.m_iszDstValueName')))(make(w, f))

@@ -1,0 +1,16 @@
+# dark_grunt Squad name (netname, FGD): monsters with the same squad name form one squad wherever they stand (three
+# 3000 units apart: "Squad of 3 ... formed"); without a name only monsters within 1024 units of each other team up,
+# so three 3000 apart stay alone; flag 32 SquadLeader: the named leader recruits them (named
+# members without a leader stay alone)
+# covers: dark_grunt.netname dark_grunt:32
+map co_fuzz
+spawn dark_grunt targetname a1 netname alpha spawnflags 32 origin "0 0 0"
+spawn dark_grunt targetname a2 netname alpha origin "3000 0 0"
+spawn dark_grunt targetname a3 netname alpha origin "-3000 0 0"
+spawn dark_grunt targetname u1 origin "0 3000 0"
+spawn dark_grunt targetname u2 origin "3000 3000 0"
+spawn dark_grunt targetname u3 origin "-3000 3000 0"
+activate
+frames 30
+expectn 1 Squad of 3 dark_grunt formed
+expectnot Squad of 2 dark_grunt formed

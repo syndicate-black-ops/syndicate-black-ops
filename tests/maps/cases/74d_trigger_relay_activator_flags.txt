@@ -1,0 +1,21 @@
+# trigger_relay activator flags (Featureful, docs/FEATUREFUL_OPTIONS.md): a stock relay passes itself as the activator
+# (a game_text for the activator reaches nobody); 64 "Forward activator" passes the player who called it; 128 "Pass
+# caller as activator" passes its caller (here the player, who is both). 1.38 has neither flag
+# covers: trigger_relay:64 trigger_relay:128 game_text
+map co_fuzz
+spawn trigger_relay target gt_plain
+spawn trigger_relay target gt_fwd spawnflags 64
+spawn trigger_relay target gt_caller spawnflags 128
+spawn game_text targetname gt_plain message relay_plain
+spawn game_text targetname gt_fwd message relay_forward
+spawn game_text targetname gt_caller message relay_caller
+activate
+connect 1 P1
+frames 3
+useclient 0 1
+useclient 1 1
+useclient 2 1
+frames 3
+expectnot MSTR 23 ->#1: relay_plain
+expectn 1 MSTR 23 ->#1: relay_forward
+expectn 1 MSTR 23 ->#1: relay_caller

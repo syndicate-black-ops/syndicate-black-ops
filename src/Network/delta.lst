@@ -1,3 +1,4 @@
+// Half-Life SDK 2.3 reference copy, not used: the game reads gamedir/syndicate/delta.lst
 // structure name
 // none == no conditional encode routine
 // gamedll routine_name : before transmitting data, invoke the named function from the game .dll to reset fields as needed

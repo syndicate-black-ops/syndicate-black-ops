@@ -1,0 +1,11 @@
+# dark_grunt flag 2 Gag (FGD base Monster): no idle speech: a gagged one (edict #20) makes no voice sound (channel 2) in
+# 120 s near a player; the same monster without the flag (#21) does
+# covers: dark_grunt:2
+map co_fuzz
+spawn dark_grunt targetname gagged spawnflags 2 origin "0 300 0"
+spawn dark_grunt targetname talker spawnflags 0 origin "0 -300 0"
+activate
+connect 1 P1
+frames 1200
+expectnot SOUND #20 dark_grunt ch2 
+expectmin 1 SOUND #21 dark_grunt ch2 

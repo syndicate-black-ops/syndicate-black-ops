@@ -45,6 +45,7 @@ public:
 	void Spawn( void );
 	void Precache( void );
 	void SetYawSpeed( void );
+	void SetActivity( Activity NewActivity );
 	int	 ISoundMask( void );
 	int  Classify ( void );
 	int  IRelationship( CBaseEntity *pTarget );
@@ -383,6 +384,26 @@ void CWerewolf_hunter :: StartTask ( Task_t *pTask )
 
 
 //=========================================================
+// SetActivity - werewolf.mdl has two walk sequences: walk1 has no forward movement (it walks in place), walk2
+// moves. A walk on walk1 never reaches its goal, so ACT_WALK always plays walk2
+//=========================================================
+void CWerewolf_hunter :: SetActivity( Activity NewActivity )
+{
+	CSquadMonster::SetActivity( NewActivity );
+	if ( NewActivity == ACT_WALK && m_flGroundSpeed == 0 )
+	{
+		int iSequence = LookupSequence( "walk2" );
+		if ( iSequence >= 0 )
+		{
+			pev->sequence = iSequence;
+			pev->frame = 0;
+			ResetSequenceInfo();
+			SetYawSpeed();
+		}
+	}
+}
+
+//=========================================================
 // Spawn
 //=========================================================
 void CWerewolf_hunter :: Spawn()
@@ -406,7 +427,9 @@ void CWerewolf_hunter :: Spawn()
 		pev->health		= 2500;
 	pev->view_ofs		= Vector ( 0, 0, 64 );// position of the eyes relative to monster's origin.
 	m_flFieldOfView		= VIEW_FIELD_FULL;
-	m_MonsterState		= MONSTERSTATE_ALERT;
+	// Alert start; with a Target (path_corner) it starts idle, so its idle schedule walks the path
+	if ( FStringNull( pev->target ) )
+		m_MonsterState		= MONSTERSTATE_ALERT;
 	m_afCapability		= bits_CAP_HEAR | bits_CAP_TURN_HEAD | bits_CAP_RANGE_ATTACK2 | bits_CAP_DOORS_GROUP;
 
 	m_voicePitch		= RANDOM_LONG( 85, 110 );
@@ -446,6 +469,10 @@ void CWerewolf_hunter :: Precache()
 
 int CWerewolf_hunter :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	// don't slash one of your own
 	if ((bitsDamageType & DMG_SLASH) && pevAttacker && IRelationship( Instance(pevAttacker) ) < R_DL)
 		return 0;
@@ -687,6 +714,9 @@ void CWerewolf_hunter :: Look ( int iDistance )
 				 !FBitSet( pSightEnt->pev->spawnflags, SF_MONSTER_PRISONER )	&& 
 				 pSightEnt->pev->health > 0 )
 			{
+				// SBO 2.1: "prisonerto" / "ignoredby", as in CBaseMonster::Look (this Look left them out)
+				if ( LookSkips( pSightEnt ) )
+					continue;
 				// SBO 2.0: FL_NOTARGET entities are not seen, as in CBaseMonster::Look
 				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) )
 				{

@@ -31,6 +31,7 @@ extern globalvars_t g_stubGlobals;
 extern DLL_FUNCTIONS g_dll;
 extern NEW_DLL_FUNCTIONS g_newDll;
 extern bool g_stubHaveNewDll;
+extern float g_stubBrushSize[3];	// map-test cases (brushsize): the size SET_MODEL gives "*N" brush models (0 0 0: none)
 extern bool g_stubLoading;	// precaches are allowed (the engine's ss_loading)
 extern int g_stubReports;	// engine-error conditions seen
 extern std::string g_stubAction;	// what the harness is doing (printed with reports and AddressSanitizer errors)

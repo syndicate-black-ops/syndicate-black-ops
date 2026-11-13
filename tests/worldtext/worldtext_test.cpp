@@ -73,9 +73,10 @@ static std::vector<Msg> ServerMessages( int id, const std::string &text, int fla
 {
 	std::vector<Msg> out;
 	size_t pos = 0, left = text.size();
-	while ( left > WORLDTEXT_MAIN_TEXT_BYTES )
+	const size_t main = WORLDTEXT_MAIN_TEXT_BYTES - ( ( flags & WORLDTEXT_FLAG_PARENT ) ? WORLDTEXT_PARENT_BYTES : 0 );
+	while ( left > main )
 	{
-		size_t n = left - WORLDTEXT_MAIN_TEXT_BYTES;
+		size_t n = left - main;
 		if ( n > WORLDTEXT_PART_BYTES )
 			n = WORLDTEXT_PART_BYTES;
 		Msg m;
@@ -107,6 +108,16 @@ static std::vector<Msg> ServerMessages( int id, const std::string &text, int fla
 		PutByte( m.data, 1 );
 		PutByte( m.data, 8 );
 		CHECK( m.data.size() == 3 + WORLDTEXT_HEADER_BYTES - 3 );
+		if ( flags & WORLDTEXT_FLAG_PARENT )
+		{
+			PutShort( m.data, 77 | ( 2 << 11 ) );	// parent 77, attachment 2
+			PutLong( m.data, 8.0f );
+			PutLong( m.data, -4.5f );
+			PutLong( m.data, 32.0f );
+			PutShort( m.data, 0 );
+			PutShort( m.data, 8192 );
+			PutShort( m.data, 0 );
+		}
 		PutString( m.data, text.substr( pos ) );
 	}
 	CHECK( m.data.size() <= 192 );
@@ -401,6 +412,25 @@ static void TestMessages( void )
 		store.OnPart( p.data.data(), (int)p.data.size() );
 	msgs = ServerMessages( 11, RandomText( 140 ) );
 	CHECK( Deliver( store, msgs, state, on ) && state.text.size() == WORLDTEXT_MAX_TEXT - 1 );
+
+	// a text with a parent (movewith): the parent block before the text, round trips of every length
+	for ( int len = 0; len < WORLDTEXT_MAX_TEXT; len += ( len < 400 ? 1 : 7 ) )
+	{
+		std::string text = RandomText( len );
+		std::vector<Msg> pm = ServerMessages( 43, text, WORLDTEXT_FLAG_ON | WORLDTEXT_FLAG_PARENT );
+		CHECK( Deliver( store, pm, state, on ) );
+		CHECK( on && state.text == text && state.parent == ( 77 | ( 2 << 11 ) ) );
+		CHECK( state.localOrigin[0] == 8.0f && state.localOrigin[1] == -4.5f && fabsf( state.localAngles[1] - 45.0f ) < 0.01f );
+	}
+	// a text without one has none
+	msgs = ServerMessages( 44, "plain" );
+	CHECK( Deliver( store, msgs, state, on ) && state.parent == 0 );
+	// a main message cut inside its parent block: refused
+	{
+		Msg pm = ServerMessages( 45, "x", WORLDTEXT_FLAG_ON | WORLDTEXT_FLAG_PARENT ).back();
+		for ( size_t n = WORLDTEXT_HEADER_BYTES; n < (size_t)WORLDTEXT_HEADER_BYTES + WORLDTEXT_PARENT_BYTES; n++ )
+			CHECK( !store.OnMain( pm.data.data(), (int)n, state, on ) );
+	}
 
 	// every truncation of a main message: refused (or, past the header, a shorter text); never a crash
 	Msg m = ServerMessages( 12, "Hello world" ).back();

@@ -1,0 +1,21 @@
+# scripted_sequence (m_fMoveTo 4, spawnflags 0) on a named scientist, triggered; its target fires when the action ends; killtarget of the monster by the script (co_omega17_v3 Coomer)
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist targetname actor origin "0 300 0"
+spawn scripted_sequence targetname ss m_iszEntity actor m_iszPlay idle1 m_fMoveTo 4 spawnflags 0 target ss_done origin "0 320 0"
+spawn trigger_relay targetname ss_done target ss_sink triggerstate 2
+activate
+frames 20
+useent 1 world
+frames 150
+dump 0
+expectn 1 Firing: (ss_done)

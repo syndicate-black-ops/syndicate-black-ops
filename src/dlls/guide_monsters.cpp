@@ -1,6 +1,6 @@
 //=========================================================
 // SBO 2.0: monster and script entities from the Featureful entity guide (see
-// docs/FEATUREFUL_GUIDE_ENTITIES.md): monster_target (+ monster_bullseye, code only), trigger_startpatrol,
+// docs/FEATUREFUL_GUIDE_ENTITIES.md): monster_target, trigger_startpatrol,
 // scripted_schedule, scripted_following.
 // Ported from Featureful (https://github.com/FreeSlave/halflife-featureful, Half-Life 1 SDK license) dlls/monsters.cpp,
 // dlls/triggers.cpp and dlls/scripted.cpp (monster_target and trigger_startpatrol from Spirit of Half-Life).
@@ -24,12 +24,51 @@
 //=========================================================
 // monster_target: an invisible fake monster other monsters see as an enemy of its class ("frags", When active,
 // count as); "Start inactive" (1); On / Off / Toggle switch it. Not solid and takes no damage: shots go past it.
-// Automatic func_tanks shoot at it when it counts as a player or a player ally (GuideMonsterTargets_ForTank).
+// Automatic func_tanks shoot at it when it counts as a player or a player ally (GuideMonsterTargets_NextForTank).
 //=========================================================
 #define SF_MONSTERTARGET_OFF	1
-#define MAX_MONSTER_TARGETS		32
 
-static EHANDLE s_hMonsterTargets[MAX_MONSTER_TARGETS];
+// every monster_target of the map, in spawn order, with no fixed limit: map-placed ones and ones made later (a
+// monstermaker, ...). A removed one leaves a NULL handle, dropped when the list grows. Emptied at worldspawn
+static EHANDLE *s_phMonsterTargets;
+static int s_nMonsterTargets;
+static int s_nMonsterTargetsAlloc;
+
+void GuideMonsterTargets_Reset( void )
+{
+	for ( int i = 0; i < s_nMonsterTargets; i++ )
+		s_phMonsterTargets[i] = NULL;
+	s_nMonsterTargets = 0;
+}
+
+static void GuideMonsterTargets_Add( CBaseEntity *pTarget )
+{
+	if ( s_nMonsterTargets == s_nMonsterTargetsAlloc )
+	{
+		// drop the removed ones first; grow only when the live ones fill the list
+		int n = 0;
+		for ( int i = 0; i < s_nMonsterTargets; i++ )
+		{
+			if ( s_phMonsterTargets[i] != NULL )
+				s_phMonsterTargets[n++] = s_phMonsterTargets[i];
+		}
+		for ( int i = n; i < s_nMonsterTargets; i++ )
+			s_phMonsterTargets[i] = NULL;
+		s_nMonsterTargets = n;
+
+		if ( s_nMonsterTargets == s_nMonsterTargetsAlloc )
+		{
+			int nAlloc = s_nMonsterTargetsAlloc ? s_nMonsterTargetsAlloc * 2 : 32;
+			EHANDLE *pNew = new EHANDLE[nAlloc];
+			for ( int i = 0; i < s_nMonsterTargets; i++ )
+				pNew[i] = s_phMonsterTargets[i];
+			delete[] s_phMonsterTargets;
+			s_phMonsterTargets = pNew;
+			s_nMonsterTargetsAlloc = nAlloc;
+		}
+	}
+	s_phMonsterTargets[s_nMonsterTargets++] = pTarget;
+}
 
 class CMonsterTarget : public CBaseEntity
 {
@@ -37,16 +76,40 @@ public:
 	void Spawn( void );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	int Classify( void ) { return (int)pev->frags; }
+	// SBO 2.1 (Spirit of Half-Life): On while active (monsters see it), Off while inactive
+	STATE GetState( CBaseEntity *pActivator ) { return pev->health > 0 ? STATE_ON : STATE_OFF; }
 	virtual int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
+
+	BOOL m_bClassSet;	// the map gave "frags" (MonsterTarget_PreEntvarsKeyValue); read by Spawn only, not saved
 };
 
 LINK_ENTITY_TO_CLASS( monster_target, CMonsterTarget );
-LINK_ENTITY_TO_CLASS( monster_bullseye, CMonsterTarget );	// Featureful: for parity with Source's npc_bullseye
+
+// SBO 2.0: "frags" is an entity field, so the class's KeyValue never sees it: note here that the map gave it, so a
+// monster_target without it counts as the FGD default (Player ally) while an explicit 0 stays Ignored
+BOOL MonsterTarget_PreEntvarsKeyValue( edict_t *pent, KeyValueData *pkvd )
+{
+	if ( !pkvd->szClassName || strcmp( pkvd->szClassName, "monster_target" ) || !FStrEq( pkvd->szKeyName, "frags" ) )
+		return FALSE;
+	CBaseEntity *pEntity = (CBaseEntity *)GET_PRIVATE( pent );
+	if ( !pEntity || !FClassnameIs( pEntity->pev, "monster_target" ) )
+		return FALSE;
+	const char *pValue = pkvd->szValue ? pkvd->szValue : "";
+	while ( *pValue == ' ' || *pValue == '\t' )
+		pValue++;
+	if ( !*pValue )
+	{
+		pkvd->fHandled = TRUE;	// blank: as left out
+		return TRUE;
+	}
+	( (CMonsterTarget *)pEntity )->m_bClassSet = TRUE;
+	return FALSE;
+}
 
 void CMonsterTarget::Spawn( void )
 {
-	if ( pev->frags < CLASS_NONE || pev->frags > CLASS_ALIEN_BIOWEAPON )
-		pev->frags = CLASS_PLAYER_ALLY;	// the FGD default
+	if ( !m_bClassSet || pev->frags < CLASS_NONE || pev->frags > CLASS_ALIEN_BIOWEAPON )
+		pev->frags = CLASS_PLAYER_ALLY;	// the FGD default (left out or out of range; 0 is Ignored)
 	pev->health = ( pev->spawnflags & SF_MONSTERTARGET_OFF ) ? 0 : 1;	// alive while active: monsters see it
 	pev->solid = SOLID_NOT;
 	pev->movetype = MOVETYPE_NONE;
@@ -54,15 +117,7 @@ void CMonsterTarget::Spawn( void )
 	SetBits( pev->flags, FL_MONSTER );
 	UTIL_SetOrigin( pev, pev->origin );
 
-	// the tanks' list (old maps' handles are stale: their slots are reused)
-	for ( int i = 0; i < MAX_MONSTER_TARGETS; i++ )
-	{
-		if ( s_hMonsterTargets[i] == NULL )
-		{
-			s_hMonsterTargets[i] = this;
-			break;
-		}
-	}
+	GuideMonsterTargets_Add( this );	// the tanks' list
 }
 
 void CMonsterTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
@@ -71,19 +126,18 @@ void CMonsterTarget::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		pev->health = pev->health > 0 ? 0 : 1;
 }
 
-int GuideMonsterTargets_ForTank( CBaseEntity **pList, int iMax )
+CBaseEntity *GuideMonsterTargets_NextForTank( int &iCursor )
 {
-	int n = 0;
-	for ( int i = 0; i < MAX_MONSTER_TARGETS && n < iMax; i++ )
+	while ( iCursor >= 0 && iCursor < s_nMonsterTargets )
 	{
-		CBaseEntity *pEnt = s_hMonsterTargets[i];
+		CBaseEntity *pEnt = s_phMonsterTargets[iCursor++];
 		if ( !pEnt || pEnt->pev->health <= 0 )
 			continue;
 		int cls = pEnt->Classify();
 		if ( cls == CLASS_PLAYER || cls == CLASS_PLAYER_ALLY )
-			pList[n++] = pEnt;
+			return pEnt;
 	}
-	return n;
+	return NULL;
 }
 
 // a monster free for an entity to steer: alive, not in a script, idle / alert / hunting (Featureful
@@ -256,12 +310,15 @@ static Task_t tlGuideWalkAway[] =
 	{ TASK_WAIT_FOR_MOVEMENT, (float)0 },
 	{ TASK_STOP_MOVING, (float)0 },
 };
+// investigate: stop and look, then the route to the spot again (TASK_STOP_MOVING cleared the one Suggest built), as
+// Featureful's tlInvestigateSpot gets its path after stopping
 static Task_t tlGuideInvestigate[] =
 {
 	{ TASK_SET_FAIL_SCHEDULE, (float)SCHED_IDLE_STAND },
 	{ TASK_STOP_MOVING, (float)0 },
 	{ TASK_FACE_LASTPOSITION, (float)0 },
 	{ TASK_WAIT, (float)1 },
+	{ TASK_GET_PATH_TO_LASTPOSITION, (float)0 },
 	{ TASK_WALK_PATH, (float)0 },
 	{ TASK_WAIT_FOR_MOVEMENT, (float)0 },
 	{ TASK_STOP_MOVING, (float)0 },
@@ -443,6 +500,10 @@ BOOL CScriptedSchedule::Suggest( CBaseMonster *pMonster, CBaseEntity *pSpot )
 	{
 		if ( Guide_IsSuggestedSchedule( pMonster->m_pSchedule ) )
 		{
+			// stop on the spot: the idle schedule of a talking monster that has not greeted a player yet
+			// (slIdleHello) does not stop moving, so the route would be walked to its end
+			pMonster->RouteClear();
+			pMonster->Stop();
 			pMonster->ClearSchedule();
 			pMonster->ChangeSchedule( pMonster->GetScheduleOfType( SCHED_IDLE_STAND ) );
 		}
@@ -667,6 +728,8 @@ int CScriptedFollowing::MakeFollowing( CBasePlayer *pPlayer, USE_TYPE useType )
 		{
 			if ( following )
 				result = FOLLOWING_NOCHANGE;
+			else if ( !pTalk->ScriptedFollowAllowed() )
+				result = FOLLOWING_NOCHANGE;	// SBO's follow rule, as scripted_sentence's Follow action: a barney only as a player ally with a Followage policy set
 			else
 			{
 				pTalk->LimitFollowers( pPlayer, 1 );

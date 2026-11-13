@@ -31,6 +31,7 @@
 #include "../hud_iface.h"
 #include "../com_weapons.h"
 #include "../demo.h"
+#include "movewith_client.h"	// SBO 2.0: entity parenting
 
 extern globalvars_t *gpGlobals;
 extern int g_iUser1;
@@ -45,7 +46,7 @@ static CBasePlayer	player;
 // Local version of game .dll global variables ( time, etc. )
 static globalvars_t	Globals; 
 
-static CBasePlayerWeapon *g_pWpns[ 32 ];
+static CBasePlayerWeapon *g_pWpns[ MAX_WEAPONS ];	// SBO 2.1: weapon ids 0..63 (Half-Life Unified SDK)
 
 // SBO's client has no g_flApplyVel / g_irunninggausspred (gauss prediction; not in client.dll's .bss)
 
@@ -78,7 +79,8 @@ CSw g_Sw;
 ======================
 AlertMessage
 
-Print debug messages to console
+Print debug messages to console: only with developer 1 or 2 (at_aiconsole: developer 2), as the engine's
+AlertMessage does on the server
 ======================
 */
 void AlertMessage( ALERT_TYPE atype, char *szFmt, ... )
@@ -86,12 +88,15 @@ void AlertMessage( ALERT_TYPE atype, char *szFmt, ... )
 	va_list		argptr;
 	static char	string[1024];
 	
-	va_start (argptr, szFmt);
-	vsprintf (string, szFmt,argptr);
-	va_end (argptr);
+	if ( atype == at_aiconsole && gEngfuncs.pfnGetCvarFloat( "developer" ) < 2.0f )
+		return;
 
-	gEngfuncs.Con_Printf( "cl:  " );
-	gEngfuncs.Con_Printf( string );
+	va_start (argptr, szFmt);
+	vsnprintf (string, sizeof( string ), szFmt,argptr);
+	va_end (argptr);
+	string[ sizeof( string ) - 1 ] = 0;
+
+	gEngfuncs.Con_DPrintf( "cl:  %s", string );
 }
 
 //Returns if it's multiplayer.
@@ -134,7 +139,11 @@ void HUD_PrepEntity( CBaseEntity *pEntity, CBasePlayer *pWeaponOwner )
 		((CBasePlayerWeapon *)pEntity)->GetItemInfo( &info );
 
 		if ( info.iId >= 0 && info.iId < MAX_WEAPONS )	// Robustness: g_pWpns has MAX_WEAPONS slots
+		{
 			g_pWpns[ info.iId ] = (CBasePlayerWeapon *)pEntity;
+			// halflife-updated: the item info the predicted weapons read (iMaxClip() for the reload, pszAmmo1(), iFlags())
+			CBasePlayerItem::ItemInfoArray[ info.iId ] = info;
+		}
 	}
 }
 
@@ -346,16 +355,14 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 {
 	if ((m_fInReload) && (m_pPlayer->m_flNextAttack <= 0.0))
 	{
-#if 0 // FIXME, need ammo on client to make this work right
-		// complete the reload. 
-		int j = min( iMaxClip() - m_iClip, m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType]);	
+		// halflife-updated (weapons_shared.cpp): complete the reload as the server does, with the reserve the server
+		// sends (vuser4), so the predicted clip and the server's agree
+		int j = min( iMaxClip() - m_iClip, m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] );
 
 		// Add them to the clip
 		m_iClip += j;
 		m_pPlayer->m_rgAmmo[m_iPrimaryAmmoType] -= j;
-#else	
-		m_iClip += 10;
-#endif
+
 		m_fInReload = FALSE;
 	}
 
@@ -371,8 +378,11 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 			m_fFireOnEmpty = TRUE;
 		}
 
+		// halflife #3252: the next shot counts from the time this one was due (GetNextAttackDelay), as on the server
+		m_flFireLateness = FireLateness( m_flNextSecondaryAttack );
 		if ( !fFrozen )
 			SecondaryAttack();
+		m_flFireLateness = 0;
 		m_pPlayer->pev->button &= ~IN_ATTACK2;
 	}
 	else if ((m_pPlayer->pev->button & IN_ATTACK) && ((static_cast<int>(floor(m_flNextPrimaryAttack * 1000.0)) * 1000.0) <= 0.0))
@@ -383,8 +393,10 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 			m_fFireOnEmpty = TRUE;
 		}
 
+		m_flFireLateness = FireLateness( m_flNextPrimaryAttack );
 		if ( !fFrozen )
 			PrimaryAttack();
+		m_flFireLateness = 0;
 	}
 	else if ( m_pPlayer->pev->button & IN_RELOAD && iMaxClip() != WEAPON_NOCLIP && !m_fInReload && !fFrozen ) 
 	{
@@ -556,6 +568,7 @@ void UTIL_ParticleBoxes( void )
 	player = gEngfuncs.GetLocalPlayer();
 	// Now add in all of the players.
 	gEngfuncs.pEventAPI->EV_SetSolidPlayers ( player->index - 1 );	
+	MoveWith_EventPhysents();	// SBO 2.0 movewith: placed solid children where they are drawn
 
 	for ( idx = 1; idx < 100; idx++ )
 	{
@@ -733,6 +746,8 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 
 	// Get current clock
 	gpGlobals->time = time;
+	// the command's length, as the server's gpGlobals->frametime while it runs this command (FireLateness)
+	gpGlobals->frametime = cmd->msec / 1000.0;
 
 	const char *pszInfiniteAmmo = gEngfuncs.PhysInfo_ValueForKey( "ia" );
 	g_fInfiniteAmmo = ( pszInfiniteAmmo && atoi( pszInfiniteAmmo ) != 0 ) ? TRUE : FALSE;
@@ -844,7 +859,7 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	if ( !pWeapon )
 		return;
 
-	for ( i = 0; i < 32; i++ )
+	for ( i = 0; i < MAX_WEAPONS; i++ )
 	{
 		pCurrent = g_pWpns[ i ];
 		if ( !pCurrent )
@@ -957,7 +972,7 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 	to->client.m_iId					= from->client.m_iId;
 
 	// Now see if we issued a changeweapon command ( and we're not dead )
-	if ( cmd->weaponselect && ( player.pev->deadflag != ( DEAD_DISCARDBODY + 1 ) ) )
+	if ( cmd->weaponselect && cmd->weaponselect < MAX_WEAPONS && ( player.pev->deadflag != ( DEAD_DISCARDBODY + 1 ) ) )	// SBO 2.1: weapondata has MAX_WEAPONS entries
 	{
 		// Switched to a different weapon?
 		if ( from->weapondata[ cmd->weaponselect ].m_iId == cmd->weaponselect )
@@ -1017,7 +1032,7 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 		HUD_SendWeaponAnim( to->client.weaponanim, body, 1 );
 	}
 
-	for ( i = 0; i < 32; i++ )
+	for ( i = 0; i < MAX_WEAPONS; i++ )
 	{
 		pCurrent = g_pWpns[ i ];
 
@@ -1073,9 +1088,10 @@ void HUD_WeaponsPostThink( local_state_s *from, local_state_s *to, usercmd_t *cm
 			pto->m_flNextPrimaryAttack = -1.0;
 		}
 
-		if ( pto->m_flNextSecondaryAttack < -0.001 )
+		// halflife #3252: down to -1 s like the primary's, so a secondary shot's lateness is known (FireLateness)
+		if ( pto->m_flNextSecondaryAttack < -1.0 )
 		{
-			pto->m_flNextSecondaryAttack = -0.001;
+			pto->m_flNextSecondaryAttack = -1.0;
 		}
 
 		if ( pto->m_flTimeWeaponIdle < -0.001 )

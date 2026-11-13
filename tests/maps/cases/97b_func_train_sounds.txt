@@ -1,0 +1,73 @@
+# func_train Move Sound / Stop Sound (FGD PlatSounds): each value plays its own file while the train moves and when
+# it stops (1 big elev 1 plats/bigmove1 ... 13 odd elev 2 plats/talkmove2; stop 1 plats/bigstop1 ... 8 plats/talkstop1;
+# 0 No Sound: common/null.wav). One train per value, each running one 64 unit leg
+# covers: func_train.movesnd func_train.stopsnd func_train.movesnd=0 func_train.movesnd=1 func_train.movesnd=2 func_train.movesnd=3 func_train.movesnd=4 func_train.movesnd=5 func_train.movesnd=6 func_train.movesnd=7 func_train.movesnd=8 func_train.movesnd=9 func_train.movesnd=10 func_train.movesnd=11 func_train.movesnd=12 func_train.movesnd=13 func_train.stopsnd=0 func_train.stopsnd=1 func_train.stopsnd=2 func_train.stopsnd=3 func_train.stopsnd=4 func_train.stopsnd=5 func_train.stopsnd=6 func_train.stopsnd=7 func_train.stopsnd=8
+map co_fuzz
+brushsize 64 64 64
+spawn func_train model *1 target a0 speed 640 movesnd 0 stopsnd 0
+spawn path_corner targetname a0 origin "0 0 0" target b0
+spawn path_corner targetname b0 origin "0 64 0"
+spawn func_train model *2 target a1 speed 640 movesnd 1 stopsnd 1
+spawn path_corner targetname a1 origin "200 0 0" target b1
+spawn path_corner targetname b1 origin "200 64 0"
+spawn func_train model *3 target a2 speed 640 movesnd 2 stopsnd 2
+spawn path_corner targetname a2 origin "400 0 0" target b2
+spawn path_corner targetname b2 origin "400 64 0"
+spawn func_train model *4 target a3 speed 640 movesnd 3 stopsnd 3
+spawn path_corner targetname a3 origin "600 0 0" target b3
+spawn path_corner targetname b3 origin "600 64 0"
+spawn func_train model *5 target a4 speed 640 movesnd 4 stopsnd 4
+spawn path_corner targetname a4 origin "800 0 0" target b4
+spawn path_corner targetname b4 origin "800 64 0"
+spawn func_train model *6 target a5 speed 640 movesnd 5 stopsnd 5
+spawn path_corner targetname a5 origin "1000 0 0" target b5
+spawn path_corner targetname b5 origin "1000 64 0"
+spawn func_train model *7 target a6 speed 640 movesnd 6 stopsnd 6
+spawn path_corner targetname a6 origin "1200 0 0" target b6
+spawn path_corner targetname b6 origin "1200 64 0"
+spawn func_train model *8 target a7 speed 640 movesnd 7 stopsnd 7
+spawn path_corner targetname a7 origin "1400 0 0" target b7
+spawn path_corner targetname b7 origin "1400 64 0"
+spawn func_train model *9 target a8 speed 640 movesnd 8 stopsnd 8
+spawn path_corner targetname a8 origin "1600 0 0" target b8
+spawn path_corner targetname b8 origin "1600 64 0"
+spawn func_train model *10 target a9 speed 640 movesnd 9 stopsnd 1
+spawn path_corner targetname a9 origin "1800 0 0" target b9
+spawn path_corner targetname b9 origin "1800 64 0"
+spawn func_train model *11 target a10 speed 640 movesnd 10 stopsnd 2
+spawn path_corner targetname a10 origin "2000 0 0" target b10
+spawn path_corner targetname b10 origin "2000 64 0"
+spawn func_train model *12 target a11 speed 640 movesnd 11 stopsnd 3
+spawn path_corner targetname a11 origin "2200 0 0" target b11
+spawn path_corner targetname b11 origin "2200 64 0"
+spawn func_train model *13 target a12 speed 640 movesnd 12 stopsnd 4
+spawn path_corner targetname a12 origin "2400 0 0" target b12
+spawn path_corner targetname b12 origin "2400 64 0"
+spawn func_train model *14 target a13 speed 640 movesnd 13 stopsnd 5
+spawn path_corner targetname a13 origin "2600 0 0" target b13
+spawn path_corner targetname b13 origin "2600 64 0"
+activate
+connect 1 P1
+frames 20
+expect ch6 plats/bigmove1.wav vol=0.85
+expect ch6 plats/bigmove2.wav vol=0.85
+expect ch6 plats/elevmove1.wav vol=0.85
+expect ch6 plats/elevmove2.wav vol=0.85
+expect ch6 plats/elevmove3.wav vol=0.85
+expect ch6 plats/freightmove1.wav vol=0.85
+expect ch6 plats/freightmove2.wav vol=0.85
+expect ch6 plats/heavymove1.wav vol=0.85
+expect ch6 plats/rackmove1.wav vol=0.85
+expect ch6 plats/railmove1.wav vol=0.85
+expect ch6 plats/squeekmove1.wav vol=0.85
+expect ch6 plats/talkmove1.wav vol=0.85
+expect ch6 plats/talkmove2.wav vol=0.85
+expectn 2 ch2 plats/bigstop1.wav vol=0.85
+expectn 2 ch2 plats/bigstop2.wav vol=0.85
+expectn 2 ch2 plats/freightstop1.wav vol=0.85
+expectn 2 ch2 plats/heavystop2.wav vol=0.85
+expectn 2 ch2 plats/rackstop1.wav vol=0.85
+expectn 1 ch2 plats/railstop1.wav vol=0.85
+expectn 1 ch2 plats/squeekstop1.wav vol=0.85
+expectn 1 ch2 plats/talkstop1.wav vol=0.85
+expect ch6 common/null.wav vol=0.85

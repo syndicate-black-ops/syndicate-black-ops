@@ -1,0 +1,55 @@
+# master on func_button, func_rot_button, func_door, func_door_rotating and func_water (FGD "master"): used by a player
+# while the master is shut they do nothing (no target fired, the door does not move); after it opens they fire
+# their targets and the doors move
+# covers: func_button.master func_rot_button.master func_door.master func_door_rotating.master func_water.master func_door.target func_button.target
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn func_button model *1 target button_out master lock spawnflags 1 wait 1
+spawn func_rot_button model *2 target rot_out master lock spawnflags 1 wait 1
+spawn func_door model *3 target door_out master lock speed 1000 lip 0 wait -1
+spawn func_door_rotating model *4 target rdoor_out master lock speed 1000 distance 90 wait -1
+spawn func_water model *5 target water_out master lock speed 1000 wait -1
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark locked
+useclient 2 1
+useclient 3 1
+useclient 4 1
+useclient 5 1
+useclient 6 1
+frames 20
+expectnot Firing: (button_out)
+expectnot Firing: (rot_out)
+expectnot Firing: (door_out)
+expectnot Firing: (rdoor_out)
+expectnot Firing: (water_out)
+dump 4
+mark open
+fire key
+frames 1
+useclient 2 1
+useclient 3 1
+useclient 4 1
+useclient 5 1
+useclient 6 1
+frames 30
+expectn 1 Firing: (button_out)
+expectn 1 Firing: (rot_out)
+expectn 1 Firing: (door_out)
+expectn 1 Firing: (rdoor_out)
+expectn 1 Firing: (water_out)
+dump 4

@@ -1,0 +1,31 @@
+# monstermaker "Children's TriggerTarget" / "Children's Trigger Condition" 4 Death (Featureful, FGD): every child
+# gets the maker's TriggerTarget and condition, so each child's death fires it once (two children: twice). 1.38
+# reads neither key: its children fire nothing
+# covers: monstermaker.childtriggertarget monstermaker.childtriggercondition=4 monstermaker.monstertype monstermaker.monstercount
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk monstertype monster_scientist monstercount 2 m_imaxlivechildren 1 delay 1 childtriggertarget child_died childtriggercondition 4 origin "0 500 0"
+spawn trigger_hurt model *1 dmg 1000000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useent 0 world
+frames 30
+touchclass 1 monster_scientist
+frames 60
+count monster_scientist
+expectn 1 Firing: (child_died)
+touchclass 1 monster_scientist
+frames 60
+expectn 2 Firing: (child_died)

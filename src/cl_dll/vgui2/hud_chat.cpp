@@ -349,7 +349,7 @@ void OpenChatURL(const char *url)
 
 	char msg[MAX_CHAT_URL_LEN + 32];
 	snprintf(msg, sizeof(msg), "Opening %s\n", url);
-	sbo::ConsolePrint(msg);
+	sbo::DevPrint(msg);
 
 	// BHL: HUD_Init activates it; the scoreboard does the same (idempotent)
 	ClientSteamContext().Activate();
@@ -1075,7 +1075,7 @@ void CHudChat::Init(void)
 		if (!sbo::ReplaceEngineCommand("messagemode", &MessageModeVGUI2, &s_pfnEngineMsgMode)
 		    || !sbo::ReplaceEngineCommand("messagemode2", &MessageMode2VGUI2, &s_pfnEngineMsgMode2))
 		{
-			sbo::ConsolePrint("Failed to hook messagemode and messagemode2\n");
+			sbo::DevPrint("Failed to hook messagemode and messagemode2\n");
 		}
 	}
 

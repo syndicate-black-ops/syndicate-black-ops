@@ -23,7 +23,9 @@ def node_grid(t, step=96, lo=-200, hi=200):
 # ---------------------------------------------------------------------------------------------- monster_human_grunt
 # ---------------------------------------------------------------------------------------------- barney / scientist
 @S.test('talk monster "suspicious": a player-ally barney and a scientist with the key dislike the player, without '
-        'it the barney is his ally; a hostile barney with it still hates him', players=1, doc=DOC)
+        'it the barney is his ally; a hostile barney with it still hates him', players=1, doc=DOC,
+        covers=('monster_barney', 'monster_barney.suspicious=1', 'monster_barney.is_player_ally=1', 'monster_scientist',
+                'monster_scientist.suspicious=1'))
 def talk_suspicious(t):
     t.flags('player1', '+FL_NOTARGET')
     # Prisoner (16): they see nobody, so the hostile one does not fight the others (IRelationship is the same)
@@ -54,7 +56,8 @@ def hit_facing(t, name, at, label, hits=1):
 
 
 @S.test('talk monster "tolerance": Absolute keeps a player-ally barney friendly after three hits by a player facing '
-        'it; Default (HL) is provoked by one', players=1, doc=DOC)
+        'it; Default (HL) is provoked by one', players=1, doc=DOC,
+        covers=('monster_barney', 'monster_barney.tolerance=5'))
 def talk_tolerance_barney(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_barney', targetname='babs', at=(-150, 150, 0), angles='0 270 0', is_player_ally='1',
@@ -69,7 +72,8 @@ def talk_tolerance_barney(t):
 
 
 @S.test('talk monster "tolerance" Average on a scientist: two hits by a player facing him do not provoke him, the '
-        'third does; Default (HL): the first does', players=1, doc=DOC)
+        'third does; Default (HL): the first does', players=1, doc=DOC,
+        covers=('monster_scientist', 'monster_scientist.tolerance=3'))
 def talk_tolerance_scientist(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='savg', at=(-150, 150, 0), angles='0 270 0', tolerance='3',
@@ -97,26 +101,29 @@ def friends_watch(t, victim_kv, watcher_kv=None):
     t.snap('s', 'watcher', 'rel')
 
 
-@S.test('talk monster "alert_friends" Never: killing it does not provoke the barney next to it', players=1, doc=DOC)
+@S.test('talk monster "alert_friends" Never: killing it does not provoke the barney next to it', players=1, doc=DOC,
+        covers=('monster_barney', 'monster_barney.alert_friends=3'))
 def talk_alert_never(t):
     friends_watch(t, {'alert_friends': '3'})
     t.expect.value('s', 'watcher', 'rel', R_AL)
 
 
-@S.test('talk monster "alert_friends" Default (HL): killing it provokes the barney next to it', players=1, doc=DOC)
+@S.test('talk monster "alert_friends" Default (HL): killing it provokes the barney next to it', players=1, doc=DOC,
+        covers=('monster_barney',))
 def talk_alert_default(t):
     friends_watch(t, {})
     t.expect.value('s', 'watcher', 'rel', R_HT)
 
 
 @S.test('talk monster "tolerance" Absolute, don\'t alert friends: killing it does not provoke the barney next to it',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('monster_barney', 'monster_barney.tolerance=6'))
 def talk_tolerance_no_alerts(t):
     friends_watch(t, {'tolerance': '6'})
     t.expect.value('s', 'watcher', 'rel', R_AL)
 
 
-@S.test('talk monster "tolerance" Absolute on the watcher: a friend killed next to it does not provoke it', players=1, doc=DOC)
+@S.test('talk monster "tolerance" Absolute on the watcher: a friend killed next to it does not provoke it', players=1, doc=DOC,
+        covers=('monster_barney', 'monster_barney.tolerance=5'))
 def talk_tolerance_not_alertable(t):
     friends_watch(t, {}, {'tolerance': '5'})
     t.expect.value('s', 'watcher', 'rel', R_AL)
@@ -129,7 +136,8 @@ def use_on(t, name, label):
 
 
 @S.test('talk monster "RefusalSentence": a pre-disaster scientist refusing +use says that group (SC_SCARED); "null" '
-        'says nothing; unset: SC_POK (HL)', players=1, doc=DOC)
+        'says nothing; unset: SC_POK (HL)', players=1, doc=DOC,
+        covers=('monster_scientist', 'monster_scientist.RefusalSentence', 'monster_scientist:256'))
 def talk_refusal_sentence(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='sref', at=(-150, 150, 0), angles='0 270 0', spawnflags='256',
@@ -149,7 +157,7 @@ def talk_refusal_sentence(t):
 
 
 @S.test('talk monster "SpeakAs" SC: a player-ally barney says the scientist line SC_OK when he starts following '
-        '(a barney without it says BA_OK)', players=1, doc=DOC)
+        '(a barney without it says BA_OK)', players=1, doc=DOC, covers=('monster_barney', 'monster_barney.SpeakAs'))
 def talk_speak_as(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_barney', targetname='bsc', at=(-100, 150, 0), angles='0 270 0', is_player_ally='1',
@@ -165,7 +173,7 @@ def talk_speak_as(t):
 
 
 @S.test('monster_barney "bodystate" Gun Drawn: body 1 (the pistol in his hand) from the start; default holstered (0)',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('monster_barney', 'monster_barney.bodystate=1'))
 def barney_bodystate(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_barney', targetname='bdrawn', at=(-100, 150, 0), angles='0 270 0', bodystate='1',
@@ -184,7 +192,7 @@ def apache(t, name, at, **kv):
 
 
 @S.test('monster_apache "rotorvolume" 0.3: its rotor sound plays at volume 0.3; without the key at full volume',
-        size=(512, 512, 1024), players=1, doc=DOC)
+        size=(512, 512, 1024), players=1, doc=DOC, covers=('monster_apache', 'monster_apache.rotorvolume'))
 def apache_rotor_volume(t):
     t.flags('player1', '+FL_NOTARGET')
     apache(t, 'aquiet', (-150, 0, 500), rotorvolume='0.3', spawnflags='4')
@@ -199,7 +207,8 @@ def apache_rotor_volume(t):
 
 
 @S.test('monster_apache "m_iObeyTriggerMode" 1: Off does not start a waiting apache, On does, Off stops it (rotor '
-        'sound stopped); without the key a second trigger does nothing', size=(512, 512, 1024), players=1, doc=DOC)
+        'sound stopped); without the key a second trigger does nothing', size=(512, 512, 1024), players=1, doc=DOC,
+        covers=('monster_apache', 'monster_apache:4', 'monster_apache.m_iObeyTriggerMode=1'))
 def apache_obey_trigger(t):
     t.flags('player1', '+FL_NOTARGET')
     apache(t, 'aobey', (-150, 0, 500), m_iObeyTriggerMode='1', spawnflags='4')
@@ -225,7 +234,9 @@ def apache_obey_trigger(t):
 # ---------------------------------------------------------------------------------------------- monster_osprey
 @S.test('monster_osprey "num" 2, "trigger_on_deploy", "trigger_on_deploy_grunt": four grunts died, the osprey drops '
         'two; its deploy target fires once (activator: the osprey), the grunt target once per grunt (activator: '
-        'the grunt)', size=(512, 512, 1024), players=1, doc=DOC)
+        'the grunt)', size=(512, 512, 1024), players=1, doc=DOC,
+        covers=('monster_osprey', 'monster_osprey.num', 'monster_osprey.trigger_on_deploy',
+                'monster_osprey.trigger_on_deploy_grunt'))
 def osprey_num_triggers(t):
     t.flags('player1', '+FL_NOTARGET')
     t.teleport('player1', (220, -220, 0))
@@ -252,7 +263,8 @@ def osprey_num_triggers(t):
 
 @S.test('monster_osprey "num" 2 on a closed path with no corner of speed 400 or more: after the second drop (all '
         'four grunt slots alive) it flies on around the loop (the server does not hang in its path walk)',
-        size=(512, 512, 1024), players=1, doc=DOC)
+        size=(512, 512, 1024), players=1, doc=DOC,
+        covers=('monster_osprey', 'monster_osprey.num', 'monster_osprey.trigger_on_deploy'))
 def osprey_closed_slow_path(t):
     t.flags('player1', '+FL_NOTARGET')
     t.teleport('player1', (220, -220, 0))
@@ -314,7 +326,8 @@ def make_wait_test(key, classname):
 
     waits_until_provoked.__name__ = 'waits_until_provoked_' + key
     S.test('%s flag 64 "wait until provoked": it ignores the player in view until he hurts it, then attacks him'
-           % classname, players=1, doc='FEATUREFUL_OPTIONS.md#monstermaker-batch-3')(waits_until_provoked)
+           % classname, players=1, doc='FEATUREFUL_OPTIONS.md#monstermaker-batch-3',
+           covers=(classname, classname + ':64'))(waits_until_provoked)
 
 
 def tough(t, player='player1', hp='100000'):
@@ -338,7 +351,8 @@ def maker(t, name, cls='monster_scientist', at=(0, 0, 0), flags=4, **kv):
 
 
 @S.test('monstermaker "spawndelay" 1.5: its target fires (the child appears) 1.5 s after the trigger, not at once; '
-        'without the key at once', players=1, doc=MAKER)
+        'without the key at once', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.spawndelay', 'monstermaker.target'))
 def maker_spawndelay(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mdel', at=(-120, 0, 0), spawndelay='1.5', target='mdel_out')
@@ -357,7 +371,7 @@ def maker_spawndelay(t):
 
 
 @S.test('monstermaker "delay_after_blocked" 0.5: with the spot taken it tries again 0.5 s later (not after its '
-        'Frequency of 10 s)', players=1, doc=MAKER)
+        'Frequency of 10 s)', players=1, doc=MAKER, covers=('monstermaker', 'monstermaker.delay_after_blocked'))
 def maker_delay_after_blocked(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='blocker', at=(0, 0, 0), spawnflags='16')
@@ -374,7 +388,8 @@ def maker_delay_after_blocked(t):
 
 
 @S.test('monstermaker "classify" 11 (player ally) and "respawn_as_playerally": the made grunt and barney are allies '
-        'of the player; a grunt from a maker without them hates him', players=1, doc=MAKER)
+        'of the player; a grunt from a maker without them hates him', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.classify=11', 'monstermaker.respawn_as_playerally=1'))
 def maker_classify(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mcls', cls='monster_human_grunt', at=(-150, 0, 0), classify='11')
@@ -395,7 +410,9 @@ def maker_classify(t):
         'body: head 2, gun 1), joins the squad of the leader another maker makes with the same squadname and ignores '
         'damage from an allied grunt; a grunt from a maker without the keys has 9mmAR + HG (body 0), no squad and '
         'takes it',
-        players=1, doc='dev/sdk-update/server-ai.md')
+        players=1, doc='dev/sdk-update/server-ai.md',
+        covers=('monstermaker', 'monstermaker.weapons=10', 'monstermaker.squadname', 'monstermaker.Ff=1',
+                'monstermaker.childspawnflags'))
 def maker_child_keys(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mwpn', cls='monster_human_grunt', at=(-150, 0, 0), weapons='10', squadname='mk_squad', Ff='1')
@@ -429,7 +446,7 @@ def maker_child_keys(t):
 
 
 @S.test('monstermaker "yawdeviation" 90: each child faces the maker\'s angle turned by at most 90 degrees', players=1,
-        doc=MAKER)
+        doc=MAKER, covers=('monstermaker', 'monstermaker.yawdeviation'))
 def maker_yawdeviation(t):
     t.flags('player1', '+FL_NOTARGET')
     for k in range(4):
@@ -447,7 +464,9 @@ def maker_yawdeviation(t):
 
 
 @S.test('monstermaker "target_activator": 2 the child is the activator of its target, 3 the activator that fired '
-        'the maker; default the maker', players=1, doc=MAKER)
+        'the maker; default the maker', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.target', 'monstermaker.target_activator=2',
+                'monstermaker.target_activator=3'))
 def maker_target_activator(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mta2', at=(-150, 0, 0), target='mta2_out', target_activator='2')
@@ -465,7 +484,7 @@ def maker_target_activator(t):
 
 
 @S.test('monstermaker "trigger_on_death_notice": fired (activator: the maker) when its child dies', players=1,
-        doc=MAKER)
+        doc=MAKER, covers=('monstermaker', 'monstermaker.trigger_on_death_notice'))
 def maker_death_notice(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mdn', trigger_on_death_notice='mdn_dead')
@@ -479,8 +498,10 @@ def maker_death_notice(t):
     t.expect.fired('mdn_dead', count=1, activator='@monstermaker', after='kill')
 
 
-@S.test('monstermaker flags 16 Prisoner, 256 Pre-Disaster, 8192 (monster flag 64), 32768, 65536, 524288, 1048576 and '
-        '"gag": the child has them', players=1, doc=MAKER)
+@S.test('monstermaker flags 16 Prisoner, 256 Pre-Disaster, 8192 (monster flag 64), 32768 (not in the FGD), 65536, 524288, 1048576 and '
+        '"gag": the child has them', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker:16', 'monstermaker:256', 'monstermaker:8192',
+                'monstermaker:65536', 'monstermaker:524288', 'monstermaker:1048576', 'monstermaker.gag=1'))
 def maker_child_flags(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mfl', flags=4 | 16 | 256 | 8192 | 32768 | 65536 | 524288 | 1048576, gag='1')
@@ -496,7 +517,7 @@ def maker_child_flags(t):
 
 
 @S.test('monstermaker flag 256 Pre-Disaster seen: its scientist refuses +use (SC_POK); a stock child follows', players=1,
-        doc=MAKER)
+        doc=MAKER, covers=('monstermaker', 'monstermaker:256'))
 def maker_predisaster_use(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mpd', at=(-120, 0, 0), flags=4 | 256)
@@ -518,7 +539,8 @@ def maker_predisaster_use(t):
 
 
 @S.test('monstermaker flag 65536 Non-solid corpse: its dead child is not solid; a stock child\'s corpse is (makers with '
-        'Number of Monsters 1: other makers\' corpses fade out, not solid anyway)', players=1, doc=MAKER)
+        'Number of Monsters 1: other makers\' corpses fade out, not solid anyway)', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker:65536'))
 def maker_nonsolid_corpse(t):
     t.flags('player1', '+FL_NOTARGET')
     maker(t, 'mns', cls='monster_zombie', at=(-120, 0, 0), flags=4 | 65536, monstercount='1')
@@ -538,7 +560,8 @@ def maker_nonsolid_corpse(t):
 
 
 @S.test('monstermaker flag 32 Auto size BBox: a scientist standing 40 units off the spot blocks a stock maker (its '
-        '68-wide box) but not one with the flag (the child\'s own 32-wide hull)', players=1, doc=MAKER)
+        '68-wide box) but not one with the flag (the child\'s own 32-wide hull)', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker:32'))
 def maker_autosize(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('mauto', -120, 4 | 32), ('mstock', 120, 4)):
@@ -554,7 +577,8 @@ def maker_autosize(t):
 
 
 @S.test('monstermaker flag 64 Cyclic backlog: a trigger while the spot is taken is kept and made once it is free; '
-        'without the flag it is lost', players=1, doc=MAKER)
+        'without the flag it is lost', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker:4', 'monstermaker:64'))
 def maker_backlog(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('mbl', -120, 4 | 64), ('mlost', 120, 4)):
@@ -574,7 +598,7 @@ def maker_backlog(t):
 
 
 @S.test('monstermaker "make_blocker_move_away" 2: the scientist standing on the spot is asked to run away; without '
-        'the key it stays', players=1, doc=MAKER)
+        'the key it stays', players=1, doc=MAKER, covers=('monstermaker', 'monstermaker.make_blocker_move_away=2'))
 def maker_blocker_move_away(t):
     t.flags('player1', '+FL_NOTARGET')
     node_grid(t)
@@ -597,7 +621,8 @@ def maker_blocker_move_away(t):
 
 @S.test('monstermaker "make_blocker_move_away" 2 with the station\'s setup: a gagged scientist (not a prisoner, the '
         'player in view) on the spot runs off and the maker makes its zombie; without the key he stays and no zombie '
-        'comes', players=1, doc=MAKER)
+        'comes', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.make_blocker_move_away=2', 'monstermaker.target'))
 def maker_blocker_station(t):
     t.flags('player1', '-FL_NOTARGET')
     node_grid(t)
@@ -625,7 +650,7 @@ def maker_blocker_station(t):
 
 @S.test('monstermaker "make_blocker_move_away" 2 when the nearby nodes lie past another monster (co_monsterkeys_test): '
         'the blocker does not take a node route it cannot start; it goes straight away into the free space and the '
-        'zombie comes', players=1, doc=MAKER)
+        'zombie comes', players=1, doc=MAKER, covers=('monstermaker', 'monstermaker.make_blocker_move_away=2'))
 def maker_blocker_node_taken(t):
     t.flags('player1', '-FL_NOTARGET')
     t.teleport('player1', (-200, 150, 0), yaw=0)
@@ -650,7 +675,8 @@ def maker_blocker_node_taken(t):
 
 
 @S.test('monstermaker "body" goes to scientists and zombies, never to the grunt family: body 4 on an MP5 grunt '
-        'would draw the shotgun, so the grunt keeps his own body', players=1, doc=MAKER)
+        'would draw the shotgun, so the grunt keeps his own body', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.body'))
 def maker_body_grunts(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, cls, x in (('mbz', 'monster_zombie', -150), ('mbs', 'monster_scientist', 0), ('mbg', 'monster_human_grunt', 150)):
@@ -667,7 +693,8 @@ def maker_body_grunts(t):
 
 
 @S.test('monstermaker "body" 1 on zombies: every child is the black zombie, whatever the zombie\'s own random pick '
-        '(eight children, eight seeds); a maker without body makes both kinds', players=1, doc=MAKER)
+        '(eight children, eight seeds); a maker without body makes both kinds', players=1, doc=MAKER,
+        covers=('monstermaker', 'monstermaker.body'))
 def maker_body_zombies(t):
     t.flags('player1', '+FL_NOTARGET')
     for k in range(8):
@@ -691,7 +718,9 @@ def maker_body_zombies(t):
 
 @S.test('monstermaker "change_rendermode" 1: its child gets the maker\'s Render Mode, FX, Amount and Color; a maker '
         'with the same render keys and no "change_rendermode" leaves its child at its own (normal)', players=1,
-        doc=MAKER)
+        doc=MAKER,
+        covers=('monstermaker', 'monstermaker.change_rendermode=1', 'monstermaker.rendermode', 'monstermaker.renderamt',
+                'monstermaker.rendercolor', 'monstermaker.renderfx'))
 def maker_change_rendermode(t):
     t.flags('player1', '+FL_NOTARGET')
     render = dict(rendermode='1', renderamt='120', rendercolor='255 40 10', renderfx='19')
@@ -714,7 +743,7 @@ def maker_change_rendermode(t):
 
 
 @S.test('monstermaker flag 65536 Non-solid corpse seen: a door coming down closes over its corpse; the stock corpse '
-        'blocks its door (it goes back up)', players=1, doc=MAKER)
+        'blocks its door (it goes back up)', players=1, doc=MAKER, covers=('monstermaker', 'monstermaker:65536'))
 def maker_nonsolid_door(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('mdns', -120, 4 | 65536), ('mdst', 120, 4)):
@@ -738,6 +767,24 @@ def maker_nonsolid_door(t):
     t.expect.value('s', 'mdst_door', 'origin.z', -100, op='>')
 
 
+@S.test('monster flag 65536 Non-solid corpse on a placed monster: a dead zombie with the flag is not solid; the same '
+        'zombie without it leaves a solid corpse', players=1, doc=MAKER, covers=('monster_zombie', 'monster_zombie:65536'))
+def monster_nonsolid_corpse(t):
+    t.flags('player1', '+FL_NOTARGET')
+    for n, x, fl in (('zns', -120, 65536), ('zso', 120, 0)):
+        t.point('monster_zombie', targetname=n, at=(x, 0, 0), angles='0 270 0', spawnflags=str(16 | fl))
+    t.wait(1.0)
+    for n in ('zns', 'zso'):
+        t.kv(n, 'health', '10')
+        t.damage(n, 15)        # even a random double hit does not gib it
+    t.wait(4.0)
+    for n in ('zns', 'zso'):
+        t.snap('s', n, 'solid', 'deadflag')
+    t.expect.value('s', 'zns', 'solid', 0)
+    t.expect.value('s', 'zso', 'solid', 0, op='!=')
+
+
+
 # ---------------------------------------------------------------------------------------------- scripts (batch 4)
 SCRIPT = 'FEATUREFUL_OPTIONS.md#scripted-scenes-batch-4'
 
@@ -756,7 +803,7 @@ def held(t, name, at, script_kv=None, monster_kv=None, idle='idle1', play='barn_
 
 
 @S.test('scripted_sequence "m_takeDamagePolicy" Invulnerable: the barney it holds survives 1000 damage; without it '
-        'he dies', players=1, doc=SCRIPT)
+        'he dies', players=1, doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence.m_takeDamagePolicy=1'))
 def script_invulnerable(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'binv', (-100, 0, 0), {'m_takeDamagePolicy': '1'})
@@ -772,7 +819,7 @@ def script_invulnerable(t):
 
 
 @S.test('scripted_sequence "m_takeDamagePolicy" Non-lethal: the barney it holds keeps 1 health after 1000 damage',
-        players=1, doc=SCRIPT)
+        players=1, doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence.m_takeDamagePolicy=2'))
 def script_nonlethal(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'bnl', (0, 0, 0), {'m_takeDamagePolicy': '2', 'm_interruptionPolicy': '1'})
@@ -785,7 +832,9 @@ def script_nonlethal(t):
 
 
 @S.test('scripted_sequence "m_interruptionPolicy" By Death Only and No Interruptions: a hit leaves the barney in its '
-        'script; Default: the hit breaks him out', players=1, doc=SCRIPT)
+        'script; Default: the hit breaks him out', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.m_interruptionPolicy=1',
+                'scripted_sequence.m_interruptionPolicy=2'))
 def script_interruption(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'bdo', (-150, 0, 0), {'m_interruptionPolicy': '2'})
@@ -803,7 +852,7 @@ def script_interruption(t):
 
 
 @S.test('scripted_sequence "m_iRepeats" 2: the 2.55 s wave plays three times (still in the script at 4 s, out by 9 s); '
-        'without it out at 4 s', players=1, doc=SCRIPT)
+        'without it out at 4 s', players=1, doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence.m_iRepeats'))
 def script_repeats(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'brp', (-100, 0, 0), {'m_iRepeats': '2'})
@@ -822,7 +871,8 @@ def script_repeats(t):
 
 
 @S.test('scripted_sequence "required_state" Combat: it does not take an idle barney; Idle: it does', players=1,
-        doc=SCRIPT)
+        doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.required_state=1', 'scripted_sequence.required_state=2'))
 def script_required_state(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'brc', (-100, 0, 0), {'required_state': '2'})
@@ -835,7 +885,8 @@ def script_required_state(t):
 
 
 @S.test('scripted_sequence "m_searchPolicy" Targetname only: Target Monster "monster_barney" (a class name) takes '
-        'no barney; Default: the barney near it (by class)', players=1, doc=SCRIPT)
+        'no barney; Default: the barney near it (by class)', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.m_searchPolicy=0', 'scripted_sequence.m_searchPolicy=1'))
 def script_search_policy(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, pol in (('bsn', -150, '1'), ('bsd', 150, '0')):
@@ -850,7 +901,8 @@ def script_search_policy(t):
 
 
 @S.test('scripted_sequence "m_applySearchRadius" Always: a barney named in Target Monster but 300 away (radius 100) '
-        'is not taken; Default: he is', players=1, doc=SCRIPT)
+        'is not taken; Default: he is', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.m_applySearchRadius=1', 'scripted_sequence.m_flRadius'))
 def script_apply_radius(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'bar', (-150, -150, 0), {'m_applySearchRadius': '1', 'm_flRadius': '100'}, script_at=(-150, 150, 0))
@@ -863,7 +915,8 @@ def script_apply_radius(t):
 
 
 @S.test('scripted_sequence "m_iPriority" Override: it takes a barney another script holds (its Fire on Possession '
-        'fires); a Normal one does not', players=1, doc=SCRIPT)
+        'fires); a Normal one does not', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.m_iPriority=4', 'scripted_sequence.m_iszFireOnPossessed'))
 def script_priority(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'bpo', (-100, 0, 0))
@@ -884,7 +937,9 @@ def script_priority(t):
 
 
 @S.test('scripted_sequence "m_fTurnType" with Move to "No - Turn to Face": 1 the barney turns toward the script, 2 '
-        'he does not turn, 0 he takes its angle (90)', players=1, doc=SCRIPT)
+        'he does not turn, 0 he takes its angle (90)', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.m_fMoveTo=5', 'scripted_sequence.m_fTurnType=0',
+                'scripted_sequence.m_fTurnType=1', 'scripted_sequence.m_fTurnType=2'))
 def script_turn_type(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, tt in (('btf', -150, '1'), ('btn', 0, '2'), ('btm', 150, '0')):
@@ -903,7 +958,8 @@ def script_turn_type(t):
 
 
 @S.test('scripted_sequence "moveto_radius" 150 with Walk: the barney stops about 150 from the mark; without it he '
-        'walks onto it', players=1, doc=SCRIPT)
+        'walks onto it', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence.moveto_radius', 'scripted_sequence.m_fMoveTo=1'))
 def script_moveto_radius(t):
     t.flags('player1', '+FL_NOTARGET')
     node_grid(t)
@@ -923,7 +979,7 @@ def script_moveto_radius(t):
 
 
 @S.test('scripted_sequence flag 32768 "Remove on interruption": a hit breaks the barney out and the script is removed',
-        players=1, doc=SCRIPT)
+        players=1, doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence:32768'))
 def script_remove_on_interruption(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'bri2', (0, 0, 0), {'spawnflags': '32768'})
@@ -935,7 +991,7 @@ def script_remove_on_interruption(t):
 
 @S.test('scripted_sequence flag 1024 "Auto-search": a named script keeps looking in its radius from the map start and '
         'takes the barney a maker makes later, without a trigger; without the flag it waits for its trigger',
-        players=1, doc=SCRIPT)
+        players=1, doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence:1024'))
 def script_autosearch(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('bau', -100, '1024'), ('bnt', 100, '0')):
@@ -954,7 +1010,8 @@ def script_autosearch(t):
 
 
 @S.test('scripted_sequence flag 4096 "Try search once": fired before its barney exists it does not keep looking; '
-        'without it it takes the barney once he appears', players=1, doc=SCRIPT)
+        'without it it takes the barney once he appears', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence:4096'))
 def script_try_once(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('bto', -100, '4096'), ('btl', 100, '0')):
@@ -977,7 +1034,7 @@ def script_try_once(t):
 
 @S.test('scripted_sequence flag 262144 "Allow unnamed idle": an auto-searching script with an idle animation waits '
         '(the barney stays in it, playing the idle); without the flag it plays its action and lets go', players=1,
-        doc=SCRIPT)
+        doc=SCRIPT, covers=('scripted_sequence', 'scripted_sequence:262144', 'scripted_sequence.m_iszIdle'))
 def script_unnamed_idle(t):
     t.flags('player1', '+FL_NOTARGET')
     for n, x, fl in (('bui', -100, 1024 | 262144), ('bun', 100, 1024)):
@@ -992,7 +1049,8 @@ def script_unnamed_idle(t):
 
 
 @S.test('scripted_sequence flag 524288 "Allow Take Damage TriggerCondition": the barney held by a no-interrupt script '
-        'fires his Take Damage TriggerTarget when hit; without the flag he does not', players=1, doc=SCRIPT)
+        'fires his Take Damage TriggerTarget when hit; without the flag he does not', players=1, doc=SCRIPT,
+        covers=('scripted_sequence', 'scripted_sequence:524288', 'scripted_sequence:32'))
 def script_takedamage_trigger(t):
     t.flags('player1', '+FL_NOTARGET')
     held(t, 'btd', (-100, 0, 0), {'spawnflags': str(32 | 524288)},
@@ -1015,7 +1073,8 @@ def sentence(t, name, at, speaker, duration='1.5', **kv):
 
 
 @S.test('scripted_sentence "follow_action" Start following: the scientist starts following the nearest player; a '
-        'barney that is no player ally does not (SBO rule)', players=1, doc=SCRIPT)
+        'barney that is no player ally does not (SBO rule)', players=1, doc=SCRIPT,
+        covers=('scripted_sentence', 'scripted_sentence.follow_action=1'))
 def sentence_follow_action(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='sfa', at=(-100, 100, 0), angles='0 270 0')
@@ -1034,7 +1093,9 @@ def sentence_follow_action(t):
 
 
 @S.test('scripted_sentence "fire_after" with "fire_after_delay" 0.5: fired 0.5 s after the 1.5 s sentence', players=1,
-        doc=SCRIPT)
+        doc=SCRIPT,
+        covers=('scripted_sentence', 'scripted_sentence.fire_after', 'scripted_sentence.fire_after_delay',
+                'scripted_sentence.duration'))
 def sentence_fire_after(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='sfi', at=(0, 100, 0), angles='0 270 0', spawnflags='2')
@@ -1048,7 +1109,8 @@ def sentence_fire_after(t):
 
 
 @S.test('scripted_sentence "allow_use": +use during its sentence makes the scientist follow; without it +use is '
-        'ignored while he speaks (HL)', players=1, doc=SCRIPT)
+        'ignored while he speaks (HL)', players=1, doc=SCRIPT,
+        covers=('scripted_sentence', 'scripted_sentence.allow_use=1'))
 def sentence_allow_use(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='sau', at=(-100, 100, 0), angles='0 270 0', spawnflags='2')
@@ -1069,7 +1131,9 @@ def sentence_allow_use(t):
 
 
 @S.test('scripted_sentence "search_origin": the speaker class is looked for around that point (radius 64), not '
-        'around the entity 300 away; attenuation 4 plays at 0.5', players=1, doc=SCRIPT)
+        'around the entity 300 away; attenuation 4 plays at 0.5', players=1, doc=SCRIPT,
+        covers=('scripted_sentence', 'scripted_sentence.search_origin', 'scripted_sentence.entity',
+                'scripted_sentence.attenuation=4'))
 def sentence_search_origin(t):
     t.flags('player1', '+FL_NOTARGET')
     t.point('monster_scientist', targetname='sso', at=(150, 150, 0), angles='0 270 0', spawnflags='2')
@@ -1089,7 +1153,8 @@ LEFT = 'FEATUREFUL_OPTIONS.md#small-leftovers-and-shooter-physics-batch-5'
 
 
 @S.test('func_pendulum flag 256 "Swing both ways": it swings Distance (60) to both sides of where it starts (beyond +20 '
-        'at 1 s, beyond -20 at 3 s); a stock pendulum stays between 0 and 60', players=1, doc=LEFT)
+        'at 1 s, beyond -20 at 3 s); a stock pendulum stays between 0 and 60', players=1, doc=LEFT,
+        covers=('func_pendulum', 'func_pendulum:256', 'func_pendulum.distance'))
 def pendulum_bothways(t):
     for n, x, fl in (('pb', -120, 256), ('ps', 120, 0)):
         t.brush('func_pendulum', size=(16, 16, 64), at=(x, 0, 32), targetname=n, speed='120', distance='60',
@@ -1109,7 +1174,8 @@ def pendulum_bothways(t):
 
 
 @S.test('func_pushable "toggleable_push": fired, it turns solid (SOLID_BSP) and a player walking into it does not '
-        'move it; fired again it is pushable (SOLID_BBOX)', players=1, doc=LEFT)
+        'move it; fired again it is pushable (SOLID_BBOX)', players=1, doc=LEFT,
+        covers=('func_pushable', 'func_pushable.toggleable_push=1'))
 def pushable_toggle(t):
     t.brush('func_pushable', size=(48, 48, 48), at=(0, 0, 0), targetname='pt', toggleable_push='1')
     info(t, 'pt0', at=(0, 0, 24))
@@ -1129,7 +1195,7 @@ def pushable_toggle(t):
 
 
 @S.test('func_breakable flag 512 "Explosives only": bullets do nothing, blast damage breaks it; a stock one breaks '
-        'from bullets', players=1, doc=LEFT)
+        'from bullets', players=1, doc=LEFT, covers=('func_breakable', 'func_breakable:512'))
 def breakable_explosives_only(t):
     t.brush('func_breakable', size=(48, 48, 48), at=(-100, 0, 0), targetname='bx', health='20', spawnflags='512')
     t.brush('func_breakable', size=(48, 48, 48), at=(100, 0, 0), targetname='bs', health='20')
@@ -1147,7 +1213,7 @@ def breakable_explosives_only(t):
 
 
 @S.test('func_tank flag 64 "Laser Spot": an active tank shows a laser dot (laser_spot); off, the dot is hidden',
-        players=1, doc=LEFT)
+        players=1, doc=LEFT, covers=('func_tank', 'func_tank:64'))
 def tank_laser_spot(t):
     t.flags('player1', '+FL_NOTARGET')
     t.brush('func_tank', size=(32, 32, 32), at=(0, 0, 64), targetname='tls', spawnflags='64', yawrate='30',
@@ -1163,7 +1229,9 @@ def tank_laser_spot(t):
 
 @S.test('env_shooter "m_iPhysics" 5 (arc shot) with "m_iszSpawnTarget" and "m_iszTouch": each shot is made as a '
         '"shot" (the spawn target fires with it as activator) and fires its touch target when it lands', players=1,
-        doc=LEFT)
+        doc=LEFT,
+        covers=('env_shooter', 'env_shooter.m_iPhysics=5', 'env_shooter.m_iszSpawnTarget', 'env_shooter.m_iszTouch',
+                'env_shooter.m_iGibs'))
 def shooter_shots(t):
     t.point('env_shooter', targetname='sh', at=(0, 0, 120), angles='-60 0 0', shootmodel='sprites/glow01.spr',
             m_iGibs='2', delay='0.2', m_flVelocity='100', m_flGibLife='3', m_iPhysics='5', m_vecSize='8 8 8',
@@ -1179,7 +1247,7 @@ def shooter_shots(t):
 
 
 @S.test('env_shooter default (m_iPhysics 0) stays a bouncing gib; "m_iszSpawnTarget" fires with each gib', players=1,
-        doc=LEFT)
+        doc=LEFT, covers=('env_shooter', 'env_shooter.m_iszSpawnTarget', 'env_shooter.m_iGibs'))
 def shooter_gibs(t):
     t.point('env_shooter', targetname='shg', at=(0, 0, 120), angles='-60 0 0', shootmodel='models/woodgibs.mdl',
             m_iGibs='2', delay='0.2', m_flVelocity='100', m_flGibLife='3', m_iszSpawnTarget='shg_made')
@@ -1195,7 +1263,8 @@ def shooter_gibs(t):
 # Every test's monsters exist from the map start and Half-Life's barneys are provoked by the combat they hear (also
 # through walls): the tests with gunfire come last.
 @S.test('monster_human_grunt "standgroundrange": when the player he fights hides behind a wall, a grunt with the key '
-        'keeps his spot; without it he moves to get a line of fire', players=1, doc=DOC)
+        'keeps his spot; without it he moves to get a line of fire', players=1, doc=DOC,
+        covers=('monster_human_grunt', 'monster_human_grunt.standgroundrange'))
 def grunt_standground(t):
     t.flags('player1', '-FL_NOTARGET')
     t.flags('player1', '+FL_GODMODE')
@@ -1231,7 +1300,7 @@ def grunt_standground(t):
 
 
 @S.test('talk monster "suspicious" seen: a player-ally barney with the key takes the player as his enemy and shoots',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('monster_barney', 'monster_barney.suspicious=1', 'monster_barney.is_player_ally=1'))
 def talk_suspicious_attacks(t):
     t.flags('player1', '-FL_NOTARGET')
     t.flags('player1', '+FL_GODMODE')

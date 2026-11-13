@@ -91,6 +91,10 @@ public:
 	void EXPORT Smoke ( void );
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1: "iMagnitude" / "scale" changed at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
+	void SetSpriteScale( void );
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -164,6 +168,12 @@ void CEnvExplosion::Spawn( void )
 	}
 	*/
 
+	SetSpriteScale();
+}
+
+// the fireball and smoke size from the magnitude, or "scale" (Spawn; SBO 2.1: again after a run-time change)
+void CEnvExplosion::SetSpriteScale( void )
+{
 	float flSpriteScale;
 	flSpriteScale = ( m_iMagnitude - 50) * 0.6;
 	
@@ -183,6 +193,27 @@ void CEnvExplosion::Spawn( void )
 	// SBO 2.0 (Featureful): "Custom sprite scale"
 	if ( pev->scale > 0 )
 		m_spriteScale = min( (int)( pev->scale * 10.0f ), 255 );
+}
+
+CKeyValue CEnvExplosion::GetKeyValue( const char *keyName )
+{
+	CKeyValue keyvalue = g_emptyKeyValue;
+	if ( FStrEq( keyName, "iMagnitude" ) || FStrEq( keyName, "iradius" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = FStrEq( keyName, "iMagnitude" ) ? "iMagnitude" : "iradius";
+		keyvalue.iVal = FStrEq( keyName, "iMagnitude" ) ? m_iMagnitude : m_iRadius;
+		return keyvalue;
+	}
+	return CBaseMonster::GetKeyValue( keyName );
+}
+
+// SBO 2.1: the damage reads the magnitude at each explosion; the fireball and smoke size were worked out once in
+// Spawn, so they follow a new magnitude or scale here
+void CEnvExplosion::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( FStrEq( keyName, "iMagnitude" ) || !stricmp( keyName, "scale" ) )
+		SetSpriteScale();
 }
 
 void CEnvExplosion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )

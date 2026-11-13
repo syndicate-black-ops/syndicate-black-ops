@@ -4,7 +4,7 @@
 #                 text. Name lookups are not run (no network): only Split and ParseIPv4, and Resolve on IPv4 text.
 #   a2s_test:     src/cl_dll/vgui2/sbo_a2s_rules.cpp (the rules query): GoldSrc and Source split replies out of order,
 #                 cut and damaged packets, random data.
-#   image_test:     src/cl_dll/vgui2/sbo_image_decode.cpp (map pictures, overviews): every gamedir/syndicate/overviews/*.tga
+#   image_test:     src/cl_dll/vgui2/sbo_image_decode.cpp (map pictures, overviews): every gamedir/syndicate/overviews/*.tga, gfx/vgui/*.tga (the header reader too)
 #                 and gfx/mapimages/*.jpg, a progressive copy of one JPEG (the CDN sends progressive JPEGs; made with
 #                 ImageMagick when it is installed), then each cut short and with random bytes changed.
 set -euo pipefail
@@ -20,4 +20,4 @@ g++ "${FLAGS[@]}" -o "$T/image_test" "$ROOT/tests/server_browser/image_test.cpp"
 PROG=()
 first=$(ls "$ROOT"/gamedir/syndicate/gfx/mapimages/*.jpg | head -1)
 if command -v convert >/dev/null && convert "$first" -interlace Plane "$T/progressive.jpg" 2>/dev/null; then PROG=("$T/progressive.jpg"); fi
-"$T/image_test" "$ROOT"/gamedir/syndicate/overviews/*.tga "$ROOT"/gamedir/syndicate/gfx/mapimages/*.jpg "${PROG[@]}"
+"$T/image_test" "$ROOT"/gamedir/syndicate/overviews/*.tga "$ROOT"/gamedir/syndicate/gfx/vgui/*.tga "$ROOT"/gamedir/syndicate/gfx/mapimages/*.jpg "${PROG[@]}"

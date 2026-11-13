@@ -51,6 +51,8 @@ const char *GetGameDirectory();
 //! given, "" if it has no value
 const char *GetLaunchParm(const char *name);
 void ConsolePrint(const char *text);
+//! A console line only with developer 1 or 2 (gEngfuncs.Con_DPrintf): the tools' notes, not errors
+void DevPrint(const char *text);
 void HookUserMsg(const char *name, UserMsgHookFn fn);
 void PlaySoundByName(const char *sample, float volume);
 void AddCommand(const char *name, CmdFn fn);
@@ -142,6 +144,9 @@ struct ScorePlayer
 //! Refreshes the player's engine info and fills `out`. bReadEngineSteamID: read player_info_t::m_nSteamID
 //! (SteamPipe/HL25 engine layout only -- the caller checks the engine).
 void GetScorePlayer(int clientIndex, ScorePlayer &out, bool bReadEngineSteamID);
+//! The server's sv_cheats value from its "Cheats" message (0 until it sends one; older servers never do). The
+//! engine's own sv_cheats on the client is only 0 or 1.
+int GetServerCheats();
 //! True once the server sent an "SboXP" message this map (this branch's server, coop maps only).
 bool HasSboXP();
 //! New map: forget the XP values (VGui2_Score_Reset).

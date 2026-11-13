@@ -218,7 +218,7 @@ C2A2_0 sentences/buzwarn buzwarn c2a2_0
 C2A2_1 sentences/deeoo c2a2_1
 C2A2_2 sentences/buzwarn buzwarn c2a2_2
 C2A2_3 sentences/buzwarn buzwarn c2a2_3
-C2A2_3 sentences/buzwarn buzwarn c2a2_3
+C2A2_8 sentences/buzwarn buzwarn c2a2_3
 C2A2_4 sentences/buzwarn buzwarn c2a2_4
 C2A2_5 sentences/deeoo deeoo c2a2_5
 C2A2_6 sentences/buzwarn buzwarn c2a2_6

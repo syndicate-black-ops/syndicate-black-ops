@@ -1,0 +1,34 @@
+# trigger_multiple flag 2 "No Clients": players no longer set it off; nothing else does either (no other flag)
+# covers: trigger_multiple:2
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn trigger_multiple model *1 target t_client spawnflags 2 wait 0.2
+spawn trigger_multiple model *2 target t_monster spawnflags 2 wait 0.2
+spawn trigger_multiple model *3 target t_pushable spawnflags 2 wait 0.2
+spawn trigger_multiple model *4 target t_other spawnflags 2 wait 0.2
+spawn monster_human_grunt origin "0 300 0"
+spawn func_pushable model *5
+spawn func_wall model *6
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+touchclient 0 1
+touchent 1 4
+touchent 2 5
+touchent 3 6
+frames 3
+expectnot Firing: (t_client)
+expectnot Firing: (t_monster)
+expectnot Firing: (t_pushable)
+expectnot Firing: (t_other)

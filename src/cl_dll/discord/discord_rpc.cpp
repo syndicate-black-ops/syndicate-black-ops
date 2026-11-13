@@ -42,9 +42,10 @@ static double s_nextRebuild;
 static char s_map[64];
 static long long s_mapStart; // unix time the current map was entered
 
+// connection and error notes: only with developer 1 or 2
 static void LogToConsole(const char *msg)
 {
-	gEngfuncs.pfnConsolePrint(msg);
+	gEngfuncs.Con_DPrintf("%s", msg);
 }
 
 // Keeps only an "ip:port" prefix (digits, dots, colon), like OpenAG's sanitize_address: the join secret comes from

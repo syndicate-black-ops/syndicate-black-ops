@@ -14,7 +14,10 @@
 //   * Entities being removed (FL_KILLME) and edicts without an entity are skipped (Featureful's loop stopped at an
 //     edict without an entity).
 //   * A target that triggers the sensor again while it fires is ignored (console note): no endless recursion.
-//   * "Act as Classify" uses SBO's class table (CBaseMonster::IDefaultRelationship, classes 0-13).
+//   * "Act as Classify" uses SBO's class table (CBaseMonster::IDefaultRelationship, classes 0-13), and a monster's
+//     class is the one the monsters see: its "classify" / "is_player_ally" keys (CBaseMonster::KeyedClass).
+//   * Relationship 3 "Enemy or neutral" is filter 2 or filter 1 (Featureful: at least neutral in either direction,
+//     which let allies through).
 //=========================================================
 
 #include	"extdll.h"
@@ -237,7 +240,12 @@ BOOL CTriggerSensor::Senses( CBaseEntity *pEntity, const Vector &pos, Vector &en
 
 	if ( m_relationship != RELATIONSHIP_ANY )
 	{
-		const int entityClassify = pEntity->Classify();
+		// SBO 2.0: the class the monsters see (CBaseMonster::ClassRelationship): a monster's "classify" /
+		// "is_player_ally" keys, also a monstermaker's Children's classification
+		int entityClassify = pEntity->Classify();
+		CBaseMonster *pMonster = pEntity->MyMonsterPointer();
+		if ( pMonster )
+			entityClassify = pMonster->KeyedClass( entityClassify );
 		const int relToEntity = CBaseMonster::IDefaultRelationship( m_classify, entityClassify );
 		const int relToSensor = CBaseMonster::IDefaultRelationship( entityClassify, m_classify );
 
@@ -252,7 +260,10 @@ BOOL CTriggerSensor::Senses( CBaseEntity *pEntity, const Vector &pos, Vector &en
 			passedRelationshipFilter = relToEntity >= R_DL || relToSensor >= R_DL;
 			break;
 		case RELATIONSHIP_ENEMY_OR_NEUTRAL:
-			passedRelationshipFilter = relToEntity >= R_NO || relToSensor >= R_NO;
+			// SBO 2.0: Enemy or Neutral, as Ally or neutral is Ally or Neutral (Featureful passed anything at least
+			// neutral one way, so an ally one way and neutral the other passed both this and Ally)
+			passedRelationshipFilter = ( relToEntity >= R_DL || relToSensor >= R_DL ) ||
+						( relToEntity == R_NO && relToSensor == R_NO );
 			break;
 		case RELATIONSHIP_ALLY:
 			passedRelationshipFilter = ( relToEntity == R_AL && relToSensor == R_AL ) ||

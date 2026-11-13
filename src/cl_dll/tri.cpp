@@ -22,6 +22,8 @@
 #include "worldtext.h"
 #include "worldscreen/worldscreen.h"
 #include "spray_anim.h"
+#include "colorcorrection.h"	// SBO 2.0: color_correction
+#include "view.h"	// SoHL env_sky: EnvSky_ShowEntities
 
 #define DLLEXPORT __declspec( dllexport )
 
@@ -684,6 +686,12 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 		RenderFog();
 		return;
 	}
+
+	// SoHL env_sky: this view's entities are drawn; the sky room's entities, moved out of it, go back (view.cpp)
+	EnvSky_ShowEntities();
+
+	// SBO 2.0: color_correction: this view's world is drawn (a view without a view model is graded after it)
+	ColorCorr_ViewDrawn();
 
 	// cs16-client: env_fog
 	RenderFog();

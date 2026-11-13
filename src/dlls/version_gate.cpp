@@ -27,7 +27,7 @@
 
 // The oldest client version this server lets in: raise it for a release that breaks the client / server protocol,
 // not for every patch. Same x.y.z format as the key.
-#define VERSION_GATE_MIN	"2.0.0"
+#define VERSION_GATE_MIN	"2.1.0"
 
 // No "//" or ":" in the reason: a stock engine also prints it with a stufftext "echo", whose parser drops everything
 // after "//" and splits at ":".

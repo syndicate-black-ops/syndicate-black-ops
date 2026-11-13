@@ -1,0 +1,25 @@
+# coop mp_loadouttime 10 (10b402b5): P1 picks a loadout, P2 stays in the menus without touching them: the round starts
+# without P2 once his 10 s are over (SBO waited for every player); with P2 still choosing it had not started before
+# covers: info_player_start
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+cvar mp_loadouttime 10
+spawn info_player_start origin "0 0 0"
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 1 item 1
+frames 50
+expectnot ROUND START
+frames 300
+expectn 1 ROUND START

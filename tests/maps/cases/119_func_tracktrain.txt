@@ -1,0 +1,55 @@
+# func_tracktrain (FGD): First stop target puts it on that path_track at the map start, Height above track 20 lifts
+# the train 20 above the track; Initial speed 100 starts it moving at that speed with no trigger; Sound 1 / 3 / 4
+# play plats/ttrain1 / 3 / 4 at Volume 5 (half, 0.5) when it starts, 0 None plays no move sound; Damage on crush 30:
+# a player blocking it takes 30, dmg 0 hurts nobody. (The stub does not move a train by its velocity: its origin stays at
+# the first path_track, raised by the Height)
+# covers: func_tracktrain.target func_tracktrain.height func_tracktrain.startspeed func_tracktrain.sounds func_tracktrain.sounds=0 func_tracktrain.sounds=1 func_tracktrain.sounds=3 func_tracktrain.sounds=4 func_tracktrain.volume func_tracktrain.dmg path_track path_track.target
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+brushsize 64 32 32
+spawn path_track targetname a1 target a2 origin "1000 5000 100"
+spawn path_track targetname a2 origin "3000 5000 100"
+spawn func_tracktrain targetname tr model *1 target a1 height 20 startspeed 100 speed 200 sounds 1 volume 5 wheels 16
+spawn path_track targetname b1 target b2 origin "0 1000 100"
+spawn path_track targetname b2 origin "2000 1000 100"
+spawn func_tracktrain targetname t3 model *2 target b1 sounds 3 volume 5 speed 200 dmg 30 wheels 16
+spawn path_track targetname c1 target c2 origin "0 2000 100"
+spawn path_track targetname c2 origin "2000 2000 100"
+spawn func_tracktrain targetname t4 model *3 target c1 sounds 4 volume 10 speed 200 wheels 16
+spawn path_track targetname d1 target d2 origin "0 3000 100"
+spawn path_track targetname d2 origin "2000 3000 100"
+spawn func_tracktrain targetname t0 model *4 target d1 sounds 0 speed 200 dmg 0 wheels 16
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectfield tr speed 100
+expectre SOUND #\d+ func_tracktrain ch6 plats/ttrain1.wav vol=0.50
+expectfield t3 speed 0
+expectfield tr origin "1000 5000 120"
+mark start
+useent 5 world
+useent 8 world
+useent 11 world
+frames 5
+expectre SOUND #\d+ func_tracktrain ch6 plats/ttrain3.wav vol=0.50
+expectre SOUND #\d+ func_tracktrain ch6 plats/ttrain4.wav vol=1.00
+expectnotre SOUND #\d+ func_tracktrain ch6 (?!plats/ttrain[134])
+mark crush
+expectdump player health=100.0
+blockclient 5 1
+frames 1
+expectdump player health=70.0
+blockclient 11 1
+frames 1
+expectdump player health=70.0

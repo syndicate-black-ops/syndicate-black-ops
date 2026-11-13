@@ -1,0 +1,12 @@
+# monster_alien_slave flag 2 Gag (FGD base Monster): no idle speech: a gagged one (edict #20) makes no voice sound (channel 2) in
+# 120 s near a player; the same monster without the flag (#21) does. 1.38 ignored Gag on this class (decision
+# gag-spawnflag)
+# covers: monster_alien_slave:2
+map co_fuzz
+spawn monster_alien_slave targetname gagged spawnflags 2 origin "0 300 0"
+spawn monster_alien_slave targetname talker spawnflags 0 origin "0 -300 0"
+activate
+connect 1 P1
+frames 1200
+expectnot SOUND #20 monster_alien_slave ch2 
+expectmin 1 SOUND #21 monster_alien_slave ch2 

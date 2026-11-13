@@ -954,6 +954,7 @@ void VGui2_Updater_Startup()
 		if (!strncmp(api, "https://", 8) || !strncmp(api, "http://", 7))
 			cfg.apiBase = api;
 	s_pUpdater = new sbo_update::Updater(cfg, SboUpdate_SteamHttp(), UpdaterLog);
+	s_pUpdater->SetDevLog([](const std::string &line) { sbo::DevPrint((line + "\n").c_str()); });
 	if (cfg.gameDir.empty() && !cfg.repo.empty())
 		UpdaterLog("Updater: the game folder was not found; update checks only");
 	s_pUpdater->Startup();

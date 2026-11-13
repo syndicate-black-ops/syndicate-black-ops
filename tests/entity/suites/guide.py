@@ -31,7 +31,7 @@ def tough(t, player='player1', hp='1000'):
 
 # ---------------------------------------------------------------------------------------------- env_warpball
 @S.test('env_warpball defaults: both stock sounds, up to 20 green lightning beams, the shake, a sprite; fires its target',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('env_warpball', 'env_warpball.target'))
 def warpball_defaults(t):
     t.point('env_warpball', targetname='wb', at=(0, 0, 64), target='after')
     info(t, 'after')
@@ -50,7 +50,9 @@ def warpball_defaults(t):
 
 
 @S.test('env_warpball keys: beam color and count, sprite 2 with its own color, scale; warp position [LP]',
-        players=1, doc=DOC)
+        players=1, doc=DOC,
+        covers=('env_warpball', 'env_warpball.beamcolor', 'env_warpball.beamcount', 'env_warpball.warp_target',
+                'env_warpball.rendercolor', 'env_warpball.renderamt', 'env_warpball.scale', 'env_warpball.model2'))
 def warpball_keys(t):
     info(t, 'spot', at=(-100, 50, 40))
     t.point('env_warpball', targetname='wb', at=(0, 0, 64), beamcolor='255 0 0', beamcount='4', warp_target='spot',
@@ -72,7 +74,9 @@ def warpball_keys(t):
 
 
 @S.test('env_warpball flags: No screen shake (4), Dynamic light (8), No sounds (16), Remove on fire (1)', players=1,
-        doc=DOC)
+        doc=DOC,
+        covers=('env_warpball', 'env_warpball:1', 'env_warpball:4', 'env_warpball:8', 'env_warpball:16',
+                'env_warpball.rendercolor'))
 def warpball_flags(t):
     t.point('env_warpball', targetname='wb', at=(0, 0, 64), spawnflags=str(1 | 4 | 8 | 16), rendercolor='0 0 255')
     t.teleport('player1', (100, 0, 0))
@@ -84,7 +88,8 @@ def warpball_flags(t):
     t.expect.removed('wb')
 
 
-@S.test('env_warpball custom sounds (noise1, noise2) and volume', players=1, doc=DOC)
+@S.test('env_warpball custom sounds (noise1, noise2) and volume', players=1, doc=DOC,
+        covers=('env_warpball', 'env_warpball.noise1', 'env_warpball.noise2'))
 def warpball_sounds(t):
     t.point('env_warpball', targetname='wb', at=(0, 0, 64), noise1='buttons/blip1.wav', noise2='buttons/blip2.wav',
             volume='0.5')
@@ -99,7 +104,7 @@ def warpball_sounds(t):
 
 
 @S.test('env_warpball Kill center (2): 300 shock damage at the center at once; Damage delay waits', players=2,
-        doc=DOC)
+        doc=DOC, covers=('env_warpball', 'env_warpball:2', 'env_warpball.damage_delay', 'env_warpball.warp_target'))
 def warpball_kill(t):
     tough(t, 'player1')
     tough(t, 'player2')
@@ -121,7 +126,7 @@ def warpball_kill(t):
 
 
 @S.test('monstermaker Warpball: the named env_warpball plays at each child (sound on the maker), without its target',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('env_warpball', 'monstermaker', 'monstermaker.warpball'))
 def warpball_maker(t):
     t.point('env_warpball', targetname='wb', at=(0, 0, 200), target='never', spawnflags='2')
     info(t, 'never')
@@ -138,7 +143,9 @@ def warpball_maker(t):
 
 # ---------------------------------------------------------------------------------------------- env_shockwave
 @S.test('env_shockwave defaults: a cylinder of shockwave.spr, raised by half its height, removed after one use',
-        doc=DOC)
+        doc=DOC,
+        covers=('env_shockwave', 'env_shockwave.m_iHeight', 'env_shockwave.m_iRadius', 'env_shockwave.m_iTime',
+                'env_shockwave.rendercolor', 'env_shockwave.renderamt'))
 def shockwave_defaults(t):
     t.point('env_shockwave', targetname='sw', at=(0, 0, 16), m_iHeight='32', m_iRadius='300', m_iTime='5',
             rendercolor='188 220 255', renderamt='255')
@@ -153,7 +160,12 @@ def shockwave_defaults(t):
 
 
 @S.test('env_shockwave keys: Centered (1), Repeatable (2), torus and disk, sprite, color, frames, noise, scroll, '
-        'position [LP]', doc=DOC)
+        'position [LP]', doc=DOC,
+        covers=('env_shockwave', 'env_shockwave:1', 'env_shockwave:2', 'env_shockwave.m_cType=19',
+                'env_shockwave.m_cType=20', 'env_shockwave.netname', 'env_shockwave.rendercolor',
+                'env_shockwave.renderamt', 'env_shockwave.m_iFrameRate', 'env_shockwave.m_iStartFrame',
+                'env_shockwave.m_iNoise', 'env_shockwave.m_iScrollRate', 'env_shockwave.m_iszPosition',
+                'env_shockwave.m_iHeight'))
 def shockwave_keys(t):
     info(t, 'spot', at=(50, 50, 80))
     t.point('env_shockwave', targetname='sw', at=(0, 0, 16), spawnflags='3', m_cType='19', netname='sprites/laserbeam.spr',
@@ -173,7 +185,10 @@ def shockwave_keys(t):
 
 # ---------------------------------------------------------------------------------------------- env_beamtrail
 @S.test('env_beamtrail: On sends a trail on its target (sprite, life, width, color), Off kills its beams, Start off '
-        '(1) waits for a trigger', doc=DOC)
+        '(1) waits for a trigger', doc=DOC,
+        covers=('env_beamtrail', 'env_beamtrail:1', 'env_beamtrail.target', 'env_beamtrail.netname',
+                'env_beamtrail.health', 'env_beamtrail.armorvalue', 'env_beamtrail.rendercolor',
+                'env_beamtrail.renderamt'))
 def beamtrail(t):
     t.point('info_target', targetname='mover', at=(0, 0, 64))
     t.point('env_beamtrail', targetname='bt', at=(0, 0, 32), target='mover', spawnflags='1', netname='sprites/laserbeam.spr',
@@ -191,7 +206,7 @@ def beamtrail(t):
     t.expect.msg('svc:23', fields={'te': TE_KILLBEAM}, count=1, after='off')
 
 
-@S.test('env_beamtrail without a target trails itself; Toggle follows the state', doc=DOC)
+@S.test('env_beamtrail without a target trails itself; Toggle follows the state', doc=DOC, covers=('env_beamtrail',))
 def beamtrail_self(t):
     t.point('env_beamtrail', targetname='bt', at=(0, 0, 32), spawnflags='1')
     t.fire('bt')
@@ -204,7 +219,11 @@ def beamtrail_self(t):
 
 
 # ---------------------------------------------------------------------------------------------- env_quakefx
-@S.test('env_quakefx: each effect type with its keys; removed after one use unless Repeatable (1)', doc=DOC)
+@S.test('env_quakefx: each effect type with its keys; removed after one use unless Repeatable (1)', doc=DOC,
+        covers=('env_quakefx', 'env_quakefx:1', 'env_quakefx.impulse=4', 'env_quakefx.impulse=10',
+                'env_quakefx.impulse=11', 'env_quakefx.impulse=12', 'env_quakefx.impulse=14', 'env_quakefx.impulse=122',
+                'env_quakefx.armortype', 'env_quakefx.armorvalue', 'env_quakefx.health', 'env_quakefx.message',
+                'env_quakefx.frags'))
 def quakefx(t):
     info(t, 'spot', at=(40, 40, 40))
     for n, imp in (('tar', 4), ('lava', 10), ('tele', 11), ('expl', 12)):
@@ -229,7 +248,9 @@ def quakefx(t):
 
 # ---------------------------------------------------------------------------------------------- env_decal
 @S.test('env_decal: decal groups and a custom texture sprayed where the line hits; direction from angles or [LV]; '
-        'an unknown custom decal sprays nothing', doc=DOC)
+        'an unknown custom decal sprays nothing', doc=DOC,
+        covers=('env_decal', 'env_decal.impulse=0', 'env_decal.impulse=1', 'env_decal.impulse=2', 'env_decal.impulse=6',
+                'env_decal.noise', 'env_decal.target', 'env_decal.netname'))
 def decal(t):
     info(t, 'spot', at=(0, 0, 100))
     t.point('env_decal', targetname='gun', at=(0, 0, 64), angles='0 0 0', impulse='1')
@@ -247,7 +268,9 @@ def decal(t):
 
 
 # ---------------------------------------------------------------------------------------------- func_breakable_effect
-@S.test('func_breakable_effect: the material\'s sound and gibs with its flags; removed after one use', doc=DOC)
+@S.test('func_breakable_effect: the material\'s sound and gibs with its flags; removed after one use', doc=DOC,
+        covers=('func_breakable_effect', 'func_breakable_effect.material=0', 'func_breakable_effect:8192',
+                'func_breakable_effect:16384', 'func_breakable_effect.m_iGibs'))
 def breakeffect(t):
     t.brush('func_breakable_effect', targetname='be', size=(64, 64, 64), at=(0, 0, 32), material='0',
             spawnflags=str(8192 | 16384), m_iGibs='12')
@@ -262,7 +285,10 @@ def breakeffect(t):
     t.expect.removed('be')
 
 
-@S.test('func_breakable_effect: Repeatable (1), At position [LP], gib model, no gibs (-1)', doc=DOC)
+@S.test('func_breakable_effect: Repeatable (1), At position [LP], gib model, no gibs (-1)', doc=DOC,
+        covers=('func_breakable_effect', 'func_breakable_effect:1', 'func_breakable_effect.position',
+                'func_breakable_effect.gibmodel', 'func_breakable_effect.m_iGibs', 'func_breakable_effect.material=1',
+                'func_breakable_effect.material=2'))
 def breakeffect_keys(t):
     info(t, 'spot', at=(-100, 0, 50))
     t.brush('func_breakable_effect', targetname='be', size=(32, 32, 32), at=(0, 0, 0), material='2', spawnflags='1',
@@ -281,8 +307,26 @@ def breakeffect_keys(t):
     t.expect.removed('none')
 
 
+@S.test('func_breakable_effect Material 7 (Unbreakable Glass): breaks like Glass (glass sound, glass gibs); a '
+        'func_breakable with Material 7 still never breaks', doc=DOC,
+        covers=('func_breakable_effect', 'func_breakable_effect.material=7'))
+def breakeffect_unbreakable_glass(t):
+    t.brush('func_breakable_effect', targetname='be', size=(32, 32, 32), at=(0, 0, 0), material='7')
+    t.brush('func_breakable', targetname='wall', size=(32, 32, 32), at=(100, 0, 0), material='7')
+    t.fire('be')
+    t.fire('wall')
+    t.wait(0.2)
+    t.expect.sound('debris/bustglass', ent='be', count=1)
+    t.expect.msg('svc:23', fields={'te': TE_BREAKMODEL, 'model': 'model:models/glassgibs.mdl',
+                                   'flags': BREAK_GLASS}, count=1)
+    t.expect.removed('be')
+    t.expect.sound('debris/bust', ent='wall', count=0, min=0)
+    t.expect.not_removed('wall')
+
+
 # ---------------------------------------------------------------------------------------------- func_illusionary_toggle
-@S.test('func_illusionary_toggle: not solid; Starts Invisible (1); On shows, Off hides, Toggle toggles', doc=DOC)
+@S.test('func_illusionary_toggle: not solid; Starts Invisible (1); On shows, Off hides, Toggle toggles', doc=DOC,
+        covers=('func_illusionary_toggle', 'func_illusionary_toggle:1'))
 def illusionary_toggle(t):
     t.brush('func_illusionary_toggle', targetname='holo', size=(64, 64, 64), at=(0, 0, 0), spawnflags='1')
     t.snap('start', 'holo', 'effects', 'solid')
@@ -310,7 +354,9 @@ def corners(t, a=(-150, -150, 64), b=(150, -150, 64), speed=None, **kv):
 
 
 @S.test('env_spritetrain: waits at its first corner, a trigger starts it along the path at its speed; render '
-        'defaults Additive and 255', doc=DOC)
+        'defaults Additive and 255', doc=DOC,
+        covers=('env_spritetrain', 'env_spritetrain.target', 'env_spritetrain.speed', 'env_spritetrain.framerate',
+                'env_spritetrain.noise', 'env_spritetrain.noise1'))
 def spritetrain(t):
     corners(t)
     t.point('env_spritetrain', targetname='st', at=(0, 0, 64), target='c1', speed='200', model='sprites/fexplo1.spr',
@@ -332,7 +378,9 @@ def spritetrain(t):
     t.expect.sound('plats/train2.wav', ent='st')
 
 
-@S.test('env_spritetrain Initially On (4), Obey Trigger Mode, negative render amount starts invisible', doc=DOC)
+@S.test('env_spritetrain Initially On (4), Obey Trigger Mode, negative render amount starts invisible', doc=DOC,
+        covers=('env_spritetrain', 'env_spritetrain:4', 'env_spritetrain.m_iObeyTriggerMode=1',
+                'env_spritetrain.renderamt', 'env_spritetrain.rendermode'))
 def spritetrain_flags(t):
     # c2 -> c1 is a teleport (path_corner flag 2), so the train only ever moves +x; it runs since the map started
     t.point('path_corner', targetname='c1', at=(-150, -150, 64), target='c2', spawnflags='2')
@@ -356,7 +404,10 @@ def spritetrain_flags(t):
 
 # ---------------------------------------------------------------------------------------------- env_modeltrain
 @S.test('env_modeltrain: moves along the path turning to face the next corner (yaw only), move and idle sequences',
-        doc=DOC)
+        doc=DOC,
+        covers=('env_modeltrain', 'env_modeltrain.target', 'env_modeltrain.speed', 'env_modeltrain.turn_policy=1',
+                'env_modeltrain.idle_sequence', 'env_modeltrain.move_sequence', 'env_modeltrain.idle_framerate',
+                'env_modeltrain.move_framerate'))
 def modeltrain(t):
     corners(t, a=(-150, -150, 64), b=(150, 150, 64))
     t.point('env_modeltrain', targetname='mt', at=(0, 0, 64), target='c1', speed='150',
@@ -377,7 +428,8 @@ def modeltrain(t):
     t.expect.same('idle', 'stopped', 'mt', 'sequence')
 
 
-@S.test('env_modeltrain Turn Policy: Instant faces the corner in pitch and yaw, No turn keeps its angles', doc=DOC)
+@S.test('env_modeltrain Turn Policy: Instant faces the corner in pitch and yaw, No turn keeps its angles', doc=DOC,
+        covers=('env_modeltrain', 'env_modeltrain:4', 'env_modeltrain.turn_policy=0', 'env_modeltrain.turn_policy=2'))
 def modeltrain_turn(t):
     t.point('path_corner', targetname='a1', at=(-150, 0, 40), target='a2')
     t.point('path_corner', targetname='a2', at=(150, 0, 140))
@@ -412,7 +464,9 @@ def release(t, player):
 
 
 @S.test('player_capabilities Jump off: +jump does not leave the ground; Copy use input On gives it back', players=1,
-        doc=DOC)
+        doc=DOC,
+        covers=('player_capabilities', 'player_capabilities.jump_capability=-1',
+                'player_capabilities.jump_capability=3'))
 def caps_jump(t):
     t.point('player_capabilities', targetname='nojump', jump_capability='-1')
     t.point('player_capabilities', targetname='copy', jump_capability='3')
@@ -435,7 +489,10 @@ def caps_jump(t):
 
 
 @S.test('player_capabilities Movement off: no walking; Duck off: no ducking; Toggle and respawn give them back',
-        players=1, doc=DOC)
+        players=1, doc=DOC,
+        covers=('player_capabilities', 'player_capabilities.movement_capability=-1',
+                'player_capabilities.movement_capability=2', 'player_capabilities.duck_capability=-1',
+                'player_capabilities.duck_capability=2'))
 def caps_move_duck(t):
     t.point('player_capabilities', targetname='freeze', movement_capability='-1', duck_capability='-1')
     t.point('player_capabilities', targetname='flip', movement_capability='2', duck_capability='2')
@@ -459,7 +516,8 @@ def caps_move_duck(t):
     t.expect.value('on', 'player1', 'flags', FL_DUCKING, op='&')
 
 
-@S.test('player_capabilities Use off: +use on a button does nothing; On: it works', players=1, doc=DOC)
+@S.test('player_capabilities Use off: +use on a button does nothing; On: it works', players=1, doc=DOC,
+        covers=('player_capabilities', 'player_capabilities.use_capability=-1', 'player_capabilities.use_capability=1'))
 def caps_use(t):
     t.point('player_capabilities', targetname='nouse', use_capability='-1')
     t.point('player_capabilities', targetname='use', use_capability='1')
@@ -482,7 +540,9 @@ def caps_use(t):
     t.expect.used('pressed', after='allowed', min=1)
 
 
-@S.test('player_capabilities Attack off: +attack does not fire; a spectator activator is ignored', players=1, doc=DOC)
+@S.test('player_capabilities Attack off: +attack does not fire; a spectator activator is ignored', players=1, doc=DOC,
+        covers=('player_capabilities', 'player_capabilities.attack_capability=-1',
+                'player_capabilities.attack_capability=1'))
 def caps_attack(t):
     t.point('player_capabilities', targetname='noattack', attack_capability='-1')
     t.point('player_capabilities', targetname='attack', attack_capability='1')
@@ -503,37 +563,41 @@ def caps_attack(t):
 
 
 @S.test('player_capabilities "Capability" message (Featureful): sent to the player when his capabilities change, '
-        'again after a fullupdate, and 0 when they are back', players=1, doc=DOC)
+        'again after a fullupdate, and 0 when they are back', players=1, doc=DOC,
+        covers=('player_capabilities', 'player_capabilities.attack_capability=-1',
+                'player_capabilities.attack_capability=1', 'player_capabilities.jump_capability=-1',
+                'player_capabilities.jump_capability=1'))
 def capability_message(t):
     t.point('player_capabilities', targetname='noatk', attack_capability='-1', jump_capability='-1')
     t.point('player_capabilities', targetname='back', attack_capability='1', jump_capability='1')
     t.wait(0.3)
     t.mark('off')
     t.fire('noatk', activator='player1')
-    t.wait(0.3)
+    t.wait(1.0)     # steps apart by more than a loaded frame (windows widen by the frame length)
     t.mark('full')
     t.cmd('player1', 'fullupdate')
-    t.wait(0.3)
+    t.wait(1.0)
     t.mark('on')
     t.fire('back', activator='player1')
     t.wait(0.3)
-    t.expect.msg('Capability', to='player1', fields={'bits': 3}, after='off', within=(0, 0.25), count=1)
-    t.expect.msg('Capability', to='player1', fields={'bits': 3}, after='full', within=(0, 0.25), count=1)
+    t.expect.msg('Capability', to='player1', fields={'bits': 3}, after='off', within=(0, 0.5), count=1)
+    t.expect.msg('Capability', to='player1', fields={'bits': 3}, after='full', within=(0, 0.5), count=1)
     t.expect.msg('Capability', to='player1', fields={'bits': 0}, after='on', count=1)
 
 
-@S.test('player_speed: a fraction of his own speed, an absolute speed, 0 resets', players=2, doc=DOC)
+@S.test('player_speed: a fraction of his own speed, an absolute speed, 0 resets', players=2, doc=DOC,
+        covers=('player_speed', 'player_speed.maxspeed', 'player_speed.value_notion=0', 'player_speed.value_notion=1'))
 def player_speed(t):
     t.point('player_speed', targetname='half', maxspeed='0.5', value_notion='0')
     t.point('player_speed', targetname='abs', maxspeed='120', value_notion='1')
     t.point('player_speed', targetname='reset', maxspeed='0')
-    t.teleport('player1', (-150, -100, 0), yaw=0)
-    t.teleport('player2', (-150, 100, 0), yaw=0)
+    t.teleport('player1', (-220, -100, 0), yaw=0)
+    t.teleport('player2', (-220, 100, 0), yaw=0)
     t.wait(0.3)
     t.fire('half', activator='player1')
     t.wait(0.1)
-    hold(t, 'player1', 400, 0, 0.6)
-    hold(t, 'player2', 400, 0, 0.6)
+    hold(t, 'player1', 400, 0, 0.9)
+    hold(t, 'player2', 400, 0, 0.9)
     t.snap('half', 'player1', 'velocity')
     t.snap('half', 'player2', 'velocity')
     t.snap('half_k', 'player1', 'maxspeed')
@@ -541,19 +605,19 @@ def player_speed(t):
     release(t, 'player1')
     release(t, 'player2')
     t.wait(0.4)
-    t.teleport('player1', (-150, -100, 0), yaw=0)
+    t.teleport('player1', (-220, -100, 0), yaw=0)
     t.fire('abs', activator='player1')
     t.wait(0.2)
-    hold(t, 'player1', 400, 0, 0.6)
+    hold(t, 'player1', 400, 0, 0.9)
     t.snap('abs', 'player1', 'velocity')
     release(t, 'player1')
     t.wait(0.4)
-    t.teleport('player1', (-150, -100, 0), yaw=0)
-    t.teleport('player2', (-150, 100, 0), yaw=0)
+    t.teleport('player1', (-220, -100, 0), yaw=0)
+    t.teleport('player2', (-220, 100, 0), yaw=0)
     t.fire('reset', activator='player1')
     t.wait(0.2)
-    hold(t, 'player1', 400, 0, 0.6)
-    hold(t, 'player2', 400, 0, 0.6)
+    hold(t, 'player1', 400, 0, 0.9)
+    hold(t, 'player2', 400, 0, 0.9)
     t.snap('reset', 'player1', 'velocity')
     t.snap('reset', 'player2', 'velocity')
     t.snap('reset_k', 'player1', 'maxspeed')
@@ -571,7 +635,12 @@ def player_speed(t):
 
 @S.test('game_player_settings: health = + - < >, max health with overheal, armor = and overcharge; fires its target '
         'with the player as activator; a weapon given, then player_hasweapon pass / fail and as a master', players=1,
-        doc=DOC)
+        doc=DOC,
+        covers=('game_player_settings', 'game_player_settings.health', 'game_player_settings.armorvalue',
+                'game_player_settings.max_health', 'game_player_settings.allow_overheal=0',
+                'game_player_settings.allow_overcharge=1', 'game_player_settings.target', 'player_hasweapon',
+                'player_hasweapon.weapon_name', 'player_hasweapon.pass_target', 'player_hasweapon.fail_target',
+                'trigger_multiple.master'))
 def player_settings(t):
     t.point('game_player_settings', targetname='set50', health='=50', armorvalue='=30', target='equipped')
     t.point('game_player_settings', targetname='add20', health='+20')
@@ -639,7 +708,7 @@ def player_settings(t):
 
 
 @S.test('player_flicker: On flickers the flashlight, Off keeps it lit; entities ignore a non-player activator',
-        players=1, doc=DOC)
+        players=1, doc=DOC, covers=('player_flicker',))
 def flicker(t):
     t.point('player_flicker', targetname='fl')
     t.console('mp_flashlight 1')
@@ -663,7 +732,8 @@ def flicker(t):
     t.expect.value('still', 'player1', 'effects', EF_DIMLIGHT, op='&')
 
 
-@S.test('trigger_vehiclecontrols: Off locks the train\'s controls, On unlocks, Toggle switches', doc=DOC)
+@S.test('trigger_vehiclecontrols: Off locks the train\'s controls, On unlocks, Toggle switches', doc=DOC,
+        covers=('trigger_vehiclecontrols', 'trigger_vehiclecontrols.target'))
 def vehiclecontrols(t):
     t.point('path_track', targetname='p1', target='p2', at=(0, -150, 0))
     t.point('path_track', targetname='p2', target='p1', at=(0, 150, 0))
@@ -688,7 +758,7 @@ def vehiclecontrols(t):
 
 
 @S.test('trigger_vehiclecontrols as the player sees it: locked, +use and +forward on the platform do not drive it; '
-        'unlocked, they do', players=1, doc=DOC)
+        'unlocked, they do', players=1, doc=DOC, covers=('trigger_vehiclecontrols', 'trigger_vehiclecontrols.target'))
 def vehiclecontrols_drive(t):
     t.point('path_track', targetname='p1', target='p2', at=(0, -200, 0))
     t.point('path_track', targetname='p2', target='p1', at=(0, 200, 0))
@@ -721,7 +791,8 @@ def vehiclecontrols_drive(t):
     t.expect.value('c', 'tt', 'origin.y', t._abs((0, -200, 0))[1] + 40, op='>')
 
 
-@S.test('ambient_random: each trigger plays one of its sounds (all of them over 12 triggers); not toggled', doc=DOC)
+@S.test('ambient_random: each trigger plays one of its sounds (all of them over 12 triggers); not toggled', doc=DOC,
+        covers=('ambient_random', 'ambient_random.message', 'ambient_random.noise', 'ambient_random.noise1'))
 def ambient_random(t):
     t.point('ambient_random', targetname='ar', at=(0, 0, 64), message='buttons/blip1.wav', noise='buttons/blip2.wav',
             noise1='buttons/button3.wav', spawnflags=str(16 | 32), health='10')
@@ -735,7 +806,8 @@ def ambient_random(t):
 
 
 @S.test('ambient_extraspeaker: plays on a speaker that follows the activator (blank target or !activator); toggled mode stops it',
-        players=1, doc=DOC)
+        players=1, doc=DOC,
+        covers=('ambient_extraspeaker', 'ambient_extraspeaker.message', 'ambient_extraspeaker.target'))
 def extraspeaker(t):
     t.point('ambient_extraspeaker', targetname='es', at=(0, 0, 64), message='buttons/blip1.wav',
             spawnflags=str(16 | 32), channel='2')               # no target: the activator (*player)
@@ -756,7 +828,35 @@ def extraspeaker(t):
     t.expect.value('s', '@extra_speaker', 'movetype', 12)     # MOVETYPE_FOLLOW
 
 
-@S.test('env_soundmark: a Danger mark at a position; Remove On fire (1)', doc=DOC)
+@S.test('ambient_extraspeaker without Start Silent: the default target (the activator) is nobody at the map start, '
+        'so the first trigger plays it on the player and the next stops it; a named target plays from the start and '
+        'the first trigger stops it', players=1, doc=DOC,
+        covers=('ambient_extraspeaker', 'ambient_extraspeaker.target', 'ambient_extraspeaker:16'))
+def extraspeaker_start_on(t):
+    info(t, 'box', at=(100, 0, 16))
+    t.point('ambient_extraspeaker', targetname='es', at=(0, 0, 64), message='ambience/alien_zonerator.wav',
+            spawnflags='4')                                     # no target: the activator
+    t.point('ambient_extraspeaker', targetname='named', at=(0, 0, 64), message='ambience/alien_zonerator.wav',
+            target='box', spawnflags='4')
+    t.wait(0.3)
+    t.mark('first')
+    t.fire('es', activator='player1')
+    t.wait(1.0)     # apart by more than a loaded frame
+    t.mark('second')
+    t.fire('es', activator='player1')
+    t.wait(1.0)
+    t.mark('third')
+    t.fire('named', activator='player1')
+    t.wait(1.0)
+    t.expect.sound('alien_zonerator', ent='@extra_speaker', after='first', within=(0, 0.5), count=1)    # plays
+    t.expect.sound('alien_zonerator', after='first', within=(0, 0.5), flags=32, count=0, min=0)
+    t.expect.sound('alien_zonerator', ent='@extra_speaker', after='second', within=(0, 0.5), flags=32, count=1)
+    t.expect.sound('alien_zonerator', ent='@extra_speaker', after='third', within=(0, 0.5), flags=32, count=1)
+    t.expect.sound('alien_zonerator', after='third', within=(0, 0.5), count=1)      # only the stop
+
+
+@S.test('env_soundmark: a Danger mark at a position; Remove On fire (1)', doc=DOC,
+        covers=('env_soundmark', 'env_soundmark:1'))
 def soundmark(t):
     info(t, 'spot', at=(100, 0, 16))
     t.point('env_soundmark', targetname='sm', at=(0, 0, 16), position='spot', type='32', radius='500',
@@ -780,7 +880,8 @@ def tank(t, name='tank', at=(0, 150, 64), flags=0, target='shot', **kv):
 
 
 @S.test('monster_target: an automatic func_tank shoots at an active one counting as a player ally; inactive (1): '
-        'no shots; On switches it on', doc=DOC)
+        'no shots; On switches it on', doc=DOC,
+        covers=('monster_target', 'monster_target:1', 'monster_target.frags=11'))
 def monster_target(t):
     tank(t, flags=SF_TANK_ACTIVE)
     t.point('monster_target', targetname='mt', at=(0, -150, 40), frags='11', spawnflags='1')
@@ -792,10 +893,11 @@ def monster_target(t):
     t.expect.used('shot', after='on', min=2)
 
 
-@S.test('monster_bullseye is monster_target; a target counting as an alien is not shot by tanks', doc=DOC)
-def monster_bullseye(t):
+@S.test('monster_target: a target counting as an alien is not shot by tanks', doc=DOC,
+        covers=('monster_target.frags=7',))
+def monster_target_alien(t):
     tank(t, flags=SF_TANK_ACTIVE)
-    t.point('monster_bullseye', targetname='mb', at=(0, -150, 40), frags='7')
+    t.point('monster_target', targetname='mb', at=(0, -150, 40), frags='7')
     t.wait(1.5)
     t.snap('s', 'mb', 'health', 'flags')
     t.expect.not_used('shot')
@@ -804,7 +906,10 @@ def monster_bullseye(t):
 
 
 @S.test('scripted_tanksequence: face the sequence, fire once at the end, halt when facing; Control and Active '
-        'afterwards; not repeatable: removed', doc=DOC)
+        'afterwards; not repeatable: removed', doc=DOC,
+        covers=('scripted_tanksequence', 'scripted_tanksequence.m_iszEntity', 'scripted_tanksequence.m_iTurn=2',
+                'scripted_tanksequence.m_iShoot=1', 'scripted_tanksequence.m_iUntil=1', 'scripted_tanksequence.target',
+                'scripted_tanksequence.m_iActive=1', 'scripted_tanksequence.m_iControllable=1'))
 def tanksequence_face(t):
     tank(t)
     t.point('scripted_tanksequence', targetname='seq', at=(-150, 150, 64), m_iszEntity='tank', m_iTurn='2',
@@ -822,7 +927,11 @@ def tanksequence_face(t):
 
 
 @S.test('scripted_tanksequence: match the sequence angle, fire constantly, time limit fires the timeout target; '
-        'Repeatable (2) stays', doc=DOC)
+        'Repeatable (2) stays', doc=DOC,
+        covers=('scripted_tanksequence', 'scripted_tanksequence:2', 'scripted_tanksequence.m_iTurn=1',
+                'scripted_tanksequence.m_iShoot=2', 'scripted_tanksequence.m_iUntil=0',
+                'scripted_tanksequence.m_fDuration', 'scripted_tanksequence.netname',
+                'scripted_tanksequence.m_iActive=0'))
 def tanksequence_timeout(t):
     tank(t)
     t.point('scripted_tanksequence', targetname='seq', at=(150, 150, 64), m_iszEntity='tank', m_iTurn='1',
@@ -842,7 +951,10 @@ def tanksequence_timeout(t):
 
 
 @S.test('scripted_tanksequence: face an enemy (a monster_target by name), halt when it dies (Off): no halt '
-        'target before; a trigger ends it early', doc=DOC)
+        'target before; a trigger ends it early', doc=DOC,
+        covers=('scripted_tanksequence', 'scripted_tanksequence.m_iTurn=3', 'scripted_tanksequence.m_iszEnemy',
+                'scripted_tanksequence.m_iShoot=3', 'scripted_tanksequence.m_iUntil=2', 'scripted_tanksequence.target',
+                'monster_target'))
 def tanksequence_enemy(t):
     tank(t)
     t.point('monster_target', targetname='foe', at=(-150, 0, 40))
@@ -860,7 +972,8 @@ def tanksequence_enemy(t):
     t.expect.used('halted', after='kill', count=1)
 
 
-@S.test('trigger_startpatrol: a scientist walks the route from the named path_corner', doc=DOC)
+@S.test('trigger_startpatrol: a scientist walks the route from the named path_corner', doc=DOC,
+        covers=('trigger_startpatrol', 'trigger_startpatrol.target', 'trigger_startpatrol.m_iszPath'))
 def startpatrol(t):
     t.point('monster_scientist', targetname='sci', at=(-150, -150, 0), angles='0 0 0')
     t.point('path_corner', targetname='r1', at=(150, -150, 0), target='r2')
@@ -877,7 +990,9 @@ def startpatrol(t):
     t.expect.distance('after', 'sci', 'r1', 0, 200)
 
 
-@S.test('scripted_schedule: move to a spot, turn to a spot; a scientist obeys', doc=DOC)
+@S.test('scripted_schedule: move to a spot, turn to a spot; a scientist obeys', doc=DOC,
+        covers=('scripted_schedule', 'scripted_schedule.entity', 'scripted_schedule.schedule=4',
+                'scripted_schedule.schedule=5', 'scripted_schedule.spot_entity'))
 def scripted_schedule(t):
     t.point('monster_scientist', targetname='sci', at=(-150, 0, 0), angles='0 0 0')
     info(t, 'spot', at=(150, 0, 0))
@@ -928,7 +1043,11 @@ def no_run_test(key, classname, away=True):
 
     runs_by_walking.__name__ = 'scripted_schedule_run_walks_' + key
     S.test('scripted_schedule run orders on %s (no run animation): it walks instead, to the spot%s, as Half-Life\'s '
-           'run tasks do' % (classname, ' and away from it' if away else ''), players=1, doc=DOC)(runs_by_walking)
+           'run tasks do' % (classname, ' and away from it' if away else ''), players=1, doc=DOC,
+           covers=('scripted_schedule', 'scripted_schedule.entity', 'scripted_schedule.schedule=5',
+                   'scripted_schedule.schedule=1', 'scripted_schedule.spot_entity',
+                   'scripted_schedule.move_preference=2', 'scripted_schedule.mindist', 'scripted_schedule.maxdist',
+                   classname))(runs_by_walking)
 
 
 for _key, _classname in (('zombie', 'monster_zombie'), ('cyborg', 'monster_cyborg'),
@@ -937,7 +1056,10 @@ for _key, _classname in (('zombie', 'monster_zombie'), ('cyborg', 'monster_cybor
 
 
 @S.test('scripted_following: a scientist starts following the player (fires on start), Forward input Toggle stops '
-        'him (fires on stop); a second start fires nothing', players=1, doc=DOC)
+        'him (fires on stop); a second start fires nothing', players=1, doc=DOC,
+        covers=('scripted_following', 'scripted_following.entity', 'scripted_following.use_type=0',
+                'scripted_following.use_type=1', 'scripted_following.on_start_following',
+                'scripted_following.on_stop_following'))
 def scripted_following(t):
     t.point('monster_scientist', targetname='sci', at=(0, 150, 0), angles='0 270 0')
     t.point('scripted_following', targetname='follow', entity='sci', use_type='1', on_start_following='started',
@@ -961,7 +1083,9 @@ def scripted_following(t):
 
 
 @S.test('scripted_action: a grunt fires at a crate (a func_breakable) on cue: the crate takes his bullets; the action '
-        'fires its target; No action (8) finishes at once', doc=DOC)
+        'fires its target; No action (8) finishes at once', doc=DOC,
+        covers=('scripted_action', 'scripted_action.m_iszEntity', 'scripted_action.m_fAction=0',
+                'scripted_action.m_fAction=8', 'scripted_action.m_iszAttack', 'scripted_action.target'))
 def scripted_action(t):
     t.point('monster_human_grunt', targetname='grunt', at=(-150, 0, 0), angles='0 0 0')
     t.point('monster_scientist', targetname='sci', at=(-150, 150, 0), angles='0 0 0')
@@ -984,8 +1108,29 @@ def scripted_action(t):
     t.expect.value('s', 'grunt', 'angles.y', 0, tol=10)
 
 
+@S.test('scripted_action Entity to attack !activator: the grunt fires at the entity that fired the action (a crate '
+        'to his left), not at the script', doc=DOC, covers=('scripted_action.m_iszAttack',))
+def scripted_action_activator(t):
+    t.point('monster_human_grunt', targetname='grunt', at=(-150, 0, 0), angles='0 0 0')
+    t.brush('func_breakable', targetname='crate', size=(48, 48, 48), at=(-150, 180, 0), material='1',
+            health='100000')
+    t.point('scripted_action', targetname='act', at=(-150, 0, 0), m_iszEntity='grunt', m_fAction='0',
+            m_iszAttack='!activator', target='acted', m_fMoveTo='0', spawnflags='64', names=('m_iszEntity',))
+    info(t, 'acted')
+    t.wait(1.0)
+    t.mark('go')
+    t.fire('act', activator='crate')
+    t.wait(3.0)
+    t.snap('s', 'grunt', 'angles')
+    t.expect.used('acted', count=1)
+    t.expect.damaged('crate', attacker='grunt', after='go')
+    t.expect.value('s', 'grunt', 'angles.y', 90, tol=10)
+    t.expect.no_console('no attack target')
+
+
 @S.test('env_soundmark Danger: a scientist near the mark runs away from it (a node grid gives him cover; monsters '
-        'listen only with a player in their PVS)', players=1, doc=DOC)
+        'listen only with a player in their PVS)', players=1, doc=DOC,
+        covers=('env_soundmark', 'env_soundmark.type=32', 'env_soundmark.radius'))
 def soundmark_scatter(t):
     for x in (-200, -100, 0, 100, 200):
         for y in (-200, -100, 0, 100, 200):
@@ -1011,7 +1156,8 @@ def soundmark_scatter(t):
 
 
 @S.test('scripted_schedule turn to !activator: the scientist turns to the player and does not start following him '
-        '(the spot is not his follow target)', players=1, doc=DOC)
+        '(the spot is not his follow target)', players=1, doc=DOC,
+        covers=('scripted_schedule', 'scripted_schedule.schedule=4', 'scripted_schedule.spot_entity'))
 def scripted_schedule_turn_player(t):
     t.point('monster_scientist', targetname='sci', at=(-150, 0, 0), angles='0 0 0')
     t.point('scripted_schedule', targetname='turn', entity='sci', schedule='4', spot_entity='!activator',
@@ -1029,7 +1175,8 @@ def scripted_schedule_turn_player(t):
 
 
 @S.test('scripted_schedule waits while the scientist is afraid (a zombie behind glass): once the zombie is dead '
-        'he runs to the spot (Featureful keeps a suggestion until the monster is free)', players=1, doc=DOC)
+        'he runs to the spot (Featureful keeps a suggestion until the monster is free)', players=1, doc=DOC,
+        covers=('scripted_schedule', 'scripted_schedule.schedule=5', 'scripted_schedule.spot_entity'))
 def scripted_schedule_waits(t):
     t.point('monster_scientist', targetname='sci', at=(-150, -150, 0), angles='0 90 0')
     t.console('developer 2')
@@ -1053,7 +1200,9 @@ def scripted_schedule_waits(t):
 
 
 @S.test('scripted_schedule move away with a wall behind the scientist: he goes round it to a node away from the spot',
-        doc=DOC)
+        doc=DOC,
+        covers=('scripted_schedule', 'scripted_schedule.schedule=1', 'scripted_schedule.spot_entity',
+                'scripted_schedule.mindist'))
 def scripted_schedule_away_wall(t):
     for x in (-192, -64, 64, 192):
         for y in (-192, -64, 64, 192):
@@ -1075,7 +1224,8 @@ def scripted_schedule_away_wall(t):
 
 
 @S.test('trigger_startpatrol: a player standing in the route does not stop the patrol (the scientist goes round him '
-        'and reaches the last corner)', players=1, doc=DOC)
+        'and reaches the last corner)', players=1, doc=DOC,
+        covers=('trigger_startpatrol', 'trigger_startpatrol.target', 'trigger_startpatrol.m_iszPath'))
 def startpatrol_player_in_path(t):
     t.point('monster_scientist', targetname='sci', at=(-150, -150, 0), angles='0 0 0')
     t.point('path_corner', targetname='r1', at=(100, -150, 0), target='r2')
@@ -1097,7 +1247,12 @@ def mover(t, name='box', at=(0, 0, 100)):
 
 
 @S.test('trigger_motion: set position [LP], add offset, set angles from a direction, rotate by values, set / add '
-        'velocity, set / add avelocity', doc=DOC)
+        'velocity, set / add avelocity', doc=DOC,
+        covers=('trigger_motion', 'trigger_motion.target', 'trigger_motion.m_iszPosition',
+                'trigger_motion.m_iPosMode=0', 'trigger_motion.m_iPosMode=1', 'trigger_motion.m_iszAngles',
+                'trigger_motion.m_iAngMode=0', 'trigger_motion.m_iAngMode=2', 'trigger_motion.m_iszVelocity',
+                'trigger_motion.m_iVelMode=0', 'trigger_motion.m_iVelMode=1', 'trigger_motion.m_iszAVelocity',
+                'trigger_motion.m_iAVelMode=0', 'trigger_motion.m_iAVelMode=1'))
 def trigger_motion(t):
     mover(t)
     info(t, 'spot', at=(100, 50, 120))
@@ -1129,7 +1284,9 @@ def trigger_motion(t):
 
 
 @S.test('trigger_motion: rotate velocity by values keeps its speed; !activator moves the player; a missing target '
-        'does nothing', players=1, doc=DOC)
+        'does nothing', players=1, doc=DOC,
+        covers=('trigger_motion', 'trigger_motion.target', 'trigger_motion.m_iszVelocity',
+                'trigger_motion.m_iVelMode=0', 'trigger_motion.m_iVelMode=3'))
 def trigger_motion_rotate(t):
     mover(t)
     t.point('trigger_motion', targetname='setvel', target='box', m_iszVelocity='100 0 0', m_iVelMode='0')
@@ -1152,7 +1309,9 @@ def trigger_motion_rotate(t):
 
 
 @S.test('motion_manager: follow a moving entity every frame (set position), face a direction; Obey Trigger Mode Off '
-        'stops it', doc=DOC)
+        'stops it', doc=DOC,
+        covers=('motion_manager', 'motion_manager:16', 'motion_manager.target', 'motion_manager.m_iszPosition',
+                'motion_manager.m_iPosMode=0', 'motion_manager.m_iszFacing', 'motion_manager.m_iFaceMode=0'))
 def motion_follow(t):
     mover(t, 'lamp', at=(0, 0, 100))
     t.point('path_corner', targetname='c1', at=(-150, -150, 64), target='c2')
@@ -1179,7 +1338,7 @@ def motion_follow(t):
 
 
 @S.test('motion_manager: offset position (a speed), rotate by values per second; Start On (32); not obeying: '
-        'Toggle restarts', doc=DOC)
+        'Toggle restarts', doc=DOC, covers=('motion_manager', 'motion_manager:32', 'motion_manager.m_iPosMode=1'))
 def motion_offset(t):
     mover(t, 'drift', at=(-150, 0, 100))
     t.point('motion_manager', targetname='mm', target='drift', m_iszPosition='100 0 0', m_iPosMode='1',
@@ -1198,7 +1357,10 @@ def motion_offset(t):
 
 
 @S.test('motion_manager: set velocity, accelerate, follow position (velocity towards it), set avelocity, set angles '
-        'to an entity\'s', doc=DOC)
+        'to an entity\'s', doc=DOC,
+        covers=('motion_manager', 'motion_manager:32', 'motion_manager.m_iszPosition', 'motion_manager.m_iPosMode=2',
+                'motion_manager.m_iPosMode=3', 'motion_manager.m_iPosMode=4', 'motion_manager.m_iszFacing',
+                'motion_manager.m_iFaceMode=3', 'motion_manager.m_iFaceMode=4'))
 def motion_modes(t):
     t.point('info_target', targetname='a', at=(-150, -100, 100))
     t.point('info_target', targetname='b', at=(-150, 0, 100))
@@ -1230,7 +1392,18 @@ GAME_WEAPONS = ('weapon_spa weapon_medikit weapon_fa18 weapon_nm33 weapon_federa
 
 @S.test('game_player_settings: take each game weapon while it is held, and while another is held; the player keeps '
         'a working weapon (the removed active weapon crashed the server: GetNextBestWeapon with no current weapon)',
-        players=1, doc=DOC, size=(512, 512, 256))
+        players=1, doc=DOC, size=(512, 512, 256),
+        covers=('game_player_settings', 'player_hasweapon', 'player_hasweapon.weapon_name',
+                'player_hasweapon.pass_target', 'game_player_settings.weapon_spa=-1',
+                'game_player_settings.weapon_medikit=-1', 'game_player_settings.weapon_fa18=-1',
+                'game_player_settings.weapon_nm33=-1', 'game_player_settings.weapon_federal=-1',
+                'game_player_settings.weapon_pm66=-1', 'game_player_settings.weapon_ben=-1',
+                'game_player_settings.weapon_sw=-1', 'game_player_settings.weapon_chaingun=-1',
+                'game_player_settings.weapon_rc28=-1', 'game_player_settings.weapon_k444=-1',
+                'game_player_settings.weapon_canon=-1', 'game_player_settings.weapon_glauncher=-1',
+                'game_player_settings.weapon_chainsaw=-1', 'game_player_settings.weapon_rpg=-1',
+                'game_player_settings.weapon_satchel=-1', 'game_player_settings.weapon_handgrenade=-1',
+                'game_player_settings.weapon_snark=-1'))
 def take_every_weapon(t):
     tough(t, 'player1', '100000')
     for i, w in enumerate(GAME_WEAPONS):
@@ -1264,7 +1437,8 @@ def take_every_weapon(t):
 
 
 @S.test('player_speed absolute 160 after a live co-op penalty (SboLevelPenalty lowers the max speed at once): the '
-        'player still moves at 160', players=2, doc=DOC)
+        'player still moves at 160', players=2, doc=DOC,
+        covers=('player_speed', 'player_speed.maxspeed', 'player_speed.value_notion=1'))
 def player_speed_after_penalty(t):
     # last in the suite: it restarts the round and leaves player2 five levels down
     t.point('player_speed', targetname='abs', maxspeed='160', value_notion='1')

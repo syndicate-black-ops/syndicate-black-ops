@@ -1,0 +1,11 @@
+# monster_grunt_hunter flag 2 Gag (FGD base Monster): no idle speech: a gagged one (edict #20) makes no voice sound (channel 2) in
+# 120 s near a player; the same monster without the flag (#21) does
+# covers: monster_grunt_hunter:2
+map co_fuzz
+spawn monster_grunt_hunter targetname gagged spawnflags 2 origin "0 300 0"
+spawn monster_grunt_hunter targetname talker spawnflags 0 origin "0 -300 0"
+activate
+connect 1 P1
+frames 1200
+expectnot SOUND #20 monster_grunt_hunter ch2 
+expectmin 1 SOUND #21 monster_grunt_hunter ch2 

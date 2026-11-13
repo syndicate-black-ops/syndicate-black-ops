@@ -68,6 +68,8 @@ public:
 	}
 	void TurnOff( void );
 	void TurnOn( void );
+	// SBO 2.1 (Spirit of Half-Life): On while it is shown, Off while it is hidden
+	virtual STATE GetState( CBaseEntity *pActivator ) { return ( pev->effects & EF_NODRAW ) ? STATE_OFF : STATE_ON; }
 	inline float Frames( void ) { return m_maxFrame; }
 	inline void SetTransparency( int rendermode, int r, int g, int b, int a, int fx )
 	{
@@ -200,6 +202,8 @@ public:
 	void	TurnOn( void );
 	void	TurnOff( void );
 	int		IsOn( void );
+	// SBO 2.1 (Spirit of Half-Life): On while the laser is on, Off while it is off
+	virtual STATE GetState( CBaseEntity *pActivator ) { return IsOn() ? STATE_ON : STATE_OFF; }
 	void	UpdateOnRemove( void );
 
 	void	FireAtPoint( TraceResult &point, entvars_t *pevAttacker = NULL, entvars_t *pevInflictor = NULL );
@@ -221,5 +225,8 @@ public:
 // SoHL env_sky (effects.cpp): the map's 3D sky for a player whose HUD is initialised (CBasePlayer::UpdateClientData)
 class CBasePlayer;
 void EnvSky_SendState( CBasePlayer *pPlayer );
+// the entities in the sky room of the env_sky that is on go to every player (client.cpp AddToFullPack)
+bool EnvSky_IsSkyEntity( int e, const edict_t *ent );
+void EnvSky_ClearEntities( void );	// ServerDeactivate: none on the next map until its env_sky lists them
 
 #endif		//EFFECTS_H

@@ -198,21 +198,21 @@ void CSw::PrimaryAttack()
 			WRITE_BYTE( 0 );	// decay
 		MESSAGE_END();
 
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0;
+		m_flNextPrimaryAttack = GetNextAttackDelay( 1.0 );
 	}
 	else
 	{
 		CPlasma::Shoot( m_pPlayer->pev, vecSrc, vecAiming * 2000, 1 );
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
+		m_flNextPrimaryAttack = GetNextAttackDelay( 0.5 );
 	}
 #else
 	if ( m_fInZoom == 1 )
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.0;
+		m_flNextPrimaryAttack = GetNextAttackDelay( 1.0 );
 	else
-		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
+		m_flNextPrimaryAttack = GetNextAttackDelay( 0.5 );
 #endif
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -269,9 +269,16 @@ void CSw::WeaponIdle( void )
 
 	if ( m_flTimeWeaponIdle < UTIL_WeaponTimeBase() )
 	{
+		// the idle sequence's length: sent once per loop
 		if ( m_iClip )
+		{
 			SendWeaponAnim( SW_IDLE1 );
+			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 2.0 / 10.0;
+		}
 		else
+		{
 			SendWeaponAnim( SW_IDLE2 );
+			m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 16.0 / 25.0;
+		}
 	}
 }

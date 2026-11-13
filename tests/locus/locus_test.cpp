@@ -55,7 +55,7 @@ static entvars_t s_vars[5];
 static CTestEnt s_ents[5];
 static const char *s_names[5] = { "num7", "nan", "loopA", "loopB", "self" };
 
-CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStart, const char *szName )
+CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStart, const char *szName, CBaseEntity *, CBaseEntity * )
 {
 	if ( pStart ) return NULL;
 	for ( int i = 0; i < 5; i++ )

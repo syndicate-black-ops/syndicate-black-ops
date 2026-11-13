@@ -19,6 +19,7 @@
 //          client reads LEN_LABEL_V2 (it cuts a longer one there itself), and the API cuts them for it to
 //          LEN_LABEL_V2 with "..." at the end. Version 4 reads LAYOUT_STARS (a star rating) and STARS; an older client
 //          reads LAYOUT_STARS as LAYOUT_LIST (one row per star), and the API sends it LAYOUT_LIST and no STARS.
+//          Version 5 reads WINNER (an older client would skip it; the API does not send it).
 //
 // Shared by the client and the tests. Plain C++, no engine headers.
 //=================================================================//
@@ -31,7 +32,7 @@
 
 namespace servermenu
 {
-constexpr int PROTOCOL_VERSION = 4;
+constexpr int PROTOCOL_VERSION = 5;
 constexpr int PROTOCOL_MIN = 2; //!< the oldest version this client and the API speak (version 1 had no record lengths)
 
 //! The engine's user message payload limit (MAX_USER_MSG_DATA, 192; stock HLDS stops with Host_Error past it). The
@@ -118,7 +119,10 @@ enum Op
 	OP_STARS = 37,   //!< byte menu, byte tenths (the average in tenths of a star, 0..10 x MAX_STARS; STARS_NONE: none),
 	                 //!< string text ("" none): a LAYOUT_STARS menu's read-only star row, partly filled to the
 	                 //!< average, with its text after it (e.g. "4.3 - 44 ratings") (live; version 4)
-	OP_LAST = OP_STARS, //!< the last op this version knows (later ones are skipped)
+	OP_WINNER = 38,  //!< byte menu, short item (NO_ITEM: none): the item that won (a vote's result): its card or row
+	                 //!< gets a shimmer sweeping across it, then stays marked until the window closes or the menu is
+	                 //!< defined again (live; version 5)
+	OP_LAST = OP_WINNER, //!< the last op this version knows (later ones are skipped)
 };
 
 // CONFIRM kinds

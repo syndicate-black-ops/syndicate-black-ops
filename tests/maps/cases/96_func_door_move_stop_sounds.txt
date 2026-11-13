@@ -1,0 +1,206 @@
+# Move Sound / Stop Sound (FGD Door) on func_door, func_door_rotating and func_water: a fired door plays
+# doors/doormove<N>.wav while it moves (1-10) and doors/doorstop<N>.wav when it stops (1-8); 0 No Sound plays
+# common/null.wav. One door per value and class, the stop sounds on doors 1-8 and on 9-10 again (stopsnd 1, 2)
+# The func_water rows have no Contents key (skin 0, a solid door), so they play sounds; real func_water (Contents
+# set) is silent, as in Half-Life (entity test door_keys water_silent), and has no Move / Stop Sound keys in the FGD
+# covers: func_door.movesnd func_door.stopsnd func_door.movesnd=0 func_door.movesnd=1 func_door.movesnd=2 func_door.movesnd=3 func_door.movesnd=4 func_door.movesnd=5 func_door.movesnd=6 func_door.movesnd=7 func_door.movesnd=8 func_door.movesnd=9 func_door.movesnd=10 func_door.stopsnd=0 func_door.stopsnd=1 func_door.stopsnd=2 func_door.stopsnd=3 func_door.stopsnd=4 func_door.stopsnd=5 func_door.stopsnd=6 func_door.stopsnd=7 func_door.stopsnd=8 func_door_rotating.movesnd func_door_rotating.stopsnd func_door_rotating.movesnd=0 func_door_rotating.movesnd=1 func_door_rotating.movesnd=2 func_door_rotating.movesnd=3 func_door_rotating.movesnd=4 func_door_rotating.movesnd=5 func_door_rotating.movesnd=6 func_door_rotating.movesnd=7 func_door_rotating.movesnd=8 func_door_rotating.movesnd=9 func_door_rotating.movesnd=10 func_door_rotating.stopsnd=0 func_door_rotating.stopsnd=1 func_door_rotating.stopsnd=2 func_door_rotating.stopsnd=3 func_door_rotating.stopsnd=4 func_door_rotating.stopsnd=5 func_door_rotating.stopsnd=6 func_door_rotating.stopsnd=7 func_door_rotating.stopsnd=8
+map co_fuzz
+brushsize 64 64 64
+spawn func_door targetname door0 model *1 speed 640 wait -1 movesnd 0 stopsnd 0
+spawn func_door targetname door1 model *2 speed 640 wait -1 movesnd 1 stopsnd 1
+spawn func_door targetname door2 model *3 speed 640 wait -1 movesnd 2 stopsnd 2
+spawn func_door targetname door3 model *4 speed 640 wait -1 movesnd 3 stopsnd 3
+spawn func_door targetname door4 model *5 speed 640 wait -1 movesnd 4 stopsnd 4
+spawn func_door targetname door5 model *6 speed 640 wait -1 movesnd 5 stopsnd 5
+spawn func_door targetname door6 model *7 speed 640 wait -1 movesnd 6 stopsnd 6
+spawn func_door targetname door7 model *8 speed 640 wait -1 movesnd 7 stopsnd 7
+spawn func_door targetname door8 model *9 speed 640 wait -1 movesnd 8 stopsnd 8
+spawn func_door targetname door9 model *10 speed 640 wait -1 movesnd 9 stopsnd 1
+spawn func_door targetname door10 model *11 speed 640 wait -1 movesnd 10 stopsnd 2
+spawn func_door_rotating targetname door_rotating0 model *12 distance 90 speed 900 wait -1 movesnd 0 stopsnd 0
+spawn func_door_rotating targetname door_rotating1 model *13 distance 90 speed 900 wait -1 movesnd 1 stopsnd 1
+spawn func_door_rotating targetname door_rotating2 model *14 distance 90 speed 900 wait -1 movesnd 2 stopsnd 2
+spawn func_door_rotating targetname door_rotating3 model *15 distance 90 speed 900 wait -1 movesnd 3 stopsnd 3
+spawn func_door_rotating targetname door_rotating4 model *16 distance 90 speed 900 wait -1 movesnd 4 stopsnd 4
+spawn func_door_rotating targetname door_rotating5 model *17 distance 90 speed 900 wait -1 movesnd 5 stopsnd 5
+spawn func_door_rotating targetname door_rotating6 model *18 distance 90 speed 900 wait -1 movesnd 6 stopsnd 6
+spawn func_door_rotating targetname door_rotating7 model *19 distance 90 speed 900 wait -1 movesnd 7 stopsnd 7
+spawn func_door_rotating targetname door_rotating8 model *20 distance 90 speed 900 wait -1 movesnd 8 stopsnd 8
+spawn func_door_rotating targetname door_rotating9 model *21 distance 90 speed 900 wait -1 movesnd 9 stopsnd 1
+spawn func_door_rotating targetname door_rotating10 model *22 distance 90 speed 900 wait -1 movesnd 10 stopsnd 2
+spawn func_water targetname water0 model *23 speed 640 wait -1 movesnd 0 stopsnd 0
+spawn func_water targetname water1 model *24 speed 640 wait -1 movesnd 1 stopsnd 1
+spawn func_water targetname water2 model *25 speed 640 wait -1 movesnd 2 stopsnd 2
+spawn func_water targetname water3 model *26 speed 640 wait -1 movesnd 3 stopsnd 3
+spawn func_water targetname water4 model *27 speed 640 wait -1 movesnd 4 stopsnd 4
+spawn func_water targetname water5 model *28 speed 640 wait -1 movesnd 5 stopsnd 5
+spawn func_water targetname water6 model *29 speed 640 wait -1 movesnd 6 stopsnd 6
+spawn func_water targetname water7 model *30 speed 640 wait -1 movesnd 7 stopsnd 7
+spawn func_water targetname water8 model *31 speed 640 wait -1 movesnd 8 stopsnd 8
+spawn func_water targetname water9 model *32 speed 640 wait -1 movesnd 9 stopsnd 1
+spawn func_water targetname water10 model *33 speed 640 wait -1 movesnd 10 stopsnd 2
+activate
+connect 1 P1
+frames 3
+mark door0
+fire door0
+frames 3
+expect func_door ch6 common/null.wav vol=1.00
+mark door1
+fire door1
+frames 3
+expectn 1 func_door ch6 doors/doormove1.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop1.wav vol=1.00
+mark door2
+fire door2
+frames 3
+expectn 1 func_door ch6 doors/doormove2.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop2.wav vol=1.00
+mark door3
+fire door3
+frames 3
+expectn 1 func_door ch6 doors/doormove3.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop3.wav vol=1.00
+mark door4
+fire door4
+frames 3
+expectn 1 func_door ch6 doors/doormove4.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop4.wav vol=1.00
+mark door5
+fire door5
+frames 3
+expectn 1 func_door ch6 doors/doormove5.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop5.wav vol=1.00
+mark door6
+fire door6
+frames 3
+expectn 1 func_door ch6 doors/doormove6.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop6.wav vol=1.00
+mark door7
+fire door7
+frames 3
+expectn 1 func_door ch6 doors/doormove7.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop7.wav vol=1.00
+mark door8
+fire door8
+frames 3
+expectn 1 func_door ch6 doors/doormove8.wav vol=1.00
+expectn 1 func_door ch6 doors/doorstop8.wav vol=1.00
+mark door9
+fire door9
+frames 3
+expectn 1 func_door ch6 doors/doormove9.wav vol=1.00
+expectn 2 func_door ch6 doors/doorstop1.wav vol=1.00
+mark door10
+fire door10
+frames 3
+expectn 1 func_door ch6 doors/doormove10.wav vol=1.00
+expectn 2 func_door ch6 doors/doorstop2.wav vol=1.00
+mark door_rotating0
+fire door_rotating0
+frames 3
+expect func_door_rotating ch6 common/null.wav vol=1.00
+mark door_rotating1
+fire door_rotating1
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove1.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop1.wav vol=1.00
+mark door_rotating2
+fire door_rotating2
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove2.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop2.wav vol=1.00
+mark door_rotating3
+fire door_rotating3
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove3.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop3.wav vol=1.00
+mark door_rotating4
+fire door_rotating4
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove4.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop4.wav vol=1.00
+mark door_rotating5
+fire door_rotating5
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove5.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop5.wav vol=1.00
+mark door_rotating6
+fire door_rotating6
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove6.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop6.wav vol=1.00
+mark door_rotating7
+fire door_rotating7
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove7.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop7.wav vol=1.00
+mark door_rotating8
+fire door_rotating8
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove8.wav vol=1.00
+expectn 1 func_door_rotating ch6 doors/doorstop8.wav vol=1.00
+mark door_rotating9
+fire door_rotating9
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove9.wav vol=1.00
+expectn 2 func_door_rotating ch6 doors/doorstop1.wav vol=1.00
+mark door_rotating10
+fire door_rotating10
+frames 3
+expectn 1 func_door_rotating ch6 doors/doormove10.wav vol=1.00
+expectn 2 func_door_rotating ch6 doors/doorstop2.wav vol=1.00
+mark water0
+fire water0
+frames 3
+expect func_water ch6 common/null.wav vol=1.00
+mark water1
+fire water1
+frames 3
+expectn 1 func_water ch6 doors/doormove1.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop1.wav vol=1.00
+mark water2
+fire water2
+frames 3
+expectn 1 func_water ch6 doors/doormove2.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop2.wav vol=1.00
+mark water3
+fire water3
+frames 3
+expectn 1 func_water ch6 doors/doormove3.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop3.wav vol=1.00
+mark water4
+fire water4
+frames 3
+expectn 1 func_water ch6 doors/doormove4.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop4.wav vol=1.00
+mark water5
+fire water5
+frames 3
+expectn 1 func_water ch6 doors/doormove5.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop5.wav vol=1.00
+mark water6
+fire water6
+frames 3
+expectn 1 func_water ch6 doors/doormove6.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop6.wav vol=1.00
+mark water7
+fire water7
+frames 3
+expectn 1 func_water ch6 doors/doormove7.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop7.wav vol=1.00
+mark water8
+fire water8
+frames 3
+expectn 1 func_water ch6 doors/doormove8.wav vol=1.00
+expectn 1 func_water ch6 doors/doorstop8.wav vol=1.00
+mark water9
+fire water9
+frames 3
+expectn 1 func_water ch6 doors/doormove9.wav vol=1.00
+expectn 2 func_water ch6 doors/doorstop1.wav vol=1.00
+mark water10
+fire water10
+frames 3
+expectn 1 func_water ch6 doors/doormove10.wav vol=1.00
+expectn 2 func_water ch6 doors/doorstop2.wav vol=1.00

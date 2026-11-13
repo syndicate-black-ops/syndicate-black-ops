@@ -176,6 +176,9 @@ echo "==== build.txt ===="
   else
     echo "  The syndicate folder as above (dlls/hl.so, dlls/hl.dll)."
   fi
+  echo "  Metamod on Linux: addons/metamod/config.ini needs the line \"gamedll dlls/hl.so\" (1.38: dlls/hl_i386.so), or"
+  echo "  start with +localinfo mm_gamedll dlls/hl.so. Without it the server stops with \"Game DLL version mismatch\"."
+  echo "  Renaming hl.so to hl_i386.so instead does not help: Metamod then loads Half-Life, not SBO."
   echo "COPYING OVER AN EXISTING INSTALL instead of replacing the folder: files removed since your build stay behind;"
   echo "  verify.sh / verify.ps1 do not list them. When in doubt, replace the whole folder."
   echo

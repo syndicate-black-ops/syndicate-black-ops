@@ -1,8 +1,9 @@
 """func_tank kill credit (fix/tank-kill-credit, Valve halflife#561): the player at a tank's controls gets the kill of
 its rockets, laser and mortar shells, as of its bullets and of his own weapons (frags / co-op XP, DeathMsg and
 SboDeathMsg killer). With nobody at the controls the tank keeps it (killer 0 in the feed).
-Kill feed weapon codes: func_tank 'tank' (d_tank), func_tanklaser 'tanklaser' (d_tanklaser), func_tankrocket
-'rpg_rocket' (d_rpg_rocket), func_tankmortar 'env_explosion' (the skull: no icon)."""
+Kill feed weapon code: each func_tank kind, manned or not, sends its own name (the turret icon d_tank for all):
+func_tank 'tank', func_tanklaser 'tanklaser' (its beam), func_tankrocket 'tankrocket' (its rockets, not the RPG's
+'rpg_rocket'), func_tankmortar 'tankmortar' (its blasts, not 'env_explosion') (SboKillfeed_InflictorCode)."""
 
 from etest import Suite
 
@@ -19,8 +20,8 @@ TANK_KEYS = dict(angles='0 90 0', yawrate='60', yawrange='30', pitchrate='30', p
 KINDS = {
     'func_tank': dict(code='tank', keys=dict(bullet='1', bullet_damage='1000', firerate='4')),
     'func_tanklaser': dict(code='tanklaser', keys=dict(laserentity='beam')),
-    'func_tankrocket': dict(code='rpg_rocket', keys={}),
-    'func_tankmortar': dict(code='env_explosion', keys=dict(iMagnitude='300')),
+    'func_tankrocket': dict(code='tankrocket', keys={}),
+    'func_tankmortar': dict(code='tankmortar', keys=dict(iMagnitude='300')),
 }
 
 
@@ -105,30 +106,42 @@ def manned(cls, code):
     manned_player.__name__ = 'manned_player_' + cls
     manned_monster.__name__ = 'manned_monster_' + cls
     S.test('%s at the controls kills a player: player1 is the killer, weapon "%s"' % (cls, code), players=2,
-           size=ROOM, doc=DOC)(manned_player)
+           size=ROOM, doc=DOC, covers=(cls, cls + ':32'))(manned_player)
     S.test('%s at the controls kills a monster: player1 gets the kill and the XP (SboDeathMsg killer 1)' % cls,
-           players=2, size=ROOM, doc=DOC)(manned_monster)
+           players=2, size=ROOM, doc=DOC, covers=(cls, cls + ':32'))(manned_monster)
 
 
 for _cls, _kind in KINDS.items():
     manned(_cls, _kind['code'])
 
 
-@S.test('func_tankrocket with nobody at the controls (active, targets players) kills a player: the tank keeps the '
-        'kill (killer 0, weapon "rpg_rocket")', players=2, size=ROOM, doc=DOC)
-def unmanned_rocket(t):
-    tank(t, 'func_tankrocket', 1 | 2)     # Active, target players
-    fresh_round(t)
-    t.flags('player1', '+FL_NOTARGET')
-    tough(t, 'player1')
-    t.teleport('player1', (200, -200, 0), yaw=90)
-    t.mark('fire')
-    player_victim(t)
-    t.wait(5.0)
-    t.fire('tk', use='off')
-    t.flags('player1', '-FL_NOTARGET')
-    t.expect.damaged('player2', attacker='tk', after='fire')
-    t.expect.msg('DeathMsg', fields={'killer': 0, 'victim': 2, 'weapon': 'rpg_rocket'}, after='fire', count=1)
+def unmanned(cls, attacker):
+    def body(t):
+        tank(t, cls, 1)         # Active (every tank targets players; Half-Life's flag 2 is read by nothing)
+        fresh_round(t)
+        t.flags('player1', '+FL_NOTARGET')
+        tough(t, 'player1')
+        t.teleport('player1', (200, -200, 0), yaw=90)
+        t.mark('fire')
+        player_victim(t)
+        t.wait(5.0)
+        t.fire('tk', use='off')
+        t.flags('player1', '-FL_NOTARGET')
+        t.expect.damaged('player2', attacker=attacker, after='fire')
+        t.expect.msg('DeathMsg', fields={'killer': 0, 'victim': 2, 'weapon': KINDS[cls]['code']}, after='fire',
+                     count=1)
+
+    body.__name__ = 'unmanned_' + cls
+    S.test('%s with nobody at the controls (active, targets players) kills a player: the tank keeps the kill '
+           '(killer 0, weapon "%s": the turret icon)' % (cls, KINDS[cls]['code']), players=2, size=ROOM,
+           doc=DOC, covers=(cls, cls + ':1'))(body)
+
+
+# the attacker: the tank (bullets, rockets), the laser (as in HL), the mortar's explosion (as in HL)
+unmanned('func_tank', 'tk')
+unmanned('func_tankrocket', 'tk')
+unmanned('func_tanklaser', 'beam')
+unmanned('func_tankmortar', None)
 
 
 # --- Featureful keys (docs/FEATUREFUL_OPTIONS.md, batch 8): bulletCount, firemaster, extra_barrels,
@@ -162,7 +175,8 @@ def manned_at(t, seconds, victim='player2'):
 
 
 @S.test('func_tank "bulletCount" 2: a player at the controls holding attack for 2 s (8 shots at rate 4) hits twice, '
-        'then the tank clicks (weapons/357_cock1.wav) instead of firing', players=2, size=ROOM, doc=OPT)
+        'then the tank clicks (weapons/357_cock1.wav) instead of firing', players=2, size=ROOM, doc=OPT,
+        covers=('func_tank', 'func_tank.bulletCount'))
 def bullet_count(t):
     gun(t, bulletCount='2')
     manned_at(t, 2.0)
@@ -170,7 +184,8 @@ def bullet_count(t):
     t.expect.sound('357_cock1', ent='tk', after='fire')
 
 
-@S.test('func_tank without "bulletCount" never runs out (no click)', players=2, size=ROOM, doc=OPT)
+@S.test('func_tank without "bulletCount" never runs out (no click)', players=2, size=ROOM, doc=OPT,
+        covers=('func_tank',))
 def bullet_count_unset(t):
     gun(t)
     manned_at(t, 2.0)
@@ -183,7 +198,8 @@ STEAM = 'model:sprites/steam1.spr'
 
 
 @S.test('func_tank "Smoke on empty" (256) with "bulletCount" 2: one smoke puff (TE_SMOKE, sprites/steam1.spr, scale 20, '
-        '5 fps) when the last bullet is fired', players=2, size=ROOM, doc=OPT)
+        '5 fps) when the last bullet is fired', players=2, size=ROOM, doc=OPT,
+        covers=('func_tank', 'func_tank:256', 'func_tank.bulletCount'))
 def smoke_on_empty(t):
     gun(t, spawnflags=32 | 256, bulletCount='2')
     manned_at(t, 2.0)
@@ -193,7 +209,7 @@ def smoke_on_empty(t):
 
 
 @S.test('func_tank "bulletCount" 2 without "Smoke on empty": it runs out with no smoke puff', players=2, size=ROOM,
-        doc=OPT)
+        doc=OPT, covers=('func_tank', 'func_tank.bulletCount'))
 def smoke_on_empty_unset(t):
     gun(t, bulletCount='2')
     manned_at(t, 2.0)
@@ -202,7 +218,7 @@ def smoke_on_empty_unset(t):
 
 
 @S.test('func_tank "firemaster" off (a multisource nobody fired): no shot and no click (with one bullet)',
-        players=2, size=ROOM, doc=OPT)
+        players=2, size=ROOM, doc=OPT, covers=('func_tank', 'func_tank.firemaster'))
 def fire_master(t):
     t.point('multisource', targetname='fm_off')
     t.point('trigger_relay', targetname='fm_src', target='fm_off')     # its one source, never fired
@@ -213,7 +229,8 @@ def fire_master(t):
 
 
 @S.test('func_tank "extra_barrels": the named (inactive) tank turns with the controlled one and fires with it (its '
-        'target fires, its bullets hit)', players=2, size=ROOM, doc=OPT)
+        'target fires, its bullets hit)', players=2, size=ROOM, doc=OPT,
+        covers=('func_tank', 'func_tank.extra_barrels', 'func_tank.target'))
 def extra_barrels(t):
     gun(t, extra_barrels='tkx', names=('extra_barrels',))
     gun(t, name='tkx', at=(TANK_AT[0], TANK_AT[1], TANK_AT[2] + 40), spawnflags=0, target='tkx_shot')
@@ -222,10 +239,12 @@ def extra_barrels(t):
     t.expect.fired('tkx_shot', caller='tkx', after='fire', min=2)
 
 
-def gib_test(policy, damage, gibbed):
+def gib_test(policy, damage, gibbed, explicit=False, victim='monster_zombie'):
     def body(t):
-        gun(t, bullet_damage=str(damage), firerate='1', **({'bullet_gib_policy': str(policy)} if policy else {}))
-        t.point('monster_zombie', at=VICTIM_AT, targetname='npc', angles='0 270 0', spawnflags='16')
+        t.exact_damage()
+        gun(t, bullet_damage=str(damage), firerate='1',
+            **({'bullet_gib_policy': str(policy)} if policy or explicit else {}))
+        t.point(victim, at=VICTIM_AT, targetname='npc', angles='0 270 0', spawnflags='16')
         fresh_round(t)
         t.kv('npc', 'health', '1')
         t.teleport('player2', (200, -200, 0), yaw=90)
@@ -242,15 +261,26 @@ def gib_test(policy, damage, gibbed):
         else:
             t.snap('s', 'npc', 'deadflag')
             t.expect.value('s', 'npc', 'deadflag', 0, op='>')
-    body.__name__ = 'gib_policy_%d_damage_%d' % (policy, damage)
-    S.test('func_tank "bullet_gib_policy" %d, Damage Per Bullet %d: the killed zombie %s' % (
-        policy, damage, 'is gibbed' if gibbed else 'keeps its body'), players=2, size=ROOM, doc=OPT)(body)
+    body.__name__ = 'gib_policy_%d_damage_%d%s_%s' % (policy, damage, '_set' if explicit else '',
+                                                      victim.replace('monster_', ''))
+    S.test('func_tank "bullet_gib_policy" %d%s, Damage Per Bullet %d: the killed %s %s' % (
+        policy, ' (set)' if explicit else '', damage, victim.replace('monster_', ''),
+        'is gibbed' if gibbed else 'keeps its body'), players=2,
+        size=ROOM, doc=OPT, covers=('func_tank', 'func_tank.bullet_damage')
+        + (('func_tank.bullet_gib_policy=%d' % policy,) if policy or explicit else ()))(body)
 
 
 gib_test(0, 4000, True)     # Default: over 16 always gibs (FireBullets)
 gib_test(2, 4000, False)    # Never gib
 gib_test(0, 10, False)      # Default: 16 or less never gibs
 gib_test(3, 10, True)       # Always gib
+# A scientist at 1 health, hit in the head (the tank aims at the eyes: twice the damage): Default gibs anything over 16
+# (FireBullets' DMG_ALWAYSGIB), Normal goes by the health the hit leaves (gibs below -30,
+# CBaseMonster::ShouldGibMonster): 15 (30 in the head) leaves -29, not gibbed; 4000 gibs. (A zombie takes 1 from any
+# body shot, CZombie::TraceAttack: no use for Normal.) The gib tests deal exact damage (exact_damage)
+gib_test(0, 20, True, explicit=True, victim='monster_scientist')
+gib_test(1, 15, False, victim='monster_scientist')
+gib_test(1, 4000, True, victim='monster_scientist')
 
 
 # m_iClass: a tank turned on (Active) once the room is set, facing north; the candidates stand 280 units north, 100 apart; every
@@ -281,7 +311,7 @@ def tough_npc(t, name):
 
 
 @S.test('func_tank "m_iClass" 0 (default, Active): it shoots the player and never a grunt or a zombie beside him',
-        players=1, size=(512, 512, 256), doc=OPT)
+        players=1, size=(512, 512, 256), doc=OPT, covers=('func_tank', 'func_tank:1'))
 def class_default(t):
     npc(t, 'monster_human_grunt', 'g', LEFT_AT)
     npc(t, 'monster_zombie', 'z', RIGHT_AT)
@@ -298,7 +328,7 @@ def class_default(t):
 
 
 @S.test('func_tank "m_iClass" 11 (Player Ally): it shoots a grunt and a zombie, never the player', players=1,
-        size=(512, 512, 256), doc=OPT)
+        size=(512, 512, 256), doc=OPT, covers=('func_tank', 'func_tank:1', 'func_tank.m_iClass=11'))
 def class_player_ally(t):
     npc(t, 'monster_human_grunt', 'g', LEFT_AT)
     class_room(t, 11)
@@ -312,7 +342,7 @@ def class_player_ally(t):
 
 
 @S.test('func_tank "m_iClass" 11 shoots a zombie (Alien Military) and never the player', players=1,
-        size=(512, 512, 256), doc=OPT)
+        size=(512, 512, 256), doc=OPT, covers=('func_tank', 'func_tank:1', 'func_tank.m_iClass=11'))
 def class_player_ally_alien(t):
     npc(t, 'monster_zombie', 'z', RIGHT_AT)
     class_room(t, 11)
@@ -343,7 +373,9 @@ def ally_case(tank_class, shot):
     body.__name__ = 'class_%d_ally_grunt' % tank_class
     S.test('func_tank "m_iClass" %d and a grunt with "is_player_ally" 1: %s' % (
         tank_class, 'shot (Human Military hates player allies)' if shot else 'not shot'), players=1,
-        size=(512, 512, 256), doc=OPT)(body)
+        size=(512, 512, 256), doc=OPT,
+        covers=('func_tank', 'func_tank:1', 'monster_human_grunt.is_player_ally=1')
+        + (('func_tank.m_iClass=%d' % tank_class,) if tank_class else ()))(body)
 
 
 ally_case(0, False)
@@ -352,7 +384,8 @@ ally_case(4, True)
 
 
 @S.test('func_tank "m_iClass" 4 (Human Military) judges a monster by its "classify": a zombie with classify 4 is '
-        'left alone, a plain zombie beside it is shot', players=1, size=(512, 512, 256), doc=OPT)
+        'left alone, a plain zombie beside it is shot', players=1, size=(512, 512, 256), doc=OPT,
+        covers=('func_tank', 'func_tank:1', 'func_tank.m_iClass=4', 'monster_zombie.classify=4'))
 def class_keyed_classify(t):
     npc(t, 'monster_zombie', 'zh', LEFT_AT, classify='4')
     npc(t, 'monster_zombie', 'z', RIGHT_AT)

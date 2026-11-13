@@ -39,7 +39,13 @@ struct client_static_prop_t
 	int			model;
 	cl_entity_t	ent;
 	vec3_t		absmin, absmax;	// for the PVS test
+	BOOL		hasLightOrigin;	// SBO 2.0 info_light_origin: lit from lightorigin
+	vec3_t		lightorigin;
 };
+
+// SBO 2.0 info_light_origin: a prop's entity carries this in curstate.iuser3 and its id in iuser4, so the renderer
+// finds the prop whatever copy of the entity the engine hands it
+#define STATICPROP_ENT_TAG	0x53505250	// "SPRP"
 
 static client_static_model_t s_Models[ STATICPROP_MAX_MODELS ];
 static client_static_prop_t s_Props[ STATICPROP_MAX_PROPS ];
@@ -99,7 +105,7 @@ static model_t *StaticProps_Model( int i )
 				}
 			}
 			else
-				gEngfuncs.Con_Printf( "env_static: model \"%s\" missing or not a studio model\n", m->name );
+				gEngfuncs.Con_DPrintf( "env_static: model \"%s\" missing or not a studio model\n", m->name );
 		}
 	}
 	return m->model;
@@ -201,6 +207,8 @@ static int MsgFunc_StaticProp( const char *pszName, int iSize, void *pbuf )
 		ent->curstate.solid = SOLID_NOT;
 		ent->curstate.movetype = MOVETYPE_NONE;
 		ent->index = 0;		// not a server entity
+		ent->curstate.iuser3 = STATICPROP_ENT_TAG;	// SBO 2.0: StaticProps_LightOrigin
+		ent->curstate.iuser4 = id;
 		ent->baseline = ent->curstate;
 		ent->prevstate = ent->curstate;
 
@@ -222,11 +230,37 @@ static int MsgFunc_StaticProp( const char *pszName, int iSize, void *pbuf )
 		break;
 	}
 
+	case STATICPROP_LIGHTORIGIN:	// SBO 2.0 info_light_origin
+	{
+		int id = READ_SHORT();
+		vec3_t origin;
+		for ( int k = 0; k < 3; k++ )
+			origin[k] = READ_LONG() / 8.0f;
+		if ( READ_OK() && id >= 0 && id < STATICPROP_MAX_PROPS && s_Props[id].used )
+		{
+			s_Props[id].hasLightOrigin = TRUE;
+			VectorCopy( origin, s_Props[id].lightorigin );
+		}
+		break;
+	}
+
 	default:
 		break;
 	}
 
 	return 1;
+}
+
+// SBO 2.0 info_light_origin: the point a prop is lit from (FALSE: not a prop, or lit as usual)
+BOOL StaticProps_LightOrigin( const cl_entity_t *ent, float *out )
+{
+	if ( ent->index != 0 || ent->curstate.iuser3 != STATICPROP_ENT_TAG )
+		return FALSE;
+	const int id = ent->curstate.iuser4;
+	if ( id < 0 || id >= STATICPROP_MAX_PROPS || !s_Props[id].used || !s_Props[id].hasLightOrigin )
+		return FALSE;
+	VectorCopy( s_Props[id].lightorigin, out );
+	return TRUE;
 }
 
 void StaticProps_Init( void )

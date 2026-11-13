@@ -29,8 +29,22 @@ constexpr size_t MAX_FILE_BYTES = 8u * 1024 * 1024;
 bool DecodeTgaScaled(const uint8_t *data, size_t size, int maxWide, int maxTall, std::vector<uint8_t> &rgba, int &wide,
     int &tall, bool keyGreen = false);
 
+//! Reads only a .tga file's 18-byte header: true with its size, bits per pixel (24 or 32) and image type (2
+//! uncompressed or 10 run-length) for a truecolor TGA, false for anything else (a color-mapped or gray TGA, a header cut
+//! short, a size of 0 or above MAX_SOURCE_SIDE)
+bool ReadTgaHeader(const uint8_t *data, size_t size, int &wide, int &tall, int &bits, int &imageType);
+
 //! The same for a JPEG file (baseline or progressive). False for anything that is not a JPEG within the limits.
 bool DecodeJpegScaled(const uint8_t *data, size_t size, int maxWide, int maxTall, std::vector<uint8_t> &rgba,
+    int &wide, int &tall);
+
+//! A frame of a Half-Life sprite (.spr, "IDSP" version 2): the one with the most to see among the first frames (a
+//! smoke animation often starts empty; a frame group: its first), with its palette and its texture format: normal and
+//! additive opaque, index alpha (the last palette color, the index as alpha), alpha test (index 255 transparent).
+//! Additive and index alpha sprites get their brightest pixel at full white, for the list's black cells (glows and
+//! smoke read clearly). Scaled down like the others, or up (nearest pixel) to fill the box, aspect kept (the particle
+//! editor's sprite list; no engine sprite slot is used).
+bool DecodeSprScaled(const uint8_t *data, size_t size, int maxWide, int maxTall, std::vector<uint8_t> &rgba,
     int &wide, int &tall);
 } // namespace sbo_image
 

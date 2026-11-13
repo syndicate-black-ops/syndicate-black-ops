@@ -1,0 +1,52 @@
+# light / light_spot Appearance (FGD style 0-11) and Initially dark (flag 1): the compiler keeps an unnamed light's
+# style, the world gives each style its pattern at the map start (0 Normal "m", 1 Flicker A, 2 Slow strong pulse,
+# 3 Candle A, 4 Fast strobe, 5 Gentle pulse, 6 Flicker B, 7 Candle B, 8 Candle C, 9 Slow strobe, 10 Fluorescent
+# flicker, 11 Slow pulse noblack), and the unnamed light entity itself is removed. A named light (the compiler gives
+# it a style from 32; a named light_environment too) is switched: on "m" (or its Custom Appearance), Initially dark "a", each trigger toggles it
+# covers: light light.style light.style=0 light.style=1 light.style=2 light.style=3 light.style=4 light.style=5 light.style=6 light.style=7 light.style=8 light.style=9 light.style=10 light.style=11 light:1 light.pattern light_spot light_spot.style light_spot:1 light_environment light_environment:1
+map co_fuzz
+spawn light style 10
+spawn light targetname l_on style 32
+spawn light targetname l_dark style 33 spawnflags 1
+spawn light targetname l_pat style 34 pattern abcz
+spawn light_spot targetname s_dark style 35 spawnflags 1
+spawn light_environment targetname e_dark style 36 spawnflags 1
+activate
+expect LIGHTSTYLE 0 "m"
+expect LIGHTSTYLE 1 "mmnmmommommnonmmonqnmmo"
+expect LIGHTSTYLE 2 "abcdefghijklmnopqrstuvwxyzyxwvutsrqponmlkjihgfedcba"
+expect LIGHTSTYLE 3 "mmmmmaaaaammmmmaaaaaabcdefgabcdefg"
+expect LIGHTSTYLE 4 "mamamamamama"
+expect LIGHTSTYLE 5 "jklmnopqrstuvwxyzyxwvutsrqponmlkj"
+expect LIGHTSTYLE 6 "nmonqnmomnmomomno"
+expect LIGHTSTYLE 7 "mmmaaaabcdefgmmmmaaaammmaamm"
+expect LIGHTSTYLE 8 "mmmaaammmaaammmabcdefaaaammmmabcdefmmmaaaa"
+expect LIGHTSTYLE 9 "aaaaaaaazzzzzzzz"
+expect LIGHTSTYLE 10 "mmamammmmammamamaaamammma"
+expect LIGHTSTYLE 11 "abcdefghijklmnopqrrqponmlkjihgfedcba"
+expect LIGHTSTYLE 32 "m"
+expect LIGHTSTYLE 33 "a"
+expect LIGHTSTYLE 34 "abcz"
+expect LIGHTSTYLE 35 "a"
+expect LIGHTSTYLE 36 "a"
+expectcount light 3
+connect 1 P1
+frames 3
+mark toggle
+fire l_on
+fire l_dark
+fire l_pat
+fire s_dark
+frames 2
+expectn 1 LIGHTSTYLE 32 "a"
+expectn 1 LIGHTSTYLE 33 "m"
+expectn 1 LIGHTSTYLE 34 "a"
+expectn 1 LIGHTSTYLE 35 "m"
+mark toggle_back
+fire l_on
+fire l_dark
+fire l_pat
+frames 2
+expectn 2 LIGHTSTYLE 32 "m"
+expectn 2 LIGHTSTYLE 33 "a"
+expectn 2 LIGHTSTYLE 34 "abcz"

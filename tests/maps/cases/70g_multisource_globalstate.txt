@@ -1,0 +1,28 @@
+# multisource "Global State Master": it opens only while that global state is On (env_global), and then fires its
+# target with USE_ON (without a global state: USE_TOGGLE)
+# covers: multisource multisource.globalstate env_global env_global.globalstate env_global.triggermode=1 env_global.triggermode=0
+map co_fuzz
+spawn multisource targetname ms target ms_out globalstate gs_power
+spawn trigger_relay targetname r1 target ms triggerstate 2
+spawn env_global targetname power_on globalstate gs_power triggermode 1
+spawn env_global targetname power_off globalstate gs_power triggermode 0
+activate
+frames 3
+mark state_unset
+fire r1
+frames 2
+expectnot Firing: (ms_out)
+mark state_on
+fire power_on
+fire r1
+frames 2
+fire r1
+frames 2
+expectn 1 Firing: (ms_out)
+mark state_off
+fire power_off
+fire r1
+frames 2
+fire r1
+frames 2
+expectn 1 Firing: (ms_out)

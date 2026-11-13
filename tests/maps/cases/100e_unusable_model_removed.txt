@@ -1,0 +1,27 @@
+# map entities whose model the server does not have (or none, or the editor's placeholder) are removed with a message
+# for the mapper instead of ending the map at the precache (e195864b): cycler, cycler_sprite, env_sprite,
+# monster_furniture, env_shooter (shootmodel), cycler_weapon; one with a model the game has stays
+# covers: env_sprite.model monster_furniture.model env_shooter.shootmodel
+map co_fuzz
+spawn cycler model models/missing_nope.mdl
+spawn cycler_sprite model sprites/missing_nope.spr
+spawn env_sprite model sprites/missing_nope.spr
+spawn monster_furniture model models/editor/info_target.mdl
+spawn env_shooter shootmodel models/missing_nope.mdl targetname shoot
+spawn cycler_weapon model models/missing_nope.mdl
+spawn env_sprite model sprites/glow01.spr targetname kept
+activate
+frames 3
+count cycler
+count cycler_sprite
+count env_sprite
+count monster_furniture
+count env_shooter
+count cycler_weapon
+expectcount cycler 0
+expectcount cycler_sprite 0
+expectcount env_sprite 1
+expectcount monster_furniture 0
+expectcount env_shooter 0
+expectcount cycler_weapon 0
+expectn 6 : removed

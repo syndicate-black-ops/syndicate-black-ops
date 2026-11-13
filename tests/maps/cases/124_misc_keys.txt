@@ -1,0 +1,56 @@
+# Keys and flags the 1.38 maps set (FGD): func_water 256 Use Only: a player touching it does not move it, a trigger does;
+# (it opens 62 units along its angles: its size - 2) func_train 8 Not solid: not solid (0), without it solid (BSP 4); func_pendulum 1 Start ON swings at once at Speed
+# (100 degrees a second, about the Z axis; 128 Y Axis: about the Y axis), Damage Inflicted when blocked (Touch): a
+# player it touches takes dmg x speed / 100 (dmg 50 at 100: 50), Damping 1000 (the most) slows it to a stop within
+# seconds, Damping 0 never; 8 Passable: not
+# solid; monster_generic shows its Model with its Body; func_rot_button Health 10 (shootable): damage presses it (its
+# target fires); env_laser Starting Frame 2 and Texture Scroll Rate 40
+# covers: func_water:256 func_train:8 func_pendulum func_pendulum:1 func_pendulum:8 func_pendulum:128 func_pendulum.speed func_pendulum.dmg func_pendulum.damp monster_generic monster_generic.model monster_generic.body func_rot_button.health env_laser.framestart env_laser.texturescroll
+map co_fuzz
+brushsize 64 64 64
+spawn func_water targetname wuse model *1 spawnflags 256 speed 900 wait -1 skin -3
+spawn func_train targetname tns model *2 spawnflags 8
+spawn func_train targetname tsol model *3
+spawn func_pendulum targetname pz model *4 spawnflags 1 speed 100 distance 90 dmg 50
+spawn func_pendulum targetname py model *5 spawnflags 137 speed 100 distance 90 damp 1000
+spawn monster_generic targetname gen model models/scientist.mdl body 2 origin "0 2000 0"
+spawn func_rot_button targetname rbh model *6 health 10 target rbh_out speed 900 distance 90 wait 5 origin "0 3000 0"
+spawn trigger_relay targetname rbh_out target rbh_sink
+spawn trigger_hurt model *7 dmg 40 damagetype 2 origin "0 3000 0"
+spawn info_target targetname lt origin "0 4200 0"
+spawn env_laser targetname las LaserTarget lt texture sprites/laserbeam.spr framestart 2 TextureScroll 40 width 10 damage 0 spawnflags 1 origin "0 4000 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark water
+touchclient 0 1
+frames 3
+expectfield wuse origin "0 0 0"
+fire wuse
+frames 3
+expectfield wuse origin "62 0 0"
+expectfield tns solid 0
+expectfield tsol solid 4
+mark pendulum
+expectfield pz avelocity "0 100 0" 1
+expectfield py solid 0
+expectfield pz solid 4
+expectdump player health=100.0
+touchclient 3 1
+frames 1
+expectdump player health=50.0
+frames 60
+expectfield py avelocity "0 0 0"
+expectfield pz avelocity "0 100 0" 1
+mark generic
+expectfield gen model models/scientist.mdl
+expectfield gen body 2
+mark shoot
+touchent 8 6
+frames 3
+expectn 1 Firing: (rbh_out)
+mark laser
+expectfield las frame 2
+expectfield las animtime 40

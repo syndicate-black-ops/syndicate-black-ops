@@ -57,6 +57,16 @@ struct WeatherData
 
 	float updateTime;
 
+	// SBO 2.0: the server's wind_x / wind_y (units per second; used with WEATHER_FIXED_WIND) and wind_rand_x /
+	// wind_rand_y (0: no spread)
+	float windX;
+	float windY;
+	float windRandX;
+	float windRandY;
+
+	bool HasFixedWind() const;
+	void AddWindSpread(Vector& velocity) const;
+
 	bool IsLocalizedPoint() const;
 	bool IsVolume() const;
 	bool IsGlobal() const;
@@ -132,7 +142,8 @@ public:
 	void RestoreWeather();
 
 	int MsgFunc_ReceiveW(const char *pszName, int iSize, void *pbuf);
-	// SBO 2.0: func_rainvolume / func_snowvolume (Featureful's volume weather on the CS weather; docs/WEATHER.md)
+	// SBO 2.0: env_rain / env_snow with their keys and func_rainvolume / func_snowvolume (Featureful's volume weather
+	// on the CS weather; docs/WEATHER.md)
 	int MsgFunc_WeatherVol(const char *pszName, int iSize, void *pbuf);
 	// SBO 2.0: CS:CZ Deleted Scenes' grass on the map's grass textures (letter A; docs/MATERIALS.md)
 	int MsgFunc_GrassInfo(const char *pszName, int iSize, void *pbuf);
@@ -142,6 +153,10 @@ private:
 	void AddRain(const RainData& rainData);
 	void RemoveSnow(int entIndex);
 	void AddSnow(const SnowData& snowData);
+	// SBO 2.0: the whole-map weathers (not volumes): ReceiveW's (index 0) and the server's env_rain / env_snow
+	void RemoveGlobalWeather();
+	void SetRainSprites(RainData& rainData);
+	void SetSnowSprites(SnowData& snowData);
 
 	bool ShouldUpdateWind() const;
 	void UpdateWind();
@@ -183,6 +198,11 @@ private:
 
 	std::vector<RainData> m_rains;
 	std::vector<SnowData> m_snows;
+
+	// SBO 2.0: the whole-map weathers the server sent in WeatherVol (env_rain / env_snow with their keys), kept like
+	// m_iSavedWeatherType for RestoreWeather (a video restart on the same map)
+	std::vector<RainData> m_savedRains;
+	std::vector<SnowData> m_savedSnows;
 
 	// grass (GrassInfo)
 	char m_szGrassSprite[64] = "";

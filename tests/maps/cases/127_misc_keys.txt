@@ -1,0 +1,44 @@
+# Keys a few 1.38 maps use that no test checked (tier 4, not reached): func_door "Health to give on open" gives the
+# player who opens it that much health; env_message shows its message to the activator (flag 2 All Clients: to everybody) and plays its Sound Effect
+# with its Sound Radius (2 Large: ATTN_NORM 0.8, 3 Everywhere: ATTN_NONE 0); func_train "Angular Velocity" turns the
+# train while it moves
+# covers: func_door.healthvalue env_message env_message.message env_message.messagesound env_message.messageattenuation=2 env_message.messageattenuation=3 env_message:2 func_train.avelocity
+map co_fuzz
+brushsize 64 64 64
+spawn trigger_hurt targetname hurt model *1 dmg 120
+spawn func_door targetname door model *2 healthvalue 25 wait -1 speed 1000 origin "300 0 0"
+spawn env_message targetname msg_one message MSG_ONE messagesound buttons/bell1.wav messagevolume 10 messageattenuation 2
+spawn env_message targetname msg_all message MSG_ALL messagesound buttons/bell1.wav messagevolume 10 messageattenuation 3 spawnflags 2
+spawn path_corner targetname tp1 target tp2 origin "0 600 0"
+spawn path_corner targetname tp2 origin "400 600 0"
+spawn func_train targetname train model *3 target tp1 speed 100 avelocity "0 90 0"
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 1 item 1
+cmd 2 item 1
+frames 260
+mark health
+touchclient 0 1
+frames 2
+expectrange player health 35 45
+useclient 1 1
+frames 2
+expectrange player health 60 70
+mark message
+useclient 2 2
+frames 1
+expectre MSG HudText ->#2: str\(7\)
+expectnotre MSG HudText ->#1: str\(7\)
+expectre SOUND #\d+ env_message ch\d buttons/bell1.wav vol=1(\.0+)? att=0\.8
+mark message_all
+useclient 3 2
+frames 1
+expectre MSG HudText ->#1: str\(7\)
+expectre MSG HudText ->#2: str\(7\)
+expectre SOUND #\d+ env_message ch\d buttons/bell1.wav vol=1(\.0+)? att=0(\.0+)?
+mark train
+fire train
+frames 10
+expectfield train avelocity "0 90 0"

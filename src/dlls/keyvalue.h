@@ -53,6 +53,9 @@ extern const CKeyValue g_emptyKeyValue;
 CKeyValue GetEntvarsKeyvalue( entvars_t *pev, const char *keyName );
 // util.cpp: the entvars field is a model or sound name (the engine needs those precached before the map starts)
 BOOL EntvarsKeyNeedsPrecache( const char *keyName );
+// SBO 2.1: the console line for a key refused at run time because it would need a precache (an entity's own model,
+// sprite or class keys after its spawn, KeyValue_DispatchRuntime's model and sound keys)
+void KeyValue_RefuseNeedsPrecache( entvars_t *pev, const char *keyName );
 
 // "$i_name", "$f_name", "$v_name", "$s_name"
 BOOL KeyValue_IsCustomName( const char *keyName );

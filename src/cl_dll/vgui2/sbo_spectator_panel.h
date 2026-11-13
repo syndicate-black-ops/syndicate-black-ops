@@ -49,6 +49,9 @@ public:
 	void SetSuppressed(bool bSuppressed);
 	//! The bars are up (the spectator command menus are only shown with them).
 	bool IsShown() const { return m_bShown; }
+	//! The top of what the bars put at the bottom of the screen (the bottom bar, the watched player's box above it),
+	//! in screen pixels; 0 while the bars are not on the screen.
+	int BottomTop();
 	//! The command menus are children of this panel (sbo_command_menu_panel.cpp): their buttons take the mouse
 	//! while the panel does (the duck menu).
 	void EnableCommandMenuMouseInput()

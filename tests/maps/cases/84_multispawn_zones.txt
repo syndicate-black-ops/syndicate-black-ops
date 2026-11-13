@@ -1,0 +1,53 @@
+# multispawn (FGD "each trigger moves the player spawns to the next zone, from the next round"): zone 1 is
+# info_player_deathmatch, then info_player_go2, go3, go4, go5; a call moves the spawns on by one zone and the next
+# round's spawn uses it; at go5 it stays. Each round ends with the only player killed (a failed round)
+# covers: multispawn info_player_deathmatch info_player_go2 info_player_go3 info_player_go4 info_player_go5
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn info_player_deathmatch origin "64 0 0"
+spawn info_player_go2 origin "1000 0 0"
+spawn info_player_go3 origin "2000 0 0"
+spawn info_player_go4 origin "3000 0 0"
+spawn info_player_go5 origin "4000 0 0"
+spawn multispawn targetname ms
+spawn trigger_hurt model *1 dmg 100000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectdump player origin=64.0 0.0
+mark to_go2
+fire ms world
+touchclient 6 1
+frames 150
+expectdump player origin=1000.0 0.0
+mark to_go3
+fire ms world
+touchclient 6 1
+frames 150
+expectdump player origin=2000.0 0.0
+mark to_go4
+fire ms world
+touchclient 6 1
+frames 150
+expectdump player origin=3000.0 0.0
+mark to_go5
+fire ms world
+touchclient 6 1
+frames 150
+expectdump player origin=4000.0 0.0
+mark stays_go5
+fire ms world
+touchclient 6 1
+frames 150
+expectdump player origin=4000.0 0.0

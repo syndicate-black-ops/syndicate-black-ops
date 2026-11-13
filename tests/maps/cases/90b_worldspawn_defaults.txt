@@ -1,0 +1,14 @@
+# worldspawn without the keys (FGD defaults): MaxRange empty -> sv_zmax 4096; startdark 0 -> v_dark 0; gametitle 0 ->
+# no GameTitle message; defaultteam 0 -> mp_defaultteam 0; newunit 0 (keep current) -> the game leaves sv_newunit alone (unset in the stub)
+# covers: worldspawn.maxrange worldspawn.startdark=0 worldspawn.gametitle=0 worldspawn.defaultteam=0 worldspawn.newunit=0
+map co_fuzz startdark 0 gametitle 0 newunit 0 defaultteam 0
+activate
+expectcvar sv_zmax 4096
+expectcvar v_dark 0
+expectcvar mp_defaultteam 0
+expectcvar sv_newunit ""
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 30
+expectnot MSG GameTitle

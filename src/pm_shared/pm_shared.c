@@ -122,6 +122,15 @@ typedef struct hull_s
 
 #define CONTENTS_TRANSLUCENT	-15
 
+// SBO 2.1: the contents a player swims in: Water, Slime, Lava and the currents (-3 .. -14) but -7 (CONTENTS_ORIGIN),
+// which a func_illusionary sets for its "Volumetric Light" contents: Half-Life counted it as water, so a player
+// standing in the light swam
+#define PM_CONTENTS_ORIGIN	-7
+static int PM_IsWater( int cont )
+{
+	return cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT && cont != PM_CONTENTS_ORIGIN;
+}
+
 static vec3_t rgv3tStuckTable[54];
 static int rgStuckLast[MAX_CLIENTS][2];
 
@@ -416,12 +425,12 @@ void PM_CheckVelocity ()
 		// See if it's bogus.
 		if (IS_NAN(pmove->velocity[i]))
 		{
-			pmove->Con_Printf ("PM  Got a NaN velocity %i\n", i);
+			pmove->Con_DPrintf ("PM  Got a NaN velocity %i\n", i);
 			pmove->velocity[i] = 0;
 		}
 		if (IS_NAN(pmove->origin[i]))
 		{
-			pmove->Con_Printf ("PM  Got a NaN origin on %i\n", i);
+			pmove->Con_DPrintf ("PM  Got a NaN origin on %i\n", i);
 			pmove->origin[i] = 0;
 		}
 
@@ -1229,7 +1238,7 @@ qboolean PM_CheckWater ()
 	// Grab point contents.
 	cont = pmove->PM_PointContents (point, &truecont );
 	// Are we under water? (not solid and not empty?)
-	if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT )
+	if ( PM_IsWater( cont ) )
 	{
 		// Set water type
 		pmove->watertype = cont;
@@ -1244,7 +1253,7 @@ qboolean PM_CheckWater ()
 		point[2] = pmove->origin[2] + heightover2;
 		cont = pmove->PM_PointContents (point, NULL );
 		// If that point is also under water...
-		if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT )
+		if ( PM_IsWater( cont ) )
 		{
 			// Set a higher water level.
 			pmove->waterlevel = 2;
@@ -1253,7 +1262,7 @@ qboolean PM_CheckWater ()
 			point[2] = pmove->origin[2] + pmove->view_ofs[2];
 
 			cont = pmove->PM_PointContents (point, NULL );
-			if (cont <= CONTENTS_WATER && cont > CONTENTS_TRANSLUCENT ) 
+			if ( PM_IsWater( cont ) )
 				pmove->waterlevel = 3;  // In over our eyes
 		}
 

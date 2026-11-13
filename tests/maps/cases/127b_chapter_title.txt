@@ -1,0 +1,49 @@
+# worldspawn "Chapter Title Message": each player gets the title once, when they first enter the game on the map
+# (spawned in play, spectating or Game Master), players who join later too; not again on a respawn or a new round.
+# P1 and P2 at the round start, P3 as a spectator, P4 joins during the round: waits, gets it when the next round
+# spawns it.
+# 1.38 (as Half-Life) made an env_message 0.3 s into the map with no activator, which showed it to player 1 only
+# (decision chaptertitle-all-players). Used by co_light_up_the_night and co_saibercity_v3
+# covers: worldspawn.chaptertitle
+map co_fuzz chaptertitle TITLE_TEST
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+spawn trigger_hurt dmg 100000 damagetype 0
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 1 item 1
+cmd 2 item 1
+frames 260
+expect ROUND START
+mark both_in
+expectn 1 MSG HudText ->#1: str(10)
+expectn 1 MSG HudText ->#2: str(10)
+connect 3 P3
+frames 3
+cmd 3 spectate
+frames 10
+expectn 1 MSG HudText ->#3: str(10)
+connect 4 P4
+frames 3
+cmd 4 item 1
+frames 260
+expectn 0 MSG HudText ->#4: str(10)
+mark p1_dead
+touchclient 0 1
+touchclient 0 2
+frames 600
+expect FAILED ROUND
+expectn 1 MSG HudText ->#1: str(10)
+expectn 1 MSG HudText ->#2: str(10)
+expectn 1 MSG HudText ->#3: str(10)
+expectn 1 MSG HudText ->#4: str(10)

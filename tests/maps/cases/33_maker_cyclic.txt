@@ -1,0 +1,33 @@
+# cyclic monstermaker (spawnflags 4) fired 3 times while its last child is killed between fires
+# covers: monstermaker:4
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk monstertype monster_human_grunt monstercount 3 m_imaxlivechildren 1 delay 1 target mk_fired spawnflags 4 origin "0 500 0"
+spawn trigger_hurt dmg 1000000 damagetype 8192
+spawn trigger_relay targetname mk_fired target mk_sink triggerstate 2
+activate
+frames 10
+useent 0 world
+frames 10
+useent 0 world
+frames 10
+touchclass 1 monster_human_grunt
+frames 60
+useent 0 world
+frames 10
+useent 0 world
+frames 10
+touchclass 1 monster_human_grunt
+frames 60
+useent 0 world
+frames 10
+count monster_human_grunt

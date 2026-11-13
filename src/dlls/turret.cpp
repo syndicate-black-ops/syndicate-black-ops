@@ -74,6 +74,8 @@ public:
 	virtual void TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vecDir, TraceResult *ptr, int bitsDamageType);
 	virtual int	 TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType );
 	virtual int	 Classify(void);
+	void AcquiredEnemyTrigger( void );	// SBO 2.1 (Featureful CBaseTurret::SetEnemy): the AI trigger conditions
+	void DamageTrigger( void );		// SBO 2.1 (Featureful CBaseTurret::TakeDamage): "Take Damage", "50% Health"
 
 	int BloodColor( void ) { return DONT_BLEED; }
 	void GibMonster( void ) {}	// UNDONE: Throw turret gibs?
@@ -280,6 +282,7 @@ void CBaseTurret::Spawn()
 
 	SetBits (pev->flags, FL_MONSTER);
 	SetUse( &CBaseTurret::TurretUse );
+	pev->max_health = pev->health;	// SBO 2.1 (Featureful SpawnHelper): "50% Health Remaining" needs it
 
 	if (( pev->spawnflags & SF_MONSTER_TURRET_AUTOACTIVATE ) 
 		 && !( pev->spawnflags & SF_MONSTER_TURRET_STARTINACTIVE ))
@@ -291,6 +294,7 @@ void CBaseTurret::Spawn()
 	SetBoneController( 0, 0 );
 	SetBoneController( 1, 0 );
 	m_flFieldOfView = VIEW_FIELD_FULL;
+	ApplyCustomMonsterKeys();	// SBO 2.1 (Featureful SetMyFieldOfView): "field_of_view" (and the other custom keys); it never runs MonsterInit
 	// m_flSightRange = TURRET_RANGE;
 }
 
@@ -887,6 +891,7 @@ void CBaseTurret::SearchThink(void)
 	{
 		Look(TURRET_RANGE);
 		m_hEnemy = BestVisibleEnemy();
+		AcquiredEnemyTrigger();
 	}
 
 	// If we've found a target, spin up the barrel and start to attack
@@ -945,6 +950,7 @@ void CBaseTurret::AutoSearchThink(void)
 	{
 		Look( TURRET_RANGE );
 		m_hEnemy = BestVisibleEnemy();
+		AcquiredEnemyTrigger();
 	}
 
 	if (m_hEnemy != NULL)
@@ -1014,10 +1020,22 @@ void CBaseTurret ::	TurretDeath( void )
 		UTIL_Sparks( vecSrc );
 	}
 
-	if (m_fSequenceFinished && !MoveTurret( ) && pev->dmgtime + 5 < gpGlobals->time)
+	// SBO 2.0 (Featureful): flag 512 Fade Corpse, or a monstermaker child that fades, fades the wreck out as other
+	// monsters fade their corpse, once the smoke ends. Not after MoveTurret: a turret killed before it ever turned
+	// (turn rate 0) never gets its barrel to the goal and would never fade.
+	// SBO 2.1 (Half-Life Unified SDK): the AI Trigger Condition "Death" fires when the death ends (FCheckAITrigger;
+	// turrets die here, never in Killed, so it never fired)
+	if (m_fSequenceFinished && ShouldFadeOnDeath() && pev->dmgtime + 5 < gpGlobals->time)
+	{
+		pev->framerate = 0;
+		SUB_StartFadeOut();
+		FCheckAITrigger();
+	}
+	else if (m_fSequenceFinished && !MoveTurret( ) && pev->dmgtime + 5 < gpGlobals->time)
 	{
 		pev->framerate = 0;
 		SetThink( NULL );
+		FCheckAITrigger();
 	}
 }
 
@@ -1080,6 +1098,8 @@ int CBaseTurret::TakeDamage(entvars_t *pevInflictor, entvars_t *pevAttacker, flo
 
 		return 0;
 	}
+
+	DamageTrigger();	// SBO 2.1 (Featureful)
 
 	if (pev->health <= 10)
 	{
@@ -1173,6 +1193,25 @@ int CBaseTurret::MoveTurret(void)
 	//ALERT(at_console, "(%.2f, %.2f)->(%.2f, %.2f)\n", m_vecCurAngles.x, 
 	//	m_vecCurAngles.y, m_vecGoalAngles.x, m_vecGoalAngles.y);
 	return state;
+}
+
+// SBO 2.1, from Featureful (CBaseTurret::SetEnemy / TakeDamage): turrets run their own think, never the schedule AI
+// that checks the AI trigger conditions (RunAI), so only "Death" fired. A new enemy checks them with what Look saw
+// (See Player ...), a hit that leaves it alive with the damage condition (Take Damage, 50% Health Remaining)
+void CBaseTurret::AcquiredEnemyTrigger( void )
+{
+	if ( m_hEnemy == NULL )
+		return;
+	SetConditions( bits_COND_SEE_ENEMY );
+	FCheckAITrigger();
+	ClearConditions( bits_COND_SEE_ENEMY );
+}
+
+void CBaseTurret::DamageTrigger( void )
+{
+	SetConditions( bits_COND_LIGHT_DAMAGE );
+	FCheckAITrigger();
+	ClearConditions( bits_COND_LIGHT_DAMAGE );
 }
 
 //
@@ -1289,6 +1328,8 @@ int CSentry::TakeDamage(entvars_t *pevInflictor, entvars_t *pevAttacker, float f
 		return 0;
 	}
 
+	DamageTrigger();	// SBO 2.1 (Featureful)
+
 	return 1;
 }
 
@@ -1362,7 +1403,12 @@ void CSentry ::	SentryDeath( void )
 	if (m_fSequenceFinished && pev->dmgtime + 5 < gpGlobals->time)
 	{
 		pev->framerate = 0;
-		SetThink( NULL );
+		// SBO 2.0 (Featureful): flag 512 Fade Corpse, or a monstermaker child that fades, fades the wreck out
+		if ( ShouldFadeOnDeath() )
+			SUB_StartFadeOut();
+		else
+			SetThink( NULL );
+		FCheckAITrigger();	// SBO 2.1 (Half-Life Unified SDK): the AI Trigger Condition "Death"
 	}
 }
 

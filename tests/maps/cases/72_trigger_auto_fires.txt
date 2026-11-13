@@ -1,0 +1,11 @@
+# trigger_auto fires its target once when the map starts (0.1 s after spawning), with no player; without flag 1 it
+# stays but never fires again; with flag 1 "Remove On fire" it is removed
+# covers: trigger_auto trigger_auto.target trigger_auto:1
+map co_fuzz
+spawn trigger_auto target auto_keep
+spawn trigger_auto target auto_remove spawnflags 1
+activate
+frames 30
+expectn 1 Firing: (auto_keep)
+expectn 1 Firing: (auto_remove)
+expectcount trigger_auto 1

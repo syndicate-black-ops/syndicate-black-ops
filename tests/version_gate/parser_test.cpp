@@ -21,15 +21,15 @@ static void Expect( const char *version, bool want )
 int main()
 {
 	// let in
-	Expect( "2.0.0", true );
-	Expect( "2.0.0+fb1940c5", true );
-	Expect( "2.0.0+dirty@HEAD-1a2b3c4d", true );
-	Expect( "2.0.1-test.3", true );
-	Expect( "2.0.1", true );
 	Expect( "2.1.0", true );
+	Expect( "2.1.0+1a2b3c4d", true );
+	Expect( "2.1.0+dirty@HEAD-1a2b3c4d", true );
+	Expect( "2.1.0-test.3", true );
+	Expect( "2.1.1", true );
+	Expect( "2.2.0", true );
 	Expect( "3.0.0", true );
 	Expect( "10.0.0", true );
-	Expect( "02.00.00", true );
+	Expect( "02.01.00", true );
 
 	// refuse
 	Expect( nullptr, false );
@@ -38,6 +38,10 @@ int main()
 	Expect( "1.3.8", false );
 	Expect( "1.9.9-test", false );
 	Expect( "1.99.99", false );
+	Expect( "2.0.0", false );
+	Expect( "2.0.0+0f5efe27", false );
+	Expect( "2.0.1-test.3", false );
+	Expect( "2.0.99", false );
 	Expect( "2", false );
 	Expect( "2.0", false );
 	Expect( "2.0.", false );

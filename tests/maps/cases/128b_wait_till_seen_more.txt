@@ -1,0 +1,44 @@
+# Monster flag 1 WaitTillSeen (FGD base Monster) on the classes cases 116* leave out: it ignores a player until he
+# looks at it; one in front of a player who looks east (+x) wakes (the flag is cleared), one behind his back stays
+# asleep (the flag stays)
+# covers: monster_apache:1 monster_generic:1 monster_grunt_hunter:1 monster_hunter:1 monster_ichthyosaur:1 monster_zombie_hunter:1
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_apache targetname f0 spawnflags 1 angles "0 180 0" origin "1500 -650 0"
+spawn monster_apache targetname b0 spawnflags 1 angles "0 0 0" origin "-1500 -650 0"
+spawn monster_generic targetname f2 spawnflags 1 angles "0 180 0" origin "1500 -450 0" model models/scientist.mdl
+spawn monster_generic targetname b2 spawnflags 1 angles "0 0 0" origin "-1500 -450 0" model models/scientist.mdl
+spawn monster_grunt_hunter targetname f3 spawnflags 1 angles "0 180 0" origin "1500 -350 0"
+spawn monster_grunt_hunter targetname b3 spawnflags 1 angles "0 0 0" origin "-1500 -350 0"
+spawn monster_hunter targetname f4 spawnflags 1 angles "0 180 0" origin "1500 -250 0"
+spawn monster_hunter targetname b4 spawnflags 1 angles "0 0 0" origin "-1500 -250 0"
+spawn monster_ichthyosaur targetname f5 spawnflags 1 angles "0 180 0" origin "1500 -150 0"
+spawn monster_ichthyosaur targetname b5 spawnflags 1 angles "0 0 0" origin "-1500 -150 0"
+spawn monster_zombie_hunter targetname f13 spawnflags 1 angles "0 180 0" origin "1500 650 0"
+spawn monster_zombie_hunter targetname b13 spawnflags 1 angles "0 0 0" origin "-1500 650 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectfield f0 spawnflags 0
+expectfield b0 spawnflags 1
+expectfield f2 spawnflags 0
+expectfield b2 spawnflags 1
+expectfield f3 spawnflags 0
+expectfield b3 spawnflags 1
+expectfield f4 spawnflags 0
+expectfield b4 spawnflags 1
+expectfield f5 spawnflags 0
+expectfield b5 spawnflags 1
+expectfield f13 spawnflags 0
+expectfield b13 spawnflags 1

@@ -97,11 +97,11 @@ public:
 #define WEAPON_EGON				30
 #define WEAPON_HORNETGUN		32
 
-#define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))
+#define WEAPON_ALLWEAPONS		(~(1<<WEAPON_SUIT))	// pev->weapons without the suit (ids 32..63: CBasePlayer::m_iWeaponBitsHigh)
 
 #define WEAPON_SUIT				31	// ?????
 
-#define MAX_WEAPONS			32
+#define MAX_WEAPONS			64	// SBO 2.1 (Half-Life Unified SDK): ids 0..63 (cdll_dll.h)
 
 #define MAX_NORMAL_BATTERY	100
 
@@ -405,6 +405,30 @@ public:
 
 	int		m_iDefaultAmmo;// how much ammo you get when you pick up this weapon as placed by a level designer.
 
+	// Opposing Force / halflife-updated GetNextAttackDelay (halflife #3252): a held gun fires at its set rate at any
+	// frame rate. ItemPostFrame runs once per user command, so a shot fires up to one command after it was due; the
+	// next attack counts from the time the shot was due, not from the command it fired in. ItemPostFrame sets
+	// m_flFireLateness from the attack's timer just before PrimaryAttack / SecondaryAttack and clears it after.
+	// Built into the server and the client alike (weapons.h), from networked state only, so prediction agrees.
+	// A lateness of a whole delay or more is not carried: the next shot is never due at once, so shots stay at least
+	// one delay apart on average and a held gun never fires a burst.
+	float GetNextAttackDelay( float flDelay )
+	{
+		return UTIL_WeaponTimeBase() + flDelay - ( m_flFireLateness < flDelay ? m_flFireLateness : 0.0f );
+	}
+
+	// how long the attack with this timer has been due, when that is under two user commands (2 x
+	// gpGlobals->frametime: one command, with room for a longer command before it); else 0. A shot held back longer
+	// (button up, reload, deploy, the other fire mode, a frozen player) starts the count again: such a pause is not
+	// made up with catch-up shots. Down to -1 ms when the shot fires just before its time (CanAttack's millisecond
+	// test): the next one then waits that much longer, so the rate stays exact.
+	float FireLateness( float flNextAttack )
+	{
+		const float flLate = ( UseDecrement() ? 0.0f : gpGlobals->time ) - flNextAttack;
+		return ( flLate > -0.001f && flLate < 2.0f * gpGlobals->frametime ) ? flLate : 0.0f;
+	}
+
+	float	m_flFireLateness;	// FireLateness of the attack being made (ItemPostFrame); 0 outside it. Not saved
 };
 
 class CBasePlayerAmmo : public CBaseEntity
@@ -701,7 +725,6 @@ public:
 	BOOL Deploy( );
 	void Reload( void );
 	void WeaponIdle( void );
-	int m_fInReload;
 	float m_flNextReload;
 	int m_iShell;
 
@@ -1269,7 +1292,7 @@ public:
 	void Reload( void );
 	void WeaponIdle( void );
 	void ItemPostFrame( void );	// halflife-updated (shotgun.cpp): the pump sound
-	int m_fInSpecialReload;	// SBO: own copies, hide CBasePlayerWeapon's
+	// m_fInSpecialReload is CBasePlayerWeapon's: the one the server sends to the predicting client (GetWeaponData)
 	float m_flNextReload;
 	float m_flPumpTime;
 
@@ -1333,7 +1356,8 @@ public:
 	void Reload( void );
 	void BringUp( void );
 	void WeaponIdle( void );
-	int m_iSpin;		// 1 while the barrel is spinning
+	// the barrel's spin state (1 while spinning) is CBaseEntity::m_fInAttack, which GetWeaponData sends to the
+	// predicting client (iuser2) and the client copies back, so each re-prediction starts from the server's state
 	float m_flSpinTime;	// cleared by WeaponIdle, otherwise unused
 	int m_iShots;		// shots in the current burst (fire rate ramps up)
 
@@ -1370,7 +1394,6 @@ public:
 	void Reload( void );
 	void WeaponIdle( void );
 	void ItemPostFrame( void );	// halflife-updated (shotgun.cpp): the pump sound
-	int m_fInReload;
 	float m_flNextReload;
 	float m_flPumpTime;
 

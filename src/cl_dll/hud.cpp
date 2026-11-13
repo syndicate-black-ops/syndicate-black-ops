@@ -20,10 +20,12 @@
 
 #include "hud.h"
 #include "cl_util.h"
+#include "pm_shared.h"	// SBO 2.0: OBS_MAP_FREE, OBS_MAP_CHASE
 #include <string.h>
 #include <stdio.h>
 #include "parsemsg.h"
 #include "viewport.h"
+#include "view.h"	// SoHL env_sky: EnvSky_Reset
 
 #include "demo.h"
 #include "demo_api.h"
@@ -31,6 +33,9 @@
 #include "aurora/particlemgr.h"
 #include "worldtext.h"	// SBO 2.0: point_worldtext
 #include "mirror.h"	// SBO 2.0: env_mirror
+#include "overlay.h"	// SBO 2.0: env_overlay
+#include "inventory.h"	// SBO 2.0: inventory HUD row
+#include "colorcorrection.h"	// SBO 2.0: color_correction
 #include "render_fade.h"	// SBO 2.0: env_render fades
 #include "head_scale.h"		// SBO 2.0: players' head scales
 #include "killfeed_icons.h"	// SBO 2.0: killfeed icons plugins set
@@ -38,13 +43,16 @@
 #include "objecthint.h"	// SBO 2.0: object hints
 #include "break_gibs.h"	// SBO 2.0: scaled break gibs
 #include "dlights.h"	// SBO 2.0: env_dlight
+#include "light_origin.h"	// SBO 2.0: info_light_origin
 #include "static_props.h"	// SBO 2.0: env_static
 #include "map_music.h"	// SBO 2.0: ambient_music
+#include "mover_prediction.h"	// SBO 2.0: mover prediction
 #include "vgui2/vgui2_api.h"
 #include "sequence_speak.h"	// game_shared: Sequence_IsSpeakSafe
 #include "worldscreen/worldscreen.h"
 #include "weapon_hand.h"	// SBO 2.0: weapon hand (cl_righthand)
 #include "version_gate_shared.h"	// SBO 2.0: the version gate's userinfo key
+#include "client_os_shared.h"	// SBO 2.0: the client OS cvar the server queries (client_info.cpp)
 #include "version/sbo_version.h"
 
 
@@ -364,11 +372,14 @@ int __MsgFunc_SeqSpeak(const char *pszName, int iSize, void *pbuf)
 // This is called every time the DLL is loaded
 void CHud :: Init( void )
 {
-	// SBO 2.0 version gate (docs/VERSION_GATE.md): the game version ("2.0.0") in the userinfo, so a server refuses an
+	// SBO 2.0 version gate (docs/VERSION_GATE.md): the game version ("2.1.0") in the userinfo, so a server refuses an
 	// older client at connect. Registering a cvar does not put it in the userinfo (only setting it does: the engine's
 	// Cvar_DirectSet), so it is set right away. First: the userinfo holds 256 bytes, the keys set later lose when it is full.
 	CVAR_CREATE( VERSION_GATE_KEY, SboVersion_Number(), FCVAR_USERINFO );
 	gEngfuncs.Cvar_Set( (char *)VERSION_GATE_KEY, (char *)SboVersion_Number() );
+	// SBO 2.0 client info (docs/dev/CLIENT_INFO.md): the OS this client was built for, for the server's cvar query.
+	// Not archived, not in the userinfo; CHud::Think sets it back if it is changed.
+	m_pCvarClientOS = CVAR_CREATE( CLIENT_OS_CVAR, CLIENT_OS_VALUE, 0 );
 	HOOK_MESSAGE( Logo );
 	HOOK_MESSAGE( SeqSpeak );	// SBO 2.0: trigger_sequence
 	HOOK_MESSAGE( ResetHUD );
@@ -416,12 +427,16 @@ void CHud :: Init( void )
 	PlayerAfk_Init();	// SBO 2.0: AFK sign ("PlayerAfk", entity.cpp)
 	Materials_Init();	// SBO 2.0: material system ("MatFile", materials.cpp)
 	Mirror_Init();		// SBO 2.0: env_mirror ("Mirror", mirror.cpp)
+	Overlay_Init();		// SBO 2.0: env_overlay ("Overlay", overlay.cpp)
+	Inventory_Init();	// SBO 2.0: inventory ("Inventory", inventory.cpp)
+	ColorCorr_Init();	// SBO 2.0: color_correction ("ColorCorr", colorcorrection.cpp)
 	RenderFade_Init();	// SBO 2.0: env_render fades ("RenderFade", render_fade.cpp)
 	HeadScale_Init();	// SBO 2.0: players' head scales ("HeadScale", head_scale.cpp)
 	KillFeedIcons_Init();	// SBO 2.0: killfeed icons plugins set ("KfIcon", killfeed_icons.cpp)
 	ObjectHint_Init();	// SBO 2.0: object hints ("ObjectHint", cl_objecthint; objecthint.cpp)
 	BreakGibs_Init();	// SBO 2.0: "BreakModel", func_breakable / func_pushable "gibscale" (break_gibs.cpp)
 	DLights_Init();		// SBO 2.0: env_dlight ("KeyedDLight", dlights.cpp)
+	LightOrigin_Init();	// SBO 2.0: info_light_origin ("LightOrigin", light_origin.cpp)
 	StaticProps_Init();	// SBO 2.0: env_static ("StaticProp", static_props.cpp)
 	MapMusic_Init();	// SBO 2.0: ambient_music ("MapMusic", map_music.cpp)
 	Video_Init();		// SBO 2.0: game_playvideo ("PlayVideo", video/video_player.cpp)
@@ -433,6 +448,7 @@ void CHud :: Init( void )
 
 	m_iLogo = 0;
 	m_iFOV = 0;
+	m_iRenderFOV = 0;
 
 	// HL25: archived; cl_autowepswitch is sent in userinfo (the server decides whether picking up a weapon switches to it)
 	CVAR_CREATE( "zoom_sensitivity_ratio", "1.2", FCVAR_ARCHIVE );
@@ -578,6 +594,7 @@ void CHud :: VidInit( void )
 
 	// SBO 2.0: a new map has no 3D sky until the server's SetSky (it comes after the InitHUD, which clears it too)
 	m_iSkyMode = SKY_OFF;
+	EnvSky_Reset();		// nor sky entities (view.cpp)
 
 	// HUD scaling: still chosen from the real screen (only scales above 640x480, so always the 640 set then)
 	if (ScreenWidth < 640)
@@ -658,14 +675,21 @@ void CHud :: VidInit( void )
 	Materials_VidInit();	// SBO 2.0: material system, the global files until the map's file is named
 	V_ResetViewModelRender();	// SBO 2.0: "ViewModel" message
 	Mirror_Reset();		// SBO 2.0: env_mirror: a new map has none until the server sends them
+	Overlay_VidInit();	// SBO 2.0: env_overlay: none on a new map; the last map's .tga pictures freed
+	Inventory_VidInit();	// SBO 2.0: inventory: the items' icons from the reloaded hud.txt sprites
+
+
+	ColorCorr_VidInit();	// SBO 2.0: color_correction: none on a new map; the last map's tables freed
 	RenderFade_Reset();	// SBO 2.0: env_render fades
 	HeadScale_Reset();	// SBO 2.0: players' head scales: normal until the server sends them
 	KillFeedIcons_Reset();	// SBO 2.0: plugins' killfeed icons: none until the server sends them
 	ObjectHint_Reset();	// SBO 2.0: object hints: the engine freed their temporary entities
 	DLights_Reset();	// SBO 2.0: env_dlight: a new map has none until the server sends them
+	LightOrigin_Reset();	// SBO 2.0: info_light_origin: none until the server sends them
 	StaticProps_Reset();	// SBO 2.0: env_static: a new map has none until the server sends them
 	MapMusic_Reset();	// SBO 2.0: ambient_music: the engine stops the MP3 at a level load; the next state runs
 	Video_Reset();		// SBO 2.0: game_playvideo: a new map or server stops a video
+	MoverPrediction_Reset();	// SBO 2.0: mover prediction: nothing carried over from the last map
 
 	m_Ammo.VidInit();
 	m_Health.VidInit();
@@ -819,6 +843,11 @@ int CHud::MsgFunc_SetFOV(const char *pszName,  int iSize, void *pbuf)
 	*/
 
 	g_lastFOV = newfov;
+
+	// SBO 2.0: over a map overview it is the watched player's FOV for the first-person inset only; the HUD keeps
+	// the spectator's own (CHud::Think)
+	if ( !gEngfuncs.IsSpectateOnly() && ( g_iUser1 == OBS_MAP_FREE || g_iUser1 == OBS_MAP_CHASE ) )
+		return 1;
 
 	if ( newfov == 0 )
 	{

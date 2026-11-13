@@ -1,0 +1,16 @@
+# dead monsters with a "pose" past their pose list are clamped to it (e7b4fbc3): they spawn, the map loads (1.38 read
+# past the list: a bad sequence name, a crash at map load)
+# covers: monster_hgrunt_dead.pose monster_scientist_dead.pose monster_barney_dead.pose
+map co_fuzz
+spawn monster_hgrunt_dead pose 99 origin "0 100 0"
+spawn monster_scientist_dead pose 99 origin "0 200 0"
+spawn monster_barney_dead pose 99 origin "0 300 0"
+spawn monster_hgrunt_dead pose -5 origin "0 400 0"
+activate
+frames 5
+count monster_hgrunt_dead
+count monster_scientist_dead
+count monster_barney_dead
+expectcount monster_hgrunt_dead 2
+expectcount monster_scientist_dead 1
+expectcount monster_barney_dead 1

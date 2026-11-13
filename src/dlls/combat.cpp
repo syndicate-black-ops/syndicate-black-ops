@@ -30,6 +30,7 @@
 #include "weapons.h"
 #include "func_break.h"
 #include "player.h"
+#include "sbo_test.h"	// SBO_TEST_COMMANDS builds: test_shotluck (docs/dev/ENTITY_TESTS.md)
 #include "gamerules.h"
 #include "scripted.h"	// SBO 2.0: the scripted_sequence damage policies
 
@@ -659,14 +660,7 @@ void CBaseMonster :: Killed( entvars_t *pevAttacker, int iGib )
 		pOwner->DeathNotice( pev );
 	}
 
-	// SBO 2.0 (Featureful TriggerOnDeath): once, activator = the killer
-	if ( !FStringNull( m_iszTriggerOnDeath ) )
-	{
-		CBaseEntity *pKiller = pevAttacker ? CBaseEntity::Instance( pevAttacker ) : NULL;
-		string_t iszTarget = m_iszTriggerOnDeath;
-		m_iszTriggerOnDeath = iStringNull;
-		FireTargets( STRING( iszTarget ), pKiller ? pKiller : this, this, USE_TOGGLE, 0 );
-	}
+	FireTriggerOnDeath( pevAttacker );	// SBO 2.0 (Featureful TriggerOnDeath)
 
 	if	( ShouldGibMonster( iGib ) )
 	{
@@ -929,6 +923,13 @@ int CBaseMonster :: TakeHealth (float flHealth, int bitsDamageType)
 	return iHealed;
 }
 
+// SBO 2.0 (Featureful "m_takeDamagePolicy" 1): a script holding the monster makes it invulnerable. The monsters'
+// own TakeDamage overrides check it first too, so a hit on it gives no XP either
+BOOL CBaseMonster :: ScriptInvulnerable( void )
+{
+	return m_pCine && m_pCine->m_iTakeDamagePolicy == SCRIPT_TAKEDAMAGE_INVULNERABLE;
+}
+
 /*
 ============
 TakeDamage
@@ -954,7 +955,7 @@ int CBaseMonster :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker,
 		return 0;
 
 	// SBO 2.0 (Featureful "m_takeDamagePolicy" Invulnerable during script): no damage while a script holds it
-	if ( m_pCine && m_pCine->m_iTakeDamagePolicy == SCRIPT_TAKEDAMAGE_INVULNERABLE )
+	if ( ScriptInvulnerable() )
 		return 0;
 
 	if ( !IsAlive() )
@@ -970,6 +971,10 @@ int CBaseMonster :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker,
 		pentAttacker = ENT( 0 );
 	CBaseEntity *pAttacker = (CBaseEntity *)GET_PRIVATE( pentAttacker );
 	int iShot = RANDOM_LONG( 1, 100 );	// SBO 2.0: whole numbers 1-100, each 1 in 100 (1.38: RANDOM_FLOAT truncated, 100 never came up)
+#ifdef SBO_TEST_COMMANDS
+	if ( Test_ShotLuckOff() )	// test builds only: test_shotluck 0, an exact hit (the draw above still happens)
+		iShot = 50;
+#endif
 
 	if ( iShot == 1 )
 	{
@@ -1056,8 +1061,17 @@ int CBaseMonster :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker,
 		 flTake >= pev->health )
 		flTake = pev->health > 1 ? pev->health - 1 : 0;
 
+	// SBO 2.0 cheat_unkillable (Half-Life Unified SDK, cheat_commands.cpp): the player keeps at least 1 health. Here,
+	// not in CBasePlayer::TakeDamage, because the random shot multipliers above come after the player's own code.
+	if ( IsPlayer() && ( (CBasePlayer *)this )->m_bCheatUnkillable && flTake >= pev->health )
+		flTake = pev->health > 1 ? pev->health - 1 : 0;
+
 	// do the damage
 	pev->health -= flTake;
+
+	// SBO 2.1 (Half-Life Unified SDK): "unkillable": the damage leaves it barely alive
+	if ( m_fUnkillable && pev->health < 1 )
+		pev->health = 1;
 
 	// SBO 2.0 (Featureful "Allow Take Damage TriggerCondition"): the hit fires a Take Damage TriggerTarget even
 	// while the script ignores damage
@@ -1314,10 +1328,18 @@ CBaseEntity* CBaseMonster :: CheckTraceHullAttack( float flDist, int iDamage, in
 	if ( tr.pHit )
 	{
 		CBaseEntity *pEntity = CBaseEntity::Instance( tr.pHit );
+		if ( !pEntity )
+			return NULL;
 
 		if ( iDamage > 0 )
 		{
+			// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the
+			// handle checks the edict's serial number and private data, so a victim freed there comes back NULL
+			// (a miss) instead of a pointer to freed memory
+			EHANDLE hEntity;
+			hEntity = pEntity;
 			pEntity->TakeDamage( pev, pev, iDamage, iDmgType );
+			return hEntity;
 		}
 
 		return pEntity;
@@ -1549,7 +1571,9 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 		pevAttacker = pev;  // the default attacker is ourselves
 
 	ClearMultiDamage();
-	gMultiDamage.type = DMG_BULLET | DMG_NEVERGIB;
+	// SBO 2.1: with bitsGib (func_tank "bullet_gib_policy" 1 Normal: 0) the register does not start as DMG_NEVERGIB, so
+	// a Normal hit gibs by the health it leaves (GIB_NORMAL), as in Featureful; the NEVERGIB start made it never gib
+	gMultiDamage.type = DMG_BULLET | ( bitsGib >= 0 ? 0 : DMG_NEVERGIB );
 
 	for (ULONG iShot = 1; iShot <= cShots; iShot++)
 	{

@@ -149,7 +149,7 @@ public:
 			if (!strncmp(part, WSCREEN_LOCAL_ANIM_PREFIX, prefix))
 				StartSequence(part + prefix);
 			else if (m_bInAnimUpdate)
-				worldscreen::Printf("worldscreen: screen %d animation script FireCommand \"%s\" ignored (only "
+				worldscreen::DebugPrintf("worldscreen: screen %d animation script FireCommand \"%s\" ignored (only "
 				                    "\"" WSCREEN_LOCAL_ANIM_PREFIX "<sequence>\" runs from a script)\n", m_iSlot, part);
 			else
 				worldscreen::SendCommand(m_iSlot, part);
@@ -166,7 +166,7 @@ public:
 		m_pAnim = new vgui2::AnimationController(this);
 		m_pAnim->SetProportional(false);
 		if (!m_pAnim->SetScriptFile(GetVPanel(), path, true))
-			worldscreen::Printf("worldscreen: screen %d: %s could not be read\n", m_iSlot, path);
+			worldscreen::DebugPrintf("worldscreen: screen %d: %s could not be read\n", m_iSlot, path);
 		else if (worldscreen::DebugLevel() > 0)
 			worldscreen::Printf("worldscreen: screen %d: animations %s\n", m_iSlot, path);
 	}
@@ -175,7 +175,7 @@ public:
 	{
 		if (!m_pAnim || !m_pAnim->StartAnimationSequence(this, name))
 		{
-			worldscreen::Printf("worldscreen: screen %d: no animation sequence \"%s\"%s\n", m_iSlot, name,
+			worldscreen::DebugPrintf("worldscreen: screen %d: no animation sequence \"%s\"%s\n", m_iSlot, name,
 			    m_pAnim ? "" : " (the layout has no _anims.txt)");
 			return false;
 		}
@@ -235,18 +235,33 @@ public:
 			SetScheme(s_hScheme);
 	}
 
-	// Builds the panel from the layout. False: no layout file.
-	bool Load(const char *panelName, int &wide, int &tall)
+	// Builds the panel from the layout (or from layoutText, the world screen editor's preview). False: no layout
+	// file (no layout in the text).
+	bool Load(const char *panelName, int &wide, int &tall, const char *layoutText = nullptr)
 	{
-		Unload();
-
 		char path[160];
 		snprintf(path, sizeof(path), "%s%s.res", WORLDSCREEN_LAYOUT_DIR, panelName);
-		if (!g_pFullFileSystem || !g_pFullFileSystem->FileExists(path))
+		KeyValues *layout = nullptr;
+		if (layoutText && *layoutText)
+		{
+			layout = new KeyValues(path);
+			if (!layout->LoadFromBuffer(path, layoutText) || !layout->GetFirstSubKey())
+			{
+				layout->deleteThis();
+				return false;
+			}
+		}
+		else if (!g_pFullFileSystem || !g_pFullFileSystem->FileExists(path))
+		{
+			Unload();
 			return false;
+		}
 
+		Unload();
 		m_pContent = new CWorldScreenContent(this, m_iSlot);
-		m_pContent->LoadControlSettings(path);
+		m_pContent->LoadControlSettings(path, nullptr, layout);
+		if (layout)
+			layout->deleteThis();
 		m_pContent->GetSize(wide, tall);
 
 		int sw = 0, st = 0;
@@ -255,7 +270,7 @@ public:
 		const int maxTall = (st > 0 && st < WORLDSCREEN_MAX_PIXELS) ? st : WORLDSCREEN_MAX_PIXELS;
 		if (wide < 16 || tall < 16 || wide > maxWide || tall > maxTall)
 		{
-			worldscreen::Printf("worldscreen: %s: \"WorldScreen\" size %d x %d out of range (16 .. %d x %d), using "
+			worldscreen::DebugPrintf("worldscreen: %s: \"WorldScreen\" size %d x %d out of range (16 .. %d x %d), using "
 			                    "%d x %d\n", path, wide, tall, maxWide, maxTall, wide < 16 || wide > maxWide ?
 			                    WORLDSCREEN_DEFAULT_WIDE : wide, tall < 16 || tall > maxTall ? WORLDSCREEN_DEFAULT_TALL : tall);
 			if (wide < 16 || wide > maxWide)
@@ -553,7 +568,7 @@ public:
 			vgui2::surface()->DrawGetTextureSize(m_iTexId, w, t);
 			m_bHaveImage = w > 0 && t > 0;
 			if (!m_bHaveImage)
-				worldscreen::Printf("worldscreen: %s.tga not found: a cross is drawn instead\n", CURSOR_FILE);
+				worldscreen::DebugPrintf("worldscreen: %s.tga not found: a cross is drawn instead\n", CURSOR_FILE);
 		}
 
 		const int w = GetWide(), t = GetTall();
@@ -602,6 +617,16 @@ bool VGui2_WorldScreen_Create(int slot, const char *panelName, int &pixelWide, i
 	if (!s_pHosts[slot])
 		s_pHosts[slot] = new CWorldScreenHost(g_pViewport, slot);
 	return s_pHosts[slot]->Load(panelName, pixelWide, pixelTall);
+}
+
+bool VGui2_WorldScreen_CreateFromText(int slot, const char *panelName, const char *layoutText, int &pixelWide,
+    int &pixelTall)
+{
+	if (slot < 0 || slot >= WORLDSCREEN_MAX || !g_pViewport)
+		return false;
+	if (!s_pHosts[slot])
+		s_pHosts[slot] = new CWorldScreenHost(g_pViewport, slot);
+	return s_pHosts[slot]->Load(panelName, pixelWide, pixelTall, layoutText);
 }
 
 void VGui2_WorldScreen_Remove(int slot)

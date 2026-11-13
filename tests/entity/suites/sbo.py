@@ -14,7 +14,10 @@ def info(t, name, **kv):
 
 
 # ---------------------------------------------------------------------------------------------- trigger_changevalue
-@S.test('trigger_changevalue: Add (1) to a func_breakable health', doc=CV + '#trigger_changevalue')
+@S.test('trigger_changevalue: Add (1) to a func_breakable health', doc=CV + '#trigger_changevalue',
+        covers=('trigger_changevalue', 'trigger_changevalue.target', 'trigger_changevalue.m_iszValueName',
+                'trigger_changevalue.m_iszNewValue', 'trigger_changevalue.m_iszValueType',
+                'trigger_changevalue.message'))
 def cv_add(t):
     t.brush('func_breakable', targetname='crate', health='50')
     t.point('trigger_changevalue', targetname='cv', target='crate', m_iszValueName='health', m_iszNewValue='25',
@@ -28,7 +31,8 @@ def cv_add(t):
     t.expect.used('after', caller='cv', count=1)         # "message" triggered after the change
 
 
-@S.test('trigger_changevalue: Replace a vector, Mul a float, flag 2 leaves Y alone', doc=CV + '#trigger_changevalue')
+@S.test('trigger_changevalue: Replace a vector, Mul a float, flag 2 leaves Y alone', doc=CV + '#trigger_changevalue',
+        covers=('trigger_changevalue', 'trigger_changevalue.m_iszValueType', 'trigger_changevalue:2'))
 def cv_vector(t):
     info(t, 'tgt', rendercolor='10 20 30', renderamt='40')
     t.point('trigger_changevalue', targetname='cv1', target='tgt', m_iszValueName='rendercolor',
@@ -43,7 +47,8 @@ def cv_vector(t):
     t.expect.value('s', 'tgt', 'renderamt', 100)
 
 
-@S.test('trigger_changevalue: custom keyvalue $i_ set then added, read back', doc=CV + '#how-a-value-is-read-and-written')
+@S.test('trigger_changevalue: custom keyvalue $i_ set then added, read back', doc=CV + '#how-a-value-is-read-and-written',
+        covers=('trigger_changevalue', 'trigger_changevalue.m_iszValueName', 'trigger_changevalue.m_iszValueType'))
 def cv_custom(t):
     info(t, 'var', **{'$i_count': '5'})
     t.point('trigger_changevalue', targetname='add3', target='var', m_iszValueName='$i_count', m_iszNewValue='3',
@@ -57,7 +62,8 @@ def cv_custom(t):
     t.expect.value('after', 'var', 'kv:$i_count', 11)
 
 
-@S.test('trigger_changevalue: division by zero and model keys leave the value as it was', doc=CV + '#limits-and-what-is-not-safe')
+@S.test('trigger_changevalue: division by zero and model keys leave the value as it was', doc=CV + '#limits-and-what-is-not-safe',
+        covers=('trigger_changevalue', 'trigger_changevalue.m_iszValueType'))
 def cv_unsafe(t):
     t.brush('func_breakable', targetname='crate', health='50')
     t.point('trigger_changevalue', targetname='div0', target='crate', m_iszValueName='health', m_iszNewValue='0',
@@ -73,7 +79,8 @@ def cv_unsafe(t):
     t.expect.same('before', 'after', 'crate', 'model')
 
 
-@S.test('trigger_changevalue: !activator changes the triggering player', doc=CV + '#trigger_changevalue', players=1)
+@S.test('trigger_changevalue: !activator changes the triggering player', doc=CV + '#trigger_changevalue', players=1,
+        covers=('trigger_changevalue', 'trigger_changevalue.target'))
 def cv_activator(t):
     t.point('trigger_changevalue', targetname='cv', target='!activator', m_iszValueName='armorvalue',
             m_iszNewValue='42')
@@ -84,7 +91,10 @@ def cv_activator(t):
 
 
 @S.test('trigger_changevalue / copyvalue on the int fields the save table calls float (flags, deadflag)',
-        doc=CV + '#how-a-value-is-read-and-written')
+        doc=CV + '#how-a-value-is-read-and-written',
+        covers=('trigger_changevalue', 'trigger_changevalue.m_iszValueType', 'trigger_copyvalue',
+                'trigger_copyvalue.netname', 'trigger_copyvalue.m_iszSrcValueName', 'trigger_copyvalue.target',
+                'trigger_copyvalue.m_iszDstValueName'))
 def cv_int_flags(t):
     # flags, deadflag, fixangle, light_level are ints in entvars_t but FIELD_FLOAT in the save table: they were
     # computed and written as floats (flags 0 OR FL_NOTARGET read back 1124073472, the bits of 128.0f)
@@ -114,7 +124,9 @@ def cv_int_flags(t):
 
 
 # ---------------------------------------------------------------------------------------------- trigger_copyvalue
-@S.test('trigger_copyvalue: copies a key from one entity to another', doc=CV + '#trigger_copyvalue')
+@S.test('trigger_copyvalue: copies a key from one entity to another', doc=CV + '#trigger_copyvalue',
+        covers=('trigger_copyvalue', 'trigger_copyvalue.netname', 'trigger_copyvalue.m_iszSrcValueName',
+                'trigger_copyvalue.target', 'trigger_copyvalue.m_iszDstValueName'))
 def copy_once(t):
     t.brush('func_breakable', at=(-64, 0, 0), targetname='src', health='33')
     t.brush('func_breakable', at=(64, 0, 0), targetname='dst', health='1')
@@ -126,7 +138,8 @@ def copy_once(t):
     t.expect.value('s', 'dst', 'health', 33)
 
 
-@S.test('trigger_copyvalue: constant mode copies every dmg seconds until OFF', doc=CV + '#trigger_copyvalue')
+@S.test('trigger_copyvalue: constant mode copies every dmg seconds until OFF', doc=CV + '#trigger_copyvalue',
+        covers=('trigger_copyvalue', 'trigger_copyvalue:8', 'trigger_copyvalue.dmg'))
 def copy_constant(t):
     info(t, 'src', **{'$f_v': '1'})
     info(t, 'dst', **{'$f_v': '0'})
@@ -153,7 +166,9 @@ GT = 'GAME_TIMER.md'
 
 
 @S.test('game_timer: enabled with ON runs out, fires target / resumetarget / pausetarget, tells clients',
-        doc=GT + '#outputs-target-keys')
+        doc=GT + '#outputs-target-keys',
+        covers=('game_timer', 'game_timer.timer_length', 'game_timer.target', 'game_timer.resumetarget',
+                'game_timer.pausetarget'))
 def timer_basic(t):
     t.point('game_timer', targetname='timer', timer_length='1', target='done', resumetarget='resumed',
             pausetarget='paused', warn_time='0')
@@ -170,7 +185,9 @@ def timer_basic(t):
     t.expect.msg('GameTimer', fields={'enabled': False}, after='go', within=(0.95, 1.15))
 
 
-@S.test('game_timer: warntarget at the warning time', doc=GT + '#outputs-target-keys')
+@S.test('game_timer: warntarget at the warning time', doc=GT + '#outputs-target-keys',
+        covers=('game_timer', 'game_timer.timer_length', 'game_timer.warn_time', 'game_timer.warntarget',
+                'game_timer.target'))
 def timer_warn(t):
     t.point('game_timer', targetname='timer', timer_length='2', warn_time='0.5', warntarget='warned', target='done')
     info(t, 'warned')
@@ -182,7 +199,7 @@ def timer_warn(t):
     t.expect.fired('done', count=1, after='go', within=(1.95, 2.15))
 
 
-@S.test('game_timer: SET with a value is SetTime', doc=GT + '#inputs')
+@S.test('game_timer: SET with a value is SetTime', doc=GT + '#inputs', covers=('game_timer',))
 def timer_set(t):
     t.point('game_timer', targetname='timer', timer_length='10', target='done', warn_time='0')
     info(t, 'done')
@@ -194,7 +211,8 @@ def timer_set(t):
     t.expect.fired('done', count=1, after='set', within=(0.45, 0.65))
 
 
-@S.test('game_timer: paused 1 / 0 through trigger_changevalue holds and resumes it', doc=GT + '#inputs')
+@S.test('game_timer: paused 1 / 0 through trigger_changevalue holds and resumes it', doc=GT + '#inputs',
+        covers=('game_timer',))
 def timer_pause(t):
     t.point('game_timer', targetname='timer', timer_length='1', target='done', warn_time='0')
     info(t, 'done')
@@ -213,7 +231,8 @@ def timer_pause(t):
     t.expect.fired('done', count=1, after='resume', within=(0.4, 0.65))
 
 
-@S.test('game_timer: add_time through trigger_changevalue, capped at max_length', doc=GT + '#keys-of-a-live-timer')
+@S.test('game_timer: add_time through trigger_changevalue, capped at max_length', doc=GT + '#keys-of-a-live-timer',
+        covers=('game_timer', 'game_timer.max_length'))
 def timer_add(t):
     t.point('game_timer', targetname='timer', timer_length='1', max_length='1.5', target='done', warn_time='0')
     info(t, 'done')
@@ -225,7 +244,8 @@ def timer_add(t):
     t.expect.fired('done', count=1, after='go', within=(1.45, 1.65))
 
 
-@S.test('game_timer with trigger_copyvalue: time_remaining copied into a custom key', doc=GT + '#outputs-target-keys')
+@S.test('game_timer with trigger_copyvalue: time_remaining copied into a custom key', doc=GT + '#outputs-target-keys',
+        covers=('game_timer', 'game_timer.timer_length', 'trigger_copyvalue'))
 def timer_copy(t):
     t.point('game_timer', targetname='timer', timer_length='5', warn_time='0')
     info(t, 'store', **{'$f_left': '0'})
@@ -243,7 +263,8 @@ def timer_copy(t):
 SQ = 'SEQUENCES.md'
 
 
-@S.test('trigger_sequence: #firetargets and #pause, caller is the trigger_sequence', doc=SQ + '#commands-')
+@S.test('trigger_sequence: #firetargets and #pause, caller is the trigger_sequence', doc=SQ + '#commands-',
+        covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_basic(t):
     seq = t.sequence('alarm', '    #firetargets = "%s"\n    #pause = 0.5\n    #firetargets = "%s"'
                      % (t.name('a'), t.name('b')))
@@ -257,7 +278,8 @@ def seq_basic(t):
     t.expect.fired('b', caller='seq', count=1, after='go', within=(0.45, 0.65))
 
 
-@S.test('trigger_sequence: OFF stops a running entry', doc=SQ + '#on-and-off')
+@S.test('trigger_sequence: OFF stops a running entry', doc=SQ + '#on-and-off',
+        covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_off(t):
     seq = t.sequence('stopme', '    #firetargets = "%s"\n    #pause = 0.6\n    #firetargets = "%s"'
                      % (t.name('a'), t.name('b')))
@@ -273,7 +295,8 @@ def seq_off(t):
 
 
 @S.test('trigger_sequence: a sound line without a speaker plays everywhere (ambient sound, ATTN_NONE, full volume), '
-        'not as the entity\'s own sound (the engine sends that only to the players near it)', doc=SQ + '#sounds')
+        'not as the entity\'s own sound (the engine sends that only to the players near it)', doc=SQ + '#sounds',
+        covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_sound_everywhere(t):
     t.seq.append('!sentences\n{\n    ETSQA0 debris/beamstart1\n}\n')
     seq = t.sequence('radio', '    #sound = ETSQA')
@@ -286,7 +309,7 @@ def seq_sound_everywhere(t):
 
 
 @S.test('trigger_sequence: a sentences.txt group without a speaker plays everywhere too (ambient sound "!<number>", '
-        'ATTN_NONE)', doc=SQ + '#sounds')
+        'ATTN_NONE)', doc=SQ + '#sounds', covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_sentence_group_everywhere(t):
     seq = t.sequence('okay', '    #sound = BA_OK')
     t.point('trigger_sequence', at=(0, 0, 64), targetname='seq', sequence_id=seq)
@@ -298,7 +321,7 @@ def seq_sentence_group_everywhere(t):
 
 
 @S.test('trigger_sequence: OFF stops its sound without a speaker (the ambient sound with SND_STOP); the next line '
-        'stops the one before it', doc=SQ + '#on-and-off')
+        'stops the one before it', doc=SQ + '#on-and-off', covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_sound_off(t):
     t.seq.append('!sentences\n{\n    ETSQB0 debris/beamstart1\n}\n!sentences\n{\n    ETSQC0 debris/beamstart2\n}\n')
     seq = t.sequence('twolines', '    #sound = ETSQB\n    #pause = 0.3\n    #sound = ETSQC\n    #pause = 2\n'
@@ -319,7 +342,7 @@ def seq_sound_off(t):
 
 
 @S.test('trigger_sequence: a sound line with a speaker stays the monster\'s own sound at speech distance (ATTN_NORM)',
-        doc=SQ + '#sounds')
+        doc=SQ + '#sounds', covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
 def seq_sound_speaker(t):
     t.seq.append('!sentences\n{\n    ETSQD0 debris/beamstart1\n}\n')
     seq = t.sequence('said', '    #sound = ETSQD, speaker = %s' % t.name('sci'))
@@ -335,7 +358,8 @@ def seq_sound_speaker(t):
 
 # ---------------------------------------------------------------------------------------------- env_fogzone
 @S.test('env_fogzone: the client gets the zone (FogZone; it draws the zone fog itself), Fog carries the map fog (none)',
-        players=1, doc='WEATHER.md#env_fogzone-prototype-haze-from-outside-fog-by-depth-prototype-not-tested-in-the-game')
+        players=1, doc='WEATHER.md#env_fogzone-prototype-haze-from-outside-fog-by-depth-prototype-not-tested-in-the-game',
+        covers=('env_fogzone', 'env_fogzone:1', 'env_fogzone.rendercolor', 'env_fogzone.density'))
 def fogzone(t):
     t.brush('env_fogzone', size=(160, 160, 128), at=(0, 96, 0), tex='AAATRIGGER', targetname='fog', spawnflags='1',
             rendercolor='200 100 50', density='0.002')
@@ -361,7 +385,8 @@ def fogzone(t):
 
 
 # ---------------------------------------------------------------------------------------------- env_tutor / message box
-@S.test('env_tutor: "Activator only" shows the window to the triggering player', players=1, doc='TUTOR_PORT.md')
+@S.test('env_tutor: "Activator only" shows the window to the triggering player', players=1, doc='TUTOR_PORT.md',
+        covers=('env_tutor', 'env_tutor:1', 'env_tutor.type=64'))
 def tutor(t):
     t.point('env_tutor', targetname='tut', spawnflags='1', message='Entity test tutor', type='64')
     t.mark('go')
@@ -372,7 +397,7 @@ def tutor(t):
 
 
 @S.test('env_tutor: triggered again while shown, it is sent again (its sound plays again), the same show',
-        players=1, doc='TUTOR_PORT.md')
+        players=1, doc='TUTOR_PORT.md', covers=('env_tutor', 'env_tutor:8', 'env_tutor.target'))
 def tutor_again(t):
     # interrupt: the last test's message may still be shown
     t.point('env_tutor', targetname='tut', spawnflags='9', message='Entity test tutor again', type='64',
@@ -389,7 +414,8 @@ def tutor_again(t):
     t.fire('tut', activator='player1', use='off')
 
 
-@S.test('game_messagebox: opens a box with its title and text for the activator', players=1, doc='MESSAGE_BOX.md')
+@S.test('game_messagebox: opens a box with its title and text for the activator', players=1, doc='MESSAGE_BOX.md',
+        covers=('game_messagebox', 'game_messagebox.title', 'game_messagebox.message'))
 def messagebox(t):
     t.point('game_messagebox', targetname='box', title='Test title', message='Test text')
     t.mark('go')

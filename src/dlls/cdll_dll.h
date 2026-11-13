@@ -20,10 +20,15 @@
 #ifndef CDLL_DLL_H
 #define CDLL_DLL_H
 
-#define MAX_WEAPONS		32		// ???
+// SBO 2.1 (Half-Life Unified SDK, HLU #98): weapon ids 0..63. The engine's local_state_t has 64 weapon_data_t entries.
+// A player's weapons: ids 0..30 and the suit (31) in pev->weapons, ids 32..63 in CBasePlayer::m_iWeaponBitsHigh.
+#define MAX_WEAPONS		64
 
-#define MAX_WEAPON_SLOTS		5	// hud item selection slots
-#define MAX_ITEM_TYPES			6	// hud item selection slots
+// SBO 2.1 (Half-Life Unified SDK): 10 weapon slots (categories), one per number key; slots above 5 are drawn only
+// when the player holds a weapon there or in a higher one. A player's item buckets are indexed by iItemSlot (1..10).
+#define MAX_WEAPON_SLOTS		10	// hud item selection slots
+#define MAX_ALWAYS_VISIBLE_WEAPON_SLOTS	5	// the slots the weapon menu always shows
+#define MAX_ITEM_TYPES			11	// hud item selection slots
 
 #define MAX_ITEMS				5	// hard coded item types
 

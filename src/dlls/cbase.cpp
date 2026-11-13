@@ -21,8 +21,11 @@
 #include	"gamerules.h"
 #include	"game.h"
 #include	"semiclip.h"
+#include	"movewith.h"	// SBO 2.0: entity parenting
 #include	"map_compat.h"	// SBO 2.0
 #include	"objecthint.h"	// SBO 2.0
+#include	"light_origin.h"	// SBO 2.0: "lightorigin"
+#include	"client_info.h"	// SBO 2.0: pfnCvarValue2
 
 void EntvarsKeyvalue( entvars_t *pev, KeyValueData *pkvd );
 
@@ -122,7 +125,7 @@ NEW_DLL_FUNCTIONS gNewDLLFunctions =
 	NULL,						//pfnGameShutdown
 	DispatchShouldCollide,		//pfnShouldCollide			SBO 2.0: entities' ShouldCollide, then semiclip on moving platforms (semiclip.cpp)
 	NULL,						//pfnCvarValue
-	NULL,						//pfnCvarValue2
+	ClientInfo_CvarValue2,		//pfnCvarValue2			SBO 2.0: answers to the client info queries (client_info.cpp)
 };
 // ---- end halflife-updated ----
 
@@ -192,8 +195,11 @@ static void OnFreeEntPrivateData( edict_t *pEdict )
 }
 
 
+void FgdDefaults_Spawned( edict_t *pent );	// below
+
 int DispatchSpawn( edict_t *pent )
 {
+	FgdDefaults_Spawned( pent );	// SBO 2.0: later keys (plugins, test_kv) get no FGD defaults
 	MapCompat_Spawn( pent );	// SBO 2.0: the entity's keys are all in (map_compat.cpp)
 
 	CBaseEntity *pEntity = (CBaseEntity *)GET_PRIVATE(pent);
@@ -204,6 +210,12 @@ int DispatchSpawn( edict_t *pent )
 		pEntity->pev->absmin = pEntity->pev->origin - Vector(1,1,1);
 		pEntity->pev->absmax = pEntity->pev->origin + Vector(1,1,1);
 
+		// SBO 2.1: an entity without a model of its own precached what any entity of its class precaches (util.h)
+		const BOOL fClassModel = FStringNull( pent->v.model ) || !STRING( pent->v.model )[0];
+		const string_t iszClassname = pent->v.classname;
+
+		MoveWith_PreSpawn( pent );	// SBO 2.0 movewith: the editor pose, for children placed relative to it
+
 		pEntity->Spawn();
 
 		// Try to get the pointer again, in case the spawn function deleted the entity.
@@ -213,10 +225,14 @@ int DispatchSpawn( edict_t *pent )
 
 		if ( pEntity )
 		{
+			MoveWith_PostSpawn( pent );
+
 			if ( g_pGameRules && !g_pGameRules->IsAllowedToSpawn( pEntity ) )
 				return -1;	// return that this entity should be deleted
 			if ( pEntity->pev->flags & FL_KILLME )
 				return -1;
+			if ( fClassModel )
+				UTIL_PrecachedClasses_Add( STRING( iszClassname ) );
 		}
 
 
@@ -246,20 +262,44 @@ int DispatchSpawn( edict_t *pent )
 	return 0;
 }
 
+static void FgdDefaults_Seed( edict_t *pent, KeyValueData *pkvd );	// below DispatchKeyValue
+
 BOOL GamePlayerSettings_PreEntvarsKeyValue( edict_t *pent, KeyValueData *pkvd );	// maprules.cpp
+BOOL DLight_PreEntvarsKeyValue( edict_t *pent, KeyValueData *pkvd );	// env_dlight.cpp
+BOOL MonsterTarget_PreEntvarsKeyValue( edict_t *pent, KeyValueData *pkvd );	// guide_monsters.cpp
 
 void DispatchKeyValue( edict_t *pentKeyvalue, KeyValueData *pkvd )
 {
 	if ( !pkvd || !pentKeyvalue )
 		return;
 
+	FgdDefaults_Seed( pentKeyvalue, pkvd );	// SBO 2.0: FGD defaults of 2.x entities, before the map's first key
+
 	// SBO 2.0: maps/map_compat.txt drops or overrides keys of custom maps while they load (map_compat.cpp)
 	if ( MapCompat_KeyValue( pentKeyvalue, pkvd ) )
 		return;
 
+	// Half-Life Unified SDK: an entity's class can't be changed once it is set (a second "classname" key in the
+	// map, trigger_changevalue / trigger_copyvalue on "classname"): the entity would keep its class's code but
+	// carry another class's name
+	if ( !FStringNull( pentKeyvalue->v.classname ) && pkvd->szKeyName && !stricmp( pkvd->szKeyName, "classname" ) )
+	{
+		ALERT( at_console, "%s: classname \"%s\" ignored (an entity's class can't be changed)\n",
+			STRING( pentKeyvalue->v.classname ), pkvd->szValue ? pkvd->szValue : "" );
+		return;
+	}
+
 	// SBO 2.0 (Featureful PreEntvarsKeyvalue): game_player_settings reads its "health", "max_health" and "armorvalue"
 	// with their '+' / '-' / '=' / '<' / '>' prefix, which the entity fields would lose (maprules.cpp)
 	if ( GamePlayerSettings_PreEntvarsKeyValue( pentKeyvalue, pkvd ) )
+		return;
+
+	// SBO 2.0: env_dlight / env_elight note whether the map set "renderamt" / "rendercolor" (left out: the FGD defaults)
+	if ( DLight_PreEntvarsKeyValue( pentKeyvalue, pkvd ) )
+		return;
+
+	// SBO 2.0: monster_target notes whether the map set "frags" (left out: Player ally)
+	if ( MonsterTarget_PreEntvarsKeyValue( pentKeyvalue, pkvd ) )
 		return;
 
 	EntvarsKeyvalue( VARS(pentKeyvalue), pkvd );
@@ -271,6 +311,13 @@ void DispatchKeyValue( edict_t *pentKeyvalue, KeyValueData *pkvd )
 
 	// SevenKewp (Sven Co-op): custom keyvalues "$i_x", "$f_x", "$v_x", "$s_x" on any entity (keyvalue.cpp)
 	if ( KeyValue_SetCustom( pentKeyvalue, pkvd->szKeyName, pkvd->szValue ) )
+	{
+		pkvd->fHandled = TRUE;
+		return;
+	}
+
+	// SBO 2.0: "movewith" / "parent" / "parentflags" on any entity (movewith.cpp)
+	if ( MoveWith_KeyValue( pentKeyvalue, pkvd ) )
 	{
 		pkvd->fHandled = TRUE;
 		return;
@@ -290,7 +337,92 @@ void DispatchKeyValue( edict_t *pentKeyvalue, KeyValueData *pkvd )
 		return;
 	}
 
+	// SBO 2.0 (Trinity renderer): "lightorigin" on any model entity names the info_light_origin it is lit from
+	// (light_origin.cpp); env_static reads it in its own KeyValue
+	if ( !FClassnameIs( pentKeyvalue, "env_static" ) && LightOrigin_KeyValue( pEntity, pkvd->szKeyName, pkvd->szValue ) )
+	{
+		pkvd->fHandled = TRUE;
+		return;
+	}
+
 	pEntity->KeyValue( pkvd );
+}
+
+// SBO 2.0: the FGD defaults of SBO 2.x entities whose code reads a key left out as something else (mostly 0). A map
+// entity of one of these classes gets them before its first key, as if the map gave them, so every key the map does
+// give overrides them. Only keys before the entity spawns (a map's, ent_create's); an entity the game code makes
+// with its own Spawn keeps its code's values, and keys after the spawn (plugins, test_kv) get no defaults. Only 2.x classes, and only keys no stock or custom map leaves out.
+struct FgdDefault_t { const char *classname; const char *key; const char *value; };
+static const FgdDefault_t s_FgdDefaults[] =
+{
+	{ "ambient_random", "health", "10" }, { "ambient_random", "pitch", "100" }, { "ambient_random", "pitchstart", "100" },
+	{ "env_beamtrail", "rendercolor", "255 255 255" }, { "env_beamtrail", "armorvalue", "5" }, { "env_beamtrail", "health", "4.0" },
+	{ "env_fog", "rendercolor", "128 128 128" },
+	{ "env_fogzone", "rendercolor", "128 128 128" },
+	{ "env_mirror", "rendermode", "2" }, { "env_mirror", "renderamt", "100" },
+	{ "env_modeltrain", "speed", "64" },
+	{ "env_overlay", "x", "-1" }, { "env_overlay", "y", "-1" }, { "env_overlay", "rendercolor", "255 255 255" },
+	{ "env_overlay", "framerate", "10" }, { "env_overlay", "fadein", "0.5" }, { "env_overlay", "fadeout", "0.5" },
+	{ "env_particle", "message", "aurora/steamvent.aur" },
+	{ "env_quakefx", "impulse", "4" }, { "env_quakefx", "frags", "70" }, { "env_quakefx", "armortype", "250" },
+	{ "env_quakefx", "health", "1.0" }, { "env_quakefx", "armorvalue", "10" },
+	{ "env_shockwave", "rendercolor", "188 220 255" },
+	{ "env_soundmark", "radius", "384" }, { "env_soundmark", "duration", "0.3" },
+	{ "env_spritetrain", "model", "sprites/glow01.spr" }, { "env_spritetrain", "framerate", "10.0" }, { "env_spritetrain", "speed", "64" },
+	{ "env_static", "framerate", "1.0" }, { "env_static", "scale", "1.0" },
+	{ "env_warpball", "scale", "1" },
+	{ "func_illusionary_toggle", "skin", "-1" },
+	{ "func_rainvolume", "raindrop_width", "2" }, { "func_rainvolume", "raindrop_height", "80" },
+	{ "func_rainvolume", "raindrop_min_speed", "500" }, { "func_rainvolume", "raindrop_max_speed", "1800" },
+	{ "func_rainvolume", "raindrop_life", "1.0" },
+	{ "func_snowvolume", "snowflake_min_size", "2.1" }, { "func_snowvolume", "snowflake_max_size", "2.6" },
+	{ "func_snowvolume", "snowflake_min_speed", "131" }, { "func_snowvolume", "snowflake_max_speed", "210" },
+	{ "func_snowvolume", "snowflake_life", "3.0" },
+	{ "func_vehicle", "length", "256" }, { "func_vehicle", "width", "128" }, { "func_vehicle", "height", "4" },
+	{ "scripted_schedule", "schedule", "1" },
+	{ "trigger_compare", "initial_value", "0" }, { "trigger_compare", "compare_value", "0" },
+	{ "trigger_hurt_remote", "dmg", "10" },
+	{ "trigger_look", "look_time", "1" }, { "trigger_look", "field_of_view", "0.7" },
+	{ "trigger_sensor", "radius", "192" }, { "trigger_sensor", "line_blocked", "2" }, { "trigger_sensor", "trace_to", "1" },
+	{ "trigger_timer", "min_delay", "0.5" }, { "trigger_timer", "max_delay", "1.0" },
+};
+
+#define FGD_DEFAULTS_EDICTS	16384
+static int s_iFgdDefaultsSerial[FGD_DEFAULTS_EDICTS];	// the edict's serial number + 1 once it has its defaults
+static int s_iFgdSpawnedSerial[FGD_DEFAULTS_EDICTS];	// the edict's serial number + 1 once it spawned
+
+void FgdDefaults_Spawned( edict_t *pent )
+{
+	int index = ENTINDEX( pent );
+	if ( index >= 0 && index < FGD_DEFAULTS_EDICTS )
+		s_iFgdSpawnedSerial[index] = pent->serialnumber + 1;
+}
+
+static void FgdDefaults_Seed( edict_t *pent, KeyValueData *pkvd )
+{
+	if ( !pkvd->szClassName )
+		return;
+	int index = ENTINDEX( pent );
+	if ( index < 0 || index >= FGD_DEFAULTS_EDICTS || s_iFgdDefaultsSerial[index] == pent->serialnumber + 1
+		|| s_iFgdSpawnedSerial[index] == pent->serialnumber + 1 )
+		return;
+	BOOL bListed = FALSE;
+	for ( int i = 0; i < (int)ARRAYSIZE( s_FgdDefaults ) && !bListed; i++ )
+		bListed = FStrEq( s_FgdDefaults[i].classname, pkvd->szClassName );
+	if ( !bListed )
+		return;
+	s_iFgdDefaultsSerial[index] = pent->serialnumber + 1;
+	for ( int i = 0; i < (int)ARRAYSIZE( s_FgdDefaults ); i++ )
+	{
+		if ( !FStrEq( s_FgdDefaults[i].classname, pkvd->szClassName ) )
+			continue;
+		KeyValueData kvd;
+		kvd.szClassName = pkvd->szClassName;
+		kvd.szKeyName = (char *)s_FgdDefaults[i].key;
+		kvd.szValue = (char *)s_FgdDefaults[i].value;
+		kvd.fHandled = FALSE;
+		DispatchKeyValue( pent, &kvd );
+	}
 }
 
 
@@ -299,6 +431,9 @@ void DispatchKeyValue( edict_t *pentKeyvalue, KeyValueData *pkvd )
 BOOL gTouchDisabled = FALSE;
 void DispatchTouch( edict_t *pentTouched, edict_t *pentOther )
 {
+#ifdef SBO_TEST_COMMANDS
+	MoveWith_TraceTouch( pentTouched, pentOther );	// test_mw_trace: what a traced player touches
+#endif
 	if ( gTouchDisabled )
 		return;
 
@@ -331,12 +466,19 @@ void DispatchThink( edict_t *pent )
 	}
 }
 
+void MoverPrediction_Blocked( edict_t *pent );	// client.cpp
+
 void DispatchBlocked( edict_t *pentBlocked, edict_t *pentOther )
 {
 	CBaseEntity *pEntity = (CBaseEntity *)GET_PRIVATE( pentBlocked );
 	CBaseEntity *pOther = (CBaseEntity *)GET_PRIVATE( pentOther );
 
-	if (pEntity)
+	// SBO 2.0 mover prediction: the engine leaves a blocked pusher's velocity as it was; the state sent to the
+	// clients says it stands (client.cpp MoverPrediction_FillState). The engine calls only this when it blocks one.
+	MoverPrediction_Blocked( pentBlocked );
+
+	// SBO 2.0 movewith: a blocked child tells the top of its chain (a door reverses, a train hurts)
+	if ( pEntity && !MoveWith_Blocked( pEntity, pOther ) )
 		pEntity->Blocked( pOther );
 }
 
@@ -738,6 +880,11 @@ int CBaseEntity::Restore( CRestore &restore )
 // Initialize absmin & absmax to the appropriate box
 void SetObjectCollisionBox( entvars_t *pev )
 {
+	// SBO 2.0 movewith: a turning brush child gets the box of its turned bounds, not the cube below around its
+	// origin, which for a child without an origin brush is far from its brushes (movewith.cpp)
+	if ( MoveWith_CollisionBox( pev ) )
+		return;
+
 	if ( (pev->solid == SOLID_BSP) && 
 		 (pev->angles.x || pev->angles.y|| pev->angles.z) )
 	{	// expand for rotation

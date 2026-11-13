@@ -553,6 +553,10 @@ void CDark :: Precache()
 
 int CDark :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	m_afMemory |= bits_MEMORY_PROVOKED;
 
 	if ( bitsDamageType & DMG_BLAST )

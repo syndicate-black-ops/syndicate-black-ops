@@ -1,0 +1,66 @@
+# func_rotating (FGD): flag 1 Start ON turns it at Rotation Speed about the vertical axis (avelocity yaw), 2 Reverse
+# Direction the other way, 4 X Axis / 8 Y Axis about those axes (roll / pitch); 16 "Spin up with acceleration": a
+# trigger speeds it up by Friction % of the speed every 0.1 s (50: 2 steps, its sound at half volume and pitch on
+# the way) and the next slows it down the same way;
+# 64 Not Solid; X Y Z spawnorigin: it moves there; Fan Sounds 1-5 play fans/fan1-5.wav, a WAV Name (message) plays
+# that file; 128 Small Radius plays it at attenuation 2 (ATTN_IDLE), none of the radius flags 0.8 (ATTN_NORM), 256
+# Medium 1.25; 32 Fan Pain hurts what touches it by its speed / 10
+# covers: func_rotating func_rotating.speed func_rotating.fanfriction func_rotating.sounds func_rotating.sounds=1 func_rotating.sounds=2 func_rotating.sounds=3 func_rotating.sounds=4 func_rotating.sounds=5 func_rotating.message func_rotating.spawnorigin func_rotating:1 func_rotating:2 func_rotating:4 func_rotating:8 func_rotating:16 func_rotating:32 func_rotating:64 func_rotating:128 func_rotating:256
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+brushsize 64 64 64
+spawn func_rotating targetname r_on model *1 speed 100 spawnflags 129 sounds 1
+spawn func_rotating targetname r_rev model *2 speed 50 spawnflags 3 sounds 2
+spawn func_rotating targetname r_x model *3 speed 100 spawnflags 5 sounds 3
+spawn func_rotating targetname r_y model *4 speed 100 spawnflags 9 sounds 4
+spawn func_rotating targetname r_acc model *5 speed 100 spawnflags 272 fanfriction 50 sounds 5
+spawn func_rotating targetname r_ns model *6 speed 10 spawnflags 64 spawnorigin "100 200 300"
+spawn func_rotating targetname r_pain model *7 speed 100 spawnflags 33
+spawn func_rotating targetname r_msg model *8 speed 100 message ambience/dog1.wav
+spawn func_rotating targetname r_solid model *9 speed 10
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark started
+expectfield r_on avelocity "0 100 0"
+expectfield r_rev avelocity "0 -50 0"
+expectfield r_x avelocity "0 0 100"
+expectfield r_y avelocity "100 0 0"
+expectfield r_acc avelocity "0 0 0"
+expectfield r_ns solid 0
+expectfield r_solid solid 4
+expectfield r_ns origin "100 200 300"
+expect ch6 fans/fan1.wav vol=1.00 att=2.00 pitch=100
+expect ch6 fans/fan2.wav vol=1.00 att=0.80 pitch=100
+expect ch6 fans/fan3.wav vol=1.00 att=0.80 pitch=100
+expect ch6 fans/fan4.wav vol=1.00 att=0.80 pitch=100
+mark accelerate
+fire r_acc
+fire r_msg
+frames 5
+# half speed on the way (sound at half volume and pitch), then full speed
+expectn 1 ch6 fans/fan5.wav vol=0.50 att=1.25 pitch=65
+expectfield r_acc avelocity "0 100 0"
+expect ch6 fans/fan5.wav vol=1.00 att=1.25 pitch=100
+expect ch6 ambience/dog1.wav vol=1.00 att=0.80 pitch=100
+mark decelerate
+fire r_acc
+frames 5
+expectn 2 ch6 fans/fan5.wav vol=0.50 att=1.25 pitch=65
+expectfield r_acc avelocity "0 0 0"
+mark pain
+expectdump player health=100.0
+touchclient 6 1
+frames 2
+expectdump player health=90.0

@@ -1,7 +1,7 @@
 // SBO 2.0 Game Master mode. See gmmode.h and docs/GM_MODE.md.
 //
 // Port of MrCalvin's Game Master Mode plugin (amxmodx-plugins server/syndicate/gmmode/scripting/syndicate_gmmode.sma,
-// "sma" below) as the owner wanted it in SBO 2.0:
+// "sma" below) as SBO 2.0 has it:
 //   * no Energy Points, costs, tier unlock times, cooldowns, max-alive / max-spawned limits or spawn_overrides.cfg
 //     (spawning works as it always did in SBO's GM mode); a free-edict guard keeps the server from running out of
 //     entities (a crash guard, not a game rule); a plugin can add a budget through the hooks CBasePlayer::GmCanPlace
@@ -1258,8 +1258,9 @@ static CBaseMonster *GmOwnedMonster( entvars_t *pev, CBasePlayer **ppOwner )
 }
 
 //=========================================================
-// The orders menu's "Destroy selected": kills one of the Game Master's own monsters (damage every monster takes in full:
-// the gargantua and the turrets cut other damage types; from the world, so nobody gets the kill)
+// The orders menu's "Destroy selected": kills one of the Game Master's own monsters or a monster no Game Master placed
+// (damage every monster takes in full: the gargantua and the turrets cut other damage types; from the world, so nobody
+// gets the kill, XP or score; it dies as from any other damage: its death triggers fire, a scripted sequence ends)
 //=========================================================
 static void GmKillMonster( CBaseEntity *pEntity )
 {
@@ -1973,8 +1974,28 @@ static void GmRemovePad( CGmTeleporter *pPad )
 		UTIL_Remove( pPad );	// UpdateOnRemove: its marker
 }
 
+// A living monster no Game Master placed (the map's, a monstermaker's) that "Destroy selected" can kill: one that takes
+// damage (not a mapper's invulnerable monster or a folded-up turret) and can be seen (not EF_NODRAW, not fully
+// transparent); never monster_furniture (map scenery: vehicles, props), a player's snark (a monster_snark only when a
+// Game Master placed it) or anything a player owns
+static BOOL GmMapMonster( CBaseMonster *pMonster )
+{
+	if ( !pMonster || pMonster->IsPlayer() || (CBaseEntity *)pMonster->m_hGmOwner || pMonster->m_iGmOwnerUserId
+		|| pMonster->pev->deadflag != DEAD_NO || pMonster->pev->takedamage == DAMAGE_NO )
+		return FALSE;
+	if ( ( pMonster->pev->effects & EF_NODRAW )
+		|| ( pMonster->pev->rendermode != kRenderNormal && pMonster->pev->renderamt <= 0 ) )
+		return FALSE;
+	if ( FClassnameIs( pMonster->pev, "monster_snark" ) || FClassnameIs( pMonster->pev, "monster_furniture" ) )
+		return FALSE;
+	CBaseEntity *pOwner = FNullEnt( pMonster->pev->owner ) ? NULL : CBaseEntity::Instance( pMonster->pev->owner );
+	return !pOwner || !pOwner->IsPlayer();
+}
+
 // What a Game Master can select (click, box, the players window's map): everything he placed: monsters of every kind
-// (turrets, the Apache, the Pitbull too: they take no orders but can be destroyed), weapon drops, teleporter pads
+// (turrets, the Apache, the Pitbull too: they take no orders but can be destroyed), weapon drops, teleporter pads; and
+// the monsters no Game Master placed (GmMapMonster: they take no orders, "Destroy selected" kills them). Never another
+// Game Master's monsters.
 static BOOL GmSelectable( CBasePlayer *pPlayer, CBaseEntity *pEntity )
 {
 	if ( !pPlayer || !pEntity || pEntity->IsPlayer() )
@@ -1983,8 +2004,10 @@ static BOOL GmSelectable( CBasePlayer *pPlayer, CBaseEntity *pEntity )
 	if ( pEntity->pev->flags & FL_MONSTER )
 	{
 		CBaseMonster *pMonster = pEntity->MyMonsterPointer();
-		return pMonster && pMonster->pev->deadflag == DEAD_NO && (CBaseEntity *)pMonster->m_hGmOwner == pPlayer
-			&& pMonster->m_iGmOwnerUserId == iUserId;
+		if ( !pMonster || pMonster->pev->deadflag != DEAD_NO )
+			return FALSE;
+		return ( (CBaseEntity *)pMonster->m_hGmOwner == pPlayer && pMonster->m_iGmOwnerUserId == iUserId )
+			|| GmMapMonster( pMonster );
 	}
 	if ( FClassnameIs( pEntity->pev, "gm_weapon_drop" ) )
 	{
@@ -4389,12 +4412,20 @@ static void GmOrdersMenu( CBasePlayer *pPlayer )
 	GmPlayerState &gm = s_Gm[pPlayer->entindex()];
 	// only the lines that apply to something selected: the orders for monsters that take orders ("3. Hunt player...":
 	// the list of the living players in play), Destroy selected for everything
-	BOOL bOrderable = FALSE;
-	for ( int i = 0; i < gm.iSelected && !bOrderable; i++ )
-		bOrderable = GmOrderable( pPlayer, gm.hSelected[i] ) != NULL;
+	int iOrderable = 0;
+	for ( int i = 0; i < gm.iSelected; i++ )
+		iOrderable += GmOrderable( pPlayer, gm.hSelected[i] ) != NULL;
+	const BOOL bOrderable = iOrderable > 0;
+	// a mixed selection (the map's monsters, Pitbulls, turrets, drops with his NPCs): how many of them obey the orders
+	char szCount[64];
+	if ( bOrderable && iOrderable < gm.iSelected )
+		_snprintf( szCount, sizeof( szCount ), "%d SELECTED, %d TAKE ORDERS", gm.iSelected, iOrderable );
+	else
+		_snprintf( szCount, sizeof( szCount ), "%d SELECTED", gm.iSelected );
+	szCount[sizeof( szCount ) - 1] = 0;
 	char szText[512];
-	_snprintf( szText, sizeof( szText ), "\\yORDERS \xC2\xB7 %d SELECTED\n\n%s\\w5. Destroy selected\n\n\\d9. Clear selection\n0. Close",
-		gm.iSelected, bOrderable ? "\\w1. Move here (aim)\n2. Attack nearest player\n3. Hunt player\n4. Hold position\n" : "" );
+	_snprintf( szText, sizeof( szText ), "\\yORDERS \xC2\xB7 %s\n\n%s\\w5. Destroy selected\n\n\\d9. Clear selection\n0. Close",
+		szCount, bOrderable ? "\\w1. Move here (aim)\n2. Attack nearest player\n3. Hunt player\n4. Hold position\n" : "" );
 	szText[sizeof( szText ) - 1] = 0;
 	GmShowMenu( pPlayer, GM_MENU_ORDERS, ( bOrderable ? ( 1 << 0 ) | ( 1 << 1 ) | ( 1 << 2 ) | ( 1 << 3 ) : 0 ) | ( 1 << 4 )
 		| ( 1 << 8 ) | ( 1 << 9 ), szText );
@@ -4414,7 +4445,7 @@ static void GmDestroySelected( CBasePlayer *pPlayer )
 		if ( pEntity->pev->flags & FL_MONSTER )
 		{
 			if ( pEntity->pev->takedamage == DAMAGE_NO )
-				UTIL_Remove( pEntity );	// a turret folded up takes no damage
+				UTIL_Remove( pEntity );	// his own turret folded up takes no damage (the map's are not selectable then)
 			else
 				GmKillMonster( pEntity );
 		}

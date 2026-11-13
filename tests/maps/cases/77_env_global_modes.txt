@@ -1,0 +1,46 @@
+# env_global Trigger Mode 0 Off, 1 On, 2 Dead, 3 Toggle, seen through a multisource that opens only while the global
+# state is On (multisource globalstate; its one member's slot is on). Toggle turns On into Off and Off into On, and
+# leaves Dead as it is
+# covers: env_global env_global.triggermode=0 env_global.triggermode=1 env_global.triggermode=2 env_global.triggermode=3 multisource.globalstate
+map co_fuzz
+spawn multisource targetname ms target ms_out globalstate gs
+spawn trigger_relay targetname member target ms
+spawn env_global targetname g_off globalstate gs triggermode 0
+spawn env_global targetname g_on globalstate gs triggermode 1
+spawn env_global targetname g_dead globalstate gs triggermode 2
+spawn env_global targetname g_toggle globalstate gs triggermode 3
+activate
+frames 3
+fire member
+fire member
+mark on
+fire g_on
+fire member
+fire member
+frames 1
+expectn 1 Firing: (ms_out)
+mark toggle_to_off
+fire g_toggle
+fire member
+fire member
+frames 1
+expectn 1 Firing: (ms_out)
+mark toggle_to_on
+fire g_toggle
+fire member
+fire member
+frames 1
+expectn 2 Firing: (ms_out)
+mark off
+fire g_off
+fire member
+fire member
+frames 1
+expectn 2 Firing: (ms_out)
+mark dead_then_toggle
+fire g_dead
+fire g_toggle
+fire member
+fire member
+frames 1
+expectn 2 Firing: (ms_out)

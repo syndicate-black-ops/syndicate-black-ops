@@ -1,0 +1,43 @@
+# Monster keys (FGD): monster_grunt_hunter Weapons 1 / 3 / 8 / 10 and monster_zombie_grunt Weapons 1 / 3 / 10 are the
+# weapon bits the AI reads (pev->weapons); Body -1 Random gives monster_scientist, monster_sitting_scientist,
+# monster_scientist_dead (heads 0-3) and monster_dark (0-3) one of the listed bodies (the exact one is not compared:
+# the stub's random numbers differ between the binaries); monster_turret / monster_miniturret Orientation 1 Ceiling
+# Mount hangs upside down (pitch 180, EF_INVLIGHT 16), 0 Floor Mount stands (pitch 0, no EF_INVLIGHT)
+# covers: monster_grunt_hunter.weapons monster_grunt_hunter.weapons=1 monster_grunt_hunter.weapons=3 monster_grunt_hunter.weapons=8 monster_grunt_hunter.weapons=10 monster_zombie_grunt.weapons monster_zombie_grunt.weapons=1 monster_zombie_grunt.weapons=3 monster_zombie_grunt.weapons=10 monster_scientist.body=-1 monster_sitting_scientist monster_sitting_scientist.body monster_sitting_scientist.body=-1 monster_scientist_dead.body monster_scientist_dead.body=-1 monster_dark.body=-1 monster_turret.orientation monster_turret.orientation=0 monster_turret.orientation=1 monster_miniturret.orientation monster_miniturret.orientation=0 monster_miniturret.orientation=1
+map co_fuzz
+spawn monster_grunt_hunter targetname h1 weapons 1 origin "0 1000 0"
+spawn monster_grunt_hunter targetname h3 weapons 3 origin "100 1000 0"
+spawn monster_grunt_hunter targetname h8 weapons 8 origin "200 1000 0"
+spawn monster_grunt_hunter targetname h10 weapons 10 origin "300 1000 0"
+spawn monster_zombie_grunt targetname z1 weapons 1 origin "0 1200 0"
+spawn monster_zombie_grunt targetname z3 weapons 3 origin "100 1200 0"
+spawn monster_zombie_grunt targetname z10 weapons 10 origin "200 1200 0"
+spawn monster_scientist targetname sr body -1 origin "0 1400 0"
+spawn monster_sitting_scientist targetname ssr body -1 origin "100 1400 0"
+spawn monster_scientist_dead targetname sdr body -1 origin "200 1400 0"
+spawn monster_dark targetname kr body -1 origin "300 1400 0"
+spawn monster_turret targetname tc orientation 1 origin "0 1600 200"
+spawn monster_turret targetname tf orientation 0 origin "200 1600 0"
+spawn monster_miniturret targetname mc orientation 1 origin "400 1600 200"
+spawn monster_miniturret targetname mf orientation 0 origin "600 1600 0"
+activate
+frames 5
+expectfield h1 weapons 1
+expectfield h3 weapons 3
+expectfield h8 weapons 8
+expectfield h10 weapons 10
+expectfield z1 weapons 1
+expectfield z3 weapons 3
+expectfield z10 weapons 10
+expectrange sr body 0 3
+expectrange ssr body 0 3
+expectrange sdr body 0 3
+expectrange kr body 0 3
+expectdump tc effects=16
+expectdump mc effects=16
+expectdump tf effects=0
+expectdump mf effects=0
+expectfield tc angles "180 180 0"
+expectfield mc angles "180 180 0"
+expectfield tf angles "0 0 0"
+expectfield mf angles "0 0 0"

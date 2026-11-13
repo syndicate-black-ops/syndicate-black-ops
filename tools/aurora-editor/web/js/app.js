@@ -41,7 +41,6 @@ const S = {
 	schema: null,
 	assets: { scripts: [], sprites: [] },
 	uploads: new Map(),		// 'sprites/x.spr' -> ArrayBuffer, 'aurora/x.aur' -> string
-	session: null,
 	sprites: new Map(),		// name -> Promise<{ state, spr, source, error }>
 	spriteInfo: new Map(),	// name -> resolved info
 	gameLog: [],
@@ -195,7 +194,7 @@ function scriptPath() {
 }
 
 //=============================================================================
-// sprites: the session's uploads first, then the game's files (SBO, then Half-Life)
+// sprites: the uploads first, then the game's files (SBO, then Half-Life)
 //=============================================================================
 
 function normSprite(n) {
@@ -221,7 +220,7 @@ function ensureSprite(name) {
 				const r = await fetch(`assets/${n}`);
 				if (r.ok) {
 					buf = await r.arrayBuffer();
-					source = r.headers.get('X-Aurora-Source') || 'game';
+					source = S.assets.sprites.find((a) => a.name === n).source;
 				}
 			} catch { buf = null; }
 		}
@@ -1588,7 +1587,7 @@ async function showSpriteDetail(name) {
 }
 
 //=============================================================================
-// session uploads
+// uploads
 //=============================================================================
 
 async function fetchText(url) {
@@ -1597,38 +1596,29 @@ async function fetchText(url) {
 	return util.latin1Decode(await r.arrayBuffer());
 }
 
-function sessionGet() {
-	try { return window.sessionStorage.getItem(KEY_PREFIX + 'session'); } catch { return null; }
-}
+// uploads stay in this browser (IndexedDB), not on a server: the page is static
+const MAX_UPLOAD_BYTES = 32 << 20, MAX_UPLOAD_FILES = 64;
 
-function sessionSet(id) {
-	try { window.sessionStorage.setItem(KEY_PREFIX + 'session', id); } catch { /* storage blocked */ }
-}
-
-async function ensureSession() {
-	if (S.session) return S.session;
-	const old = sessionGet();
-	if (old) {
-		try {
-			const r = await fetch(`api/session/${encodeURIComponent(old)}`);
-			if (r.ok) {
-				S.session = old;
-				const j = await r.json();
-				for (const f of j.files) {
-					const rr = await fetch(`api/session/${encodeURIComponent(old)}/${f.name}`);
-					if (!rr.ok) continue;
-					const buf = await rr.arrayBuffer();
-					S.uploads.set(f.name, f.kind === 'aurora' ? util.latin1Decode(buf) : buf);
-				}
-				return S.session;
-			}
-		} catch { /* a new one below */ }
+async function loadUploads() {
+	const saved = await util.uploadStore.all();
+	for (const [name, value] of saved) {
+		if (S.uploads.has(name) || !/^(aurora\/[^/]+\.aur|sprites\/[^/]+\.spr)$/.test(name)) continue;
+		S.uploads.set(name, value);
+		if (name.startsWith('sprites/')) forgetSprite(name);
 	}
-	const r = await fetch('api/session', { method: 'POST' });
-	if (!r.ok) throw new Error('the server gives no upload session: ' + (await r.text()));
-	S.session = (await r.json()).id;
-	sessionSet(S.session);
-	return S.session;
+	if (!saved.size) return;
+	renderSpriteGrid();
+	if (S.doc) { rebuild(); renderTree(); }
+}
+
+function uploadsUsed(except) {
+	let bytes = 0, files = 0;
+	for (const [n, v] of S.uploads) {
+		if (n === except) continue;
+		files++;
+		bytes += typeof v === 'string' ? v.length : v.byteLength;
+	}
+	return { bytes, files };
 }
 
 async function uploadFiles(files) {
@@ -1647,28 +1637,21 @@ async function uploadFiles(files) {
 			try { parseSprite(buf); } catch (e) { errors.push(`${file.name}: ${e.message}`); continue; }
 		}
 		const kind = isSpr ? 'sprites' : 'aurora';
-		try {
-			const sid = await ensureSession();
-			let r = await fetch(`api/session/${encodeURIComponent(sid)}/${kind}/${encodeURIComponent(base)}`, { method: 'PUT', body: buf });
-			if (r.status === 404) {
-				S.session = null;
-				sessionSet('');
-				const sid2 = await ensureSession();
-				r = await fetch(`api/session/${encodeURIComponent(sid2)}/${kind}/${encodeURIComponent(base)}`, { method: 'PUT', body: buf });
-			}
-			if (!r.ok) { errors.push(`${file.name}: ${(await r.json().catch(() => ({}))).error || r.status}`); continue; }
-		} catch (e) {
-			errors.push(`${file.name}: ${e.message} (kept in this page only)`);
-		}
 		const name = `${kind}/${base}`;
+		const used = uploadsUsed(name);
+		if (used.bytes + buf.byteLength > MAX_UPLOAD_BYTES || (used.files >= MAX_UPLOAD_FILES && !S.uploads.has(name))) {
+			errors.push(`${file.name}: uploads full (32 MB, 64 files)`);
+			continue;
+		}
+		const value = isSpr ? buf : util.latin1Decode(buf);
+		if (!(await util.uploadStore.put(name, value))) errors.push(`${file.name}: kept in this page only (browser storage blocked)`);
 		if (isSpr) {
-			S.uploads.set(name, buf);
+			S.uploads.set(name, value);
 			forgetSprite(name);
 			sprites++;
 		} else {
-			const text = util.latin1Decode(buf);
-			S.uploads.set(name, text);
-			scripts.push({ name: base, text });
+			S.uploads.set(name, value);
+			scripts.push({ name: base, text: value });
 		}
 	}
 	if (scripts.length) loadScript(scripts[0].name, scripts[0].text);
@@ -1701,7 +1684,7 @@ async function openPicker() {
 	let html = '<h2>Open</h2>';
 	html += '<h3>Shipped with the game (start from one; your copy is a draft until you download it)</h3><div class="pick-list">' +
 		S.assets.scripts.map((s) => btn('asset:' + s.name, s.name.replace(/^aurora\//, ''))).join('') + '</div>';
-	if (ups.length) html += '<h3>Uploaded in this session</h3><div class="pick-list">' + ups.map((n) => btn('upload:' + n, n.replace(/^aurora\//, ''))).join('') + '</div>';
+	if (ups.length) html += '<h3>Uploaded in this browser</h3><div class="pick-list">' + ups.map((n) => btn('upload:' + n, n.replace(/^aurora\//, ''))).join('') + '</div>';
 	if (draftNames.length) html += '<h3>Drafts in this browser (autosaved)</h3><div class="pick-list">' +
 		draftNames.map((n) => btn('draft:' + n, n, new Date(drafts[n].ts).toLocaleString())).join('') + '</div>';
 	const v = await dialog(html, [['Cancel', '']], (body, close) => {
@@ -1800,7 +1783,7 @@ function showHelp() {
 <tr><td>Mouse</td><td>drag: orbit; right drag or Shift+drag: pan; wheel: zoom. Fly camera (Scene tab): drag to look, W A S D Q E to move.</td></tr>
 </table>
 <h3>Working</h3>
-<p>Pick a type in the tree, change its keys in Properties (hover a label for its meaning), or type in the Script tab: the text is the file, and a form change rewrites only that key's line (comments, unknown keys and other editors' keys stay). Problems lists the game's console lines for the script and the editor's hints. Drafts are saved in this browser as you work; upload .aur and .spr files with the Upload button or by dropping them on the page (they stay in this session on the server, 4 MB per sprite). Download .aur, or a zip with <code>aurora/</code> and <code>sprites/</code> laid out as in the game folder.</p>
+<p>Pick a type in the tree, change its keys in Properties (hover a label for its meaning), or type in the Script tab: the text is the file, and a form change rewrites only that key's line (comments, unknown keys and other editors' keys stay). Problems lists the game's console lines for the script and the editor's hints. Drafts are saved in this browser as you work; upload .aur and .spr files with the Upload button or by dropping them on the page (they stay in this browser only, nothing is sent to a server; 4 MB per sprite, 32 MB in all). Download .aur, or a zip with <code>aurora/</code> and <code>sprites/</code> laid out as in the game folder.</p>
 <h3>Drawing, as in the game</h3>
 <p>Each particle is a square facing the view, <code>startsize</code> = half its width. Render modes go through the engine's triangle API: <b>additive</b> adds color x alpha (black is invisible); <b>solid</b> blends with the sprite's alpha x the particle's alpha; <b>texture</b> and <b>color</b> also blend, but the engine's Color4f multiplies the color by alpha and draws opaque: alpha darkens instead of fading. Sprites: normal and additive formats are opaque, indexalpha uses the index as alpha, alphatest makes color 255 transparent.</p>
 <h3>Top-level keys</h3><table>${keys(S.schema.top)}</table>
@@ -1952,7 +1935,7 @@ async function boot() {
 	}
 	const [schema, assets] = await Promise.all([
 		fetch('core/aurora-keys.json').then((r) => r.json()),
-		fetch('api/assets').then((r) => r.json()).catch(() => ({ scripts: [], sprites: [] })),
+		fetch('assets/index.json').then((r) => r.json()).catch(() => ({ scripts: [], sprites: [] })),
 	]);
 	S.schema = schema;
 	S.assets = assets;
@@ -1981,7 +1964,7 @@ async function boot() {
 	updateTransport();
 	renderSceneForm();
 	renderCompareForm();
-	ensureSession().then(() => { renderCompareForm(); }).catch((e) => console.warn('upload session:', e.message));
+	loadUploads().then(() => { renderCompareForm(); }).catch((e) => console.warn('uploads:', e.message));
 
 	let loaded = false;
 	if (location.hash.startsWith('#s=')) {

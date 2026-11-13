@@ -1,0 +1,93 @@
+# func_pushable with Breakable (128) shares func_breakable's Material type and Spawn On Break (CPushable is a
+# CBreakable): each material breaks with its own sound and gib type, 7 Unbreakable Glass does not break, and Spawn On
+# Break leaves its item (the expectations of case 94 on func_pushable; a trigger_hurt touch breaks them, 0.6 s apart (a trigger_hurt
+# hurts once per 0.5 s); a pushable used by a trigger is pushed, not broken)
+# covers: func_pushable.material=0 func_pushable.material=1 func_pushable.material=2 func_pushable.material=3 func_pushable.material=4 func_pushable.material=5 func_pushable.material=6 func_pushable.material=7 func_pushable.material=8 func_pushable.spawnobject=0 func_pushable.spawnobject=1 func_pushable.spawnobject=14 func_pushable.spawnobject=15 func_pushable.spawnobject=17 func_pushable.spawnobject=18 func_pushable.spawnobject=19 func_pushable.spawnobject=20 func_pushable:128
+map co_fuzz
+brushsize 64 64 64
+spawn func_pushable targetname m0 model *1 health 10 material 0 spawnflags 128
+spawn func_pushable targetname m1 model *2 health 10 material 1 spawnflags 128
+spawn func_pushable targetname m2 model *3 health 10 material 2 spawnflags 128
+spawn func_pushable targetname m3 model *4 health 10 material 3 spawnflags 128
+spawn func_pushable targetname m4 model *5 health 10 material 4 spawnflags 128
+spawn func_pushable targetname m5 model *6 health 10 material 5 spawnflags 128
+spawn func_pushable targetname m6 model *7 health 10 material 6 spawnflags 128
+spawn func_pushable targetname m7 model *8 health 10 material 7 spawnflags 128
+spawn func_pushable targetname m8 model *9 health 10 material 8 spawnflags 128
+spawn func_pushable targetname o1 model *10 health 10 spawnobject 1 material 1 spawnflags 128
+spawn func_pushable targetname o14 model *11 health 10 spawnobject 14 material 1 spawnflags 128
+spawn func_pushable targetname o15 model *12 health 10 spawnobject 15 material 1 spawnflags 128
+spawn func_pushable targetname o17 model *13 health 10 spawnobject 17 material 1 spawnflags 128
+spawn func_pushable targetname o18 model *14 health 10 spawnobject 18 material 1 spawnflags 128
+spawn func_pushable targetname o19 model *15 health 10 spawnobject 19 material 1 spawnflags 128
+spawn func_pushable targetname o20 model *16 health 10 spawnobject 20 material 1 spawnflags 128
+spawn func_pushable targetname o0 model *17 health 10 spawnobject 0 material 1 spawnflags 128
+spawn trigger_hurt model *18 dmg 100 damagetype 0 origin "0 2900 0"
+activate
+connect 1 P1
+frames 3
+mark materials
+touchent 17 0
+frames 6
+expectn 1 ch2 debris/bustglass
+expectn 1 0 25 1
+touchent 17 1
+frames 6
+expectn 1 ch2 debris/bustcrate
+expectn 1 0 25 8
+touchent 17 2
+frames 6
+expectn 1 ch2 debris/bustmetal
+expectn 1 0 25 2
+touchent 17 3
+frames 6
+expectn 1 ch2 debris/bustflesh
+expectn 1 0 25 4
+touchent 17 4
+frames 6
+expectn 1 ch2 debris/bustconcrete
+expectn 1 0 25 64
+touchent 17 5
+frames 6
+expectn 1 ch2 debris/bustceiling
+expectn 1 0 25 0
+touchent 17 6
+frames 6
+expectn 2 ch2 debris/bustmetal
+expectn 2 0 25 2
+touchent 17 7
+frames 6
+expectdump m7 health=10.0
+touchent 17 8
+frames 6
+expectn 2 ch2 debris/bustconcrete
+expectn 2 0 25 64
+expectn 0 MSG svc23 ->area: 3 
+mark objects
+touchent 17 9
+frames 6
+touchent 17 10
+frames 6
+touchent 17 11
+frames 6
+touchent 17 12
+frames 6
+touchent 17 13
+frames 6
+touchent 17 14
+frames 6
+touchent 17 15
+frames 6
+touchent 17 16
+frames 6
+frames 3
+expectn 9 ch2 debris/bustcrate
+expectcount item_battery 1
+expectcount weapon_rpg 1
+expectcount ammo_rpgclip 1
+expectcount weapon_handgrenade 1
+expectcount weapon_tripmine 1
+expectcount weapon_satchel 1
+expectcount weapon_snark 1
+expectn 0 MSG svc23 ->area: 3 
+mark explode

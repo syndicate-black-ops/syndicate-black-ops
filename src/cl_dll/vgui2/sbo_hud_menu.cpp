@@ -159,7 +159,8 @@ void CSboHudMenu::ApplySchemeSettings(vgui2::IScheme *pScheme)
 
 	m_TextColor = pScheme->GetColor("HudMenu.TextColor", Color(47, 145, 60, 255));
 	m_ItemColor = pScheme->GetColor("HudMenu.ItemColor", Color(47, 145, 60, 255));
-	m_BoxColor = pScheme->GetColor("HudMenu.BoxColor", Color(47, 145, 60, 15));
+	// the box: a nearly opaque dark green (Source's MenuBoxBg was 47 145 60 at 15) so the lines read over a bright scene
+	m_BoxColor = pScheme->GetColor("HudMenu.BoxColor", Color(8, 24, 10, 230));
 	m_SelectedColor = pScheme->GetColor("HudMenu.SelectedColor", Color(150, 255, 160, 255));
 	m_SelectedBgColor = pScheme->GetColor("HudMenu.SelectedBgColor", Color(47, 145, 60, 70));
 	m_YellowColor = pScheme->GetColor("HudMenu.YellowColor", Color(255, 210, 64, 255));

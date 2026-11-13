@@ -1,0 +1,28 @@
+# multisource whose member fires with a delay: the call comes from the DelayedUse entity (not a member). develop
+# toggles the slot of the member whose delay made it; 1.38 toggled the LAST member's slot. ms: the delayed member is
+# the last one, so it opens on both (co_spells / co_station_v1 rely on this: their delayed relays are the only
+# members). ms2: the delayed member is the first one; develop: its own slot, so ms2 opens; 1.38: its input landed on
+# the last member's slot and turned it off, so ms2 stayed shut (decision multisource-delayed-own-slot)
+# covers: multisource trigger_relay.delay
+map co_fuzz
+spawn multisource targetname ms target ms_out
+spawn trigger_relay targetname m1 target ms triggerstate 2
+spawn trigger_relay targetname m2 target ms triggerstate 2 delay 1
+spawn multisource targetname ms2 target ms2_out
+spawn trigger_relay targetname n1 target ms2 triggerstate 2 delay 1
+spawn trigger_relay targetname n2 target ms2 triggerstate 2
+activate
+frames 3
+mark last_member_delayed
+fire m1
+fire m2
+frames 5
+expectnot Firing: (ms_out)
+frames 10
+expectn 1 Firing: (ms_out)
+mark first_member_delayed
+fire n2
+frames 2
+fire n1
+frames 15
+expectn 1 Firing: (ms2_out)

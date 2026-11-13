@@ -1,0 +1,10 @@
+# env_sprite with a model (FGD "Sequence (model)": models only, the number of the sequence it plays): a model
+# env_sprite plays that sequence (models/scientist.mdl sequence 28 pull_needle); without the key, sequence 0
+# covers: env_sprite.sequence
+map co_fuzz
+spawn env_sprite targetname mdl model models/scientist.mdl sequence 28 framerate 1 spawnflags 1 origin "0 0 0"
+spawn env_sprite targetname mdl0 model models/scientist.mdl framerate 1 spawnflags 1 origin "200 0 0"
+activate
+frames 5
+expectfield mdl sequence 28
+expectfield mdl0 sequence 0

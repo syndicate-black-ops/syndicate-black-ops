@@ -19,12 +19,14 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#include "movewith.h"	// SBO 2.0: an ambient_generic child plays on its parent
 #include "weapons.h"
 #include "player.h"
 #include "talkmonster.h"
 #include "gamerules.h"
 #include "client_sendqueue.h"
 #include "map_music_shared.h"	// game_shared
+#include "cheat_commands.h"	// SBO 2.1: Cheat_SoundPrecached (ambient_generic "message" changed at run time)
 
 
 static char *memfgets( byte *pMemFile, int fileSize, int &filePos, char *pBuffer, int bufferSize );
@@ -365,10 +367,22 @@ public:
 	void EXPORT ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT RampThink( void );
 	void InitModulationParms(void);
-	void UpdateLinearVolume( void );
+	void UpdateLinearVolume( int iExtraFlags = 0 );	// SBO 2.1: iExtraFlags, SND_CHANGE_PITCH for a run-time pitch
 	void InitSoundForNewJoiner( edict_t *target );
 	void UpdateOnRemove( void );
 	virtual void NextSound( void ) {}	// SBO 2.0: ambient_random picks its next sound (pev->message) when turned on
+
+	// SBO 2.1: keys changed at run time (trigger_changevalue / trigger_copyvalue): volume ("health") and pitch reach
+	// a playing sound, a new sound name replaces the playing one
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
+	void SoundChanged( void );
+	void SendLiveChange( int iFlags );
+	void PlayAgain( void );
+	string_t m_iszSound;	// the sound in use (pev->message when it was taken): the one a stop must name
+	void EmitAmbient( const char *samp, float vol, float attenuation, int flags, int pitch );
+	void Activate( void );
+	void MoveWithCatchUp( void );
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -400,6 +414,9 @@ public:
 	wavinfo_t m_wavInfo;
 	float	m_lastPlayTime;
 	int		m_iSoundIndex;	// PRECACHE_SOUND's number of the sound, for messages to one client
+
+	// SBO 2.0 movewith (EmitAmbient): the map-start sound waits for the link
+	BOOL	m_bMoveWithStart;
 };
 
 LINK_ENTITY_TO_CLASS( ambient_generic, CAmbientGeneric );
@@ -416,6 +433,7 @@ TYPEDESCRIPTION	CAmbientGeneric::m_SaveData[] =
 	// The right way to do this is to split the input parms (read in keyvalue) into members and re-init this
 	// struct in Precache(), but it's unlikely that the struct will change, so it's not worth the time right now.
 	DEFINE_ARRAY( CAmbientGeneric, m_dpv, FIELD_CHARACTER, sizeof(dynpitchvol_t) ),
+	DEFINE_FIELD( CAmbientGeneric, m_iszSound, FIELD_STRING ),	// SBO 2.1
 };
 
 IMPLEMENT_SAVERESTORE( CAmbientGeneric, CBaseEntity );
@@ -587,6 +605,8 @@ void CAmbientGeneric :: Precache( void )
 		else if (*szSoundFile != '!')
 			m_iSoundIndex = PRECACHE_SOUND(szSoundFile);
 	}
+	m_iszSound = pev->message;	// SBO 2.1
+
 	// init all dynamic modulation parms
 	InitModulationParms();
 
@@ -610,7 +630,7 @@ void CAmbientGeneric :: Precache( void )
 		}
 		else if ( !m_isWav || m_playmode == PLAYMODE_DEFAULT )
 		{
-			UTIL_EmitAmbientSound ( ENT(pev), pev->origin, szSoundFile,
+			EmitAmbient( szSoundFile,
 					(m_dpv.vol * 0.01), m_flAttenuation, SND_SPAWNING, m_dpv.pitch);
 		}
 		// else: SevenKewp starts a play mode's sound per client: InitSoundForNewJoiner a second after a client
@@ -624,6 +644,87 @@ void CAmbientGeneric :: Precache( void )
 // pitch or volume of the playing sound.  This function will
 // ramp pitch and/or volume up or down, modify pitch/volume
 // with lfo if active.
+
+// SBO 2.0 movewith: an ambient_generic that moves with a parent plays on the parent's entity (CHAN_STATIC), which
+// the clients receive, so the sound moves with it on every client (an ambient sound stays where it started). A map-
+// start sound (SND_SPAWNING) of a child waits for the link: Activate starts it. A change or a stop goes to the entity
+// the sound started on, also when that entity is no longer sent (hidden) or the ambient lost its parent.
+void CAmbientGeneric :: EmitAmbient( const char *samp, float vol, float attenuation, int flags, int pitch )
+{
+	const int iChange = SND_STOP | SND_CHANGE_VOL | SND_CHANGE_PITCH;
+	edict_t *pStarted = ( flags & iChange ) ? MoveWith_SoundStartedOn( edict(), samp ) : NULL;
+	if ( pStarted )
+	{
+		EMIT_SOUND_DYN( pStarted, CHAN_STATIC, samp, vol, attenuation, flags & ~SND_SPAWNING, pitch );
+		if ( flags & SND_STOP )
+			MoveWith_SoundStopped( edict() );
+		return;
+	}
+
+	edict_t *pSoundEnt = MoveWith_SoundEntity( edict() );
+
+	if ( pSoundEnt )
+	{
+		EMIT_SOUND_DYN( pSoundEnt, CHAN_STATIC, samp, vol, attenuation, flags & ~SND_SPAWNING, pitch );
+		if ( !( flags & iChange ) )
+			MoveWith_SoundStarted( edict(), pSoundEnt, samp );
+		else if ( flags & SND_STOP )
+			MoveWith_SoundStopped( edict() );
+		return;
+	}
+
+	if ( ( flags & SND_SPAWNING ) && MoveWith_HasParentKey( edict() ) )
+	{
+		m_bMoveWithStart = TRUE;	// Activate plays it, once linked
+		return;
+	}
+
+	UTIL_EmitAmbientSound( edict(), pev->origin, samp, vol, attenuation, flags, pitch );
+}
+
+// map start, after the links (movewith.cpp, ServerActivate): the sound Precache held back
+void CAmbientGeneric :: Activate( void )
+{
+	if ( !m_bMoveWithStart )
+		return;
+
+	m_bMoveWithStart = FALSE;
+	if ( !m_fActive )
+		return;
+	if ( !MoveWith_IsChild( this ) )
+	{
+		// its parent wasn't found or the link was refused: the map-start sound it held back, at its own place, still
+		// in the spawn phase, so players who join later hear it too (R11)
+		UTIL_EmitAmbientSound( edict(), pev->origin, STRING( pev->message ), ( m_dpv.vol * 0.01 ), m_flAttenuation, SND_SPAWNING,
+			m_dpv.pitch );
+		return;
+	}
+	EmitAmbient( STRING( pev->message ), ( m_dpv.vol * 0.01 ), m_flAttenuation, 0, m_dpv.pitch );
+}
+
+// A playing loop of a child, sent again as a volume change: a client that has it changes nothing (the sound engine
+// alters the channel in place), a client that hasn't (joined later, or out of range when it started) starts it.
+// Only at events (movewith.cpp: a client's HUD init, its sound entity coming into a client's PVS), at most once a
+// second; never periodically.
+void CAmbientGeneric :: MoveWithCatchUp( void )
+{
+	const char *szSoundFile = FStringNull( m_iszSound ) ? "" : STRING( m_iszSound );	// the sound playing now
+	edict_t *pSoundEnt = MoveWith_SoundStartedOn( edict(), szSoundFile );
+	if ( !pSoundEnt )
+		pSoundEnt = MoveWith_SoundEntity( edict() );
+
+	if ( !pSoundEnt || !m_fActive || !m_fLooping || !szSoundFile[0] || szSoundFile[0] == '!' )
+		return;
+	EMIT_SOUND_DYN( pSoundEnt, CHAN_STATIC, szSoundFile, ( m_dpv.vol * 0.01 ), m_flAttenuation, SND_CHANGE_VOL, m_dpv.pitch );
+}
+
+// every CAmbientGeneric class: ambient_generic, ambient_music, ambient_random (Featureful)
+void AmbientGeneric_MoveWithCatchUp( CBaseEntity *pAmbient )
+{
+	if ( pAmbient && ( FClassnameIs( pAmbient->pev, "ambient_generic" ) || FClassnameIs( pAmbient->pev, "ambient_music" )
+		|| FClassnameIs( pAmbient->pev, "ambient_random" ) ) )
+		( (CAmbientGeneric *)pAmbient )->MoveWithCatchUp();
+}
 
 void CAmbientGeneric :: RampThink( void )
 {
@@ -646,7 +747,7 @@ void CAmbientGeneric :: RampThink( void )
 			if ( !m_isLinear )
 			{
 				// restart the sound when it stops
-				UTIL_EmitAmbientSound( ENT(pev), pev->origin, szSoundFile,
+				EmitAmbient( szSoundFile,
 					( vol * 0.01 ), m_flAttenuation, SND_CHANGE_PITCH, pitch );
 			}
 
@@ -678,7 +779,7 @@ void CAmbientGeneric :: RampThink( void )
 			if ( timeLeft <= 0 )
 			{
 				// stop the sound loop
-				UTIL_EmitAmbientSound( ENT(pev), pev->origin, szSoundFile, 0, 0, SND_STOP, 0 );
+				EmitAmbient( szSoundFile, 0, 0, SND_STOP, 0 );
 				m_lastPlayTime = 0;
 			}
 			else
@@ -723,7 +824,7 @@ void CAmbientGeneric :: RampThink( void )
 			m_dpv.spindown = 0;				// done with ramp down
 
 			// shut sound off
-			UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile, 
+			EmitAmbient( szSoundFile, 
 					0, 0, SND_STOP, 0);
 
 			// return without setting nextthink
@@ -765,7 +866,7 @@ void CAmbientGeneric :: RampThink( void )
 			m_dpv.fadeout = 0;				// done with ramp down
 			
 			// shut sound off
-			UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile, 
+			EmitAmbient( szSoundFile, 
 					0, 0, SND_STOP, 0);
 
 			// return without setting nextthink
@@ -866,7 +967,7 @@ void CAmbientGeneric :: RampThink( void )
 		if (pitch == PITCH_NORM)
 			pitch = PITCH_NORM + 1; // don't send 'no pitch' !
 
-		UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile, 
+		EmitAmbient( szSoundFile, 
 				(vol * 0.01), m_flAttenuation, flags, pitch);
 	}
 
@@ -877,7 +978,7 @@ void CAmbientGeneric :: RampThink( void )
 
 // SevenKewp: the linear play modes. The engine's own falloff is off (attenuation 0) and every client is sent its
 // own volume, by its distance: full up to "linearmin", falling to nothing at "linearmax".
-void CAmbientGeneric :: UpdateLinearVolume( void )
+void CAmbientGeneric :: UpdateLinearVolume( int iExtraFlags )
 {
 	if ( ( m_fLooping && !m_fActive ) || !m_isLinear )
 		return;
@@ -911,7 +1012,7 @@ void CAmbientGeneric :: UpdateLinearVolume( void )
 				// playing it. This way music doesn't restart when briefly leaving the audible range.
 				const float minVolume = 1.0f / 255.0f;
 				AmbientSoundMsg( ENT(pev), pev->origin, szSoundFile, m_iSoundIndex,
-					minVolume, 0.0f, SND_CHANGE_VOL, m_dpv.pitch, plr->edict() );
+					minVolume, 0.0f, SND_CHANGE_VOL | iExtraFlags, m_dpv.pitch, plr->edict() );
 			}
 
 			m_lastLinearVolume[idx] = 1;
@@ -928,7 +1029,7 @@ void CAmbientGeneric :: UpdateLinearVolume( void )
 		if ( ivol != m_lastLinearVolume[idx] )
 		{
 			AmbientSoundMsg( ENT(pev), pev->origin, szSoundFile, m_iSoundIndex, vol, 0.0f,
-				SND_CHANGE_VOL, m_dpv.pitch, plr->edict() );
+				SND_CHANGE_VOL | iExtraFlags, m_dpv.pitch, plr->edict() );
 		}
 
 		m_lastLinearVolume[idx] = ivol;
@@ -1046,7 +1147,7 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 
 		m_dpv.pitch = fraction * 255;
 
-		UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile, 
+		EmitAmbient( szSoundFile, 
 					0, 0, SND_CHANGE_PITCH, m_dpv.pitch);
 
 		return;
@@ -1107,7 +1208,7 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 					UTIL_StopGlobalMp3();
 			}
 			else
-				UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile, 
+				EmitAmbient( szSoundFile, 
 					0, 0, SND_STOP, 0);
 		}
 	}
@@ -1141,7 +1242,7 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 			}
 
 			if ( isPlaying )
-				UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile,
+				EmitAmbient( szSoundFile,
 					0, 0, SND_STOP, 0);
 		}
 			
@@ -1151,6 +1252,7 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 
 		NextSound();	// SBO 2.0: ambient_random (the old sound was stopped above)
 		szSoundFile = (char*) STRING(pev->message);
+		m_iszSound = pev->message;	// SBO 2.1
 
 		if ( m_isGlobalMp3 )
 		{
@@ -1167,7 +1269,7 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 		}
 		else
 		{
-			UTIL_EmitAmbientSound(ENT(pev), pev->origin, szSoundFile,
+			EmitAmbient( szSoundFile,
 					(m_dpv.vol * 0.01), m_flAttenuation, 0, m_dpv.pitch);
 		}
 
@@ -1175,6 +1277,150 @@ void CAmbientGeneric :: ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCalle
 		pev->nextthink = gpGlobals->time + 0.1;
 
 	} 
+}
+
+// SBO 2.1: the readable class key (trigger_changevalue's operations, trigger_copyvalue): "pitch" as KeyValue keeps it
+CKeyValue CAmbientGeneric :: GetKeyValue( const char *keyName )
+{
+	if ( FStrEq( keyName, "pitch" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "pitch";
+		keyvalue.iVal = m_dpv.pitchrun;
+		return keyvalue;
+	}
+	return CBaseEntity::GetKeyValue( keyName );
+}
+
+// SBO 2.1: a key changed at run time (keyvalue.cpp KeyValue_DispatchRuntime). Volume ("health", 0-10) and "pitch"
+// (0-255) take InitModulationParms' limits and reach a looping sound that plays at once (SND_CHANGE_VOL /
+// SND_CHANGE_PITCH, as RampThink sends); a fade or spin in progress keeps running toward the new value. With a
+// preset, the preset sets both (InitModulationParms), so they wait for the next turn-on as before. "message": see
+// SoundChanged. Any other key applies from the next turn-on, as in 1.38.
+void CAmbientGeneric :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( FStrEq( keyName, "message" ) )
+	{
+		SoundChanged();
+		return;
+	}
+
+	if ( m_isGlobalMp3 || m_dpv.preset )
+		return;
+
+	if ( FStrEq( keyName, "health" ) )
+	{
+		int vol = (int)( pev->health * 10 );
+		if ( vol > 100 ) vol = 100;
+		if ( vol < 0 ) vol = 0;
+		m_dpv.volrun = vol;
+		if ( !m_dpv.fadein && !m_dpv.fadeout )
+		{
+			m_dpv.vol = vol;
+			m_dpv.volfrac = vol << 8;
+		}
+		SendLiveChange( SND_CHANGE_VOL );
+	}
+	else if ( FStrEq( keyName, "pitch" ) )
+	{
+		if ( m_dpv.spinup || m_dpv.spindown || m_dpv.cspinup )
+			return;	// the spin ends at the new pitch, or the incremental spin-up keeps its own
+		int pitch = m_dpv.pitchrun ? m_dpv.pitchrun : PITCH_NORM;
+		if ( pitch == PITCH_NORM && ( m_dpv.spinupsav || m_dpv.spindownsav || ( m_dpv.lfotype && m_dpv.lfomodpitch ) ) )
+			pitch = PITCH_NORM + 1;	// as InitModulationParms
+		m_dpv.pitch = pitch;
+		m_dpv.pitchfrac = pitch << 8;
+		SendLiveChange( SND_CHANGE_PITCH );
+	}
+}
+
+// the playing looping sound takes the new volume / pitch (a one-shot sound plays to its end: a change message
+// would start it again)
+void CAmbientGeneric :: SendLiveChange( int iFlags )
+{
+	if ( !m_fActive || m_isGlobalMp3 )
+		return;
+
+	if ( m_isLinear )
+	{
+		// every client's volume again (by its distance), with the pitch
+		memset( m_lastLinearVolume, 0, sizeof( m_lastLinearVolume ) );
+		UpdateLinearVolume( iFlags & SND_CHANGE_PITCH );
+		return;
+	}
+
+	EmitAmbient( STRING( m_iszSound ), m_dpv.vol * 0.01, m_flAttenuation, iFlags,
+		m_dpv.pitch );
+}
+
+// the sound starts again (a new sound name while it plays), as ToggleUse turns it on, with its current volume and pitch
+void CAmbientGeneric :: PlayAgain( void )
+{
+	if ( m_isLinear )
+	{
+		memset( m_lastLinearVolume, 0, sizeof( m_lastLinearVolume ) );
+		UpdateLinearVolume();
+		memset( m_lastLinearVolume, 0, sizeof( m_lastLinearVolume ) );
+	}
+	else
+	{
+		EmitAmbient( STRING( m_iszSound ), m_dpv.vol * 0.01, m_flAttenuation, 0,
+			m_dpv.pitch );
+	}
+	m_lastPlayTime = g_engfuncs.pfnTime();
+	pev->nextthink = gpGlobals->time + 0.1;
+}
+
+// SBO 2.1: "message" (the sound) changed at run time. Taken only when the map has already precached that sound (a
+// new precache would stop the server), a sentence ("!NAME") only when it exists, a play mode's sound only as a .wav
+// whose length is known; an MP3 is never taken nor replaced (the music is a downloaded file). Refused: the old name
+// comes back and the console says why. Taken while a looping sound plays: the old one stops (a stop must name the
+// playing sound) and the new one starts at once.
+void CAmbientGeneric :: SoundChanged( void )
+{
+	const char *szNew = FStringNull( pev->message ) ? "" : STRING( pev->message );
+	const char *szOld = FStringNull( m_iszSound ) ? "" : STRING( m_iszSound );
+
+	if ( !stricmp( szNew, szOld ) )
+		return;
+
+	BOOL fUsable;
+	char sentence[ 32 ];
+	if ( !szNew[0] || m_isGlobalMp3 || HasExtension( szNew, ".mp3" ) )
+		fUsable = FALSE;
+	else if ( szNew[0] == '!' )
+		fUsable = !m_isWav && SENTENCEG_Lookup( szNew, sentence ) >= 0;
+	else
+		fUsable = Cheat_SoundPrecached( szNew ) && ( !m_isWav || HasExtension( szNew, ".wav" ) );
+
+	wavinfo_t info = m_wavInfo;
+	if ( fUsable && m_isWav )
+	{
+		info = GetWaveFileInfo( szNew );
+		fUsable = info.durationMillis > 0;
+	}
+
+	if ( !fUsable )
+	{
+		KeyValue_RefuseNeedsPrecache( pev, "message" );
+		pev->message = m_iszSound;
+		return;
+	}
+
+	if ( m_isWav )
+	{
+		m_wavInfo = info;
+		m_iSoundIndex = PRECACHE_SOUND( (char *)szNew );	// precached already: the engine returns its number
+	}
+
+	if ( m_fActive )
+		EmitAmbient( szOld, 0, 0, SND_STOP, 0 );
+
+	m_iszSound = pev->message;
+
+	if ( m_fActive )
+		PlayAgain();
 }
 
 // SevenKewp: a sound started by a play mode is not in the engine's list of spawn-time sounds, so a client that

@@ -1,10 +1,12 @@
 # Developer scoreboard icon (`ui/gfx/dev_icon<size>.tga`)
 
 The icon after the developer's name on the scoreboard: the robot's head
-from the owner's Steam avatar.
+from the developer's Steam avatar.
 
-- `avatar.png`: the owner's avatar (1024x1024), the source artwork.
-- `face.png`: the head cut out of it, leveled, with a dark rim, on a 256x256 transparent canvas (generated).
+- `avatar.png`: the developer's avatar (1024x1024), the source artwork.
+- `face.png`: the head cut out of it, leveled, on a 256x256 transparent canvas (generated; no dark rim since
+  2026-11-08: it showed as a black outline in the game). The TGAs are written opaque-or-see-through with the edge
+  colors grown outwards (`alpha_test_ready`: the game draws them filtered, without blending).
 
 The game files are `gamedir/syndicate/ui/gfx/dev_icon16.tga`, `dev_icon24.tga`, `dev_icon32.tga` and
 `dev_icon64.tga` (32-bit, uncompressed, alpha). 32 and 64 are downscaled from `face.png`; 16 and 24 are the same head

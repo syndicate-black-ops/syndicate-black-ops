@@ -300,11 +300,12 @@ void UTIL_PrecacheOtherWeapon( const char *szClassname )
 	{
 		ItemInfo II;
 		pEntity->Precache( );
+		UTIL_PrecachedClasses_Add( szClassname );	// SBO 2.1 (util.h)
 		memset( &II, 0, sizeof II );
 		if ( ((CBasePlayerItem*)pEntity)->GetItemInfo( &II ) )
 		{
 			// SBO (production audit #6): an out-of-range id overwrote the globals after ItemInfoArray
-			// (g_sModelIndexLaser ... g_sModelIndexBloodDrop/BloodSpray). WEAPON_HORNETGUN == MAX_WEAPONS.
+			// (g_sModelIndexLaser ... g_sModelIndexBloodDrop/BloodSpray).
 			if ( II.iId < 0 || II.iId >= MAX_WEAPONS )
 			{
 				ALERT( at_error, "UTIL_PrecacheOtherWeapon: %s has weapon id %d (must be 0..%d), not registered\n", szClassname, II.iId, MAX_WEAPONS - 1 );
@@ -683,8 +684,11 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 		}
 
 		m_pPlayer->TabulateAmmo();
+		// halflife #3252: the next shot counts from the time this one was due (GetNextAttackDelay)
+		m_flFireLateness = FireLateness( m_flNextSecondaryAttack );
 		if ( !fFrozen )
 			SecondaryAttack();
+		m_flFireLateness = 0;
 		m_pPlayer->pev->button &= ~IN_ATTACK2;
 	}
 	else if ((m_pPlayer->pev->button & IN_ATTACK) && CanAttack( m_flNextPrimaryAttack, gpGlobals->time, UseDecrement() ) )
@@ -696,8 +700,10 @@ void CBasePlayerWeapon::ItemPostFrame( void )
 		}
 
 		m_pPlayer->TabulateAmmo();
+		m_flFireLateness = FireLateness( m_flNextPrimaryAttack );
 		if ( !fFrozen )
 			PrimaryAttack();
+		m_flFireLateness = 0;
 	}
 	else if ( m_pPlayer->pev->button & IN_RELOAD && iMaxClip() != WEAPON_NOCLIP && !m_fInReload && !fFrozen ) 
 	{
@@ -811,7 +817,7 @@ int CBasePlayerWeapon::AddToPlayer( CBasePlayer *pPlayer )
 {
 	int bResult = CBasePlayerItem::AddToPlayer( pPlayer );
 
-	pPlayer->pev->weapons |= (1<<m_iId);
+	pPlayer->SetWeaponBit( m_iId );	// SBO 2.1: ids 32..63 too (Half-Life Unified SDK)
 
 	if ( !m_iPrimaryAmmoType )
 	{

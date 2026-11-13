@@ -56,6 +56,8 @@ class CFuncWall : public CBaseEntity
 public:
 	void	Spawn( void );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1 (Spirit of Half-Life): On while it shows its second texture (frame 1), Off with the first
+	virtual STATE GetState( CBaseEntity *pActivator ) { return pev->frame ? STATE_ON : STATE_OFF; }
 
 	// Bmodels don't go across transitions
 	virtual int	ObjectCaps( void ) { return CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
@@ -94,6 +96,8 @@ class CFuncWallToggle : public CFuncWall
 public:
 	void	Spawn( void );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1 (Spirit of Half-Life): On while it is there (solid and visible), Off while it is gone
+	virtual STATE GetState( CBaseEntity *pActivator ) { return IsOn() ? STATE_ON : STATE_OFF; }
 	void	TurnOff( void );
 	void	TurnOn( void );
 	BOOL	IsOn( void );
@@ -157,6 +161,7 @@ public:
 	void	KeyValue( KeyValueData *pkvd );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void	UpdateSpeed( float speed );
+	void	RuntimeKeyValueChanged( const char *keyName );	// SBO 2.1
 
 	// SBO 2.0, from Featureful: "useset_policy", what a use of type Set does: 0 reverses as any use (Half-Life), 1
 	// sets the speed to the value it carries, 2 adds the value to the speed
@@ -193,6 +198,16 @@ void CFuncConveyor :: Spawn( void )
 	if ( pev->speed == 0 )
 		pev->speed = 100;
 
+	UpdateSpeed( pev->speed );
+}
+
+// SBO 2.1: a key changed at run time (trigger_changevalue / trigger_copyvalue). The push reads pev->speed live; the
+// texture scroll is the speed encoded in rendercolor, so it is encoded again (also after a rendercolor change, which
+// would break the encoding). Speed 0 is 100, as in Spawn.
+void CFuncConveyor :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( pev->speed == 0 )
+		pev->speed = 100;
 	UpdateSpeed( pev->speed );
 }
 
@@ -295,6 +310,8 @@ public:
 	void TurnOff( void ) { pev->effects |= EF_NODRAW; }
 	void TurnOn( void ) { pev->effects &= ~EF_NODRAW; }
 	BOOL IsOn( void ) { return !( pev->effects & EF_NODRAW ); }
+	// SBO 2.1 (as func_wall_toggle): On while it is visible, Off while it is hidden
+	virtual STATE GetState( CBaseEntity *pActivator ) { return IsOn() ? STATE_ON : STATE_OFF; }
 };
 
 LINK_ENTITY_TO_CLASS( func_illusionary_toggle, CFuncIllusionaryToggle );
@@ -344,6 +361,18 @@ public:
 	void EXPORT Rotate( void );
 	void RampPitchVol (int fUp );
 	void Blocked( CBaseEntity *pOther );
+	// SBO 2.1 (Spirit of Half-Life): spinning up Turn On, spinning down Turn Off, turning On, standing Off
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		if ( m_pfnThink == static_cast<BASEPTR>( &CFuncRotating::SpinUp ) )
+			return STATE_TURN_ON;
+		if ( pev->avelocity == g_vecZero )
+			return STATE_OFF;
+		if ( m_pfnThink == static_cast<BASEPTR>( &CFuncRotating::SpinDown ) )
+			return STATE_TURN_OFF;
+		return STATE_ON;
+	}
+	void RuntimeKeyValueChanged( const char *keyName );	// SBO 2.1
 	virtual int	ObjectCaps( void ) { return CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
@@ -353,6 +382,7 @@ public:
 	float m_flFanFriction;
 	float m_flAttenuation;
 	float m_flVolume;
+	BOOL  m_bVolumeKey;	// SBO 2.0: "volume" was given (0 = no sound; left out = loudest)
 	float m_pitch;
 	int	  m_sounds;
 
@@ -386,7 +416,9 @@ void CFuncRotating :: KeyValue( KeyValueData* pkvd)
 		m_flFanFriction = atof(pkvd->szValue)/100;
 		pkvd->fHandled = TRUE;
 	}
-	else if (FStrEq(pkvd->szKeyName, "Volume"))
+	// SBO 2.0: the FGD key and the map tools write "volume"; the SDK read only "Volume", so every func_rotating
+	// played at full volume. Both spellings are read.
+	else if (FStrEq(pkvd->szKeyName, "volume") || FStrEq(pkvd->szKeyName, "Volume"))
 	{
 		m_flVolume = atof(pkvd->szValue)/10.0;
 		// SBO 2.0: "nan" / "inf" read as unset (1): a non-finite volume reached EMIT_SOUND (the engine turns
@@ -394,13 +426,14 @@ void CFuncRotating :: KeyValue( KeyValueData* pkvd)
 		if ( !( m_flVolume > -1e30 && m_flVolume < 1e30 ) )
 		{
 			ALERT( at_console, "func_rotating \"%s\": volume \"%s\" is not a number, using the default\n", STRING( pev->targetname ), pkvd->szValue );
-			m_flVolume = 0;
+			m_flVolume = 1.0;
 		}
 
 		if (m_flVolume > 1.0)
 			m_flVolume = 1.0;
 		if (m_flVolume < 0.0)
 			m_flVolume = 0.0;
+		m_bVolumeKey = TRUE;
 		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "spawnorigin"))
@@ -446,8 +479,9 @@ void CFuncRotating :: Spawn( )
 
 	m_pitch = PITCH_NORM - 1;
 
-	// maintain compatibility with previous maps
-	if (m_flVolume == 0.0)
+	// maintain compatibility with previous maps. SBO 2.0: only when "volume" is left out; volume 0 is no sound
+	// (Valve's code turned 0 into the loudest)
+	if (!m_bVolumeKey)
 		m_flVolume = 1.0;
 
 	// if the designer didn't set a sound attenuation, default to one.
@@ -654,7 +688,9 @@ void CFuncRotating :: RampPitchVol (int fUp)
 	if (pitch == PITCH_NORM)
 		pitch = PITCH_NORM-1;
 
-	// change the fan's vol and pitch
+	// change the fan's vol and pitch (SBO 2.0: volume 0 plays nothing; a change starts a sound that isn't playing)
+	if (m_flVolume <= 0)
+		return;
 
 	EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
 		fvol, m_flAttenuation, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
@@ -680,8 +716,9 @@ void CFuncRotating :: SpinUp( void )
 			fabs(vecAVel.z) >= fabs(pev->movedir.z * pev->speed) )
 	{
 		pev->avelocity = pev->movedir * pev->speed;// set speed in case we overshot
-		EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
-			m_flVolume, m_flAttenuation, SND_CHANGE_PITCH | SND_CHANGE_VOL, FANPITCHMAX);
+		if (m_flVolume > 0)	// SBO 2.0: volume 0 plays nothing
+			EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
+				m_flVolume, m_flAttenuation, SND_CHANGE_PITCH | SND_CHANGE_VOL, FANPITCHMAX);
 		
 		SetThink( &CFuncRotating::Rotate );
 		Rotate();
@@ -738,6 +775,29 @@ void CFuncRotating :: Rotate( void )
 	pev->nextthink = pev->ltime + 10;
 }
 
+// SBO 2.1: "speed" changed at run time (trigger_changevalue / trigger_copyvalue). Spinning up or down, SpinUp /
+// SpinDown read pev->speed every step; at full speed (Rotate) the spin only changes on the next start, so it takes
+// the new speed at once here. Below 0 is 0, as in Spawn, and 0 stops it at once (its sound too).
+void CFuncRotating :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( !FStrEq( keyName, "speed" ) )
+		return;
+
+	if ( pev->speed <= 0 )
+		pev->speed = 0;
+
+	if ( m_pfnThink != static_cast<void (CBaseEntity::*)(void)>( &CFuncRotating::Rotate ) || pev->avelocity == g_vecZero )
+		return;
+
+	pev->avelocity = pev->movedir * pev->speed;
+	if ( pev->speed == 0 )
+	{
+		EMIT_SOUND_DYN( ENT(pev), CHAN_STATIC, (char *)STRING( pev->noiseRunning ), 0, 0, SND_STOP, m_pitch );
+		if ( m_iObeyTriggerMode )
+			m_currentState = FALSE;
+	}
+}
+
 //=========================================================
 // Rotating Use - when a rotating brush is triggered
 //=========================================================
@@ -772,8 +832,9 @@ void CFuncRotating :: RotatingUse( CBaseEntity *pActivator, CBaseEntity *pCaller
 		else// fan is not moving, so start it
 		{
 			SetThink ( &CFuncRotating::SpinUp );
-			EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
-				0.01, m_flAttenuation, 0, FANPITCHMIN);
+			if (m_flVolume > 0)	// SBO 2.0: volume 0 plays nothing
+				EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
+					0.01, m_flAttenuation, 0, FANPITCHMIN);
 
 			pev->nextthink = pev->ltime + 0.1;
 		}
@@ -793,8 +854,9 @@ void CFuncRotating :: RotatingUse( CBaseEntity *pActivator, CBaseEntity *pCaller
 		}
 		else
 		{
-			EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
-				m_flVolume, m_flAttenuation, 0, FANPITCHMAX);
+			if (m_flVolume > 0)	// SBO 2.0: volume 0 plays nothing
+				EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, (char *)STRING(pev->noiseRunning), 
+					m_flVolume, m_flAttenuation, 0, FANPITCHMAX);
 			pev->avelocity = pev->movedir * pev->speed;
 
 			SetThink( &CFuncRotating::Rotate );
@@ -831,6 +893,16 @@ public:
 	void	EXPORT Stop( void );
 	void	Touch( CBaseEntity *pOther );
 	void	EXPORT RopeTouch ( CBaseEntity *pOther );// this touch func makes the pendulum a rope
+	// SBO 2.1 (Spirit of Half-Life: On while it has speed): swinging On, swinging back to its start to stop ("Auto-return")
+	// Turn Off, standing Off
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		if ( m_pfnThink == static_cast<BASEPTR>( &CPendulum::Swing ) )
+			return STATE_ON;
+		if ( m_pfnThink == static_cast<BASEPTR>( &CPendulum::Stop ) )
+			return STATE_TURN_OFF;
+		return STATE_OFF;
+	}
 	virtual int	ObjectCaps( void ) { return CBaseEntity :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );

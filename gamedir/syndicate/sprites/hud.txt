@@ -1,4 +1,4 @@
-169
+187
 selection		320 320hud1	160	160	80	20
 
 bucket1			320 320hud2	108	16	12	12
@@ -88,6 +88,11 @@ d_wong		320	killfeed	101	48	17	16
 d_medikit		320	killfeed	118	48	16	16
 d_tank		320	killfeed	134	48	35	16
 d_tanklaser		320	killfeed	134	48	35	16
+d_tankrocket		320	killfeed	134	48	35	16
+d_tankmortar		320	killfeed	134	48	35	16
+d_turret		320	killfeed	134	48	35	16
+d_miniturret		320	killfeed	134	48	35	16
+d_sentry		320	killfeed	134	48	35	16
 d_headshot		320	killfeed	0	64	36	16
 d_gm		320	killfeed	36	64	21	16
 
@@ -190,6 +195,11 @@ d_wong		640	killfeed	101	48	17	16
 d_medikit		640	killfeed	118	48	16	16
 d_tank		640	killfeed	134	48	35	16
 d_tanklaser		640	killfeed	134	48	35	16
+d_tankrocket		640	killfeed	134	48	35	16
+d_tankmortar		640	killfeed	134	48	35	16
+d_turret		640	killfeed	134	48	35	16
+d_miniturret		640	killfeed	134	48	35	16
+d_sentry		640	killfeed	134	48	35	16
 d_headshot		640	killfeed	0	64	36	16
 d_gm		640	killfeed	36	64	21	16
 
@@ -197,6 +207,14 @@ item_battery	640 640hud2	176	0	44	44
 item_healthkit	640 640hud2	176	48	44	44
 
 grenade			640 640hud7     48      96      24      24
+inv_card_red	320 320inventory	0	0	18	18
+inv_card_blue	320 320inventory	32	0	18	18
+inv_card_yellow	320 320inventory	0	32	18	18
+inv_key	320 320inventory	32	32	18	18
+inv_card_red	640 640inventory	0	0	36	36
+inv_card_blue	640 640inventory	64	0	36	36
+inv_card_yellow	640 640inventory	0	64	36	36
+inv_key	640 640inventory	64	64	36	36
 	
 
 

@@ -136,7 +136,7 @@ void CGlauncher::PrimaryAttack()
 
 	if ( 1 )
 	{
-		SendWeaponAnim( RANDOM_LONG(0,2) + GLAUNCHER_FIRE1 );
+		SendWeaponAnim( UTIL_SharedRandomLong( m_pPlayer->random_seed, 0, 2 ) + GLAUNCHER_FIRE1 );
 		m_flNextAnimTime = UTIL_WeaponTimeBase() + 0.1;
 	}
 
@@ -152,11 +152,14 @@ void CGlauncher::PrimaryAttack()
 							m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs + gpGlobals->v_forward * 16, 
 							gpGlobals->v_forward * 800 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
+	// SBO 2.0: both fire modes shoot from the one clip, so a shot holds both of them back (HL mp5.cpp SecondaryAttack).
+	// 1.38 set only this mode's time: with both buttons held the other mode fired on the next frame, two grenades.
+	// halflife #3252: counted from the time the shot was due (GetNextAttackDelay)
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay( 0.5 );
 
 	m_pPlayer->pev->punchangle.x -= 5;
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -187,7 +190,7 @@ void CGlauncher::SecondaryAttack( void )
 
 	if ( 1 )
 	{
-		SendWeaponAnim( RANDOM_LONG(0,2) + GLAUNCHER_FIRE2 );
+		SendWeaponAnim( UTIL_SharedRandomLong( m_pPlayer->random_seed, 0, 2 ) + GLAUNCHER_FIRE2 );
 		m_flNextAnimTime = UTIL_WeaponTimeBase() + 0.1;
 	}
 
@@ -203,11 +206,13 @@ void CGlauncher::SecondaryAttack( void )
 							m_pPlayer->pev->origin + m_pPlayer->pev->view_ofs + gpGlobals->v_forward * 16, 
 							gpGlobals->v_forward * 800 );
 
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.5;
+	// SBO 2.0: both modes held back, as in PrimaryAttack
+	// halflife #3252: counted from the time the shot was due (GetNextAttackDelay)
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay( 0.5 );
 
 	m_pPlayer->pev->punchangle.x -= 5;
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -228,7 +233,7 @@ void CGlauncher::WeaponIdle( void )
 		return;
 
 	int iAnim;
-	switch ( RANDOM_LONG( 0, 1 ) )
+	switch ( UTIL_SharedRandomLong( m_pPlayer->random_seed, 0, 1 ) )
 	{
 	case 0:	
 		iAnim = GLAUNCHER_LONGIDLE;	
@@ -242,5 +247,5 @@ void CGlauncher::WeaponIdle( void )
 
 	SendWeaponAnim( iAnim );
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 ); // how long till we do this again.
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 ); // how long till we do this again.
 }

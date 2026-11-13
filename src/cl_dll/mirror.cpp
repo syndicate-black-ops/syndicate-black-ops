@@ -120,7 +120,7 @@ static int MsgFunc_Mirror( const char *pszName, int iSize, void *pbuf )
 
 	if ( s_iMirrors >= MAX_MIRRORS )
 	{
-		gEngfuncs.Con_Printf( "env_mirror: more than %d active mirrors, entity %d ignored\n", MAX_MIRRORS, id );
+		gEngfuncs.Con_DPrintf( "env_mirror: more than %d active mirrors, entity %d ignored\n", MAX_MIRRORS, id );
 		return 1;
 	}
 

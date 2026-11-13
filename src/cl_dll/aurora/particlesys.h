@@ -279,5 +279,8 @@ private:
 HSPRITE Aurora_LoadSprite( const char *szName );
 
 extern bool g_bAuroraQuiet;
+// set while the particle editor builds its preview (aurora_editor.cpp): a script's problems go there, not to the console
+typedef void ( *AuroraWarnSink )( const char *szLine );
+extern AuroraWarnSink g_pfnAuroraWarnSink;
 extern int g_iAuroraActiveParticles;
 extern int g_iAuroraAllocatedParticles;

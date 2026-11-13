@@ -1,0 +1,23 @@
+# monster_grunt_hunter_repel fired: a monster_grunt_hunter comes down the rope (4fed0952: it precached and made the
+# right class; 1.38 made another)
+# covers: monster_grunt_hunter_repel
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_grunt_hunter_repel targetname rep origin "0 0 200"
+activate
+connect 1 P1
+frames 3
+fire rep
+frames 20
+count monster_grunt_hunter
+count monster_human_grunt
+expectcount monster_grunt_hunter 1

@@ -164,9 +164,10 @@ void CFa18::PrimaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usFa18_1, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.06;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.2;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.06 );
+	m_flNextSecondaryAttack = GetNextAttackDelay( 0.2 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -208,9 +209,10 @@ void CFa18::SecondaryAttack( void )
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usFa18_2, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.2;
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.1;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextSecondaryAttack = GetNextAttackDelay( 0.2 );
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.1 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -231,5 +233,5 @@ void CFa18::WeaponIdle( void )
 
 	SendWeaponAnim( FA18_IDLE1 );
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 ); // how long till we do this again.
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 ); // how long till we do this again.
 }

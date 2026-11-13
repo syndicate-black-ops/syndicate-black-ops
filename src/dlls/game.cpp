@@ -26,8 +26,8 @@ cvar_t	displaysoundlist = {"displaysoundlist","0"};
 // SBO 2.0: this library's build, for server operators (console, server rules) and plugins. The name and the flag
 // are ReGameDLL_CS's (game.cpp: game_version, FCVAR_SERVER). The version as the client's Version tab shows it, then
 // the branch it was built from:
-//   CI build:     "2.0.0+1a2b3c4d develop"
-//   local build:  "2.0.0+dirty@HEAD-1a2b3c4d feat/server-version"
+//   CI build:     "2.1.0+1a2b3c4d develop"
+//   local build:  "2.1.0+dirty@HEAD-1a2b3c4d feat/server-version"
 // Meant to be read only: the engine has no read-only flag for a game cvar, nothing in the game reads it back.
 #define GAME_VERSION_CVAR	"game_version"
 cvar_t	game_version = { GAME_VERSION_CVAR, SBO_VERSION_STRING " " SBO_VERSION_BRANCH, FCVAR_SERVER };
@@ -79,13 +79,13 @@ cvar_t	junior		= {"mp_junior","0", FCVAR_SERVER };
 cvar_t	junioracmar	= {"mp_junioracmar","1", FCVAR_SERVER };
 cvar_t	juniorpvmonst = {"mp_juniorpvmonst","1", FCVAR_SERVER };
 cvar_t	makermon	= {"mp_makermon","1", FCVAR_SERVER };	// SBO: 0 = half, 1 = unscaled, 2 = double, 3 = triple monstermaker counts; production servers run 1
-cvar_t	speedmon	= {"mp_speedmon","1", FCVAR_SERVER };
+cvar_t	speedmon	= {"mp_speedmon","1", FCVAR_SERVER };	// SBO: 0 half, 1 normal, 2 double, 3 triple monstermaker speed, -1 off (monstermaker.cpp)
 
 cvar_t	falldamage	= {"mp_falldamage","0", FCVAR_SERVER };
 cvar_t	weaponstay	= {"mp_weaponstay","0", FCVAR_SERVER };
 cvar_t	forcerespawn= {"mp_forcerespawn","1", FCVAR_SERVER };
 cvar_t	flashlight	= {"mp_flashlight","1", FCVAR_SERVER };
-cvar_t	aimcrosshair= {"mp_autocrosshair","1", FCVAR_SERVER };
+cvar_t	aimcrosshair= {"mp_autocrosshair","0", FCVAR_SERVER };
 cvar_t	decalfrequency = {"decalfrequency","30", FCVAR_SERVER };
 cvar_t	teamlist = {"mp_teamlist","hgrunt;scientist", FCVAR_SERVER };
 cvar_t	teamoverride = {"mp_teamoverride","1" };
@@ -179,6 +179,8 @@ static void PrintPointContents( void )
 		g_engfuncs.pfnServerPrint( UTIL_VarArgs( "Point contents at (%g, %g, %g) is %d\n", x, y, z, contents ) );
 }
 
+void LinkUserMessages( void );	// player.cpp
+
 void GameDLLInit( void )
 {
 	Spectate_LoadIds();	// SBO 2.0 spectator mode: the spectators of the server's last run (spectators.txt)
@@ -248,5 +250,10 @@ void GameDLLInit( void )
 	KillFeedIcons_Init();	// SBO 2.0: server command killfeed_icon (killfeed_icons.cpp)
 
 	SERVER_COMMAND( "exec skill.cfg\n" );
+
+	// SBO 2.1 (Half-Life Unified SDK): the user messages are registered now, once for the server's life, so a message
+	// sent while the first map's entities spawn has its id (ServerActivate linked them after the spawn: id 0 until
+	// then). The calls in ServerActivate and CBasePlayer::Precache find them registered and do nothing.
+	LinkUserMessages();
 }
 

@@ -1,0 +1,27 @@
+# monster TriggerCondition 2 "Take Damage": in the HL SDK (and 1.38 / develop) the condition comes from the light /
+# heavy damage conditions, which CBaseMonster::TakeDamage sets only when the attacker is a monster or a player. A
+# trigger_hurt (the attacker is the trigger) hurts the scientist but does not fire the TriggerTarget. A hit by a
+# player or monster needs aimed attacks the stub cannot make (HLDS suite)
+# covers: monster_scientist.triggercondition=2 trigger_hurt.dmg
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist TriggerCondition 2 TriggerTarget cond_2 origin "0 300 0"
+spawn trigger_hurt model *1 dmg 10 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+touchent 1 0
+frames 20
+dump 0
+expectnot Firing: (cond_2)

@@ -434,6 +434,26 @@ void IN_ReleaseRelativeMouse( void )
 
 /*
 ===========
+IN_CursorFrame
+
+HL25: once per client frame (HUD_Frame), also while not connected. IN_MouseMove leaves SDL's relative mouse mode
+while a cursor is shown, but it runs only in the engine's move commands, and those stop the moment the client drops
+off a server (server shut down or restarted, kick, timeout, a refused join), while SDL's relative mode hides the
+cursor and holds the pointer. This leaves the relative mode whenever a cursor is shown, so the cursor of the
+"Disconnected" dialog and the main menu shows and takes clicks; IN_MouseMove turns the mode back on in the game.
+===========
+*/
+void IN_CursorFrame( void )
+{
+	if ( !g_iVisibleMouse && !VGUI2_CURSOR_VISIBLE() )
+		return;
+
+	if ( mouseRelative || ( pfnSDL_GetRelativeMouseMode && pfnSDL_GetRelativeMouseMode() ) )
+		IN_SetMouseRelative( false );
+}
+
+/*
+===========
 IN_GetMouseSensitivity
 
 HL25: Get mouse sensitivity with sanitization
@@ -794,7 +814,7 @@ void IN_StartupJoystick (void)
 
 	// mark the joystick as available and advanced initialization not completed
 	// this is needed as cvars are not available during initialization
-	gEngfuncs.Con_Printf ("joystick found\n\n", mmr); 
+	gEngfuncs.Con_DPrintf ("joystick found\n\n", mmr); 
 	joy_avail = 1; 
 	joy_advancedinit = 0;
 }
@@ -833,7 +853,7 @@ void IN_StartupJoystick (void)
 						
 						// mark the joystick as available and advanced initialization not completed
 						// this is needed as cvars are not available during initialization
-						gEngfuncs.Con_Printf ("joystick found %s\n\n", SDL_GameControllerName(s_pJoystick)); 
+						gEngfuncs.Con_DPrintf ("joystick found %s\n\n", SDL_GameControllerName(s_pJoystick)); 
 						joy_avail = 1; 
 						joy_advancedinit = 0;
 						break;
@@ -1350,6 +1370,10 @@ void IN_Init (void)
 	joy_yawsensitivity		= gEngfuncs.pfnRegisterVariable ( "joyyawsensitivity", "-1.0", 0 );
 	joy_wwhack1				= gEngfuncs.pfnRegisterVariable ( "joywwhack1", "0.0", 0 );
 	joy_wwhack2				= gEngfuncs.pfnRegisterVariable ( "joywwhack2", "0.0", 0 );
+
+	// halflife-updated / Half-Life Unified SDK 38dad837 (halflife #3621): HL25 locks gamepads unless the client
+	// registers "joysupported" with a non-zero value
+	gEngfuncs.pfnRegisterVariable ( "joysupported", "1", 0 );
 
 	// HL25
 	m_customaccel			= gEngfuncs.pfnRegisterVariable ( "m_customaccel", "0", FCVAR_ARCHIVE );

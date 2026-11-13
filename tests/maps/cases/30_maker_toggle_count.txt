@@ -1,0 +1,31 @@
+# monstermaker (toggle) monstercount 3, max live 1, delay 1, target fired per child, netname: kill each child; 3 children total, 3 target fires
+# covers: monstermaker monstermaker.monstertype monstermaker.monstercount monstermaker.m_imaxlivechildren monstermaker.delay monstermaker.target monstermaker.netname
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk monstertype monster_zombie monstercount 3 m_imaxlivechildren 1 delay 1 target mk_fired netname kid origin "0 500 0"
+spawn trigger_hurt dmg 1000000 damagetype 8192
+spawn trigger_relay targetname mk_fired target mk_sink triggerstate 2
+activate
+frames 10
+useent 0 world
+frames 30
+count monster_zombie
+touchclass 1 monster_zombie
+frames 40
+count monster_zombie
+touchclass 1 monster_zombie
+frames 40
+count monster_zombie
+touchclass 1 monster_zombie
+frames 40
+count monster_zombie
+expectn 3 Firing: (mk_fired)

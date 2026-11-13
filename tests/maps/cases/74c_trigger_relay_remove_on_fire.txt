@@ -1,0 +1,17 @@
+# trigger_relay flag 1 "Remove On fire": fires once and is removed, a second call does nothing; without the flag it
+# fires every time
+# covers: trigger_relay:1
+map co_fuzz
+spawn trigger_relay targetname once target once_out spawnflags 1
+spawn trigger_relay targetname many target many_out
+activate
+frames 3
+fire once
+fire many
+frames 3
+fire once
+fire many
+frames 3
+expectn 1 Firing: (once_out)
+expectn 2 Firing: (many_out)
+expectcount trigger_relay 1

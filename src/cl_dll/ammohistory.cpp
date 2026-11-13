@@ -17,6 +17,7 @@
 //
 
 
+#include <vector>	// before cl_util.h (its min and max macros): ammohistory.h uses it
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"

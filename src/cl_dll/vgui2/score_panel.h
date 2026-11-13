@@ -88,6 +88,7 @@ public:
 	virtual void OnThink() override;
 	virtual void OnCommand(const char *command) override;
 	virtual void PostChildPaint() override; //!< SBO: the badges and their tooltip, on top of the rows
+	virtual void OnMousePressed(vgui2::MouseCode code) override; //!< SBO 2.0: a click on the objective line
 
 	// Messages
 	MESSAGE_FUNC_INT(OnItemContextMenu, "ItemContextMenu", itemID);
@@ -99,6 +100,9 @@ private:
 	static constexpr int MAX_TEAMS = 16;
 	static constexpr int TEAM_SPECTATOR = MAX_TEAMS + 1;
 	static constexpr int HEADER_SECTION_ID = 0;
+	//! SBO category mode: connected slots not in the game (GetPlayerTeam, IsGhost), the last section
+	static constexpr int GHOST_SECTION_ID = MAX_TEAMS + 2;
+	static constexpr int SECTION_COUNT = MAX_TEAMS + 3;
 	static constexpr float HIGHLIGHT_KILLER_TIME = 10.f;
 	static constexpr float UPDATE_PERIOD = 0.5f;
 	//! SBO category numbers (server SboScoreboard_GetTeam) the Bounty Killer rows need.
@@ -106,6 +110,10 @@ private:
 	static constexpr int SBO_TEAM_DEAD = 2;
 	static constexpr int SBO_TEAM_ALIVE = 4;
 	static constexpr int SBO_TEAM_SPECTATORS = 5; //!< the TeamNames "Spectators" section
+	//! ScoreInfo playerclass bits in category mode (server SboScoreboard_GetClass)
+	static constexpr int SBO_CLASS_HUNTED = 1;
+	static constexpr int SBO_CLASS_LOST = 2; //!< no command from the player's client for a few seconds
+	static constexpr int GHOST_ALPHA = 120;  //!< of a ghost's row text, avatar and section header
 	static constexpr int HUNTED_BG_ALPHA = 48; //!< of the Hunted's row tint (GetPlayerBgColor)
 
 	enum class MenuAction
@@ -163,10 +171,10 @@ private:
 	vgui2::ImageList *m_pImageList = nullptr;
 	vgui2::Menu *m_pPlayerMenu = nullptr;
 
-	std::array<TeamData, MAX_TEAMS + 2> m_TeamData;
-	std::array<bool, MAX_TEAMS + 2> m_IsTeamSectionCreated;
+	std::array<TeamData, SECTION_COUNT> m_TeamData;
+	std::array<bool, SECTION_COUNT> m_IsTeamSectionCreated;
 	std::array<PlayerData, MAX_PLAYERS + 1> m_PlayerData;
-	std::array<int, MAX_TEAMS + 2> m_SortedTeamIDs;
+	std::array<int, SECTION_COUNT> m_SortedTeamIDs;
 	std::map<CSteamID, CAvatarImage *> m_PlayerAvatars;
 	MenuData m_MenuData;
 
@@ -198,6 +206,17 @@ private:
 	//! SBO: client whose badge (GetBadge) the cursor is over, 0 = none (OnThink): PostChildPaint draws its tooltip, a
 	//! click opens its link.
 	int m_iBadgeHoverClient = 0;
+
+	//! SBO 2.0 trigger_objective: the objective list's revision the board was sized for (Resize); the list goes under
+	//! the players (ObjectivesTall, PostChildPaint)
+	int m_iObjectivesRevision = -1;
+	int ObjectivesTall();
+	//! the objective line's place in the board (false: no line); a click on it opens / closes the full list drawn
+	//! upwards over the players (closed whenever the board closes)
+	bool GetObjectivesLineBounds(int &x, int &y, int &wide, int &tall);
+	bool m_bObjectivesOpen = false;
+	int m_iObjectivesTop = 0; //!< the open list's top (PostChildPaint), for its clicks
+	void SetObjectivesOpen(bool bOpen);
 
 	//! Index of the "mute" column (the last one) in every section, -1 until a section exists (CreateSection).
 	int m_iMuteColumn = -1;
@@ -331,13 +350,20 @@ private:
 	int GetNameColumnWidth();
 
 	/**
-	 * Returns player team [0; MAX_TEAMS] or TEAM_SPECTATOR.
+	 * Returns player team [0; MAX_TEAMS] or TEAM_SPECTATOR (SBO category mode: GHOST_SECTION_ID too).
 	 */
 	int GetPlayerTeam(int client);
 	//! SBO: a slot with a name but no player behind it as the server tells the client (no TeamInfo team, no SteamID:
 	//! a plugin's virtual slot such as the radio's, HLTV): the Spectators section, left out of the counts. A real
 	//! player who just connected has his SteamID already (HL25 engine), so he is not one.
 	bool IsVirtualSlot(int client);
+
+	/**
+	 * SBO category mode: a connected slot that is not in the game: no category from the server yet (connecting,
+	 * downloading, reconnecting after a crash or time-out) or the server has had no command from its client for a
+	 * few seconds (SBO_CLASS_LOST). Listed under Ghosts, greyed, without score or ping.
+	 */
+	bool IsGhost(int client);
 
 	/**
 	 * Returns bright color if this is this player, fading red if it's the last killer, the Hunted's tint (Bounty

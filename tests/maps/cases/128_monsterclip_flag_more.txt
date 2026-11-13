@@ -1,0 +1,62 @@
+# Monster flag 4 MonsterClip (FGD base Monster) on the classes case 116q leaves out: the monster is stopped by
+# func_monsterclip brushes (FL_MONSTERCLIP 8388608 in its flags, set by MonsterInit); without the flag it is not
+# covers: monster_barney:4 monster_cyberminotor:4 monster_cyborg:4 monster_dark:4 monster_gargantua:4 monster_human_assassin:4 monster_hunter:4 monster_ichthyosaur:4 monster_imp_hunter:4 monster_scientist:4 monster_werewolf_hunter:4 monster_zombie:4 monster_zombie_grunt:4 monster_zombie_hunter:4
+map co_fuzz
+spawn monster_barney targetname c0 spawnflags 4 origin "-2000 1000 0"
+spawn monster_barney targetname n0 origin "-2000 1600 0"
+spawn monster_cyberminotor targetname c1 spawnflags 4 origin "-1800 1000 0"
+spawn monster_cyberminotor targetname n1 origin "-1800 1600 0"
+spawn monster_cyborg targetname c2 spawnflags 4 origin "-1600 1000 0"
+spawn monster_cyborg targetname n2 origin "-1600 1600 0"
+spawn monster_dark targetname c3 spawnflags 4 origin "-1400 1000 0"
+spawn monster_dark targetname n3 origin "-1400 1600 0"
+spawn monster_gargantua targetname c5 spawnflags 4 origin "-1000 1000 0"
+spawn monster_gargantua targetname n5 origin "-1000 1600 0"
+spawn monster_human_assassin targetname c6 spawnflags 4 origin "-800 1000 0"
+spawn monster_human_assassin targetname n6 origin "-800 1600 0"
+spawn monster_hunter targetname c7 spawnflags 4 origin "-600 1000 0"
+spawn monster_hunter targetname n7 origin "-600 1600 0"
+spawn monster_ichthyosaur targetname c8 spawnflags 4 origin "-400 1000 0"
+spawn monster_ichthyosaur targetname n8 origin "-400 1600 0"
+spawn monster_imp_hunter targetname c9 spawnflags 4 origin "-200 1000 0"
+spawn monster_imp_hunter targetname n9 origin "-200 1600 0"
+spawn monster_scientist targetname c12 spawnflags 4 origin "400 1000 0"
+spawn monster_scientist targetname n12 origin "400 1600 0"
+spawn monster_werewolf_hunter targetname c18 spawnflags 4 origin "1600 1000 0"
+spawn monster_werewolf_hunter targetname n18 origin "1600 1600 0"
+spawn monster_zombie targetname c19 spawnflags 4 origin "1800 1000 0"
+spawn monster_zombie targetname n19 origin "1800 1600 0"
+spawn monster_zombie_grunt targetname c20 spawnflags 4 origin "2000 1000 0"
+spawn monster_zombie_grunt targetname n20 origin "2000 1600 0"
+spawn monster_zombie_hunter targetname c21 spawnflags 4 origin "2200 1000 0"
+spawn monster_zombie_hunter targetname n21 origin "2200 1600 0"
+activate
+frames 5
+expectbits c0 flags 8388608
+expectnobits n0 flags 8388608
+expectbits c1 flags 8388608
+expectnobits n1 flags 8388608
+expectbits c2 flags 8388608
+expectnobits n2 flags 8388608
+expectbits c3 flags 8388608
+expectnobits n3 flags 8388608
+expectbits c5 flags 8388608
+expectnobits n5 flags 8388608
+expectbits c6 flags 8388608
+expectnobits n6 flags 8388608
+expectbits c7 flags 8388608
+expectnobits n7 flags 8388608
+expectbits c8 flags 8388608
+expectnobits n8 flags 8388608
+expectbits c9 flags 8388608
+expectnobits n9 flags 8388608
+expectbits c12 flags 8388608
+expectnobits n12 flags 8388608
+expectbits c18 flags 8388608
+expectnobits n18 flags 8388608
+expectbits c19 flags 8388608
+expectnobits n19 flags 8388608
+expectbits c20 flags 8388608
+expectnobits n20 flags 8388608
+expectbits c21 flags 8388608
+expectnobits n21 flags 8388608

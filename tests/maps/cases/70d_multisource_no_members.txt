@@ -1,0 +1,14 @@
+# multisource with no members (nothing targets it): a Use finds every one of its zero slots on and fires its target
+# (HL SDK); cae5705f only skips the out-of-bounds slot write 1.38 made
+# covers: multisource
+map co_fuzz
+spawn multisource targetname ms target ms_out
+activate
+frames 3
+fire ms
+frames 2
+expectn 1 Firing: (ms_out)
+expect Multisource ms enabled (0 inputs)
+fire ms
+frames 2
+expectn 2 Firing: (ms_out)

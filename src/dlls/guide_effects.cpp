@@ -9,6 +9,7 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#include "keyvalue.h"
 #include "player.h"
 #include "effects.h"
 #include "decals.h"
@@ -113,7 +114,7 @@ class CEnvWarpBall : public CBaseEntity
 {
 public:
 	void Precache( void );
-	void Spawn( void ) { Precache(); }
+	void Spawn( void ) { Precache(); m_bSpawned = TRUE; }
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	virtual int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
@@ -145,6 +146,7 @@ public:
 	float m_aiSoundDuration;
 	float m_soundVolume;
 	string_t m_model2;
+	BOOL m_bSpawned;	// SBO 2.1: "model2" can no longer change (it is precached)
 	Vector m_rendercolor2;
 	int m_renderamt2;
 	float m_scale2;
@@ -216,7 +218,10 @@ void CEnvWarpBall::KeyValue( KeyValueData *pkvd )
 	}
 	else if ( FStrEq( pkvd->szKeyName, "model2" ) )
 	{
-		m_model2 = ALLOC_STRING( pkvd->szValue );
+		if ( m_bSpawned )	// SBO 2.1: at run time (trigger_changevalue) the next play would make a sprite not precached
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else
+			m_model2 = ALLOC_STRING( pkvd->szValue );
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq( pkvd->szKeyName, "rendercolor2" ) )
@@ -488,6 +493,8 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT StartTrailThink( void );
 	void EXPORT CatchUpThink( void );
+	// SBO 2.1 (Spirit of Half-Life): On while it is on, Off while it is off
+	STATE GetState( CBaseEntity *pActivator ) { return ( pev->spawnflags & SF_BEAMTRAIL_OFF ) ? STATE_OFF : STATE_ON; }
 	void Affect( CBaseEntity *pTarget, USE_TYPE useType, CBasePlayer *pOnly );
 	void ForTargets( CBaseEntity *pActivator, USE_TYPE useType, CBasePlayer *pOnly );
 	BOOL ClientReady( CBasePlayer *pPlayer );

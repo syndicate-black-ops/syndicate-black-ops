@@ -160,8 +160,9 @@ void CSpa::PrimaryAttack()
 	if (m_iClip != 0)
 		m_flPumpTime = gpGlobals->time + 0.5;	// halflife-updated: a time, not a weapon time (never reached on the server)
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.75;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.75;
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.75 );
+	m_flNextSecondaryAttack = GetNextAttackDelay( 0.75 );
 	if (m_iClip != 0)
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
 	else
@@ -212,8 +213,9 @@ void CSpa::SecondaryAttack( void )
 	if (m_iClip != 0)
 		m_flPumpTime = gpGlobals->time + 0.5;	// halflife-updated: a time, not a weapon time (never reached on the server)
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1.5;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 1.5;
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 1.5 );
+	m_flNextSecondaryAttack = GetNextAttackDelay( 1.5 );
 	if (m_iClip != 0)
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
 	else
@@ -276,7 +278,7 @@ void CSpa::WeaponIdle( void )
 		else
 		{
 			int iAnim;
-			float flRand = RANDOM_FLOAT(0, 1);
+			float flRand = UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0, 1 );
 			if (flRand <= 0.8)
 			{
 				iAnim = SPA_IDLE_DEEP;

@@ -1,0 +1,46 @@
+# ambient_generic dynamics (FGD): Start Pitch / Spin up time: a trigger starts it at pitchstart and the pitch rises to
+# Pitch; Start Volume / Fade in: the volume rises from volstart / 10 to Volume; Spin down / Fade out: the next trigger
+# lowers pitch and volume, then stops it; Dynamic Presets 4 "Slow Fade in": the volume rises slowly from 0.1 to full;
+# LFO type 1 square, rate, mod pitch, mod vol: pitch and volume jump between two levels; Incremental spinup count 3:
+# each trigger raises the pitch a step (pitchstart + (255 - pitchstart) / 3 per trigger) without stopping it
+# covers: ambient_generic.pitchstart ambient_generic.spinup ambient_generic.spindown ambient_generic.volstart ambient_generic.fadein ambient_generic.fadeout ambient_generic.preset ambient_generic.lfotype ambient_generic.lforate ambient_generic.lfomodpitch ambient_generic.lfomodvol ambient_generic.cspinup
+map co_fuzz
+spawn ambient_generic targetname up message ambience/rain.wav health 10 pitch 200 pitchstart 50 spinup 10 spindown 10 volstart 2 fadein 10 fadeout 10 spawnflags 16
+spawn ambient_generic targetname pre message ambience/siren.wav health 10 preset 4 spawnflags 16
+spawn ambient_generic targetname lfo message ambience/distantmortar2.wav health 10 lfotype 1 lforate 100 lfomodpitch 50 lfomodvol 50 spawnflags 16
+spawn ambient_generic targetname cs message ambience/dog1.wav health 10 pitchstart 50 spinup 1 cspinup 3 spawnflags 16
+activate
+connect 1 P1
+frames 10
+mark fire
+fire up
+fire pre
+fire lfo
+fire cs
+frames 60
+# spin up / fade in
+expect ambience/rain.wav vol=0.20 att=1.25 pitch=50 flags=0
+expect ambience/rain.wav vol=0.65 att=1.25 pitch=95 flags=192
+expect ambience/rain.wav vol=1.00 att=1.25 pitch=200 flags=128
+# preset 4: from 0.1, slowly to full volume (more than 4 s)
+expect ambience/siren.wav vol=0.10 att=1.25 pitch=100 flags=0
+expect ambience/siren.wav vol=0.51 att=1.25
+expect ambience/siren.wav vol=1.00 att=1.25
+# square LFO: two levels
+expect ambience/distantmortar2.wav vol=1.00 att=1.25 pitch=164 flags=192
+expect ambience/distantmortar2.wav vol=0.36 att=1.25 pitch=37 flags=192
+# incremental spinup: the first trigger runs to 50 + 68
+expect ambience/dog1.wav vol=1.00 att=1.25 pitch=118
+expectnot ambience/dog1.wav vol=1.00 att=1.25 pitch=186
+mark again
+fire up
+fire cs
+frames 30
+# spin down / fade out, then stop
+expect ambience/rain.wav vol=0.42 att=1.25 pitch=141 flags=192
+expect ambience/rain.wav vol=0.00 att=0.00 pitch=0 flags=32
+expect ambience/dog1.wav vol=1.00 att=1.25 pitch=186
+expectnot ambience/dog1.wav vol=0.00 att=0.00 pitch=0 flags=32
+fire cs
+frames 30
+expect ambience/dog1.wav vol=1.00 att=1.25 pitch=254

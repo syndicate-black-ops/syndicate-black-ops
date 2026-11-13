@@ -40,6 +40,7 @@
 "blank"				"***************************"
 "radio"				"radio"
 "showbriefing"		"Map briefing"
+"objectives"		"Objectives panel"
 "changemodel"			"Selection Menu"
 "+voicerecord"			"voice system"
 "impulse 201"			"Spray logo"

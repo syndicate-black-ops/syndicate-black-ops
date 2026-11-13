@@ -80,6 +80,10 @@ struct WTState
 	unsigned char color[4];
 	int		orientation;
 	int		font;
+	// WORLDTEXT_FLAG_PARENT: drawn on this parent (iuser4 form) at localOrigin / localAngles (worldtext.cpp)
+	int		parent;
+	float	localOrigin[3];
+	float	localAngles[3];
 	std::string text;
 };
 

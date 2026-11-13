@@ -234,12 +234,32 @@ public:
 	CSboServerMenuArea(CSboServerMenu *pMenu);
 	void Paint() override;
 	void PaintBackground() override {}
+	void PerformLayout() override;
 	void OnMousePressed(vgui2::MouseCode code) override;
 	void OnMouseDoublePressed(vgui2::MouseCode code) override;
 	void OnMouseReleased(vgui2::MouseCode code) override;
 	void OnCursorMoved(int x, int y) override;
 	void OnCursorExited() override;
 	void OnMouseWheeled(int delta) override;
+	void RepaintShine();
+
+private:
+	CSboServerMenu *m_pMenu;
+	vgui2::Panel *m_pShine; //!< CSboServerMenuShine, over the whole area
+};
+
+//-----------------------------------------------------------------------------
+// The winner's shine (WINNER), over the item area (its child, the area's size, no input). Its own panel: the
+// surface blends at the start of a panel's paint, and the cards' text turns blending off for the rest of the area's paint
+//-----------------------------------------------------------------------------
+class CSboServerMenuShine : public vgui2::Panel
+{
+	DECLARE_CLASS_SIMPLE(CSboServerMenuShine, vgui2::Panel);
+
+public:
+	CSboServerMenuShine(vgui2::Panel *pParent, CSboServerMenu *pMenu);
+	void Paint() override;
+	void PaintBackground() override {}
 
 private:
 	CSboServerMenu *m_pMenu;
@@ -422,6 +442,17 @@ private:
 	//! The big preview's frame on the screen (the centered window's box, or a frame left of the side window)
 	Rect PreviewStage() const;
 	void PaintRow(int item, const Rect &r);
+	//! WINNER: the winning item's card or row: its gold tint (under the contents) / its border (over)
+	void PaintWinnerBack(const Rect &r, Color under, const std::vector<Rect> &holes);
+	void PaintWinnerFront(const Rect &r);
+
+public:
+	//! WINNER: the shine over the card PaintWinnerFront last marked (CSboServerMenuShine)
+	void PaintWinnerShine();
+
+private:
+	//! The shine still passes (the item area is repainted every frame until it ends)
+	bool WinnerAnimating() const;
 	void PaintButton(const Rect &r, const std::wstring &label, bool primary, bool enabled, bool hot);
 	void PaintHeader(int x, int y, int maxW, const std::string &line, vgui2::HFont font);
 
@@ -516,6 +547,9 @@ private:
 	int m_iTab = 0;
 	int m_iHighlight = -1;
 	int m_iHover = -1;
+	int m_iWinner = NO_ITEM;        //!< WINNER as this window last painted it (a new one starts the shine)
+	float m_flWinnerStart = 0.0f;   //!< ServerMenu_Now() when the shown winner was first painted
+	Rect m_rWinnerShine{ 0, 0, 0, 0 }; //!< the winner's inside (area coordinates) as last painted; w 0: not shown
 	std::wstring m_Search; //!< the search box's text
 	CSboBrowserEntry *m_pSearch = nullptr;
 	CSboBrowserEntry *m_pFields[MAX_MENU_FIELDS] = {};
@@ -577,9 +611,29 @@ CSboServerMenuArea::CSboServerMenuArea(CSboServerMenu *pMenu)
 	SetPaintBackgroundEnabled(false);
 	SetMouseInputEnabled(true);
 	SetKeyBoardInputEnabled(false);
+	m_pShine = new CSboServerMenuShine(this, pMenu);
 }
 
 void CSboServerMenuArea::Paint() { m_pMenu->PaintArea(); }
+
+void CSboServerMenuArea::PerformLayout()
+{
+	BaseClass::PerformLayout();
+	m_pShine->SetBounds(0, 0, GetWide(), GetTall());
+}
+
+void CSboServerMenuArea::RepaintShine() { m_pShine->Repaint(); }
+
+CSboServerMenuShine::CSboServerMenuShine(vgui2::Panel *pParent, CSboServerMenu *pMenu)
+    : BaseClass(pParent, "ServerMenuShine")
+    , m_pMenu(pMenu)
+{
+	SetPaintBackgroundEnabled(false);
+	SetMouseInputEnabled(false);
+	SetKeyBoardInputEnabled(false);
+}
+
+void CSboServerMenuShine::Paint() { m_pMenu->PaintWinnerShine(); }
 
 void CSboServerMenuSearch::OnMousePressed(vgui2::MouseCode code)
 {
@@ -756,6 +810,7 @@ void CSboServerMenu::Show(int menu, int tab, int item)
 		m_iScroll = 0;
 		m_flYaw = 0.0f;
 		m_bDragging = false;
+		m_iWinner = NO_ITEM; // a winner already set shines again for this opening
 		ClosePopup();
 	}
 	if (!IsVisible())
@@ -1478,6 +1533,11 @@ void CSboServerMenu::OnThink()
 	{
 		UpdatePreview();
 		MapPictureDownloads();
+		if (WinnerAnimating())
+		{
+			m_pArea->Repaint();
+			m_pArea->RepaintShine();
+		}
 	}
 }
 
@@ -2057,6 +2117,9 @@ void CSboServerMenu::PaintCard(int item, const Rect &r)
 	const Rect box{ r.x + pad, r.y + pad, r.w - 2 * pad, PictureTall() };
 	if (on)
 		FillHoles(r, model ? std::vector<Rect>{ box } : std::vector<Rect>(), COL_BG_SELECTED);
+	const bool winner = item == m->winner;
+	if (winner)
+		PaintWinnerBack(r, on ? COL_BG_SELECTED : COL_BG_WINDOW, model ? std::vector<Rect>{ box } : std::vector<Rect>());
 	// cooling down: the card greyed (its model too) under its dim texts and the clock
 	if (cooldown > 0.0f)
 		FillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, C_COOL_SHADE);
@@ -2126,6 +2189,8 @@ void CSboServerMenu::PaintCard(int item, const Rect &r)
 		DrawCooldownClock(face.x + face.w / 2, face.y + face.h / 2, radius, cooldown, it.cooldownTotal,
 			Font(side ? 17.0f : 19.0f, 700));
 	}
+	if (winner)
+		PaintWinnerFront(r);
 }
 
 namespace
@@ -2572,6 +2637,9 @@ void CSboServerMenu::PaintRow(int item, const Rect &r)
 	const bool off = (it.flags & ITEM_DISABLED) != 0 || cooldown > 0.0f;
 	if (on)
 		FillRect(r.x, r.y, r.w, r.h, COL_BG_SELECTED);
+	const bool winner = item == M()->winner;
+	if (winner)
+		PaintWinnerBack(r, on ? COL_BG_SELECTED : COL_BG_WINDOW, {});
 	if (cooldown > 0.0f)
 		FillRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2, C_COOL_SHADE); // greyed under its dim texts
 	OutlineRect(r.x, r.y, r.w, r.h, on ? COL_BORDER_PRIMARY : (item == m_iHover ? COL_BORDER : COL_BORDER_LIST));
@@ -2617,6 +2685,112 @@ void CSboServerMenu::PaintRow(int item, const Rect &r)
 	{
 		DrawCooldownClock(clockX, r.y + r.h / 2, clockRadius, cooldown, it.cooldownTotal, Font(11.0f, 700));
 	}
+	if (winner)
+		PaintWinnerFront(r);
+}
+
+//-----------------------------------------------------------------------------
+// WINNER: the item that won (a vote's result). A faint gold tint under the card's contents and a steady gold border
+// over them, the colors of the Winner badge (BADGE_GOLD), and when it is first shown one slow, soft gold shine passing
+// across it from left to right, leaning like a reflection. It stays marked until the window closes.
+// The shine is a texture (a gold band whose alpha fades out to both sides) drawn row by row over the card's picture
+// and text, clipped to the inside of the border, by its own panel over the area (CSboServerMenuShine): within the
+// area's paint the cards' text has turned blending off, and the band would draw opaque.
+//-----------------------------------------------------------------------------
+namespace
+{
+constexpr float WINNER_SHINE_TIME = 1.3f;       //!< seconds the shine takes across the card (within Galileo's 3 s)
+constexpr int WINNER_SHINE_ALPHA = 92;          //!< of 255: the band's middle
+constexpr int WINNER_SHINE_TEX = 64;            //!< the band texture's width in texels
+constexpr int WINNER_TINT = 24;                 //!< of 255: C_GOLD_TEXT mixed into the card's background
+const Color C_WINNER_FRAME(255, 214, 102, 255); //!< C_GOLD_TEXT
+const Color C_WINNER_SHINE(255, 230, 150, 255); //!< the band's gold, a little lighter than the frame
+
+//! the shine's band: gold, its alpha a smooth bell (0 at both sides, WINNER_SHINE_ALPHA in the middle); made once
+int WinnerShineTexture()
+{
+	static int s_iTexture = -1;
+	if (s_iTexture == -1)
+	{
+		const int h = 4;
+		std::vector<unsigned char> rgba((size_t)WINNER_SHINE_TEX * h * 4);
+		for (int x = 0; x < WINNER_SHINE_TEX; x++)
+		{
+			const float u = (x + 0.5f) / WINNER_SHINE_TEX;             // 0..1 across the band
+			const float bell = 0.5f - 0.5f * cosf(2.0f * (float)M_PI * u); // 0 at the sides, 1 in the middle
+			const float a = bell * bell * (3.0f - 2.0f * bell);             // softer still at the sides
+			for (int y = 0; y < h; y++)
+			{
+				unsigned char *p = &rgba[((size_t)y * WINNER_SHINE_TEX + x) * 4];
+				p[0] = (unsigned char)C_WINNER_SHINE.r();
+				p[1] = (unsigned char)C_WINNER_SHINE.g();
+				p[2] = (unsigned char)C_WINNER_SHINE.b();
+				p[3] = (unsigned char)lroundf(a * WINNER_SHINE_ALPHA);
+			}
+		}
+		s_iTexture = vgui2::surface()->CreateNewTextureID(true);
+		vgui2::surface()->DrawSetTextureRGBA(s_iTexture, rgba.data(), WINNER_SHINE_TEX, h, true, true);
+	}
+	return s_iTexture;
+}
+} // namespace
+
+bool CSboServerMenu::WinnerAnimating() const
+{
+	return m_iWinner != NO_ITEM && ServerMenu_Now() - m_flWinnerStart < WINNER_SHINE_TIME;
+}
+
+void CSboServerMenu::PaintWinnerBack(const Rect &r, Color under, const std::vector<Rect> &holes)
+{
+	// the tint as an opaque mixed color (an earlier card's picture can leave translucent fills opaque); the model
+	// preview's hole stays open
+	auto mix = [](int a, int b) { return a + (b - a) * WINNER_TINT / 255; };
+	const Color tint(mix(under.r(), C_GOLD_TEXT.r()), mix(under.g(), C_GOLD_TEXT.g()), mix(under.b(), C_GOLD_TEXT.b()), 255);
+	FillHoles({ r.x + 1, r.y + 1, r.w - 2, r.h - 2 }, holes, tint);
+}
+
+void CSboServerMenu::PaintWinnerFront(const Rect &r)
+{
+	// the border: solid gold, two lines (more at larger scales)
+	const int border = std::max(2, P(2));
+	for (int i = 0; i < border && 2 * i < std::min(r.w, r.h); i++)
+		OutlineRect(r.x + i, r.y + i, r.w - 2 * i, r.h - 2 * i, C_WINNER_FRAME);
+	// the shine (CSboServerMenuShine paints it next) inside the border
+	m_rWinnerShine = { r.x + border, r.y + border, r.w - 2 * border, r.h - 2 * border };
+}
+
+void CSboServerMenu::PaintWinnerShine()
+{
+	const Rect &in = m_rWinnerShine;
+	if (m_iWinner == NO_ITEM || in.w <= 0 || in.h <= 0)
+		return;
+	const float t = ServerMenu_Now() - m_flWinnerStart;
+	if (t < 0.0f || t >= WINNER_SHINE_TIME)
+		return;
+	float phase = t / WINNER_SHINE_TIME;
+	phase = phase * phase * (3.0f - 2.0f * phase); // eased in and out
+
+	// the band, half the card wide, leaning (its top ahead by a quarter of the card's height), one strip of rows at a
+	// time, clipped to the inside of the border; it enters and leaves wholly outside the card
+	const int x0 = in.x, x1 = in.x + in.w, y0 = in.y, y1 = in.y + in.h;
+	const int band = std::max(P(48), in.w / 2), lean = in.h / 4;
+	const int travel = in.w + band + lean;
+	const int bottom = x0 - band / 2 - lean + (int)(phase * travel); // the band's middle at the bottom edge
+	vgui2::surface()->DrawSetTexture(WinnerShineTexture());
+	vgui2::surface()->DrawSetColor(255, 255, 255, 255);
+	const int step = std::max(1, P(2));
+	for (int y = y0; y < y1; y += step)
+	{
+		const int h = std::min(step, y1 - y);
+		const int left = bottom + lean * (y1 - y) / (y1 - y0) - band / 2;
+		const int a = std::max(left, x0), b = std::min(left + band, x1);
+		if (b <= a)
+			continue;
+		const float s0 = (float)(a - left) / band, s1 = (float)(b - left) / band;
+		vgui2::VGuiVertex v[4] = { vgui2::VGuiVertex(a, y, s0, 0.0f), vgui2::VGuiVertex(b, y, s1, 0.0f),
+			vgui2::VGuiVertex(b, y + h, s1, 1.0f), vgui2::VGuiVertex(a, y + h, s0, 1.0f) };
+		vgui2::surface()->DrawTexturedPolygon(v, 4);
+	}
 }
 
 void CSboServerMenu::PaintArea()
@@ -2626,6 +2800,12 @@ void CSboServerMenu::PaintArea()
 		return;
 	m_iNewMapPictures = 0;
 	m_Tips.clear();
+	m_rWinnerShine = { 0, 0, 0, 0 };
+	if (m->winner != m_iWinner)
+	{
+		m_iWinner = m->winner;
+		m_flWinnerStart = ServerMenu_Now();
+	}
 	if (m->layout == LAYOUT_STARS)
 	{
 		PaintStarArea();

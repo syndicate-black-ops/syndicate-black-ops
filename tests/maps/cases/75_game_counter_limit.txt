@@ -1,0 +1,37 @@
+# game_counter (FGD "Fires when it hits limit"): each On / Toggle call counts up from the Initial Value (frags); it
+# fires its target when the count equals the Limit Value (health). Without flag 2 "Reset On fire" it then counts on
+# past the limit and never fires again; with flag 2 it goes back to the initial value and fires at every limit
+# covers: game_counter game_counter.health game_counter.frags game_counter.target game_counter:2
+map co_fuzz
+spawn game_counter targetname c_plain health 3 target plain_hit
+spawn game_counter targetname c_reset health 3 target reset_hit spawnflags 2
+spawn game_counter targetname c_init health 3 frags 2 target init_hit
+activate
+frames 3
+fire c_plain
+fire c_reset
+fire c_init
+frames 1
+expectn 1 Firing: (init_hit)
+fire c_plain
+fire c_reset
+frames 1
+expectnot Firing: (plain_hit)
+fire c_plain
+fire c_reset
+frames 1
+expectn 1 Firing: (plain_hit)
+expectn 1 Firing: (reset_hit)
+mark past_the_limit
+fire c_plain
+fire c_reset
+fire c_plain
+fire c_reset
+fire c_plain
+fire c_reset
+fire c_init
+fire c_init
+frames 1
+expectn 1 Firing: (plain_hit)
+expectn 2 Firing: (reset_hit)
+expectn 1 Firing: (init_hit)

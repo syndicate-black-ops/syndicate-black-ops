@@ -15,6 +15,10 @@
 									// with WSCREEN_FLAG_MOVIE also: string moviefilename (a name in video/, VIDEO_MAX_PATH),
 									// long milliseconds since the movie started, byte volume (0..10), short radius
 #define WSCREEN_OP_STATE		1	// short entindex, byte flags
+#define WSCREEN_OP_PARENT		3	// SBO 2.1, after a DEFINE of a screen with a parent (movewith, not "surface"):
+									// short entindex, short parent (entity_state_t::iuser4 form: index, attachment
+									// << 11), long x3 local origin (float bits), short x3 local angles: drawn at
+									// parent x local on the parent's drawn pose each frame
 #define WSCREEN_OP_CONTROL		2	// short entindex, byte control op, string control name, string value
 									// (WSCREEN_CONTROL_ANIMATION: string state group, may be "", string sequence)
 

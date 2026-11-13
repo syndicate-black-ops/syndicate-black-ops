@@ -1,0 +1,23 @@
+# monster_sentry flag 64 Start Inactive with 32 Auto-activate: it stays folded with a player in view until triggered;
+# the same sentry with only Auto-activate deploys (turret/tu_deploy.wav) when it sees him
+# covers: monster_sentry:64
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+spawn monster_sentry targetname off spawnflags 96 origin "0 300 0"
+spawn monster_sentry targetname on spawnflags 32 origin "0 -300 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 300
+expectnotre SOUND #20 monster_sentry ch\d turret/tu_deploy
+expectre SOUND #21 monster_sentry ch\d turret/tu_deploy

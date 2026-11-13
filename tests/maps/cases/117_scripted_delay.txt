@@ -1,0 +1,31 @@
+# scripted_sequence (FGD Scripted): "Delay before trigger" (delay 3): its target fires 3 s after the action ends (the
+# same script without a delay fires its target as the action ends, about 2 s after the trigger: idle1); Move to
+# Position 0 No: the monster plays where it stands; 4 Instantaneous: it is put on the mark at once
+# covers: scripted_sequence.delay scripted_sequence.m_fmoveto=0 scripted_sequence.m_fmoveto=4
+map co_fuzz
+spawn monster_scientist targetname a0 origin "0 300 0"
+spawn scripted_sequence targetname ss0 m_iszEntity a0 m_iszPlay idle1 m_fMoveTo 0 target ss0_done origin "0 320 0"
+spawn monster_scientist targetname a3 origin "500 300 0"
+spawn scripted_sequence targetname ss3 m_iszEntity a3 m_iszPlay idle1 m_fMoveTo 0 target ss3_done delay 3 origin "500 320 0"
+spawn trigger_relay targetname ss0_done target sink0
+spawn trigger_relay targetname ss3_done target sink3
+spawn monster_scientist targetname a4 origin "1000 300 0"
+spawn scripted_sequence targetname ss4 m_iszEntity a4 m_iszPlay idle1 m_fMoveTo 4 origin "1000 600 0"
+activate
+frames 20
+fire ss0
+fire ss3
+fire ss4
+frames 5
+expectfield a4 origin "1000 600 0" 1
+expectfield a0 origin "0 300 0" 1
+frames 15
+mark t2.0
+expectn 1 Firing: (ss0_done)
+expectnot Firing: (ss3_done)
+frames 25
+mark t4.5
+expectnot Firing: (ss3_done)
+frames 5
+mark t5.0
+expectn 1 Firing: (ss3_done)

@@ -1,0 +1,16 @@
+# trigger_changetarget (FGD "Trigger Change Target"): sets the target of the entity named in its target to New Target
+# (m_iszNewTarget); the next time that entity fires, it fires the new target
+# covers: trigger_changetarget trigger_changetarget.target trigger_changetarget.m_isznewtarget
+map co_fuzz
+spawn trigger_relay targetname r target old_out
+spawn trigger_changetarget targetname ct target r m_iszNewTarget new_out
+activate
+frames 3
+fire r
+frames 1
+fire ct
+frames 1
+fire r
+frames 1
+expectn 1 Firing: (old_out)
+expectn 1 Firing: (new_out)

@@ -56,6 +56,7 @@ public:
 
 	// SBO 2.0: the attachments of an entity the renderer does not draw this frame (studio_attachments.h)
 	void StudioComputeAttachments( cl_entity_t *ent );
+	bool StudioAttachmentModelSpace( cl_entity_t *ent, int n, float *out );	// SBO 2.0 movewith
 	
 	// Save bone matrices and names
 	virtual void StudioSaveBones( void );

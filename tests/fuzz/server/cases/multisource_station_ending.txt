@@ -1,0 +1,27 @@
+# co_station_v1 ending lock, map keys as in the BSP (entities 242, 790, 789, 778, 795).
+# game_counter counter_objectives (health 5) -> trigger_relay objectives_done_relay (delay 8, triggerstate 1)
+# -> multisource lock_ending_shuttle (only member: that relay) = master of trigger_once trigger_shuttle_destruction.
+# Case-only addition: the multisource gets target ms_end_fired so its state shows in the console.
+map co_fuzz
+connect 1
+spawn multisource targetname lock_ending_shuttle target ms_end_fired
+spawn game_counter targetname counter_objectives target objectives_done_relay health 5 frags 0 delay 0
+spawn trigger_relay targetname objectives_done_relay target lock_ending_shuttle delay 8 triggerstate 1 health -1
+spawn trigger_once model *112 master lock_ending_shuttle target shuttle_destr_relay_1 targetname trigger_shuttle_destruction delay 0
+spawn trigger_relay targetname shuttle_destr_relay_1 target ambient_shuttle_destruction_1 triggerstate 1 delay 0 health -1
+spawn trigger_relay targetname ms_end_fired target ms_sink
+activate
+frames 3
+use 1 world
+use 1 world
+use 1 world
+use 1 world
+use 1 world
+frames 120
+touch 3 1
+frames 3
+expect Firing: (objectives_done_relay)
+expect Firing: (lock_ending_shuttle)
+expect Firing: (ms_end_fired)
+expect Firing: (shuttle_destr_relay_1)
+expectn 0 MultiSrc:Used by non member

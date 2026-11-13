@@ -49,3 +49,26 @@ co_crackdown_v1	0f43c462	set	monster_furniture	#716	angles	"89.87 220.66 319.74"
 co_crackdown_v1	0f43c462	set	monster_furniture	#716	origin	"767.61 2065.35 268.56"
 co_crackdown_v1	0f43c462	set	monster_furniture	#717	angles	"89.87 220.66 319.74"
 co_crackdown_v1	0f43c462	set	monster_furniture	#717	origin	"791.61 2065.35 268.56"
+
+// Named monstermakers with flag 1 "Start ON": 1.38 never started them (no first think) and their first trigger turned
+// them off. SBO 2.0 starts them at the map start. These entries keep the maps as they played in 1.38: cyclic makers
+// (flag 4) made one monster per trigger and still do without flag 1; the others keep flag 1 with a Frequency of
+// 1000000000 s, so they start with no monster coming, as in 1.38, and the map's one trigger turns them off.
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_1	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_2	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_4	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_5	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_6	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_7	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_9	spawnflags	4
+bk_pipes	011ba245	set	monstermaker	weapon_spawner_10	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	filths_maker	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	stray_maker	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	cerberi_secret	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	cerberi1	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	soldier_maker	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	virtue_maker	spawnflags	4
+co_god_damn_the_sun	dff07ae6	set	monstermaker	cerberi2	spawnflags	4
+co_prototype	cc9a6119	set	monstermaker	maker_1	spawnflags	4
+co_saibercity_v3	5aea084d	set	monstermaker	FedStore	delay	1000000000
+co_unxmas	ae9c1d5a	set	monstermaker	mon_sci2	delay	1000000000

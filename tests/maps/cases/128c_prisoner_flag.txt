@@ -1,0 +1,72 @@
+# Monster flag 16 Prisoner (FGD base Monster): it sees nobody and nobody attacks it (monsters.cpp Look skips it): a
+# prisoner with TriggerCondition 10 (See Player, unconditional) never fires its TriggerTarget; the same monster
+# without the flag does once a player is in the game (the stub puts every client in every PVS)
+# covers: dark_grunt:16 monster_apache:16 monster_cyberminotor:16 monster_cyborg:16 monster_gargantua:16 monster_generic:16 monster_human_assassin:16 monster_ichthyosaur:16 monster_imp:16 monster_imp_hunter:16 monster_zombie_hunter:16 monster_zombie:16 monster_zombie_grunt:16
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn dark_grunt targetname p0 spawnflags 16 TriggerCondition 10 TriggerTarget pris_0 origin "-2000 600 0"
+spawn dark_grunt targetname q0 TriggerCondition 10 TriggerTarget ctl_0 origin "-2000 -600 0"
+spawn monster_apache targetname p1 spawnflags 16 TriggerCondition 10 TriggerTarget pris_1 origin "-1800 600 0"
+spawn monster_apache targetname q1 TriggerCondition 10 TriggerTarget ctl_1 origin "-1800 -600 0"
+spawn monster_cyberminotor targetname p2 spawnflags 16 TriggerCondition 10 TriggerTarget pris_2 origin "-1600 600 0"
+spawn monster_cyberminotor targetname q2 TriggerCondition 10 TriggerTarget ctl_2 origin "-1600 -600 0"
+spawn monster_cyborg targetname p3 spawnflags 16 TriggerCondition 10 TriggerTarget pris_3 origin "-1400 600 0"
+spawn monster_cyborg targetname q3 TriggerCondition 10 TriggerTarget ctl_3 origin "-1400 -600 0"
+spawn monster_gargantua targetname p5 spawnflags 16 TriggerCondition 10 TriggerTarget pris_5 origin "-1000 600 0"
+spawn monster_gargantua targetname q5 TriggerCondition 10 TriggerTarget ctl_5 origin "-1000 -600 0"
+spawn monster_generic targetname p6 spawnflags 16 TriggerCondition 10 TriggerTarget pris_6 origin "-800 600 0" model models/scientist.mdl
+spawn monster_generic targetname q6 TriggerCondition 10 TriggerTarget ctl_6 origin "-800 -600 0" model models/scientist.mdl
+spawn monster_human_assassin targetname p7 spawnflags 16 TriggerCondition 10 TriggerTarget pris_7 origin "-600 600 0"
+spawn monster_human_assassin targetname q7 TriggerCondition 10 TriggerTarget ctl_7 origin "-600 -600 0"
+spawn monster_ichthyosaur targetname p8 spawnflags 16 TriggerCondition 10 TriggerTarget pris_8 origin "-400 600 0"
+spawn monster_ichthyosaur targetname q8 TriggerCondition 10 TriggerTarget ctl_8 origin "-400 -600 0"
+spawn monster_imp targetname p9 spawnflags 16 TriggerCondition 10 TriggerTarget pris_9 origin "-200 600 0"
+spawn monster_imp targetname q9 TriggerCondition 10 TriggerTarget ctl_9 origin "-200 -600 0"
+spawn monster_imp_hunter targetname p10 spawnflags 16 TriggerCondition 10 TriggerTarget pris_10 origin "0 600 0"
+spawn monster_imp_hunter targetname q10 TriggerCondition 10 TriggerTarget ctl_10 origin "0 -600 0"
+spawn monster_zombie_hunter targetname p20 spawnflags 16 TriggerCondition 10 TriggerTarget pris_20 origin "2000 600 0"
+spawn monster_zombie_hunter targetname q20 TriggerCondition 10 TriggerTarget ctl_20 origin "2000 -600 0"
+spawn monster_zombie targetname pz1 spawnflags 16 TriggerCondition 10 TriggerTarget pris_z1 angles "0 180 0" origin "700 100 0"
+spawn monster_zombie targetname qz1 TriggerCondition 10 TriggerTarget ctl_z1 angles "0 180 0" origin "700 -100 0"
+spawn monster_zombie_grunt targetname pz2 spawnflags 16 TriggerCondition 10 TriggerTarget pris_z2 angles "0 180 0" origin "900 100 0"
+spawn monster_zombie_grunt targetname qz2 TriggerCondition 10 TriggerTarget ctl_z2 angles "0 180 0" origin "900 -100 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 360
+expectnot Firing: (pris_0)
+expectn 1 Firing: (ctl_0)
+expectnot Firing: (pris_1)
+expectn 1 Firing: (ctl_1)
+expectnot Firing: (pris_2)
+expectn 1 Firing: (ctl_2)
+expectnot Firing: (pris_3)
+expectn 1 Firing: (ctl_3)
+expectnot Firing: (pris_5)
+expectn 1 Firing: (ctl_5)
+expectnot Firing: (pris_6)
+expectn 1 Firing: (ctl_6)
+expectnot Firing: (pris_7)
+expectn 1 Firing: (ctl_7)
+expectnot Firing: (pris_8)
+expectn 1 Firing: (ctl_8)
+expectnot Firing: (pris_9)
+expectn 1 Firing: (ctl_9)
+expectnot Firing: (pris_10)
+expectn 1 Firing: (ctl_10)
+expectnot Firing: (pris_20)
+expectn 1 Firing: (ctl_20)
+expectnot Firing: (pris_z1)
+expectn 1 Firing: (ctl_z1)
+expectnot Firing: (pris_z2)
+expectn 1 Firing: (ctl_z2)

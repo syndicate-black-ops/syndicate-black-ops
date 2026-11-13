@@ -925,6 +925,10 @@ void CGargantua::TraceAttack( entvars_t *pevAttacker, float flDamage, Vector vec
 
 int CGargantua::TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType )
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	if ( bitsDamageType & DMG_BLAST )
 		flDamage *= 10;
 
@@ -1166,10 +1170,18 @@ CBaseEntity* CGargantua::GargantuaCheckTraceHullAttack(float flDist, int iDamage
 	if ( tr.pHit )
 	{
 		CBaseEntity *pEntity = CBaseEntity::Instance( tr.pHit );
+		if ( !pEntity )
+			return NULL;
 
 		if ( iDamage > 0 )
 		{
+			// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the
+			// handle checks the edict's serial number and private data, so a victim freed there comes back NULL
+			// (a miss) instead of a pointer to freed memory
+			EHANDLE hEntity;
+			hEntity = pEntity;
 			pEntity->TakeDamage( pev, pev, iDamage, iDmgType );
+			return hEntity;
 		}
 
 		return pEntity;

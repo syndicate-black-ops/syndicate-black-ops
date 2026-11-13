@@ -1,0 +1,22 @@
+# func_pushable "size" (Half-Life's Hull Size, out of the FGD): CPushable::KeyValue sets that box, then Spawn's
+# SET_MODEL sets the brush's own bounds, so the key does nothing (Half-Life SDK and 1.38 the same; 133 pushables on
+# 22 maps set it, kept as is). Every pushable is its brush's size (here 64 x 64 x 64), whatever the key says
+# covers: func_pushable
+map co_fuzz
+brushsize 64 64 64
+spawn func_pushable targetname s0 model *1 size 0 origin "0 0 0"
+spawn func_pushable targetname s1 model *2 size 1 origin "500 0 0"
+spawn func_pushable targetname s2 model *3 size 2 origin "1000 0 0"
+spawn func_pushable targetname s3 model *4 size 3 origin "1500 0 0"
+activate
+frames 2
+field s0 mins maxs
+field s3 mins maxs
+expectfield s0 mins "-32 -32 -32"
+expectfield s0 maxs "32 32 32"
+expectfield s1 mins "-32 -32 -32"
+expectfield s1 maxs "32 32 32"
+expectfield s2 mins "-32 -32 -32"
+expectfield s2 maxs "32 32 32"
+expectfield s3 mins "-32 -32 -32"
+expectfield s3 maxs "32 32 32"

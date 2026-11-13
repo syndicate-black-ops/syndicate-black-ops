@@ -152,6 +152,7 @@ struct Menu
 	std::vector<Item> items;
 	int starsTenths = STARS_NONE; //!< STARS: the read-only row's average in tenths of a star (STARS_NONE: none)
 	std::string starsText;        //!< STARS: its text ("" none)
+	int winner = NO_ITEM;         //!< WINNER: the item that won (NO_ITEM: none)
 
 	size_t TextBytes() const;
 	//! A button that exists and is not greyed (BUTTONSTATE)
@@ -172,7 +173,8 @@ struct Event
 		HELLO,   //!< a = protocol version the server speaks
 		DEFINED, //!< a = menu: a new definition is complete (an open window shows it in place)
 		CHANGED, //!< a = menu: a live update (HEADER, STATE, LABEL, ITEMTEXT, COOLDOWN, VARIANT, SLIDERVALUE, TOGGLEVALUE, AVATAR,
-	         //!< MAPPICTURE, METER, ITEMLINE, BADGES, VOTERS, ITEMTITLE, SELECTVALUE, CONFIRM, ITEMPICTURE, BUTTONSTATE, STARS) of a menu
+	         //!< MAPPICTURE, METER, ITEMLINE, BADGES, VOTERS, ITEMTITLE, SELECTVALUE, CONFIRM, ITEMPICTURE, BUTTONSTATE, STARS,
+	         //!< WINNER) of a menu
 		OPEN,    //!< a = menu, b = tab, c = highlighted item (checked: the menu is complete, the serial matches)
 		CLOSE,   //!< a = menu or CLOSE_ANY
 		HUDBAR,  //!< the HUD strip changed (Store::Hud)

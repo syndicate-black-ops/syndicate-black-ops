@@ -152,6 +152,11 @@ CSboGeneralOptions::CSboGeneralOptions(vgui2::Panel *parent)
 	m_pWeaponsTitle = new vgui2::Label(this, "WeaponsTitle", "Weapons");
 	m_pLeftHanded = new CSboCvarCheckButton(this, "LeftHandedCheck", "Left-handed weapons", "cl_righthand");
 	WatchControl(m_pLeftHanded);
+	// hud_objectives (hud_objectives.cpp, docs/OBJECTIVES.md): 0 hidden, 1 compact, 2 full; checked for 1 and 2, a
+	// change writes 1 or 0 (ApplyChanges only writes a box that changed, so 2 stays 2)
+	m_pHudTitle = new vgui2::Label(this, "HudTitle", "HUD");
+	m_pObjectives = new CSboCvarCheckButton(this, "ObjectivesCheck", "Enable on-screen objectives", "hud_objectives");
+	WatchControl(m_pObjectives);
 	m_pMenusTitle = new vgui2::Label(this, "MenusTitle", "Menus");
 	m_pMenus = new CSboCvarCheckButton(this, "MenusCheck", "New GameUI menus", "cl_experimental_menus");
 	m_pMenusHelp = new vgui2::Label(this, "MenusHelp", "Use the new server browser, joining screen and settings windows");
@@ -228,6 +233,7 @@ void CSboGeneralOptions::PerformLayout()
 	};
 	section(m_pDiscordTitle, m_pDiscord, m_pDiscordHelp);
 	section(m_pWeaponsTitle, m_pLeftHanded, nullptr);
+	section(m_pHudTitle, m_pObjectives, nullptr);
 	section(m_pMenusTitle, m_pMenus, m_pMenusHelp);
 	section(nullptr, m_pIngame, m_pIngameHelp);
 	m_iContentTall = y;
@@ -237,6 +243,7 @@ void CSboGeneralOptions::OnResetData()
 {
 	m_pDiscord->ResetData();
 	m_pLeftHanded->ResetData();
+	m_pObjectives->ResetData();
 	m_pMenus->ResetData();
 	m_pIngame->ResetData();
 }
@@ -245,13 +252,15 @@ void CSboGeneralOptions::OnApplyChanges()
 {
 	m_pDiscord->ApplyChanges();
 	m_pLeftHanded->ApplyChanges();
+	m_pObjectives->ApplyChanges();
 	m_pMenus->ApplyChanges();
 	m_pIngame->ApplyChanges();
 }
 
 bool CSboGeneralOptions::HasChanges()
 {
-	return m_pDiscord->HasBeenModified() || m_pLeftHanded->HasBeenModified() || m_pMenus->HasBeenModified() ||
+	return m_pDiscord->HasBeenModified() || m_pLeftHanded->HasBeenModified() || m_pObjectives->HasBeenModified() ||
+	       m_pMenus->HasBeenModified() ||
 	       m_pIngame->HasBeenModified();
 }
 

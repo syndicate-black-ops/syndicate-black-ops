@@ -12,6 +12,10 @@
 //   byte x4 color r g b a
 //   byte    orientation (WORLDTEXT_ORIENT_*)
 //   byte    font (Source's font numbers, cl_dll/worldtext.cpp)
+//   -- with WORLDTEXT_FLAG_PARENT (a text with a parent, movewith: docs/MOVEWITH.md):
+//   short   the parent as entity_state_t::iuser4 (entity index, attachment << 11; movewith_shared.h)
+//   long x3 local origin (float bits), short x3 local angles: drawn at parent x local on the parent's drawn pose; the
+//           origin and angles above are its world pose when sent (used until the client has the parent)
 //   string  the text, or its end when "WorldTextP" messages came first. Escapes are already resolved ("\n" is a
 //           byte 10); UTF-8, a byte that isn't UTF-8 is read as Windows-1252.
 //
@@ -28,6 +32,7 @@
 #define WORLDTEXT_FLAG_ON		1	// shown (else: off or removed)
 #define WORLDTEXT_FLAG_RAINBOW	2	// Source's "rainbow"
 #define WORLDTEXT_FLAG_CENTER	4	// SBO: each line centered on the origin
+#define WORLDTEXT_FLAG_PARENT	8	// SBO 2.1: follows a parent (movewith); the parent block comes before the text
 
 #define WORLDTEXT_ORIENT_FIXED		0	// the entity's angles
 #define WORLDTEXT_ORIENT_FACE		1	// faces the view (billboard)
@@ -37,6 +42,7 @@
 #define WORLDTEXT_MSG_BYTES			188		// what a message may hold (MAX_USER_MSG_DATA 192, with room)
 #define WORLDTEXT_HEADER_BYTES		39		// "WorldText" before its string
 #define WORLDTEXT_MAIN_TEXT_BYTES	( WORLDTEXT_MSG_BYTES - WORLDTEXT_HEADER_BYTES - 1 )
+#define WORLDTEXT_PARENT_BYTES		20		// the parent block (WORLDTEXT_FLAG_PARENT): that much less text
 #define WORLDTEXT_PART_BYTES		180		// text bytes in a "WorldTextP" (with its short and terminator: 183)
 
 #define WORLDTEXT_FONT_COUNT		14		// Source's 0 .. 12 and SBO's 13; others are font 0

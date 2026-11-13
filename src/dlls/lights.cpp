@@ -111,11 +111,18 @@ public:
 	virtual void	KeyValue( KeyValueData* pkvd ); 
 	virtual void	Spawn( void );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1 (Spirit of Half-Life): On while it is lit, Off while it is switched off ("Initially dark" until it is
+	// triggered); a light nothing can switch is On (light_environment too)
+	virtual STATE	GetState( CBaseEntity *pActivator ) { return Switchable() && FBitSet( pev->spawnflags, SF_LIGHT_START_OFF ) ? STATE_OFF : STATE_ON; }
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	
 	static	TYPEDESCRIPTION m_SaveData[];
+
+	// SBO 2.1: "pattern" / "style" at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue GetKeyValue( const char *keyName );
+	void	RuntimeKeyValueChanged( const char *keyName );
 
 	// SBO 2.0, from Spirit of Half-Life (halflife-updated-spirit dlls/lights.cpp CLight / CLightFader): what
 	// trigger_lightstyle and global_light_control change. The fade runs on the light itself (Spirit made a
@@ -125,8 +132,8 @@ public:
 	void	SetStyle( const char *szPattern );		// the pattern now (a string that lives for the map)
 	const char *GetStyle( void ) { return m_pszCurrent ? m_pszCurrent : "m"; }
 	void	SetCorrectStyle( void );				// back to its own: its pattern when on, "a" when off
-	void	StartFade( const char *szTo, float flTime, int iWait );
-	void	StartWait( int iWait );
+	void	StartFade( const char *szTo, float flTime, float flWait );
+	void	StartWait( float flWait );
 	void	EXPORT FadeThink( void );
 	void	EXPORT WaitThink( void );
 
@@ -138,7 +145,8 @@ private:
 	const char *m_pszFadeTo;	// the pattern at the end of the fade
 	int		m_cFadeFrom, m_cFadeTo;
 	float	m_flFadeStart, m_flFadeEnd;
-	int		m_iWait;			// seconds after the fade before the light's own style comes back (-1: never)
+	float	m_flWait;			// seconds after the fade before the light's own style comes back (below 0: never)
+	BOOL	m_fSpawned;			// SBO 2.1: "style" can no longer change, a new "pattern" applies at once
 };
 LINK_ENTITY_TO_CLASS( light, CLight );
 
@@ -146,6 +154,7 @@ TYPEDESCRIPTION	CLight::m_SaveData[] =
 {
 	DEFINE_FIELD( CLight, m_iStyle, FIELD_INTEGER ),
 	DEFINE_FIELD( CLight, m_iszPattern, FIELD_STRING ),
+	DEFINE_FIELD( CLight, m_fSpawned, FIELD_BOOLEAN ),
 };
 
 IMPLEMENT_SAVERESTORE( CLight, CPointEntity );
@@ -158,7 +167,13 @@ void CLight :: KeyValue( KeyValueData* pkvd)
 {
 	if (FStrEq(pkvd->szKeyName, "style"))
 	{
-		m_iStyle = atoi(pkvd->szValue);
+		// SBO 2.1: refused at run time: the light would drive another style number (the lights of that number
+		// change) while the map's lighting keeps this light on the old one
+		if ( m_fSpawned )
+			ALERT( at_console, "Key \"style\" of %s \"%s\" can't be changed at run time (it would switch other lights)\n",
+				STRING( pev->classname ), STRING( pev->targetname ) );
+		else
+			m_iStyle = atoi(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "pitch"))
@@ -168,7 +183,8 @@ void CLight :: KeyValue( KeyValueData* pkvd)
 	}
 	else if (FStrEq(pkvd->szKeyName, "pattern"))
 	{
-		m_iszPattern = ALLOC_STRING( pkvd->szValue );
+		// SBO 2.1: at run time made safe for the clients (letters a-z, at most 63; empty: "m")
+		m_iszPattern = m_fSpawned ? Lights_CleanPattern( pkvd->szValue ) : ALLOC_STRING( pkvd->szValue );
 		pkvd->fHandled = TRUE;
 	}
 	else
@@ -200,7 +216,7 @@ void CLight::SetCorrectStyle( void )
 
 // Spirit's lightfader: from the first letter of the current pattern to the first letter of the new one, a step
 // every 0.1 s, then the new pattern
-void CLight::StartFade( const char *szTo, float flTime, int iWait )
+void CLight::StartFade( const char *szTo, float flTime, float flWait )
 {
 	if ( !Switchable() )
 		return;
@@ -214,21 +230,21 @@ void CLight::StartFade( const char *szTo, float flTime, int iWait )
 		m_cFadeTo = 'm';
 	m_flFadeStart = gpGlobals->time;
 	m_flFadeEnd = gpGlobals->time + flTime;
-	m_iWait = iWait;
+	m_flWait = flWait;
 	SetThink( &CLight::FadeThink );
 	pev->nextthink = gpGlobals->time + 0.1;
 }
 
-void CLight::StartWait( int iWait )
+void CLight::StartWait( float flWait )
 {
-	if ( iWait < 0 )
+	if ( flWait < 0 )
 	{
 		SetThink( NULL );
 		pev->nextthink = 0;
 		return;
 	}
 	SetThink( &CLight::WaitThink );
-	pev->nextthink = gpGlobals->time + iWait;
+	pev->nextthink = gpGlobals->time + flWait;
 }
 
 void CLight::FadeThink( void )
@@ -246,7 +262,7 @@ void CLight::FadeThink( void )
 
 	// done: the new pattern, then (Hold time) the light's own again
 	SetStyle( m_pszFadeTo );
-	StartWait( m_iWait );
+	StartWait( m_flWait );
 }
 
 void CLight::WaitThink( void )
@@ -281,6 +297,36 @@ void CLight :: Spawn( void )
 			m_pszCurrent = "m";
 		LIGHT_STYLE(m_iStyle, (char *)m_pszCurrent);
 	}
+	m_fSpawned = TRUE;	// SBO 2.1
+}
+
+CKeyValue CLight :: GetKeyValue( const char *keyName )
+{
+	CKeyValue keyvalue = g_emptyKeyValue;
+	if ( FStrEq( keyName, "style" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "style";
+		keyvalue.iVal = m_iStyle;
+		return keyvalue;
+	}
+	if ( FStrEq( keyName, "pattern" ) )
+	{
+		keyvalue.keyType = KEY_TYPE_STRING;
+		keyvalue.keyName = "pattern";
+		keyvalue.sVal = m_iszPattern;
+		return keyvalue;
+	}
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+// SBO 2.1: a new "pattern" on a light that is on shows at once (else at its next turn-on); a trigger_lightstyle fade or
+// hold running on it ends on the new pattern
+void CLight :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( FStrEq( keyName, "pattern" ) && Switchable() && !FBitSet( pev->spawnflags, SF_LIGHT_START_OFF )
+		&& m_pfnThink == NULL )
+		SetStyle( STRING( m_iszPattern ) );
 }
 
 
@@ -457,7 +503,8 @@ public:
 	int		m_iStyleChoice;
 	string_t m_iszPattern;
 	int		m_iFade;
-	int		m_iWait;
+	float	m_flWait;		// Hold time (key m_iWait, seconds, decimals allowed; below 0: for good)
+	BOOL	m_bWaitKey;		// the key was given (a missing key reads as 0 otherwise; the default is -1)
 	BOOL	m_bRoundReset;
 };
 
@@ -468,7 +515,7 @@ TYPEDESCRIPTION CTriggerLightstyle::m_SaveData[] =
 	DEFINE_FIELD( CTriggerLightstyle, m_iStyleChoice, FIELD_INTEGER ),
 	DEFINE_FIELD( CTriggerLightstyle, m_iszPattern, FIELD_STRING ),
 	DEFINE_FIELD( CTriggerLightstyle, m_iFade, FIELD_INTEGER ),
-	DEFINE_FIELD( CTriggerLightstyle, m_iWait, FIELD_INTEGER ),
+	DEFINE_FIELD( CTriggerLightstyle, m_flWait, FIELD_FLOAT ),
 	DEFINE_FIELD( CTriggerLightstyle, m_bRoundReset, FIELD_BOOLEAN ),
 };
 
@@ -495,7 +542,8 @@ void CTriggerLightstyle::KeyValue( KeyValueData *pkvd )
 	}
 	else if ( FStrEq( pkvd->szKeyName, "m_iWait" ) )
 	{
-		m_iWait = atoi( pkvd->szValue );
+		m_flWait = atof( pkvd->szValue );
+		m_bWaitKey = TRUE;
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq( pkvd->szKeyName, "round_reset" ) )	// SBO 2.0 (round_hooks.h)
@@ -512,6 +560,8 @@ void CTriggerLightstyle::Spawn( void )
 	CPointEntity::Spawn();
 	if ( m_iFade < 0 )
 		m_iFade = 0;
+	if ( !m_bWaitKey )
+		m_flWait = -1;	// Hold time left out: for good
 }
 
 void CTriggerLightstyle::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
@@ -532,11 +582,11 @@ void CTriggerLightstyle::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE
 		}
 
 		if ( m_iFade > 0 )
-			pLight->StartFade( szPattern, (float)m_iFade, m_iWait );
+			pLight->StartFade( szPattern, (float)m_iFade, m_flWait );
 		else
 		{
 			pLight->SetStyle( szPattern );
-			pLight->StartWait( m_iWait );
+			pLight->StartWait( m_flWait );
 		}
 	}
 }

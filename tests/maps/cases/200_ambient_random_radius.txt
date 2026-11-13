@@ -1,0 +1,33 @@
+# Tier 5. ambient_random (FGD: an ambient_generic that plays one of its sounds, picked at random each time it is
+# turned on): Volume (health / 10) and Pitch, the radius flags as on ambient_generic (1 Play Everywhere 0, 2 Small
+# Radius 2, 4 Medium Radius 1.25, 8 Large Radius 0.8); WAV Name 4 / 5 (noise2 / noise3) alone are its sound; 16 Start
+# Silent: nothing at the start, a trigger starts it; 32 Not Toggled: each trigger plays once more
+# covers: ambient_random.health ambient_random.pitch ambient_random:1 ambient_random:2 ambient_random:4 ambient_random:8 ambient_random:16 ambient_random:32 ambient_random.noise2 ambient_random.noise3
+map co_fuzz
+spawn ambient_random targetname a1 message ambience/dog1.wav health 10 spawnflags 1
+spawn ambient_random targetname a2 noise2 ambience/dog2.wav health 5 pitch 150 spawnflags 2
+spawn ambient_random targetname a4 noise3 ambience/dog3.wav health 3 pitch 60 spawnflags 4
+spawn ambient_random targetname a8 message ambience/dog4.wav health 8 spawnflags 8
+spawn ambient_random targetname s16 message ambience/cat1.wav health 10 spawnflags 16
+spawn ambient_random targetname n32 message ambience/car2.wav health 7 spawnflags 48
+activate
+connect 1 P1
+frames 10
+expect ambience/dog1.wav vol=1.00 att=0.00 pitch=100 flags=256
+expect ambience/dog2.wav vol=0.50 att=2.00 pitch=150 flags=256
+expect ambience/dog3.wav vol=0.30 att=1.25 pitch=60 flags=256
+expect ambience/dog4.wav vol=0.80 att=0.80 pitch=100 flags=256
+expectnot ambience/cat1.wav
+expectnot ambience/car2.wav
+mark first_fire
+fire s16
+fire n32
+frames 5
+expectn 1 ambience/cat1.wav vol=1.00 att=1.25 pitch=100 flags=0
+expectn 1 ambience/car2.wav vol=0.70 att=1.25 pitch=100 flags=0
+mark second_fire
+fire s16
+fire n32
+frames 5
+expectn 1 ambience/cat1.wav vol=0.00 att=0.00 pitch=0 flags=32
+expectn 2 ambience/car2.wav vol=0.70 att=1.25 pitch=100 flags=0

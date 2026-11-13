@@ -8,6 +8,7 @@
 #include <wchar.h>
 
 #include <vgui/ILocalize.h>
+#include <vgui/IPanel.h>
 #include <vgui/ISurface.h>
 #include <vgui_controls/Controls.h>
 
@@ -394,4 +395,24 @@ void VGui2_Spectator_SetSuppressed(bool bSuppressed)
 {
 	if (CSboSpectatorPanel::Get())
 		CSboSpectatorPanel::Get()->SetSuppressed(bSuppressed);
+}
+
+int CSboSpectatorPanel::BottomTop()
+{
+	if (!m_bShown || !IsVisible())
+		return 0;
+	int x, top;
+	vgui2::ipanel()->GetAbsPos(m_pBottomBar->GetVPanel(), x, top);
+	if (m_pTargetInfo->IsVisible())
+	{
+		int y;
+		vgui2::ipanel()->GetAbsPos(m_pTargetInfo->GetVPanel(), x, y);
+		top = std::min(top, y);
+	}
+	return top;
+}
+
+int VGui2_Spectator_BottomTop()
+{
+	return CSboSpectatorPanel::Get() ? CSboSpectatorPanel::Get()->BottomTop() : 0;
 }

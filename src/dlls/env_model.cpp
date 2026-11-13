@@ -42,6 +42,8 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void RoundReset( void );
 	void UpdateOnRemove( void );
+	// SBO 2.1 (Spirit of Half-Life): On while it plays its "on" sequence, Off while it is off ("Initially Off")
+	STATE GetState( CBaseEntity *pActivator ) { return ( pev->spawnflags & SF_ENVMODEL_OFF ) ? STATE_OFF : STATE_ON; }
 	int	ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
 	virtual int		Save( CSave &save );
@@ -210,12 +212,14 @@ void CEnvModel::Spawn( void )
 	SetBoneController( 0, 0 );
 	SetBoneController( 1, 0 );
 
-	const float startingFrame = pev->frame;
+	// SBO 2.0: the map's Starting frame (Precache above set pev->frame to the saved frame, 0 on a new map; Featureful
+	// read pev->frame after it, so the key never applied)
 	SetSequence();
-	if ( startingFrame < 0 )
+	if ( m_flStartFrame < 0 )
 		pev->frame = RANDOM_LONG( 0, 255 );
 	else
-		pev->frame = startingFrame;
+		pev->frame = m_flStartFrame;
+	m_savedFrame = pev->frame;	// Client-side animation counts the sequence's end from here
 
 	pev->nextthink = gpGlobals->time + 0.1;
 }
@@ -252,6 +256,7 @@ void CEnvModel::RoundReset( void )
 		pev->frame = RANDOM_LONG( 0, 255 );
 	else
 		pev->frame = m_flStartFrame;
+	m_savedFrame = pev->frame;
 	pev->nextthink = gpGlobals->time + 0.1;
 }
 
@@ -352,8 +357,13 @@ void CEnvModel::SetSequence( void )
 	pev->frame = 0;
 	ResetSequenceInfo();
 
-	if ( ( pev->spawnflags & SF_ENVMODEL_OFF ) && m_flFramerate_Off )
-		pev->framerate = m_flFramerate_Off;
+	// SBO 2.0: a blank framerate is 1 in either state (the FGD's default; ResetSequenceInfo set 1). Featureful used
+	// Framerate when on for the off sequence when Framerate when off was blank
+	if ( pev->spawnflags & SF_ENVMODEL_OFF )
+	{
+		if ( m_flFramerate_Off )
+			pev->framerate = m_flFramerate_Off;
+	}
 	else if ( m_flFramerate_On )
 		pev->framerate = m_flFramerate_On;
 

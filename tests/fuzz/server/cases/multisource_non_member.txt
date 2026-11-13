@@ -1,11 +1,12 @@
-# a multisource Used by an entity that is not one of its members: it toggled its last member's state
-# (the button targets it: member; the second Use comes from the world: not a member, no toggle)
+# a multisource Used by an entity that is not one of its members toggles its last member's slot (HL SDK, 1.38),
+# without a console message (the button targets it: its only member; the Use from the world toggles the button's slot)
 map co_fuzz
 spawn multisource targetname m target relay_out
 spawn func_button model *1 target m
-spawn trigger_relay targetname relay_out
+spawn trigger_relay targetname relay_out target relay_out_sink
 activate
 frames 3
 use 0 world
 frames 2
-expect MultiSrc:Used by non member worldspawn
+expect Firing: (relay_out)
+expectn 0 MultiSrc:Used by non member

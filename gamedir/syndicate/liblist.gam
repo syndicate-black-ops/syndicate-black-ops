@@ -4,7 +4,7 @@ game "Syndicate Black Ops"
 
 type "multiplayer_only"
 gamedir "syndicate"
-version "2.0.0"
+version "2.1.0"
 
 gamedll "dlls\hl.dll"
 gamedll_linux "dlls/hl.so"

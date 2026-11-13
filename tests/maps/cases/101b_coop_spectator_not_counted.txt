@@ -1,0 +1,28 @@
+# coop: spectators are never players (719d7d4e): P2 goes to spectator mode before the round; the round starts with P1
+# alone, and when P1 is killed the round fails (the spectator is not a living player who keeps it going)
+# covers: trigger_hurt
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+spawn trigger_hurt dmg 100000 damagetype 0
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 2 spectate
+frames 3
+cmd 1 item 1
+frames 260
+expectn 1 ROUND START
+mark p1_dead
+touchclient 0 1
+frames 60
+expectn 1 FAILED ROUND

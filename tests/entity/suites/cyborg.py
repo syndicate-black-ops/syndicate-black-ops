@@ -1,4 +1,4 @@
-"""monster_cyborg (Big Cyborg) sight, src/dlls/cyborg.cpp: CCyborg::Look sees every monster and player within 12000
+"""monster_cyborg (Cyborg) sight, src/dlls/cyborg.cpp: CCyborg::Look sees every monster and player within 12000
 units, through walls and without a view cone (1.38), and skips an entity with FL_NOTARGET (the `notarget` cheat,
 observers), as CBaseMonster::Look does (1.38: it took a notarget player as its enemy).
 
@@ -37,7 +37,7 @@ def done(t):
 
 
 @S.test('a player with notarget in front of it: the cyborg does not take him as its enemy; notarget off: it does',
-        players=1, size=ROOM)
+        players=1, size=ROOM, covers=('monster_cyborg',))
 def notarget_not_seen(t):
     cyborg_and_player(t)
     t.flags('player1', '+FL_NOTARGET')
@@ -58,7 +58,8 @@ def notarget_not_seen(t):
     done(t)
 
 
-@S.test('control: the same player without notarget: the cyborg takes him as its enemy', players=1, size=ROOM)
+@S.test('control: the same player without notarget: the cyborg takes him as its enemy', players=1, size=ROOM,
+        covers=('monster_cyborg',))
 def player_seen(t):
     cyborg_and_player(t)
     t.wait(0.3)
@@ -105,7 +106,7 @@ def make_walk_test(seed, dname, mark_at, yaw):
 
     walks.__name__ = 'walks_%s_seed%d' % (dname, seed)
     S.test('walking to a scripted_sequence mark %s (seed %d): the cyborg walks with "walk" and gets there' % (dname, seed),
-           players=1, size=ROOM)(walks)
+           players=1, size=ROOM, covers=('monster_cyborg',))(walks)
 
 
 for _seed in (2, 3, 5, 7):
@@ -141,7 +142,7 @@ def make_chase_test(seed):
 
     chases.__name__ = 'chases_seed%d' % seed
     S.test('chasing the player round a wall (seed %d): the cyborg walks with "walk" and moves' % seed, players=1,
-           size=ROOM)(chases)
+           size=ROOM, covers=('monster_cyborg',))(chases)
 
 
 for _seed in (2, 3, 5):

@@ -23,6 +23,7 @@
 #include "cbase.h"
 #include "doors.h"
 #include "soundradius.h"	// SBO 2.0 (Featureful): "soundradius"
+#include "movewith.h"	// SBO 2.0: momentary_door as a child measures in its parent's frame
 
 
 extern void SetMovedir(entvars_t* ev);
@@ -40,6 +41,23 @@ public:
 	virtual void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	virtual void Blocked( CBaseEntity *pOther );
 	virtual BOOL ShouldCollide( CBaseEntity *pOther );	// SBO 2.0 (Featureful): "ignore_corpses", "handle_tiny_creatures"
+	// SBO 2.1 (Spirit of Half-Life CBaseToggle::GetState): open On, closed Off, opening Turn On, closing Turn Off. A
+	// "Starts Open" door swapped its two positions at spawn, so its top is the closed one: the states turn around
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		STATE state = ToggleStateAsState();
+		if ( FBitSet( pev->spawnflags, SF_DOOR_START_OPEN ) )
+		{
+			switch ( state )
+			{
+			case STATE_ON:			return STATE_OFF;
+			case STATE_OFF:			return STATE_ON;
+			case STATE_TURN_ON:		return STATE_TURN_OFF;
+			default:				return STATE_TURN_ON;
+			}
+		}
+		return state;
+	}
 
 
 	virtual int	ObjectCaps( void ) 
@@ -85,6 +103,9 @@ public:
 	BYTE	m_bLockedSentence;	
 	BYTE	m_bUnlockedSound;	
 	BYTE	m_bUnlockedSentence;
+	// SBO 2.1 (Featureful CBaseDoor, Half-Life Unified SDK names instead of numbers): a sound file / a sentence group
+	// name instead of each numbered locked / unlocked sound and sentence; empty: the number
+	string_t m_iszLockedSoundOverride, m_iszUnlockedSoundOverride, m_iszLockedSentenceOverride, m_iszUnlockedSentenceOverride;
 
 	// SBO 2.0, from Featureful (halflife-featureful dlls/doors.cpp CBaseDoor, Half-Life 1 SDK license; Sven Co-op's
 	// key): "Obey Trigger Mode" (m_iObeyTriggerMode) for func_door and func_door_rotating. 0 (default): every use type
@@ -134,6 +155,10 @@ TYPEDESCRIPTION	CBaseDoor::m_SaveData[] =
 	DEFINE_FIELD( CBaseDoor, m_bLockedSentence, FIELD_CHARACTER ),
 	DEFINE_FIELD( CBaseDoor, m_bUnlockedSound, FIELD_CHARACTER ),	
 	DEFINE_FIELD( CBaseDoor, m_bUnlockedSentence, FIELD_CHARACTER ),	
+	DEFINE_FIELD( CBaseDoor, m_iszLockedSoundOverride, FIELD_STRING ),	// SBO 2.1
+	DEFINE_FIELD( CBaseDoor, m_iszUnlockedSoundOverride, FIELD_STRING ),
+	DEFINE_FIELD( CBaseDoor, m_iszLockedSentenceOverride, FIELD_STRING ),
+	DEFINE_FIELD( CBaseDoor, m_iszUnlockedSentenceOverride, FIELD_STRING ),
 	DEFINE_FIELD( CBaseDoor, m_iObeyTriggerMode, FIELD_SHORT ),
 	DEFINE_FIELD( CBaseDoor, m_iDirectUse, FIELD_SHORT ),
 	DEFINE_FIELD( CBaseDoor, m_fIgnoreCorpses, FIELD_BOOLEAN ),
@@ -289,6 +314,11 @@ void CBaseDoor::KeyValue( KeyValueData *pkvd )
 		m_bUnlockedSentence = atof(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
+	// SBO 2.1 (Featureful)
+	else if (FStrEq(pkvd->szKeyName, "locked_sound_override"))	{ m_iszLockedSoundOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
+	else if (FStrEq(pkvd->szKeyName, "unlocked_sound_override"))	{ m_iszUnlockedSoundOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
+	else if (FStrEq(pkvd->szKeyName, "locked_sentence_override"))	{ m_iszLockedSentenceOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
+	else if (FStrEq(pkvd->szKeyName, "unlocked_sentence_override"))	{ m_iszUnlockedSentenceOverride = ALLOC_STRING(pkvd->szValue); pkvd->fHandled = TRUE; }
 	else if (FStrEq(pkvd->szKeyName, "m_iObeyTriggerMode"))	// SBO 2.0 (Featureful)
 	{
 		m_iObeyTriggerMode = atoi(pkvd->szValue);
@@ -541,14 +571,25 @@ void CBaseDoor::Precache( void )
 
 	// get door button sounds, for doors which are directly 'touched' to open
 
-	if (m_bLockedSound)
+	// SBO 2.1 (Featureful): a sound file instead of the number (only the one used is loaded)
+	if ( !FStringNull( m_iszLockedSoundOverride ) && STRING( m_iszLockedSoundOverride )[0] )
+	{
+		PRECACHE_SOUND( (char *)STRING( m_iszLockedSoundOverride ) );
+		m_ls.sLockedSound = m_iszLockedSoundOverride;
+	}
+	else if (m_bLockedSound)
 	{
 		pszSound = ButtonSound( (int)m_bLockedSound );
 		PRECACHE_SOUND(pszSound);
 		m_ls.sLockedSound = ALLOC_STRING(pszSound);
 	}
 
-	if (m_bUnlockedSound)
+	if ( !FStringNull( m_iszUnlockedSoundOverride ) && STRING( m_iszUnlockedSoundOverride )[0] )
+	{
+		PRECACHE_SOUND( (char *)STRING( m_iszUnlockedSoundOverride ) );
+		m_ls.sUnlockedSound = m_iszUnlockedSoundOverride;
+	}
+	else if (m_bUnlockedSound)
 	{
 		pszSound = ButtonSound( (int)m_bUnlockedSound );
 		PRECACHE_SOUND(pszSound);
@@ -585,6 +626,12 @@ void CBaseDoor::Precache( void )
 		
 		default: m_ls.sUnlockedSentence = 0; break;
 	}
+
+	// SBO 2.1 (Featureful): sentence group names (sentences.txt) instead of the numbered sentences
+	if ( !FStringNull( m_iszLockedSentenceOverride ) && STRING( m_iszLockedSentenceOverride )[0] )
+		m_ls.sLockedSentence = m_iszLockedSentenceOverride;
+	if ( !FStringNull( m_iszUnlockedSentenceOverride ) && STRING( m_iszUnlockedSentenceOverride )[0] )
+		m_ls.sUnlockedSentence = m_iszUnlockedSentenceOverride;
 }
 
 //
@@ -897,10 +944,17 @@ void CBaseDoor::Blocked( CBaseEntity *pOther )
 		|| ( m_iHandleTinyCreatures == HANDLE_TINY_CREATURES_CRUSH && pOther->IsTinyCreature() );
 	if ( pev->dmg || fInstaGib )
 	{
+		// TakeDamage can free the blocker at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+		// checks the edict's serial number and private data, so a blocker freed there comes back NULL and the door
+		// goes on, as for a blocker that is being removed
+		EHANDLE hOther;
+		hOther = pOther;
 		if ( fInstaGib )
 			pOther->TakeDamage( pev, pev, pOther->pev->health + 1, DMG_CRUSH | DMG_ALWAYSGIB );
 		else
 			pOther->TakeDamage( pev, pev, pev->dmg, DMG_CRUSH );
+		if ( hOther == NULL )
+			return;
 
 		// the blocker became non-solid or is being removed: the door goes on (Featureful tests the door's own
 		// FL_KILLME there, which a door never has; SBO tests the blocker's)
@@ -1100,6 +1154,18 @@ public:
 	// SBO 2.0 (Featureful 7af3f63b): a satchel charge or an armed trip mine under it goes off
 	void	Blocked( CBaseEntity *pOther ) { pOther->HandleDoorBlockage( this ); }
 
+	// SBO 2.1 (Spirit of Half-Life: On while it moves): opening Turn On, closing Turn Off; at rest On when open at all,
+	// Off when closed. "Starts Open" swapped the two positions at spawn: there 0 is open and 1 closed. A child of a
+	// moving parent (movewith) moves when its own movement on the parent does, not when the parent carries it.
+	virtual STATE GetState( CBaseEntity *pActivator )
+	{
+		const BOOL fStartOpen = FBitSet( pev->spawnflags, SF_DOOR_START_OPEN ) != 0;
+		if ( MoveWith_GetOwnVelocity( this ) != g_vecZero )
+			return ( m_fLastDirection != 0 ) != fStartOpen ? STATE_TURN_ON : STATE_TURN_OFF;
+		const float flOpen = fStartOpen ? 1.0f - m_fLastPos : m_fLastPos;
+		return flOpen > 0 ? STATE_ON : STATE_OFF;
+	}
+
 	// halflife-updated (halflife #3265): stop the move sound once the door has arrived
 	void EXPORT DoorMoveDone( void );
 	void EXPORT StopMoveSound( void );
@@ -1184,6 +1250,11 @@ void CMomentaryDoor::Precache( void )
 {
 
 // set the door's "in-motion" sound
+	// SBO 2.1 (Featureful func_door "noise1" / "noise2", Half-Life Unified SDK names instead of numbers): "noise1" /
+	// "noise2" sound files instead of the numbered "movesnd" / "stopsnd"; empty: the numbers
+	if ( !FStringNull( pev->noiseMoving ) && STRING( pev->noiseMoving )[0] )
+		PRECACHE_SOUND( (char *)STRING( pev->noiseMoving ) );
+	else
 	switch (m_bMoveSnd)
 	{
 	case	0:
@@ -1229,7 +1300,9 @@ void CMomentaryDoor::Precache( void )
 	// SBO 2.0, from Featureful: the stop sound ("stopsnd"; 0: none, as before)
 	static const char *s_stopSounds[] = { "doors/doorstop1.wav", "doors/doorstop2.wav", "doors/doorstop3.wav",
 		"doors/doorstop4.wav", "doors/doorstop5.wav", "doors/doorstop6.wav", "doors/doorstop7.wav", "doors/doorstop8.wav" };
-	if ( m_bStopSnd >= 1 && m_bStopSnd <= 8 )
+	if ( !FStringNull( pev->noiseArrived ) && STRING( pev->noiseArrived )[0] )
+		PRECACHE_SOUND( (char *)STRING( pev->noiseArrived ) );
+	else if ( m_bStopSnd >= 1 && m_bStopSnd <= 8 )
 	{
 		PRECACHE_SOUND( (char *)s_stopSounds[ m_bStopSnd - 1 ] );
 		pev->noiseArrived = MAKE_STRING( s_stopSounds[ m_bStopSnd - 1 ] );
@@ -1308,7 +1381,9 @@ void CMomentaryDoor::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 
 	Vector move = m_vecPosition1 + (value * (m_vecPosition2 - m_vecPosition1));
 	
-	Vector delta = move - pev->origin;
+	Vector vecOrigin = pev->origin;
+	MoveWith_GetOwnPose( this, &vecOrigin, NULL );	// SBO 2.0 movewith: a child's own pose
+	Vector delta = move - vecOrigin;
 	float speed = delta.Length() * 10;
 
 	if ( speed != 0 )

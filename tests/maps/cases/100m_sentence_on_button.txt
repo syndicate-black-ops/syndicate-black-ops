@@ -1,0 +1,14 @@
+# scripted_sentence targeting a func_button: the button speaks the sentence (69e09dc3, HL25: any toggle that may speak,
+# not only monsters; 1.38 found no speaker)
+# (the engine sends a sentence by its index: !BA_HELLO0 is !447 in sound/sentences.txt)
+# covers: scripted_sentence scripted_sentence.entity scripted_sentence.sentence
+map co_fuzz
+spawn func_button targetname btn model *1
+spawn scripted_sentence targetname say entity btn sentence !BA_HELLO0 duration 1
+activate
+connect 1 P1
+frames 3
+fire say
+frames 10
+soundcount btn 2
+expect func_button ch2 !447

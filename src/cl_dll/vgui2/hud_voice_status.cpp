@@ -76,7 +76,7 @@ void VGui2_ApplyVoiceStatusLayout(vgui2::Panel *pPanel)
 	{
 		char msg[128];
 		Q_snprintf(msg, sizeof(msg), "%s: " VOICESTATUS_RES " not found, using defaults\n", pPanel->GetName());
-		sbo::ConsolePrint(msg);
+		sbo::DevPrint(msg);
 		return;
 	}
 

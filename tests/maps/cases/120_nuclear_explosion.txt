@@ -1,0 +1,51 @@
+# nuclear_explosion (FGD): triggered, it sends the fireball (TE_SPRITE, Explosion size v1 and opacity v2), the mushroom
+# cloud (TE_SMOKE, Smoke size v3), the shockwave disc (TE_BEAMCYLINDER, Disc lifetime v4, width v5, brightness v6,
+# speed v7) and the glow (TE_GLOWSPRITE, Glow lifetime v8, size v9, brightness v10); Explosion damage v11 hurts a
+# player within Explosion radius v12 (blast damage, less with the distance), not one outside it; when the glow ends (v8
+# tenths of a second) the afterglow follows (TE_GLOWSPRITE, Afterglow lifetime v14, size v15, brightness v16). 1.38
+# never sent the afterglow (approved: nuke-afterglow). A locked master: nothing. (Shake radius v13 needs a player on
+# the ground: the stub's never is)
+# covers: nuclear_explosion nuclear_explosion.master nuclear_explosion.v1 nuclear_explosion.v2 nuclear_explosion.v3 nuclear_explosion.v4 nuclear_explosion.v5 nuclear_explosion.v6 nuclear_explosion.v7 nuclear_explosion.v8 nuclear_explosion.v9 nuclear_explosion.v10 nuclear_explosion.v11 nuclear_explosion.v12 nuclear_explosion.v14 nuclear_explosion.v15 nuclear_explosion.v16
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn nuclear_explosion targetname nuke v1 61 v2 202 v3 63 v4 24 v5 45 v6 206 v7 7 v8 20 v9 129 v10 191 v11 40 v12 2000 v13 3000 v14 34 v15 65 v16 216 origin "0 500 0"
+spawn nuclear_explosion targetname far v1 60 v2 255 v3 255 v8 10 v11 40 v12 100 v13 100 v14 30 v15 64 v16 200 origin "0 6000 0"
+spawn multisource targetname shut
+spawn trigger_relay targetname never target shut
+spawn nuclear_explosion targetname locked master shut v1 77 v8 10 v11 40 v12 5000 v13 5000 origin "0 8000 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectdump player health=100.0
+mark far
+fire far
+frames 3
+expectdump player health=100.0
+expectre MSG svc23 ->\w+: 17 0 6000 128 \d+ 60 255$
+mark fire
+fire nuke
+frames 1
+expectre MSG svc23 ->\w+: 17 0 500 128 \d+ 61 202$
+expectre MSG svc23 ->\w+: 5 0 500 256 \d+ 63 5$
+expectre MSG svc23 ->\w+: 21 0 500 0 0 500 320 \d+ 0 0 24 45 0 255 255 192 206 7$
+expectre MSG svc23 ->\w+: 23 0 500 0 \d+ 20 129 191$
+expectnotre MSG svc23 ->\w+: 23 0 500 0 \d+ 34 65 216$
+frames 1
+expectre MSG Damage ->#1: \d+ [1-9]\d* \d+ 0 500 0$
+frames 19
+expectre MSG svc23 ->\w+: 23 0 500 0 \d+ 34 65 216$
+mark locked
+fire locked
+frames 3
+expectnotre MSG svc23 ->\w+: 17 0 8000

@@ -1,0 +1,35 @@
+# Button and rotating sounds the 1.38 maps set (FGD): func_button Sounds 0 None: pressed, it plays no sound
+# (only common/null.wav); func_rotating Fan Sounds 0 No Sound: it turns silently (no fan sound),
+# 512 Large Radius plays its sound at attenuation 0.8 (ATTN_NORM); func_rot_button Sounds 21 Squeaky
+# (buttons/lever1.wav) turns Distance 90 at Speed 45 (2 s), stays Delay before reset 3 s, then turns back (2 s)
+# covers: func_button.sounds=0 func_rotating.sounds=0 func_rotating:512 func_rot_button.sounds func_rot_button.sounds=21 func_rot_button.speed func_rot_button.wait
+map co_fuzz
+brushsize 64 64 64
+spawn func_button targetname b0 model *1 sounds 0 wait 1
+spawn func_wall model *2
+spawn func_rotating targetname r0 model *3 speed 100 spawnflags 1 sounds 0
+spawn func_rotating targetname r512 model *4 speed 100 spawnflags 513 sounds 2
+spawn func_rot_button targetname rb model *5 speed 45 distance 90 wait 3 sounds 21
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 30
+expectfield r0 avelocity "0 100 0"
+expectnotre SOUND #\d+ func_rotating ch6 (?!fans/fan2|common/null)
+expect ch6 fans/fan2.wav vol=1.00 att=0.80 pitch=100
+mark press
+useclient 0 1
+useclient 4 1
+frames 2
+expectnotre SOUND #\d+ func_button ch\d (?!common/null)
+expect buttons/lever1.wav
+frames 19
+mark t2.1
+expectfield rb angles "0 90 0"
+frames 25
+mark t4.6
+expectfield rb angles "0 90 0"
+frames 35
+mark t8.1
+expectfield rb angles "0 0 0"

@@ -1,0 +1,13 @@
+# a func_breakable with explodemagnitude broken by a trigger explodes once and fires its target once (74c5ad52,
+# halflife-updated: Die returns once the breakable is not solid; on 1.38 its own blast broke it again: two blasts, two
+# target fires; co_omega17_v3's Bunker_GrenadeTrap)
+# covers: func_breakable.explodemagnitude func_breakable.target
+map co_fuzz
+spawn func_breakable targetname br model *1 health 20 explodemagnitude 100 target br_out material 1
+spawn trigger_relay targetname br_out target br_sink triggerstate 2
+activate
+connect 1 P1
+frames 3
+fire br
+frames 10
+expectn 1 Firing: (br_out)

@@ -50,6 +50,10 @@ const Color INPUT_BG(0x0b, 0x0e, 0x0b, 255);
 
 //! design pixels (at 720 lines) -> screen pixels
 int S(float px);
+//! the key hints bar at the bottom center (the GM key hints; the tool windows' mouse look note): its height, and its
+//! top for a bar standing on bottom (the screen's height, or the top of what is drawn there)
+int HintsBarTall();
+int HintsBarTop(int bottom);
 //! Tahoma (Linux: DejaVu Sans) at design px size; bold for the key names
 vgui2::HFont Font(float px, bool bold = false);
 int TextWide(vgui2::HFont font, const wchar_t *text);

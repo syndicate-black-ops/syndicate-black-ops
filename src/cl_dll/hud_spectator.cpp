@@ -26,6 +26,11 @@
 #include "studio_util.h"
 #include "screenfade.h"
 #include "vgui2/vgui2_api.h"	// VGui2_GmHudOwnsScreen
+#include "overview_gl.h"	// SBO 2.0: the overview keeps its own field of view
+#include <math.h>
+#ifndef M_PI
+#define M_PI	3.14159265358979323846
+#endif
 
 
 #pragma warning(disable: 4244)
@@ -141,6 +146,7 @@ int CHudSpectator::Init()
 
 	m_iFlags |= HUD_ACTIVE;
 	m_flNextObserverInput = 0.0f;
+	m_flOverviewNdcScale = 1.0f;
 	m_zoomDelta	= 0.0f;
 	m_moveDelta = 0.0f;
 	m_FOV = 90.0f;					// Steam SDK: HLTV director camera state
@@ -171,7 +177,7 @@ int CHudSpectator::Init()
 	
 	if ( !m_drawnames || !m_drawcone || !m_drawstatus || !m_autoDirector || !m_pip)
 	{
-		gEngfuncs.Con_Printf("ERROR! Couldn't register all spectator variables.\n");
+		gEngfuncs.Con_DPrintf("ERROR! Couldn't register all spectator variables.\n");
 		return 0;
 	}
 
@@ -394,7 +400,7 @@ void CHudSpectator::AddWaypoint( float time, vec3_t pos, vec3_t angle, float fov
 
 	if ( m_NumWayPoints >= MAX_CAM_WAYPOINTS )
 	{
-		gEngfuncs.Con_Printf( "Too many camera waypoints!\n" );	
+		gEngfuncs.Con_DPrintf( "Too many camera waypoints!\n" );	
 		return;
 	}
 
@@ -571,6 +577,11 @@ int CHudSpectator::VidInit()
 	m_hsprBeam			= SPR_Load("sprites/laserbeam.spr");
 	m_hsprCamera		= SPR_Load("sprites/camera.spr");
 	m_hCrosshair		= SPR_Load("sprites/crosshairs.spr");
+
+	// the engine unloads the overview images with every map load, the same map too: Reset loads them again
+	m_OverviewData.map[0] = 0;
+	for ( int i = 0; i < OVERVIEW_MAX_LAYERS; i++ )
+		m_MapSprite[i] = NULL;
 	
 	return 1;
 }
@@ -1214,7 +1225,7 @@ bool CHudSpectator::ParseOverviewFile( )
 
 	if (!pfile)
 	{
-		gEngfuncs.Con_Printf("Couldn't open file %s. Using default values for overiew mode.\n", filename );
+		gEngfuncs.Con_DPrintf("Couldn't open file %s. Using default values for overiew mode.\n", filename );
 		return false;
 	}
 	
@@ -1232,7 +1243,7 @@ bool CHudSpectator::ParseOverviewFile( )
 			pfile = gEngfuncs.COM_ParseFile(pfile, token);
 			if ( stricmp( token, "{" ) ) 
 			{
-				gEngfuncs.Con_Printf("Error parsing overview file %s. (expected { )\n", filename );
+				gEngfuncs.Con_DPrintf("Error parsing overview file %s. (expected { )\n", filename );
 				return false;
 			}
 
@@ -1273,7 +1284,7 @@ bool CHudSpectator::ParseOverviewFile( )
 				}
 				else
 				{
-					gEngfuncs.Con_Printf("Error parsing overview file %s. (%s unkown)\n", filename, token );
+					gEngfuncs.Con_DPrintf("Error parsing overview file %s. (%s unkown)\n", filename, token );
 					return false;
 				}
 
@@ -1291,14 +1302,14 @@ bool CHudSpectator::ParseOverviewFile( )
 			const bool bDropLayer = ( m_OverviewData.layers == OVERVIEW_MAX_LAYERS );
 
 			if ( bDropLayer )
-				gEngfuncs.Con_Printf("Overview file %s has too many layers, using the first %i.\n", filename, OVERVIEW_MAX_LAYERS );
+				gEngfuncs.Con_DPrintf("Overview file %s has too many layers, using the first %i.\n", filename, OVERVIEW_MAX_LAYERS );
 
 			pfile = gEngfuncs.COM_ParseFile(pfile,token);
 
 				
 			if ( stricmp( token, "{" ) ) 
 			{
-				gEngfuncs.Con_Printf("Error parsing overview file %s. (expected { )\n", filename );
+				gEngfuncs.Con_DPrintf("Error parsing overview file %s. (expected { )\n", filename );
 				return false;
 			}
 
@@ -1326,7 +1337,7 @@ bool CHudSpectator::ParseOverviewFile( )
 				}
 				else
 				{
-					gEngfuncs.Con_Printf("Error parsing overview file %s. (%s unkown)\n", filename, token );
+					gEngfuncs.Con_DPrintf("Error parsing overview file %s. (%s unkown)\n", filename, token );
 					return false;
 				}
 
@@ -1382,7 +1393,7 @@ void CHudSpectator::LoadMapSprites()
 
 		if ( !pSprite )
 		{
-			gEngfuncs.Con_Printf("Couldn't load overview image \"%s\" (layer %i of %s). Layer left out.\n",
+			gEngfuncs.Con_DPrintf("Couldn't load overview image \"%s\" (layer %i of %s). Layer left out.\n",
 				m_OverviewData.layersImages[i], i + 1, m_OverviewData.map );
 			continue;
 		}
@@ -1730,8 +1741,9 @@ void CHudSpectator::DrawOverviewEntities()
 		if ( gEngfuncs.pTriAPI->WorldToScreen(origin,screen) )
 			continue;	// object is behind viewer
 
-		screen[0] = XPROJECT(screen[0]);
-		screen[1] = YPROJECT(screen[1]);
+		// SBO 2.0: the engine's projection, not the overview's own (DrawOverview, OverviewGL_Begin)
+		screen[0] = XPROJECT(screen[0] * m_flOverviewNdcScale);
+		screen[1] = YPROJECT(screen[1] * m_flOverviewNdcScale);
 		screen[2] = 0.0f;
 
 		// calculate some offset under the icon
@@ -1740,8 +1752,8 @@ void CHudSpectator::DrawOverviewEntities()
 		
 		gEngfuncs.pTriAPI->WorldToScreen(origin,offset);
 
-		offset[0] = XPROJECT(offset[0]);
-		offset[1] = YPROJECT(offset[1]);
+		offset[0] = XPROJECT(offset[0] * m_flOverviewNdcScale);
+		offset[1] = YPROJECT(offset[1] * m_flOverviewNdcScale);
 		offset[2] = 0.0f;
 			
 		VectorSubtract(offset, screen, offset );
@@ -1832,9 +1844,32 @@ void CHudSpectator::DrawOverview()
 	if ( m_iDrawCycle == 1 && m_pip->value < INSET_MAP_FREE )
 		return;
 
+	// SBO 2.0: the frame is drawn with the watched player's zoom while a first-person view of that player is in it
+	// (main view or inset: CHud::Think, m_iRenderFOV); the overview keeps the spectator's own field of view (before,
+	// a zoomed player zoomed the map). Software renderer: no GL, the overview zooms with the frame as before.
+	float flScale = OverviewFovScale();
+	bool bScaled = flScale != 1.0f && OverviewGL_Begin( flScale );
+	m_flOverviewNdcScale = bScaled ? 1.0f / flScale : 1.0f;
+
 	DrawOverviewLayer();
 	DrawOverviewEntities();
+
+	if ( bScaled )
+		OverviewGL_End();
+	m_flOverviewNdcScale = 1.0f;
+
 	CheckOverviewEntities();
+}
+
+// The picture's size goes with 1 / tan( fov / 2 ): the overview's own field of view is the spectator's (OwnFOV),
+// the frame's is m_iRenderFOV
+float CHudSpectator::OverviewFovScale()
+{
+	float own = (float)gHUD.OwnFOV();
+	float frame = (float)gHUD.m_iRenderFOV;
+	if ( !( frame >= 1.0f && frame <= 179.0f ) || !( own >= 1.0f && own <= 179.0f ) || frame == own )
+		return 1.0f;
+	return tanf( own * 0.5f * (float)M_PI / 180.0f ) / tanf( frame * 0.5f * (float)M_PI / 180.0f );
 }
 void CHudSpectator::CheckOverviewEntities()
 {
@@ -2082,6 +2117,7 @@ void CHudSpectator::InitHUDData()
 	m_iSpectatorNumber = 0;
 	iJumpSpectator	= 0;
 	m_bOverviewDrawPass = m_bInsetDrawPass = false;
+	m_flOverviewNdcScale = 1.0f;
 	m_bWatchedHeightKnown = false;
 	m_iWatchedPlayer = 0;
 	m_iLayerViewKey = -1;

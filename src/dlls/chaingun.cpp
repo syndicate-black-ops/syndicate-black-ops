@@ -113,15 +113,36 @@ BOOL CChaingun::Deploy( )
 
 void CChaingun::PrimaryAttack( void )
 {
+	// SBO 2.0: an empty clip neither fires nor leaves the looping fire sequence (the client's event starts it) running
+	// while the button is held: a spinning barrel spins down, as on release; after that the empty click, once per
+	// press (WeaponIdle resets it), as the other guns do.
+	if ( m_iClip <= 0 )
+	{
+		if ( m_fInAttack )
+		{
+			SendWeaponAnim( CHAINGUN_SPINDOWN );
+			EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/gat_spindown.wav", RANDOM_FLOAT(0.92, 1.0), ATTN_NORM, 0, 98 + RANDOM_LONG(0,3));
+			m_fInAttack = 0;
+			m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1;
+		}
+		else
+		{
+			PlayEmptySound( );
+			m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.3;
+		}
+		m_flTimeWeaponIdle = m_flNextPrimaryAttack;
+		return;
+	}
+
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.1;
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.1;
 
-	if ( m_iSpin == 0 && m_iClip > 0 )
+	if ( m_fInAttack == 0 && m_iClip > 0 )
 	{
 		SendWeaponAnim( CHAINGUN_SPINUP );
 		EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/gat_spinup.wav", RANDOM_FLOAT(0.92, 1.0), ATTN_NORM, 0, 98 + RANDOM_LONG(0,3));
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.4;
-		m_iSpin = 1;
+		m_fInAttack = 1;
 	}
 	else
 	{
@@ -133,7 +154,7 @@ void CChaingun::PrimaryAttack( void )
 		if ( m_iShots < 22 )
 			m_iShots++;
 
-		m_iSpin = 1;
+		m_fInAttack = 1;
 
 		if ( TRUE && m_iClip > 0 )
 			ChaingunFire( 0.04, 1 / (float)m_iShots, TRUE, TRUE );
@@ -182,8 +203,9 @@ void CChaingun::ChaingunFire( float flSpread, float flCycleTime, int fUseAutoAim
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usChaingun, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.04;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.04 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 }
 
 
@@ -225,13 +247,13 @@ void CChaingun::WeaponIdle( void )
 	m_flSpinTime = 0;
 	m_iShots = 0;
 
-	if ( m_iSpin == 1 )
+	if ( m_fInAttack == 1 )
 	{
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 1;
 		m_flTimeWeaponIdle = m_flNextPrimaryAttack;
 		SendWeaponAnim( CHAINGUN_SPINDOWN );
 		EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/gat_spindown.wav", RANDOM_FLOAT(0.92, 1.0), ATTN_NORM, 0, 98 + RANDOM_LONG(0,3));
-		m_iSpin = 0;
+		m_fInAttack = 0;
 	}
 	else
 	{
@@ -243,7 +265,7 @@ void CChaingun::WeaponIdle( void )
 		m_pPlayer->GetAutoaimVector( AUTOAIM_10DEGREES );
 
 		int iAnim;
-		switch ( RANDOM_LONG( 0, 1 ) )
+		switch ( UTIL_SharedRandomLong( m_pPlayer->random_seed, 0, 1 ) )
 		{
 		case 0:	
 			iAnim = CHAINGUN_IDLE1;	
@@ -257,6 +279,6 @@ void CChaingun::WeaponIdle( void )
 
 		SendWeaponAnim( iAnim );
 
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 ); // how long till we do this again.
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 ); // how long till we do this again.
 	}
 }

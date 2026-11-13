@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Runs the entity test suites (docs/dev/ENTITY_TESTS.md). Use scripts/run_entity_tests.sh.
 
-    run.py [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--repeat N] [--timescale X] [--list] [--coverage]
+    run.py [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--repeat N] [--timescale X] [--list]
+           [--coverage [--coverage-out DIR]] [--coverage-gate]
 
 Each suite: one generated map (tests/entity/suites/<suite>.py), compiled with ReSDHLT (cached), run on a throw-away
 copy of a stock HLDS with the hl.so under test, checked against the trace the test layer writes. Output in
@@ -39,6 +40,17 @@ def load_suites():
     return suites, classes
 
 
+def build_main_checkout():
+    """The main checkout of a git worktree (the gitignored build/ map scan lives there), or ROOT."""
+    import subprocess
+    try:
+        common = subprocess.run(['git', '-C', ROOT, 'rev-parse', '--path-format=absolute', '--git-common-dir'],
+                                capture_output=True, text=True, check=True).stdout.strip()
+        return os.path.dirname(common)
+    except (OSError, subprocess.CalledProcessError):
+        return ROOT
+
+
 def default_hl():
     for p in ('build/linux/hl.so', 'build/linux/cmake/hl.so'):
         p = os.path.join(ROOT, p)
@@ -63,7 +75,13 @@ def main():
                     else None, help='game clock speed (tests/entity/timescale); default 5, or 2 on a loaded machine')
     ap.add_argument('--list', action='store_true', help='list the suites and tests')
     ap.add_argument('--ignore-requires', action='store_true', help="run suites whose branch code the hl.so lacks")
-    ap.add_argument('--coverage', action='store_true', help='FGD classes no test uses')
+    ap.add_argument('--coverage', action='store_true',
+                    help='FGD classes no test uses, and classes / keys / spawnflag bits / choice values set and asserted '
+                         'by the entity suites and the map-test cases (etest/coverage.py)')
+    ap.add_argument('--coverage-out', default=None, help='with --coverage: write per-item TSV tables to this folder')
+    ap.add_argument('--coverage-gate', action='store_true',
+                    help='fail unless every FGD item is asserted by a test or exempted in tests/fgd_exemptions.json '
+                         '(etest/coverage.py gate)')
     a = ap.parse_args()
 
     suites, classes = load_suites()
@@ -83,11 +101,25 @@ def main():
             for t in s.tests:
                 print('  %s %s' % (t.id, t.title))
         return 0
+    if a.coverage_gate:
+        import fgd
+        from etest import coverage
+        fails, lines = coverage.gate(fgd, classes, suites, os.path.join(ROOT, 'tests', 'maps', 'cases'),
+                                     os.path.join(ROOT, 'tests', 'fgd_exemptions.json'))
+        print('\n'.join(lines))
+        return 1 if fails else 0
     if a.coverage:
-        used = {e.classname for s in suites for t in s.tests for e in t.ents}
+        import fgd
+        from etest import coverage
+        cases_dir = os.path.join(ROOT, 'tests', 'maps', 'cases')
+        used = {e.classname for s in suites for t in s.tests for e in t.ents} | coverage.case_classes(cases_dir)
         missing = [c for c, v in classes.items() if v['kind'] in ('pointclass', 'solidclass') and c not in used]
-        print('%d of %d FGD entity classes have no test:' % (len(missing), len(missing) + len(used & set(classes))))
+        print('%d of %d FGD entity classes have no test (entity suites and map-test cases):'
+              % (len(missing), len(missing) + len(used & set(classes))))
         print('  ' + ' '.join(missing))
+        scan = os.path.join(build_main_checkout(), 'build', 'map-entities', 'entities.jsonl')
+        for line in coverage.report(fgd, classes, suites, cases_dir, map_scan=scan, out_dir=a.coverage_out):
+            print(line)
         return 0
 
     if not a.hl or not os.path.exists(a.hl):

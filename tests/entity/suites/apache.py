@@ -11,6 +11,8 @@ ROOM = (512, 512, 1024)
 SF_WAITFORTRIGGER = 4
 SF_START_INACTIVE = 64
 SF_FIRE_ROCKETS = 32
+SF_EXPLODE_SOONER = 8
+SF_NO_WRECKAGE = 1024
 
 
 def tough(t, player='player1'):
@@ -42,17 +44,8 @@ def gunship(t, spawnflags=None, maker=False):
         t.fire('heli', use='on')
 
 
-@S.test('"Fire Rockets" (32): the apache fires hvr_rockets at a test player', players=1, size=ROOM,
-        doc=DOC + '#fire-rockets')
-def rockets_on(t):
-    gunship(t, SF_FIRE_ROCKETS)
-    t.wait(12)
-    t.expect.spawned('@hvr_rocket', min=1)
-    t.expect.sound('rocket1.wav', ent='@hvr_rocket')
-
-
 @S.test('without "Fire Rockets" the apache never fires a rocket (chaingun only, as 1.38)', players=1, size=ROOM,
-        doc=DOC + '#fire-rockets')
+        doc=DOC + '#fire-rockets', covers=('monster_apache',))
 def rockets_off(t):
     gunship(t, 0)
     t.wait(12)
@@ -68,7 +61,8 @@ def maker(t, **keys):
     t.point('info_target', at=(0, 0, 400), targetname='spot')
 
 
-@S.test('a monstermaker apache flies and thinks right after it spawns', size=ROOM, doc=DOC + '#monstermaker')
+@S.test('a monstermaker apache flies and thinks right after it spawns', size=ROOM, doc=DOC + '#monstermaker',
+        covers=('monstermaker', 'monstermaker.monstertype=monster_apache'))
 def maker_child_flies(t):
     maker(t)
     t.fire('maker')
@@ -83,7 +77,7 @@ def maker_child_flies(t):
 
 
 @S.test('a monstermaker apache with "Fire Rockets" in childspawnflags fires rockets', players=1, size=ROOM,
-        doc=DOC + '#monstermaker')
+        doc=DOC + '#monstermaker', covers=('monstermaker', 'monstermaker.childspawnflags', 'monster_apache:32'))
 def maker_child_rockets(t):
     gunship(t, maker=True)
     t.fire('maker')
@@ -95,7 +89,8 @@ def maker_child_rockets(t):
 
 
 @S.test('a monstermaker with "MonsterClip" (8): its apache still flies (bit 4 is not "Wait For Trigger" for it)',
-        size=ROOM, doc=DOC + '#monstermaker')
+        size=ROOM, doc=DOC + '#monstermaker',
+        covers=('monstermaker', 'monstermaker:8', 'monstermaker.monstertype=monster_apache'))
 def maker_monsterclip(t):
     maker(t, spawnflags='8')
     t.fire('maker')
@@ -106,7 +101,7 @@ def maker_monsterclip(t):
 
 
 @S.test('"Wait For Trigger" (4): the apache stays where it is until used, then flies', size=ROOM,
-        doc=DOC + '#wait-for-trigger')
+        doc=DOC + '#wait-for-trigger', covers=('monster_apache', 'monster_apache:4'))
 def wait_for_trigger(t):
     t.point('monster_apache', at=(0, 0, 400), targetname='heli', angles='0 90 0', spawnflags=str(SF_WAITFORTRIGGER))
     t.point('info_target', at=(0, 0, 400), targetname='spot')
@@ -124,7 +119,7 @@ def wait_for_trigger(t):
 
 
 @S.test('a monstermaker apache with childspawnflags 64 ("Start Inactive") waits until its name is fired', size=ROOM,
-        doc=DOC + '#monstermaker')
+        doc=DOC + '#monstermaker', covers=('monstermaker', 'monstermaker.childspawnflags', 'monster_apache:64'))
 def maker_child_waits(t):
     maker(t, childspawnflags=str(SF_START_INACTIVE))
     t.fire('maker')
@@ -140,7 +135,8 @@ def maker_child_waits(t):
 
 
 @S.test('a monstermaker with "Max live children" 1 spawns its next apache once the first is shot down', size=ROOM,
-        doc=DOC + '#monstermaker')
+        doc=DOC + '#monstermaker',
+        covers=('monstermaker', 'monstermaker.monstercount', 'monstermaker.m_imaxlivechildren', 'monster_apache'))
 def maker_next_after_death(t):
     # HL SDK bug: CApache::Killed never sent the maker its DeathNotice, so the slot stayed taken forever
     maker(t, monstercount='2', delay='1')
@@ -153,7 +149,7 @@ def maker_next_after_death(t):
 
 
 @S.test('AI trigger "Take Damage" (TriggerCondition 2) fires TriggerTarget when the apache is hurt', size=ROOM,
-        doc=DOC)
+        doc=DOC, covers=('monster_apache', 'monster_apache.TriggerCondition=2', 'monster_apache.TriggerTarget'))
 def ai_trigger_take_damage(t):
     # halflife-updated (halflife #3262): CApache::TakeDamage sets the damage conditions FCheckAITrigger reads
     t.point('monster_apache', at=(0, 0, 400), targetname='heli', spawnflags=str(SF_START_INACTIVE),
@@ -165,3 +161,49 @@ def ai_trigger_take_damage(t):
     t.wait(1.5)                 # NullThink checks the AI trigger every 0.5 s
     t.expect.fired('hurt', count=1)                 # once, and not before the hit:
     t.expect.fired('hurt', after='hit', count=1)
+
+
+def shot_down(t, spawnflags):
+    """An apache made 400 up when the test starts (a monstermaker child: a placed one would be in the map from its
+    start, and t01's rockets kill whatever apache stands in the room north of t01 before its test), waiting (64),
+    then shot down: it falls (gravity 0.3), hits the floor about 1.7 s later and explodes at once (CrashTouch),
+    before its 4 s (Explode sooner) or 15 s timer."""
+    maker(t, childspawnflags=str(spawnflags | SF_START_INACTIVE))
+    t.fire('maker', use='on')
+    t.wait(1.0)
+    t.mark('kill')
+    t.damage('child', 100000)
+    t.wait(5)
+    t.expect.spawned('@monster_apache', count=1)
+    t.expect.removed('child', after='kill', count=1, within=(0, 4.5))   # crashed and exploded
+
+@S.test('a shot-down apache leaves a smoking wreck (cycler_wreckage) where it crashed', size=ROOM,
+        doc=DOC + '#mapper-guide', covers=('monster_apache',))
+def wreckage_default(t):
+    shot_down(t, 0)
+    t.expect.spawned('@cycler_wreckage', after='kill', count=1)
+
+
+@S.test('"No Wreckage" (1024): the apache crashes and explodes but leaves no wreck', size=ROOM,
+        doc=DOC + '#mapper-guide', covers=('monster_apache', 'monster_apache:1024'))
+def no_wreckage(t):
+    shot_down(t, SF_NO_WRECKAGE)
+    t.expect.spawned('@cycler_wreckage', count=0)
+
+
+@S.test('"Explode sooner" (8) with "No Wreckage" (1024): it explodes and leaves no wreck', size=ROOM,
+        doc=DOC + '#mapper-guide', covers=('monster_apache', 'monster_apache:8', 'monster_apache:1024'))
+def explode_sooner_no_wreckage(t):
+    shot_down(t, SF_EXPLODE_SOONER | SF_NO_WRECKAGE)
+    t.expect.spawned('@cycler_wreckage', count=0)
+
+
+# last: its rockets blow up beside the next rooms (an apache's box, 720 wide, reaches into them), where they killed
+# the apache of a test that had not run yet
+@S.test('"Fire Rockets" (32): the apache fires hvr_rockets at a test player', players=1, size=ROOM,
+        doc=DOC + '#fire-rockets', covers=('monster_apache', 'monster_apache:32'))
+def rockets_on(t):
+    gunship(t, SF_FIRE_ROCKETS)
+    t.wait(12)
+    t.expect.spawned('@hvr_rocket', min=1)
+    t.expect.sound('rocket1.wav', ent='@hvr_rocket')

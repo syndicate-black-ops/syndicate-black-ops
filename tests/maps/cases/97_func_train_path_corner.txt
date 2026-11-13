@@ -1,0 +1,48 @@
+# func_train and path_corner (FGD): a fired train runs from its First stop target at Speed 64 (p1 -> p2, 128 units:
+# 2 s), fires p2's Fire On Pass, Waits there 1 s, then takes p2's New Train Speed 128. p3 has Teleport (2): the
+# train jumps there at once, then runs on to p4 (286 units at 128), fires p4's Fire On Pass and stops there (p4
+# Wait for retrigger, 1) until it is fired again; then back to p1 (fires pass1) and on to p2, whose Fire On Pass has
+# Fire once (4): not fired again. Move / Stop Sound 1 (plats/bigmove1, plats/bigstop1) at Sound Volume 0.5. The
+# stub moves movers by their think times: positions are the ends of each move
+# covers: func_train func_train.target func_train.speed func_train.volume func_train.movesnd=1 func_train.stopsnd=1 path_corner path_corner.target path_corner.message path_corner.wait path_corner.speed path_corner:1 path_corner:2 path_corner:4
+map co_fuzz
+brushsize 64 64 64
+spawn func_train targetname tr model *1 target p1 speed 64 movesnd 1 stopsnd 1 volume 0.5
+spawn path_corner targetname p1 origin "0 0 0" target p2 message pass1
+spawn path_corner targetname p2 origin "128 0 0" target p3 wait 1 speed 128 message pass2 spawnflags 4
+spawn path_corner targetname p3 origin "128 256 0" target p4 spawnflags 2
+spawn path_corner targetname p4 origin "0 512 0" target p1 spawnflags 1 message pass4
+activate
+connect 1 P1
+frames 3
+expectfield tr origin "0 0 0"
+mark go
+fire tr
+frames 23
+mark t2.3
+expectfield tr origin "128 0 0"
+expectfield tr speed 64
+expectn 1 Firing: (pass2)
+frames 3
+mark t2.6_waiting
+expectfield tr origin "128 0 0"
+frames 9
+mark t3.5_teleported
+expectfield tr origin "128 256 0"
+expectfield tr speed 128
+expectnot Firing: (pass4)
+frames 35
+mark t7_retrigger_wait
+expectfield tr origin "0 512 0"
+expectn 1 Firing: (pass4)
+frames 20
+mark t9_still
+expectfield tr origin "0 512 0"
+fire tr
+frames 55
+mark lap2
+expectn 1 Firing: (pass1)
+expectfield tr origin "128 0 0"
+expectn 1 Firing: (pass2)
+expect ch6 plats/bigmove1.wav vol=0.50
+expect ch2 plats/bigstop1.wav vol=0.50

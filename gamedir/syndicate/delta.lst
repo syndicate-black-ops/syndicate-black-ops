@@ -47,9 +47,9 @@ clientdata_t none
 	DEFINE_DELTA( waterjumptime, DT_INTEGER, 15, 1.0 ),
 	DEFINE_DELTA( waterlevel, DT_INTEGER, 2, 1.0 ),
 
-	DEFINE_DELTA( iuser1, DT_INTEGER, 3, 1.0 ),				// Non-zero if I'm a spectator (1,2,3 different spec modes)
+	DEFINE_DELTA( iuser1, DT_INTEGER, 3, 1.0 ), // Non-zero if I'm a spectator (1,2,3 different spec modes)
 	DEFINE_DELTA( iuser2, DT_INTEGER, 16, 1.0 ),
-    DEFINE_DELTA( iuser3, DT_INTEGER, 8, 1.0 ),
+	DEFINE_DELTA( iuser3, DT_INTEGER, 8, 1.0 ),
 	DEFINE_DELTA( iuser4, DT_INTEGER, 2, 1.0 ),
 
 	DEFINE_DELTA( vuser1[0], DT_SIGNED | DT_FLOAT, 10, 1.0 ),
@@ -84,6 +84,8 @@ entity_state_t gamedll Entity_Encode
 	DEFINE_DELTA( angles[1], DT_ANGLE, 16, 1.0 ),
 	DEFINE_DELTA( origin[1], DT_SIGNED | DT_FLOAT, 19, 8.0 ),
 	DEFINE_DELTA( origin[2], DT_SIGNED | DT_FLOAT, 19, 8.0 ),
+	// moving objects: the parent and attachment of a child that is drawn on its parent (next to its pose)
+	DEFINE_DELTA( iuser4, DT_INTEGER, 14, 1.0 ),
 	DEFINE_DELTA( sequence, DT_INTEGER, 8, 1.0 ),
 	DEFINE_DELTA( modelindex, DT_INTEGER, 10, 1.0 ),
 	DEFINE_DELTA( movetype, DT_INTEGER, 4, 1.0 ),
@@ -95,14 +97,19 @@ entity_state_t gamedll Entity_Encode
 	DEFINE_DELTA( maxs[1], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
 	DEFINE_DELTA( maxs[2], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
 
-	DEFINE_DELTA( endpos[0], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( endpos[1], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( endpos[2], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( startpos[0], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( startpos[1], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( startpos[2], DT_SIGNED | DT_FLOAT, 13, 1.0 ),
-	DEFINE_DELTA( impacttime, DT_TIMEWINDOW_BIG, 13, 100.0 ),
-	DEFINE_DELTA( starttime, DT_TIMEWINDOW_BIG, 13, 100.0 ),
+	// mover prediction: a moving door, lift or train's velocity, turn and next stop (pushers only)
+	DEFINE_DELTA( basevelocity[0], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( basevelocity[1], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( basevelocity[2], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( startpos[0], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( startpos[1], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( startpos[2], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( impacttime, DT_SIGNED | DT_FLOAT, 22, 8.0 ),
+	DEFINE_DELTA( starttime, DT_SIGNED | DT_FLOAT, 22, 64.0 ),
+	DEFINE_DELTA( iuser1, DT_INTEGER, 2, 1.0 ),
+	DEFINE_DELTA( endpos[0], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( endpos[1], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
+	DEFINE_DELTA( endpos[2], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
 
 	DEFINE_DELTA( weaponmodel, DT_INTEGER, 10, 1.0 ),
 	DEFINE_DELTA( owner, DT_INTEGER, 5, 1.0 ),
@@ -127,9 +134,6 @@ entity_state_t gamedll Entity_Encode
 	DEFINE_DELTA( rendercolor.g, DT_BYTE, 8, 1.0 ),
 	DEFINE_DELTA( rendercolor.b, DT_BYTE, 8, 1.0 ),
 	DEFINE_DELTA( aiment, DT_INTEGER, 11, 1.0 ),
-	DEFINE_DELTA( basevelocity[0], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
-	DEFINE_DELTA( basevelocity[1], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
-	DEFINE_DELTA( basevelocity[2], DT_SIGNED | DT_FLOAT, 16, 8.0 ),
 
 	// Playerclass signifies it's a decalable glass item when referring to an object
 
@@ -247,7 +251,7 @@ weapon_data_t none
 	DEFINE_DELTA( m_fAimedDamage, DT_FLOAT, 6, 0.1 ),
 	DEFINE_DELTA( m_fInZoom, DT_INTEGER, 1, 1.0 ),
 	DEFINE_DELTA( m_iWeaponState, DT_INTEGER, 2, 1.0 ),
-	DEFINE_DELTA( m_iId, DT_INTEGER, 5, 1.0 ),
+	DEFINE_DELTA( m_iId, DT_INTEGER, 6, 1.0 ), // weapon ids 0..63 (Half-Life Unified SDK: 64 weapons)
 	DEFINE_DELTA( iuser1, DT_SIGNED | DT_INTEGER, 10, 1.0  ),
 	DEFINE_DELTA( iuser2, DT_SIGNED | DT_INTEGER, 10, 1.0  ),
 	DEFINE_DELTA( iuser3, DT_SIGNED | DT_INTEGER, 10, 1.0  ),

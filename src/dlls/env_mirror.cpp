@@ -42,6 +42,8 @@ public:
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1 (Spirit of Half-Life): On while it reflects, Off while it is off
+	STATE GetState( CBaseEntity *pActivator ) { return m_fActive ? STATE_ON : STATE_OFF; }
 	int ObjectCaps( void ) { return CBaseEntity::ObjectCaps() & ~FCAP_ACROSS_TRANSITION; }
 
 	virtual int Save( CSave &save );

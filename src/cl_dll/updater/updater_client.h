@@ -128,9 +128,13 @@ public:
 	//! Main menu after a start that installed: backups of the old version go
 	void CleanupAfterStart();
 
+	//! Where the notes that show only with developer go (the start's "is up to date"); unset: the normal log
+	void SetDevLog(std::function<void(const std::string &)> devLog) { m_DevLog = std::move(devLog); }
+
 private:
 	struct Job;
 	void Log(const std::string &line);
+	void DevLog(const std::string &line);
 	bool Request(const HttpRequest &req);
 	void OnHttp(HttpResult &res);
 	void OnReleases(HttpResult &res);
@@ -144,6 +148,7 @@ private:
 	Config m_Cfg;
 	IHttp *m_pHttp;
 	std::function<void(const std::string &)> m_Log;
+	std::function<void(const std::string &)> m_DevLog;
 	State m_State;
 	std::string m_Error;
 	CheckResult m_Result;

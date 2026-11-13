@@ -20,6 +20,7 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#include "keyvalue.h"
 #include "monsters.h"
 #include "saverestore.h"
 #include "locus.h"		// SBO 2.0
@@ -49,6 +50,7 @@ enum
 	MONSTERMAKER_NULLENTITY,
 	MONSTERMAKER_SPAWNED,
 	MONSTERMAKER_BADPLACE,
+	MONSTERMAKER_OFF,	// SBO 2.0: mp_speedmon -1
 };
 
 //=========================================================
@@ -59,7 +61,13 @@ class CMonsterMaker : public CBaseMonster
 public:
 	void Spawn( void );
 	void Precache( void );
+	BOOL HasMonsterType( void );	// SBO 2.0
 	void KeyValue( KeyValueData* pkvd);
+	// SBO 2.1: "monstercount" changed at run time (trigger_changevalue / trigger_copyvalue)
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
+	void StartWorking( void );
+	BOOL m_fRanOut;		// made its last monster: no Use, no think (a new count starts it again)
 	void EXPORT ToggleUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT CyclicUse ( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT MakerThink ( void );
@@ -107,6 +115,14 @@ public:
 	// ("Warp at monster's...") -1 its origin, 0 / 1 its center
 	string_t m_iszWarpball;
 
+	// SBO 2.1 (Half-Life Unified SDK): "#<key>" keys, given to every child as "<key>" before it spawns
+	enum { MAX_CHILD_KEYS = 64 };
+	string_t m_iszChildKeys[ MAX_CHILD_KEYS ];
+	string_t m_iszChildValues[ MAX_CHILD_KEYS ];
+	int		 m_iChildKeyCount;
+	BOOL	 m_fChildKeysFixed;	// spawned: the "#" keys are precached for, so no more are taken (not saved)
+	void	 ApplyChildKeys( edict_t *pent );
+
 	int ChildSpawnflags( void );	// every spawnflag a child gets (MakeMonster)
 
 	// SBO 2.0, from Featureful: "spawndelay" (the child appears this long after the spot is
@@ -127,7 +143,7 @@ public:
 	int		 m_iDelayedCount;
 	int		 m_iCyclicBacklogSize;
 	float	 m_flLastSpawnDelay;
-	float	 NextMakeDelay( void );	// m_flDelay with the "speedmon" factor (1.38)
+	float	 NextMakeDelay( void );	// m_flDelay with the mp_speedmon factor (1.38)
 	static void ChildHull( const char *szClassname, Vector &vecMins, Vector &vecMaxs );
 	static BOOL ChildTakesBody( const char *szClassname );
 };
@@ -143,6 +159,16 @@ LINK_ENTITY_TO_CLASS( monstermaker_hull, CMonsterMakerHull );
 
 extern cvar_t makermon;
 extern cvar_t speedmon;
+
+// mp_speedmon: 0 half, 1 normal, 2 double, 3 triple production speed, -1 off (the map's makers make nothing); any
+// other value counts as 1
+static int SpeedmonSetting( void )
+{
+	const float flValue = speedmon.value;
+	if ( flValue == -1 || flValue == 0 || flValue == 2 || flValue == 3 )
+		return (int)flValue;
+	return 1;
+}
 
 LINK_ENTITY_TO_CLASS( monstermaker, CMonsterMaker );
 
@@ -176,6 +202,10 @@ TYPEDESCRIPTION	CMonsterMaker::m_SaveData[] =
 	DEFINE_FIELD( CMonsterMaker, m_fChangeRenderMode, FIELD_BOOLEAN ),
 	DEFINE_FIELD( CMonsterMaker, m_iDelayedCount, FIELD_INTEGER ),
 	DEFINE_FIELD( CMonsterMaker, m_iCyclicBacklogSize, FIELD_INTEGER ),
+	DEFINE_ARRAY( CMonsterMaker, m_iszChildKeys, FIELD_STRING, CMonsterMaker::MAX_CHILD_KEYS ),
+	DEFINE_ARRAY( CMonsterMaker, m_iszChildValues, FIELD_STRING, CMonsterMaker::MAX_CHILD_KEYS ),
+	DEFINE_FIELD( CMonsterMaker, m_iChildKeyCount, FIELD_INTEGER ),
+	DEFINE_FIELD( CMonsterMaker, m_fRanOut, FIELD_BOOLEAN ),
 };
 
 
@@ -222,7 +252,14 @@ void CMonsterMaker :: KeyValue( KeyValueData *pkvd )
 	}
 	else if ( FStrEq(pkvd->szKeyName, "monstertype") )
 	{
-		m_iszMonsterClassname = ALLOC_STRING( pkvd->szValue );
+		// SBO 2.1: at run time (trigger_changevalue) only a class this map has precached already (util.h): any other
+		// would be precached by its first monster, after the map loaded. A maker with "#" keys keeps its class (they
+		// were precached for it)
+		if ( m_fChildKeysFixed && ( m_iChildKeyCount || !UTIL_PrecachedClasses_Has( pkvd->szValue ) )
+			&& stricmp( pkvd->szValue, STRING( m_iszMonsterClassname ) ) )
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else
+			m_iszMonsterClassname = ALLOC_STRING( pkvd->szValue );
 		pkvd->fHandled = TRUE;
 	}
 	// SBO: keys for the children, see MakeMonster
@@ -317,17 +354,85 @@ void CMonsterMaker :: KeyValue( KeyValueData *pkvd )
 		m_fChangeRenderMode = atoi( pkvd->szValue ) != 0;
 		pkvd->fHandled = TRUE;
 	}
+	// SBO 2.1 (Half-Life Unified SDK): "#<key>" is passed on to every child as "<key>". A child's model, health and
+	// name are never set this way, nor its class
+	else if ( pkvd->szKeyName[0] == '#' )
+	{
+		pkvd->fHandled = TRUE;
+		const char *szKey = pkvd->szKeyName + 1;
+		if ( m_fChildKeysFixed )	// at run time (trigger_changevalue): it could need a precache
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else if ( !szKey[0] || !stricmp( szKey, "model" ) || !stricmp( szKey, "new_model" ) || !stricmp( szKey, "health" )
+			|| !stricmp( szKey, "max_health" ) || !stricmp( szKey, "displayname" ) || !stricmp( szKey, "classname" ) )
+		{
+			ALERT( at_aiconsole, "%s \"%s\": key \"%s\" is not passed on to its monsters\n", STRING( pev->classname ),
+				STRING( pev->targetname ), pkvd->szKeyName );
+		}
+		else if ( m_iChildKeyCount < MAX_CHILD_KEYS )
+		{
+			m_iszChildKeys[ m_iChildKeyCount ] = ALLOC_STRING( szKey );
+			m_iszChildValues[ m_iChildKeyCount ] = ALLOC_STRING( pkvd->szValue );
+			m_iChildKeyCount++;
+		}
+		else
+			ALERT( at_console, "%s \"%s\": too many child keys (more than %d)\n", STRING( pev->classname ),
+				STRING( pev->targetname ), MAX_CHILD_KEYS );
+	}
 	else
 		CBaseMonster::KeyValue( pkvd );
+}
+
+// SBO 2.1 (Half-Life Unified SDK UTIL_InitializeKeyValues): the "#" keys, the way the engine gives a map entity its keys
+void CMonsterMaker :: ApplyChildKeys( edict_t *pent )
+{
+	for ( int i = 0; i < m_iChildKeyCount; i++ )
+	{
+		KeyValueData kvd;
+		kvd.szClassName = (char *)STRING( pent->v.classname );
+		kvd.szKeyName = (char *)STRING( m_iszChildKeys[ i ] );
+		kvd.szValue = (char *)STRING( m_iszChildValues[ i ] );
+		kvd.fHandled = FALSE;
+		DispatchKeyValue( pent, &kvd );
+	}
 }
 
 
 void CMonsterMaker :: Spawn( )
 {
 	pev->solid = SOLID_NOT;
+	m_fChildKeysFixed = TRUE;	// SBO 2.1: the "#" keys are read (KeyValue)
+
+	// SBO 2.0: a maker without a monster type (no key, or an empty one) warns once and removes itself. 1.38 (as
+	// Half-Life) precached the empty class name and the engine stopped the server ("Spawned a NULL entity!").
+	// Printed on every server (not only with developer), as game_playvideo's errors.
+	if ( !HasMonsterType() )
+	{
+		g_engfuncs.pfnServerPrint( UTIL_VarArgs( "Map %s: monstermaker \"%s\" at %.0f %.0f %.0f has no monster type "
+			"(key \"monstertype\"): removed\n", STRING( gpGlobals->mapname ), STRING( pev->targetname ), pev->origin.x,
+			pev->origin.y, pev->origin.z ) );
+		UTIL_Remove( this );
+		return;
+	}
 
 	m_cLiveChildren = 0;
 	Precache();
+	StartWorking();
+
+	if ( m_cNumMonsters == 1 )
+	{
+		m_fFadeChildren = FALSE;
+	}
+	else
+	{
+		m_fFadeChildren = TRUE;
+	}
+
+	m_flGround = 0;
+}
+
+// SBO 2.1: Spawn's Use and think (also for a maker that ran out and gets a new count)
+void CMonsterMaker :: StartWorking( void )
+{
 	if ( !FStringNull ( pev->targetname ) )
 	{
 		if ( pev->spawnflags & SF_MONSTERMAKER_CYCLIC )
@@ -341,6 +446,10 @@ void CMonsterMaker :: Spawn( )
 
 		if ( FBitSet ( pev->spawnflags, SF_MONSTERMAKER_START_ON ) )
 		{// start making monsters as soon as monstermaker spawns
+			// SBO 2.0 (Featureful MONSTERMAKER_START_ON_FIX): the first monster comes Frequency seconds after the
+			// start, as for a maker without a name (HL set no nextthink, so it never started and its first trigger
+			// turned it off)
+			pev->nextthink = gpGlobals->time + NextMakeDelay();
 			m_fActive = TRUE;
 			SetThink ( &CMonsterMaker::MakerThink );
 		}
@@ -358,35 +467,91 @@ void CMonsterMaker :: Spawn( )
 	}
 	else
 	{// no targetname, just start.
-			if ( speedmon.value == 0 )
-				pev->nextthink = gpGlobals->time + m_flDelay * 2;
-			else if ( speedmon.value == 1 )
-				pev->nextthink = gpGlobals->time + m_flDelay;
-			else if ( speedmon.value == 2 )
-				pev->nextthink = gpGlobals->time + m_flDelay * 0.5f;
-			else if ( speedmon.value == 3 )
-				pev->nextthink = gpGlobals->time + m_flDelay / 3;
+			pev->nextthink = gpGlobals->time + NextMakeDelay();
 			m_fActive = TRUE;
 			SetThink ( &CMonsterMaker::MakerThink );
 	}
+}
 
-	if ( m_cNumMonsters == 1 )
-	{
-		m_fFadeChildren = FALSE;
-	}
-	else
-	{
-		m_fFadeChildren = TRUE;
-	}
+// mp_makermon's factor on the map's counts (KeyValue): 0 half, 2 double, 3 triple, else 1
+static float MakermonFactor( void )
+{
+	if ( makermon.value == 0 )
+		return 0.5f;
+	if ( makermon.value == 2 || makermon.value == 3 )
+		return makermon.value;
+	return 1.0f;
+}
 
-	m_flGround = 0;
+// SBO 2.1: "monstercount" read back as the map writes it, before mp_makermon's factor (KeyValue applies the factor
+// to the value written back, so Add and the other operations work on the count left): -1 no limit, else the
+// monsters still to make, divided by the factor, rounded
+CKeyValue CMonsterMaker :: GetKeyValue( const char *keyName )
+{
+	if ( FStrEq( keyName, "monstercount" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "monstercount";
+		keyvalue.iVal = m_cNumMonsters > 0 ? (int)( m_cNumMonsters / MakermonFactor() + 0.5f ) : m_cNumMonsters;
+		return keyvalue;
+	}
+	return CBaseMonster::GetKeyValue( keyName );
+}
+
+// SBO 2.1: a new "monstercount" at run time. A maker that ran out gets Spawn's Use and think again: a maker without a
+// name, or one that was on, goes on making; a cyclic one takes triggers again. The children fade as Spawn decides it
+// (all but a count of 1).
+void CMonsterMaker :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( !FStrEq( keyName, "monstercount" ) )
+		return;
+
+	m_fFadeChildren = m_cNumMonsters != 1;
+
+	if ( m_fRanOut && m_cNumMonsters != 0 )
+	{
+		m_fRanOut = FALSE;
+		const BOOL fWasOn = m_fActive;
+		StartWorking();
+		if ( fWasOn && !FStringNull( pev->targetname ) && !( pev->spawnflags & SF_MONSTERMAKER_CYCLIC ) )
+		{
+			m_fActive = TRUE;
+			SetThink( &CMonsterMaker::MakerThink );
+			pev->nextthink = gpGlobals->time + NextMakeDelay();
+		}
+	}
 }
 
 void CMonsterMaker :: Precache( void )
 {
 	CBaseMonster::Precache();
 
-	UTIL_PrecacheOther( STRING( m_iszMonsterClassname ) );
+	if ( HasMonsterType() )		// SBO 2.0: see Spawn
+	{
+		UTIL_PrecacheOther( STRING( m_iszMonsterClassname ) );
+
+		// SBO 2.1 (Half-Life Unified SDK UTIL_PrecacheOther with keys): a child made with the "#" keys precaches what
+		// they name (a sound, a model of its own) now, while the map loads
+		if ( m_iChildKeyCount )
+		{
+			edict_t *pent = CREATE_NAMED_ENTITY( m_iszMonsterClassname );
+			if ( !FNullEnt( pent ) )
+			{
+				ApplyChildKeys( pent );
+				CBaseEntity *pEntity = CBaseEntity::Instance( pent );
+				if ( pEntity )
+					pEntity->Precache();
+				REMOVE_ENTITY( pent );
+			}
+		}
+	}
+}
+
+// SBO 2.0: the maker names a class to make ("monstertype" set and not empty)
+BOOL CMonsterMaker :: HasMonsterType( void )
+{
+	return !FStringNull( m_iszMonsterClassname ) && STRING( m_iszMonsterClassname )[0] != '\0';
 }
 
 //=========================================================
@@ -477,14 +642,19 @@ void CMonsterMaker::ChildHull( const char *szClassname, Vector &vecMins, Vector 
 	vecMaxs = Vector( 34, 34, 0 );
 }
 
+// mp_speedmon -1: the normal delay, the maker keeps trying (MakeMonster makes nothing) so it makes monsters again
+// once the value changes
 float CMonsterMaker::NextMakeDelay( void )
 {
-	if ( speedmon.value == 0 )
+	switch ( SpeedmonSetting() )
+	{
+	case 0:
 		return m_flDelay * 2;
-	if ( speedmon.value == 2 )
+	case 2:
 		return m_flDelay * 0.5f;
-	if ( speedmon.value == 3 )
+	case 3:
 		return m_flDelay / 3;
+	}
 	return m_flDelay;
 }
 
@@ -494,6 +664,10 @@ float CMonsterMaker::NextMakeDelay( void )
 int CMonsterMaker::MakeMonster( void )
 {
 	m_flLastSpawnDelay = 0;
+
+	// SBO 2.0: mp_speedmon -1, the map's makers make nothing (a cyclic maker's trigger is not kept)
+	if ( SpeedmonSetting() == -1 )
+		return MONSTERMAKER_OFF;
 
 	// SBO 2.0 (Featureful): children still on their way ("spawndelay") count too
 	if ( m_iMaxLiveChildren > 0 && m_cLiveChildren + m_iDelayedCount >= m_iMaxLiveChildren )
@@ -666,6 +840,8 @@ CBaseEntity *CMonsterMaker::SpawnChild( const Vector &placePosition, const Vecto
 	pevCreate->angles = placeAngles;
 	SetBits( pevCreate->spawnflags, ChildSpawnflags() );	// SBO 2.0: fall to ground, monsterclip, + childspawnflags
 
+	ApplyChildKeys( pent );	// SBO 2.1 (Half-Life Unified SDK): the "#" keys, before the maker's own child keys
+
 	// SBO: give the child the maker's child keyvalues before it spawns, the same
 	// order as a map-placed monster (keyvalues, then Spawn). Monsters only fill in
 	// their defaults (weapons, ...) when the key was not set.
@@ -741,13 +917,20 @@ CBaseEntity *CMonsterMaker::SpawnChild( const Vector &placePosition, const Vecto
 	}
 
 	m_cLiveChildren++;// count this monster
-	m_cNumMonsters--;
 
-	if ( m_cNumMonsters == 0 )
+	// SBO 2.1 (Half-Life Unified SDK): an infinite maker (-1) keeps its count; counting it down too, it reached 0
+	// after about 4.29 billion children and stopped
+	if ( m_cNumMonsters != -1 )
 	{
-		// Disable this forever.  Don't kill it because it still gets death notices
-		SetThink( NULL );
-		SetUse( NULL );
+		m_cNumMonsters--;
+
+		if ( m_cNumMonsters == 0 )
+		{
+			// Disable this forever.  Don't kill it because it still gets death notices
+			SetThink( NULL );
+			SetUse( NULL );
+			m_fRanOut = TRUE;	// SBO 2.1: until a new "monstercount" (RuntimeKeyValueChanged)
+		}
 	}
 
 	// SBO 2.0 (Featureful "target_activator"): -1 no activator, 1 the maker, 2 the child, 3 the maker's activator; 0
@@ -776,7 +959,8 @@ void CMonsterMakerHull::Think( void )
 		CMonsterMaker *pMaker = (CMonsterMaker *)pOwner;
 		pMaker->m_iDelayedCount--;
 		UTIL_SetOrigin( pev, pev->origin );	// unlinked from the box test before the child takes the spot
-		pMaker->SpawnChild( pev->origin, pev->angles );
+		if ( SpeedmonSetting() != -1 )	// mp_speedmon -1 set while the spot was held: no child
+			pMaker->SpawnChild( pev->origin, pev->angles );
 	}
 	UTIL_Remove( this );
 }

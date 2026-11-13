@@ -1,0 +1,23 @@
+# func_mortar_field (FGD): triggered, it drops Repeat Count (3) mortar shells (monster_mortar), each within Spread Radius
+# (100) of its aim point; Targeting 1 Activator aims at the activator (the player at x 64): the first shell lands with x
+# within 64 +- 100; Repeat Count 1 drops one
+# covers: func_mortar_field func_mortar_field.m_icount func_mortar_field.m_flspread func_mortar_field.m_fcontrol func_mortar_field.m_fcontrol=1
+map co_fuzz
+brushsize 64 64 64
+spawn func_mortar_field targetname mf model *1 m_iCount 3 m_flSpread 100 m_fControl 1
+spawn func_mortar_field targetname one model *2 m_iCount 1 m_flSpread 10 m_fControl 1
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+fire mf
+frames 1
+expectcount monster_mortar 3
+expectrange monster_mortar origin -36 164
+expectn 1 weapons/mortar.wav
+frames 60
+fire one
+frames 1
+expectcount monster_mortar 1
+expectrange monster_mortar origin 54 74

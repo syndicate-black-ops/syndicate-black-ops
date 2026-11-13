@@ -1,0 +1,38 @@
+# Repeatable flags (FGD): scripted_sequence 4 Repeatable: it stays after its action and plays it again when triggered
+# again (its target fires each time); without the flag it is removed after the action (a second trigger does
+# nothing). env_shooter 1 Repeatable: after its Number of Gibs it stays and shoots them again when triggered again;
+# without the flag it is removed once it is done
+# covers: scripted_sequence:4 env_shooter:1
+map co_fuzz
+spawn monster_scientist targetname a1 origin "0 300 0"
+spawn scripted_sequence targetname rep m_iszEntity a1 m_iszPlay idle1 m_fMoveTo 0 target rep_done spawnflags 4 origin "0 320 0"
+spawn monster_scientist targetname a2 origin "600 300 0"
+spawn scripted_sequence targetname once m_iszEntity a2 m_iszPlay idle1 m_fMoveTo 0 target once_done origin "600 320 0"
+spawn trigger_relay targetname rep_done target sink1
+spawn trigger_relay targetname once_done target sink2
+spawn env_shooter targetname shrep m_iGibs 2 delay 0.1 m_flVelocity 100 m_flVariance 0 m_flGibLife 30 shootmodel models/hgibs.mdl spawnflags 1 origin "0 2000 100"
+spawn env_shooter targetname shonce m_iGibs 2 delay 0.1 m_flVelocity 100 m_flVariance 0 m_flGibLife 30 shootmodel models/hgibs.mdl origin "600 2000 100"
+activate
+connect 1 P1
+frames 20
+fire rep
+fire once
+frames 40
+expectn 1 Firing: (rep_done)
+expectn 1 Firing: (once_done)
+expectcount scripted_sequence 1
+fire rep
+fire once
+frames 40
+expectn 2 Firing: (rep_done)
+expectn 1 Firing: (once_done)
+mark shooters
+fire shrep
+fire shonce
+frames 10
+expectcount gib 4
+expectcount env_shooter 1
+fire shrep
+fire shonce
+frames 10
+expectcount gib 6

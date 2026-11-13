@@ -1,0 +1,23 @@
+# killtarget (FGD: removes every entity with that name when the entity fires): trigger_relay without a delay removes
+# both entities named "victim" at once and fires its target; a trigger_once touched by a player does the same; an
+# entity is never removed by a killtarget naming another
+# covers: trigger_relay.killtarget trigger_once.killtarget
+map co_fuzz
+spawn trigger_relay targetname r target r_out killtarget victim
+spawn info_target targetname victim
+spawn info_target targetname victim
+spawn info_target targetname bystander
+spawn trigger_once model *1 target once_out killtarget victim2
+spawn info_target targetname victim2
+activate
+connect 1 P1
+frames 3
+fire r
+frames 1
+expectn 1 Firing: (r_out)
+expectcount info_target 2
+touchclient 4 1
+frames 2
+expectn 1 Firing: (once_out)
+expectcount info_target 1
+dumpent bystander

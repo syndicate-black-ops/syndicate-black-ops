@@ -1,0 +1,18 @@
+# func_breakable Gibs Direction 1 "Relative to Attack" (FGD): the gibs fly away from the attack, 200 units/s (the
+# TE_BREAKMODEL base velocity). A trigger_hurt 100 units south (-y) of the breakable hurts it: velocity 0 200 0
+# (the stub puts the breakable's center, absmin + size / 2, at 31 31 31: the hurt sits at 31 -69 31).
+# 1.38 read only the words "directed" / "random", so the FGD's "1" gave random gibs (velocity 0 0 0); develop reads
+# "1" (halflife-updated #24)
+# covers: func_breakable.explosion func_breakable.explosion=1
+map co_fuzz
+brushsize 64 64 64
+spawn func_breakable targetname dir model *1 health 10 explosion 1 material 1 origin "0 0 0"
+spawn trigger_hurt model *2 dmg 50 damagetype 0 origin "31 -69 31"
+activate
+connect 1 P1
+frames 3
+mark directed
+touchent 1 0
+frames 3
+expectcount func_breakable 0
+expectn 1 MSG svc23 ->area: 108 0 0 0 64 64 64 0 200 0 10

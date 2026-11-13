@@ -1,0 +1,32 @@
+# game_end with a master (co-op): fired while the master is shut, the mission goes on; after the master opens the
+# same call ends the mission (SUCCESSFULL MISSION, intermission)
+# covers: game_end game_end.master
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn game_end targetname ge master lock
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark locked
+fire ge world
+frames 50
+expectnot SUCCESSFULL MISSION
+mark open
+fire key
+fire ge world
+frames 100
+expect SUCCESSFULL MISSION
+expect SVC_INTERMISSION

@@ -36,6 +36,7 @@
 // SBO: the shortest check interval (SevenKewp: 0 = a think every frame, which the engine runs at most once a frame
 // anyway)
 #define TCOND_MIN_INTERVAL 0.01f
+#define TCOND_DEFAULT_INTERVAL 0.1f	// m_fCheckInterval left out
 
 enum tcond_compare_types
 {
@@ -109,6 +110,7 @@ public:
 
 	BOOL m_bRoundReset;		// SBO 2.0: "round_reset"
 	BOOL m_bEvaluating;		// SBO: Evaluate runs (a result target that fires this entity again isn't followed)
+	BOOL m_bIntervalSet;	// SBO 2.0: the map gives m_fCheckInterval (left out: TCOND_DEFAULT_INTERVAL)
 };
 
 LINK_ENTITY_TO_CLASS( trigger_condition, CTriggerCondition );
@@ -167,6 +169,7 @@ void CTriggerCondition::KeyValue( KeyValueData *pkvd )
 	else if ( FStrEq( pkvd->szKeyName, "m_fCheckInterval" ) )
 	{
 		m_checkInterval = atof( pkvd->szValue );
+		m_bIntervalSet = TRUE;
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq( pkvd->szKeyName, "round_reset" ) )	// SBO 2.0 (round_hooks.h)
@@ -181,6 +184,9 @@ void CTriggerCondition::KeyValue( KeyValueData *pkvd )
 void CTriggerCondition::Spawn( void )
 {
 	CPointEntity::Spawn();
+
+	if ( !m_bIntervalSet )
+		m_checkInterval = TCOND_DEFAULT_INTERVAL;	// the FGD default
 
 	isActive = FALSE;
 	m_checkedFirstResult = FALSE;

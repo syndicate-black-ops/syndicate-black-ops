@@ -1,0 +1,23 @@
+# game_player_equip with a huge count ("ammo_rc28" "100000"): at most 100 items of one kind, with a message for the
+# mapper (2a1d0ba1; 1.38 gave items until the server ran out of entities). A count of 3 gives 3
+# covers: game_player_equip
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn game_player_equip targetname gpe ammo_rc28 100000 ammo_pm66 3
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+fire gpe
+frames 3
+expect ammo_rc28 count 100000, using 100

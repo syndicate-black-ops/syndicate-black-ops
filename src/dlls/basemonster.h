@@ -113,6 +113,7 @@ public:
 // Scripted sequence Info
 	SCRIPTSTATE			m_scriptState;		// internal cinematic state
 	CCineMonster		*m_pCine;
+	BOOL ScriptInvulnerable( void );	// SBO 2.0: its script ("m_takeDamagePolicy" 1) makes it invulnerable
 
 	float 				m_flLastYawTime;	// HL25: last time yaw change was computed (ChangeYaw)
 
@@ -138,9 +139,12 @@ public:
 // fought as, in IRelationship. "classify" 0 its own, -1 none, else that class; "is_player_ally" 1 swaps sides (a
 // friend of the players becomes military, everything else a player ally)
 	BOOL				m_fForceTakeDamageTrigger;	// SBO 2.0 (Featureful): a hit in a script with flag 524288
+	BOOL				m_fUnkillable;	// SBO 2.1 (Half-Life Unified SDK): "unkillable": damage leaves it at 1 health (TakeDamage)
 	int					m_iClassKey;
 	BOOL				m_fReverseRelationship;
 	int					KeyedClass( int iDefaultClass );
+	BOOL				LookSkips( CBaseEntity *pSightEnt );
+	void				FireTriggerOnDeath( entvars_t *pevAttacker );	// SBO 2.0 (Featureful "trigger_on_death")	// SBO 2.0 (Featureful): "prisonerto" / "ignoredby" in Look
 // SBO 2.0 (Featureful): "prisonerto" a class that neither sees it nor is seen by it, "ignoredby" a
 // class that does not see it (0 none); "freeroam" 0 the map's default (worldspawn "freeroam"), 1 never, 2 always: an
 // idle monster walks from node to node; "active_alert" 0 default (off), 1 never, 2 always: after a fight it
@@ -158,6 +162,8 @@ public:
 	static	TYPEDESCRIPTION m_SaveData[];
 
 	void KeyValue( KeyValueData *pkvd );
+	// SBO 2.1: "health" / "max_health" changed at run time stay consistent (monsters.cpp)
+	void RuntimeKeyValueChanged( const char *keyName );
 
 // monster use function
 	void EXPORT			MonsterUse( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
@@ -173,6 +179,9 @@ public:
 	void Listen ( void );
 
 	virtual BOOL	IsAlive( void ) { return (pev->deadflag != DEAD_DEAD); }
+	// SBO 2.1: On while it lives, Turn Off while it dies, Off when dead (Spirit of Half-Life's monsters read as On,
+	// dead or alive)
+	virtual STATE	GetState( CBaseEntity *pActivator ) { return pev->deadflag == DEAD_NO ? STATE_ON : ( pev->deadflag == DEAD_DYING ? STATE_TURN_OFF : STATE_OFF ); }
 
 	// SBO 2.0 Locus (Featureful): as a [LR] number, a monster is its health ratio (0 when dead)
 	virtual BOOL	CalcRatio( CBaseEntity *pLocus, float *outResult )

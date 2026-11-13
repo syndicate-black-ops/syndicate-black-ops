@@ -1,0 +1,12 @@
+# nuclear_explosion values above 255: the message fields are bytes (FGD: every value but damage and the radii is
+# 0-255). CNuke writes each with WRITE_BYTE, so a larger value wraps: 1200 arrives as 176, 400 as 144. Kept as is
+# (1.38 the same), so the 9 maps that set v16 above 255 (all 40 of their nuclear_explosion entities) look as before
+# covers: nuclear_explosion.v1 nuclear_explosion.v16
+map co_fuzz
+spawn nuclear_explosion targetname nuke v1 1200 v2 255 v3 255 v4 20 v5 48 v6 200 v7 0 v8 10 v9 128 v10 190 v11 0 v12 0 v13 0 v14 30 v15 64 v16 400 origin "0 500 0"
+activate
+frames 3
+fire nuke
+frames 15
+expectre MSG svc23 ->\w+: 17 0 500 128 \d+ 176 255$
+expectre MSG svc23 ->\w+: 23 0 500 0 \d+ 30 64 144$

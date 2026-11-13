@@ -1,0 +1,8 @@
+# trigger_changelevel whose "map" is the map that is running: an error for the mapper at spawn (74c5ad52, halflife-updated:
+# a changelevel to the current map does not work); another map name: no error
+map co_fuzz
+spawn trigger_changelevel map co_fuzz model *1
+spawn trigger_changelevel map co_other model *1
+activate
+frames 3
+expectn 1 trigger_changelevel points to the current map (co_fuzz)

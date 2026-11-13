@@ -1,0 +1,16 @@
+# multi_manager flags from Featureful (docs/FEATUREFUL_OPTIONS.md): 8 "Once only": removed after its list has run;
+# 1024 "Instant": the delay-0 targets fire in the frame of the call, not at the next think. 1.38 has neither flag
+# covers: multi_manager:8 multi_manager:1024
+map co_fuzz
+spawn multi_manager targetname mm_once spawnflags 8 once_a 0 once_b 1
+spawn multi_manager targetname mm_instant spawnflags 1024 inst_a 0 inst_b 1
+activate
+frames 3
+fire mm_instant
+expect Firing: (inst_a)
+frames 15
+expectn 1 Firing: (inst_b)
+fire mm_once
+frames 15
+expectn 1 Firing: (once_b)
+expectcount multi_manager 1

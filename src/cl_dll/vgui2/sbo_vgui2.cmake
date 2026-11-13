@@ -16,7 +16,10 @@
 #                sbo_ui_style.cpp, sbo_map_picture.cpp, sbo_loading_screen.cpp, sbo_script_file.cpp (no SDK
 #                headers), sbo_settings_window.cpp, sbo_options_window.cpp, sbo_create_server.cpp,
 #                sbo_server_menu.cpp, sbo_server_menu_proto.cpp (no SDK headers),
-#                sbo_gm_spawn_menu.cpp
+#                sbo_gm_spawn_menu.cpp, sbo_cc_editor.cpp (color correction editor), sbo_particle_editor.cpp
+#                (particle editor), sbo_worldscreen_editor.cpp (world screen editor), controls/*.cpp (generic
+#                tool-window controls: sbo_tool_window, sbo_value_controls, sbo_list_controls, sbo_graph_controls,
+#                sbo_picture_picker)
 #                -> OBJECT library sbo_vgui2_sdk (an OBJECT library, not STATIC: client_vgui.obj is only
 #                   reachable through the ClientFactory dllexport and the EXPOSE_SINGLE_INTERFACE static
 #                   registrar, so a static-lib member would be dropped by the linker)
@@ -48,7 +51,14 @@ set(SBO_SDK_OVERRIDE_DIR "${CMAKE_BINARY_DIR}/sdk_overrides")
 foreach(_hdr MessageMap.h KeyBindingMap.h)
   file(READ "${SBO_SOURCE_SDK_DIR}/public/vgui_controls/${_hdr}" _txt)
   string(REPLACE "ALIGN16 MessageFunc_t" "MessageFunc_t" _txt "${_txt}")
-  file(WRITE "${SBO_SDK_OVERRIDE_DIR}/vgui_controls/${_hdr}" "${_txt}")
+  # written only when the text changes: a rewrite (new timestamp) at every configure rebuilt every VGUI2 source
+  set(_old "")
+  if(EXISTS "${SBO_SDK_OVERRIDE_DIR}/vgui_controls/${_hdr}")
+    file(READ "${SBO_SDK_OVERRIDE_DIR}/vgui_controls/${_hdr}" _old)
+  endif()
+  if(NOT _old STREQUAL _txt)
+    file(WRITE "${SBO_SDK_OVERRIDE_DIR}/vgui_controls/${_hdr}" "${_txt}")
+  endif()
 endforeach()
 include_directories(BEFORE "${SBO_SDK_OVERRIDE_DIR}")
 add_subdirectory("${SBO_SOURCE_SDK_DIR}" "${CMAKE_BINARY_DIR}/hl1_source_sdk")
@@ -115,8 +125,19 @@ add_library(sbo_vgui2_sdk OBJECT
   ${SBO_VGUI2_DIR}/sbo_create_server.cpp
   ${SBO_VGUI2_DIR}/sbo_server_menu.cpp
   ${SBO_VGUI2_DIR}/sbo_server_menu_proto.cpp
-  ${SBO_VGUI2_DIR}/sbo_gm_spawn_menu.cpp)
+  ${SBO_VGUI2_DIR}/sbo_gm_spawn_menu.cpp
+  ${SBO_VGUI2_DIR}/sbo_cc_editor.cpp
+  ${SBO_VGUI2_DIR}/sbo_particle_editor.cpp
+  ${SBO_VGUI2_DIR}/sbo_worldscreen_editor.cpp
+  ${SBO_VGUI2_DIR}/controls/sbo_tool_window.cpp
+  ${SBO_VGUI2_DIR}/controls/sbo_value_controls.cpp
+  ${SBO_VGUI2_DIR}/controls/sbo_list_controls.cpp
+  ${SBO_VGUI2_DIR}/controls/sbo_graph_controls.cpp
+  ${SBO_VGUI2_DIR}/controls/sbo_picture_picker.cpp)
 target_include_directories(sbo_vgui2_sdk PRIVATE ${SBO_VGUI2_DIR} ${SOURCE_SDK_INCLUDE_PATHS})
+# the color correction editor uses the client's color correction headers (colorcorrection_ops.h ->
+# game_shared/colorcorrection_shared.h); game_shared only for that file, after the SDK's own include paths
+set_source_files_properties(${SBO_VGUI2_DIR}/sbo_cc_editor.cpp PROPERTIES INCLUDE_DIRECTORIES "${SBO_SRC_DIR}/game_shared")
 # VERSION_SAFE_STEAM_API_INTERFACES: SteamAPI_InitSafe + CSteamAPIContext (BHL client), no SteamFriends() etc. imports
 target_compile_definitions(sbo_vgui2_sdk PRIVATE ${SOURCE_SDK_DEFINES} CLIENT_DLL
   VERSION_SAFE_STEAM_API_INTERFACES _CRT_SECURE_NO_WARNINGS)
@@ -152,6 +173,13 @@ set_source_files_properties(${SBO_VGUI2_DIR}/sbo_bridge.cpp ${SBO_VGUI2_DIR}/sbo
 target_sources(sbo_vgui2_sdk PRIVATE ${SBO_VGUI2_DIR}/hud_game_timer.cpp)
 target_sources(client PRIVATE ${SBO_VGUI2_DIR}/sbo_game_timer_bridge.cpp)
 set_source_files_properties(${SBO_VGUI2_DIR}/sbo_game_timer_bridge.cpp
+  PROPERTIES COMPILE_OPTIONS "${SBO_CLIENT_COMPAT_FI}")
+
+# trigger_objective list (docs/OBJECTIVES.md): hud_objectives.cpp is SDK world, sbo_objectives_bridge.cpp SBO world;
+# the list logic (cl_dll/objective_core.cpp) is in cmake/sbo_client.cmake
+target_sources(sbo_vgui2_sdk PRIVATE ${SBO_VGUI2_DIR}/hud_objectives.cpp)
+target_sources(client PRIVATE ${SBO_VGUI2_DIR}/sbo_objectives_bridge.cpp)
+set_source_files_properties(${SBO_VGUI2_DIR}/sbo_objectives_bridge.cpp
   PROPERTIES COMPILE_OPTIONS "${SBO_CLIENT_COMPAT_FI}")
 
 # SBO's SDK 2.3 interface.cpp defines CreateInterface/InterfaceReg like tier1's interface.cpp -> drop it

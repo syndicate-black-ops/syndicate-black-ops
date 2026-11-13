@@ -110,7 +110,7 @@ void CRc28::Holster( void )
 	m_fInReload = FALSE;// cancel any reload in progress.
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 1.0;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + RANDOM_FLOAT ( 0, 5 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0, 5 );
 	SendWeaponAnim( RC28_DRAW );
 }
 
@@ -175,7 +175,7 @@ void CRc28::PrimaryAttack()
 
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.08;
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.25;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 	m_fFired = 1;
 }
 
@@ -232,8 +232,11 @@ void CRc28::SecondaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usRc28_2, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.08;
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
+	// SBO 2.0: the semi-automatic primary shot waits for it too (it holds the secondary back 0.25 s). 1.38 set only
+	// the secondary time: with both buttons held the primary fired on the next frame, two shots at once.
+	// halflife #3252: counted from the time the shot was due (GetNextAttackDelay)
+	m_flNextPrimaryAttack = m_flNextSecondaryAttack = GetNextAttackDelay( 0.08 );
 }
 
 
@@ -255,4 +258,5 @@ void CRc28::WeaponIdle( void )
 		return;
 
 	SendWeaponAnim( RC28_IDLE1 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 31.0 / 16.0;	// the idle sequence's length: sent once per loop
 }

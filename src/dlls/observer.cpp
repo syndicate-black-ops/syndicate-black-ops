@@ -32,6 +32,7 @@
 #include	"coop.h"
 #include	"br.h"
 #include	"dm.h"
+#include	"inventory.h"
 
 extern DLL_GLOBAL BOOL g_fGameOver;
 extern void respawn( entvars_t *pev, BOOL fCopyCorpse );
@@ -466,8 +467,13 @@ void CBasePlayer::Observer_CheckProperties()
 	}
 	else
 	{
-		// SBO 2.0: 0, the spectator's own FOV (default_fov), as in first person on an unzoomed player (the SDK: 90)
-		m_iFOV = 0;
+		// SBO 2.0: 0, the spectator's own FOV (default_fov), as in first person on an unzoomed player (the SDK: 90).
+		// Over a map overview the watched player's FOV, which the client's first-person inset uses (the overview
+		// itself keeps its own view: client CHud::Think, V_GetMapFreePosition); UpdateClientData sends it (SetFOV)
+		CBasePlayer *target = NULL;
+		if ( ( pev->iuser1 == OBS_MAP_FREE || pev->iuser1 == OBS_MAP_CHASE ) && m_hObserverTarget != NULL )
+			target = (CBasePlayer *)UTIL_PlayerByIndex( ENTINDEX( m_hObserverTarget->edict() ) );
+		m_iFOV = target ? target->m_iFOV : 0;
 
 		if ( m_iObserverWeapon != 0 )
 		{
@@ -486,8 +492,8 @@ void CBasePlayer::Observer_CheckProperties()
 // SBO 2.0: the watched player's state for the spectator panel (client: cl_dll/vgui2/sbo_spectator_info.cpp), the
 // native version of what the metamod-spectator-info plugin printed as HUD text. "SpecHealth2" (Counter-Strike's
 // name for its health-of-the-target message; SBO's carries more): byte player, short health, short armor, byte
-// weapon id (WeaponList id, 0 = none), byte flags (SPECINFO_*), byte BR rounds won on this map (0 outside BR). Sent
-// to this observer only, and only when the target
+// weapon id (WeaponList id, 0 = none), byte flags (SPECINFO_*), byte BR rounds won on this map (0 outside BR), short
+// view model (model index of the target's pev->viewmodel, 0 = none). Sent to this observer only, and only when the target
 // or one of the values changed since the last one; the client keeps the last one. The rest of the panel (name,
 // level / points, XP) is what every client already has for the scoreboard.
 // Nothing is sent while there is no target (roaming): the client shows the panel only for the player in its
@@ -520,8 +526,18 @@ void CBasePlayer::Observer_SendTargetInfo()
 
 	int iBrWins = target->m_iBrRoundWins > 255 ? 255 : target->m_iBrRoundWins;
 
+	// the target's view model, as UpdateClientData sends it in first person: the client's first-person inset over
+	// another main view draws it (view.cpp V_CalcSpectatorRefdef). The SDK's client guessed it from the player's
+	// weapon model ("p_" -> "v_"), which a plugin that draws the third-person weapon itself leaves empty (production's
+	// packed_models_sbo), so the inset had no weapon. The last one sent is kept per observer here, not in the player
+	// class (no class layout change for the AMXX gamedata); a new target is always sent (m_iSpecInfoTarget).
+	static int s_iSpecInfoViewModel[32 + 1];	// the engine's client limit (MAX_CLIENTS)
+	int iViewModel = FStringNull( target->pev->viewmodel ) ? 0 : MODEL_INDEX( STRING( target->pev->viewmodel ) );
+	int &iSentViewModel = s_iSpecInfoViewModel[entindex() <= 32 ? entindex() : 0];
+
 	if ( iTarget == m_iSpecInfoTarget && iHealth == m_iSpecInfoHealth && iArmor == m_iSpecInfoArmor
-		&& iWeapon == m_iSpecInfoWeapon && iFlags == m_iSpecInfoFlags && iBrWins == m_iSpecInfoBrWins )
+		&& iWeapon == m_iSpecInfoWeapon && iFlags == m_iSpecInfoFlags && iBrWins == m_iSpecInfoBrWins
+		&& iViewModel == iSentViewModel )
 		return;
 
 	m_iSpecInfoTarget = iTarget;
@@ -530,6 +546,7 @@ void CBasePlayer::Observer_SendTargetInfo()
 	m_iSpecInfoWeapon = iWeapon;
 	m_iSpecInfoFlags = iFlags;
 	m_iSpecInfoBrWins = iBrWins;
+	iSentViewModel = iViewModel;
 
 	MESSAGE_BEGIN( MSG_ONE, gmsgSpecHealth2, NULL, pev );
 		WRITE_BYTE( iTarget );
@@ -538,6 +555,7 @@ void CBasePlayer::Observer_SendTargetInfo()
 		WRITE_BYTE( iWeapon );
 		WRITE_BYTE( iFlags );
 		WRITE_BYTE( iBrWins );
+		WRITE_SHORT( iViewModel );
 	MESSAGE_END();
 }
 
@@ -658,10 +676,13 @@ void CBasePlayer::StartSpectating( void )
 	// (m_bOutOfPlay). Spectators count for no game metric: co-op's round goes on as if the player had never been in
 	// it (also mp_hardcore's base, unlike a disconnect), BR's as on a disconnect (no death limit there), the hunted
 	// hands the bounty round back.
+	Inventory_ReturnAll( this );	// SBO 2.0 inventory: a spectator holds no items; his go back to their placed spots
+
 	switch ( m_Mode )
 	{
 	case MODE_COOP:
 		((CCoop *)g_pGameRules)->PlayerStartsSpectating( this );
+
 		break;
 	case MODE_BR:
 		((CBr *)g_pGameRules)->PlayerStartsSpectating( this );

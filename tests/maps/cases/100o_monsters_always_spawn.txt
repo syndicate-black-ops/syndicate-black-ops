@@ -1,0 +1,19 @@
+# a map monster spawns whatever mp_allowmonsters says (3c4edd9f: the cvar and the game rules' FAllowMonsters check are
+# gone; on 1.38 the co-op rules allowed monsters too)
+# covers: monster_zombie
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_allowmonsters 0
+spawn monster_zombie origin "0 300 0"
+activate
+frames 5
+expectcount monster_zombie 1

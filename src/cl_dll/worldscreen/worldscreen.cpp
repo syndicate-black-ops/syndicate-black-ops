@@ -63,6 +63,7 @@
 #include "worldscreen_bsp.h"
 #include "worldscreen_gl.h"
 #include "worldscreen_video.h"
+#include "movewith_client.h" // MoveWith_PlaceOnParent (a screen with a parent)
 
 extern vec3_t v_origin, v_angles; // view.cpp: last view origin / aim angles
 void HUD_SetCrosshairHidden(bool hidden); // hud_scale.cpp
@@ -112,6 +113,10 @@ struct Screen
 	bool present = false;          // the carrier is in this frame (current packet, drawn): the faces are moved
 	float carOrigin[3] = {};       // the carrier's transform this frame: world = origin + axes * local
 	float carAxes[3][3] = {};      // forward, left, up
+	// a point screen with a parent (WSCREEN_OP_PARENT, movewith): placed on the parent's drawn pose each frame
+	int parent = 0;                // iuser4 form (index, attachment); 0 none
+	float localOrigin[3] = {}, localAngles[3] = {};
+	float origin[3] = {}, angles[3] = {}, width = 0, height = 0; // as defined (the parent's pose moves them)
 	// visibility
 	bool seen = false;             // seen by a view since the host's last ConsumeSeen
 	bool occluded = false;         // last trace result
@@ -170,6 +175,7 @@ void ReserveRepaints()
 bool s_bDrawnThisFrame = false;
 
 // aim / click state
+int s_iLocalSlot = -1;            // the world screen editor's own screen (EditorPlaceLocal), -1 if none
 int s_iAimSlot = -1;              // the screen the view ray hits (front side, within its input distance), or -1
 int s_iAimX = -1, s_iAimY = -1;   // panel pixel (-1: a held click keeps a screen the ray left)
 int s_iPressSlot[2] = { -1, -1 }; // [0] attack, [1] attack2: the screen that got the press
@@ -220,7 +226,7 @@ void BuildBound(Screen &s, int entindex)
 		return; // the console has the reason
 	if (faces.empty())
 	{
-		worldscreen::Printf("worldscreen: vgui_screen %d: its carrier (model *%d) has no %s face, not shown\n", entindex,
+		worldscreen::DebugPrintf("worldscreen: vgui_screen %d: its carrier (model *%d) has no %s face, not shown\n", entindex,
 		    s.submodel, WSCREEN_TOOL_TEXTURE);
 		return;
 	}
@@ -397,7 +403,7 @@ void PanelPixel(const Screen &s, const BoundFace &f, const float *p, int &px, in
 }
 
 // TraceScreen for a bound screen: the view ray in the carrier's frame against each face.
-bool TraceBound(const Screen &s, const float *eye, const float *dir, int &px, int &py, float &dist)
+bool TraceBound(const Screen &s, const float *eye, const float *dir, int &px, int &py, float &dist, float reach)
 {
 	float eyeL[3], dirL[3];
 	PointToLocal(s, eye, eyeL);
@@ -406,7 +412,7 @@ bool TraceBound(const Screen &s, const float *eye, const float *dir, int &px, in
 	for (const BoundFace &f : s.faces)
 	{
 		const float planeDist = Dot(eyeL, f.normal) - f.dist;
-		if (planeDist < 0 || planeDist > s.inputDist)
+		if (planeDist < 0 || planeDist > reach)
 			continue;
 		const float denom = Dot(dirL, f.normal);
 		if (denom >= -1e-6f)
@@ -427,15 +433,17 @@ bool TraceBound(const Screen &s, const float *eye, const float *dir, int &px, in
 }
 
 // The view ray against a screen. True with the panel pixel and the ray length if it hits the front side and the
-// eye is within the screen's input distance of its plane.
-bool TraceScreen(const Screen &s, const float *eye, const float *dir, int &px, int &py, float &dist)
+// eye is within reach of its plane (the screen's input distance unless given: the world screen editor's pick).
+bool TraceScreen(const Screen &s, const float *eye, const float *dir, int &px, int &py, float &dist, float reach = -1.0f)
 {
+	if (reach < 0)
+		reach = s.inputDist;
 	if (s.bound)
-		return TraceBound(s, eye, dir, px, py, dist);
+		return TraceBound(s, eye, dir, px, py, dist, reach);
 	float toEye[3];
 	Sub(eye, s.corners[0], toEye);
 	const float planeDist = Dot(toEye, s.normal);
-	if (planeDist < 0 || planeDist > s.inputDist)
+	if (planeDist < 0 || planeDist > reach)
 		return false;
 	const float denom = Dot(dir, s.normal);
 	if (denom >= -1e-6f) // parallel, or looking away from the front side
@@ -758,7 +766,7 @@ void Define()
 		if (slot < 0)
 		{
 			if (!s_bWarnedFull)
-				worldscreen::Printf("worldscreen: the map has more than %d vgui_screen entities, entity %d and later "
+				worldscreen::DebugPrintf("worldscreen: the map has more than %d vgui_screen entities, entity %d and later "
 				                    "ones are not shown\n", WORLDSCREEN_MAX, entindex);
 			s_bWarnedFull = true;
 			return;
@@ -772,6 +780,14 @@ void Define()
 	s.flags = flags;
 	s.inputDist = (float)inputDist;
 	BuildCorners(s, origin, angles, width, height);
+	for (int i = 0; i < 3; i++)
+	{
+		s.origin[i] = origin[i];
+		s.angles[i] = angles[i];
+	}
+	s.width = width;
+	s.height = height;
+	s.parent = 0; // a WSCREEN_OP_PARENT follows when it has one
 	const bool bound = (flags & WSCREEN_FLAG_BOUND) != 0;
 	if (bound != s.bound || carrier != s.carrier || submodel != s.submodel)
 	{
@@ -803,7 +819,7 @@ void Define()
 		strcpy(s.panel, panel);
 		s.hasPanel = s_bVGui2 && VGui2_WorldScreen_Create(slot, panel, s.pixelWide, s.pixelTall);
 		if (!s.hasPanel)
-			worldscreen::Printf("worldscreen: vgui_screen %d: no layout ui/scripts/screens/%s.res, not shown\n",
+			worldscreen::DebugPrintf("worldscreen: vgui_screen %d: no layout ui/scripts/screens/%s.res, not shown\n",
 			    entindex, panel);
 	}
 	if (!(flags & WSCREEN_FLAG_ACTIVE))
@@ -831,6 +847,30 @@ int MsgFunc_WScreen(const char *, int iSize, void *pbuf)
 	}
 
 	const int slot = FindSlot(READ_SHORT());
+	if (op == WSCREEN_OP_PARENT)
+	{
+		const int parent = READ_SHORT() & 0xFFFF;
+		float lo[3], la[3];
+		for (int i = 0; i < 3; i++)
+		{
+			const int bits = READ_LONG();
+			float f;
+			memcpy(&f, &bits, sizeof(f));
+			lo[i] = (f == f && f > -131072.0f && f < 131072.0f) ? f : 0.0f;
+		}
+		for (int i = 0; i < 3; i++)
+			la[i] = (READ_SHORT() & 0xFFFF) * (360.0f / 65536.0f);
+		if (slot < 0 || s_Screens[slot].bound)
+			return 1;
+		Screen &s = s_Screens[slot];
+		s.parent = parent;
+		for (int i = 0; i < 3; i++)
+		{
+			s.localOrigin[i] = lo[i];
+			s.localAngles[i] = la[i];
+		}
+		return 1;
+	}
 	if (op == WSCREEN_OP_STATE)
 	{
 		const int flags = READ_BYTE();
@@ -939,8 +979,15 @@ void SendCommand(int slot, const char *command)
 		return;
 	if (!WScreen_ValidName(command, WSCREEN_MAX_COMMAND, 1))
 	{
-		Printf("worldscreen: button command \"%s\" not sent: at most %d letters, digits, '_', '-', '.', ':' and "
+		DebugPrintf("worldscreen: button command \"%s\" not sent: at most %d letters, digits, '_', '-', '.', ':' and "
 		       "single spaces\n", command, WSCREEN_MAX_COMMAND - 1);
+		return;
+	}
+	if (slot == s_iLocalSlot)
+	{
+		// the editor's own screen exists only in this game: nothing goes to the server
+		DebugPrintf("worldscreen: the editor's screen was clicked with the command \"%s\", which isn't sent because the map has no such screen\n",
+		    command);
 		return;
 	}
 	char cmd[128];
@@ -948,6 +995,190 @@ void SendCommand(int slot, const char *command)
 	if (DebugLevel() > 0)
 		Printf("worldscreen: %s\n", cmd);
 	gEngfuncs.pfnServerCmd(cmd);
+}
+
+int EditorSlotAt(const float *eye, const float *dir)
+{
+	int best = -1;
+	float bestDist = 0;
+	for (int i = 0; i < WORLDSCREEN_MAX; i++)
+	{
+		const Screen &s = s_Screens[i];
+		if (!Usable(s) || s.movie || !s.hasPanel)
+			continue;
+		int px, py;
+		float dist;
+		if (TraceScreen(s, eye, dir, px, py, dist, 1e9f) && (best < 0 || dist < bestDist))
+		{
+			best = i;
+			bestDist = dist;
+		}
+	}
+	return best;
+}
+
+int EditorSlotInView()
+{
+	vec3_t fwd, right, up;
+	gEngfuncs.pfnAngleVectors(v_angles, fwd, right, up);
+	const float eye[3] = { v_origin[0], v_origin[1], v_origin[2] };
+	const float dir[3] = { fwd[0], fwd[1], fwd[2] };
+	return EditorSlotAt(eye, dir);
+}
+
+int EditorSlotAtScreenPoint(int x, int y)
+{
+	const int sw = ScreenWidth, st = ScreenHeight;
+	if (sw <= 0 || st <= 0)
+		return -1;
+	// the engine's own unprojection of this view: screen x / y in -1 .. 1 (y up)
+	float screen[3] = { 2.0f * x / sw - 1.0f, 1.0f - 2.0f * y / st, 0.0f };
+	float world[3];
+	gEngfuncs.pTriAPI->ScreenToWorld(screen, world);
+	const float eye[3] = { v_origin[0], v_origin[1], v_origin[2] };
+	float dir[3];
+	Sub(world, eye, dir);
+	const float len = sqrtf(Dot(dir, dir));
+	if (len < 1e-4f)
+		return EditorSlotInView();
+	for (float &c : dir)
+		c /= len;
+	return EditorSlotAt(eye, dir);
+}
+
+const char *EditorSlotPanel(int slot)
+{
+	if (slot < 0 || slot >= WORLDSCREEN_MAX || !s_Screens[slot].used || s_Screens[slot].movie)
+		return "";
+	return s_Screens[slot].panel;
+}
+
+int EditorSlotEntity(int slot)
+{
+	return (slot >= 0 && slot < WORLDSCREEN_MAX && s_Screens[slot].used) ? s_Screens[slot].entindex : 0;
+}
+
+bool EditorTraceWall(int x, int y, float *point, float *normal)
+{
+	const int sw = ScreenWidth, st = ScreenHeight;
+	if (sw <= 0 || st <= 0)
+		return false;
+	// the screen point back into the world (the particle editor's Place): x -1 .. 1 across, y 1 .. -1 down
+	float screen[3] = { 2.0f * x / sw - 1.0f, 1.0f - 2.0f * y / st, 0.0f };
+	float nearPt[3], farPt[3];
+	gEngfuncs.pTriAPI->ScreenToWorld(screen, nearPt);
+	screen[2] = 1.0f;
+	gEngfuncs.pTriAPI->ScreenToWorld(screen, farPt);
+	float dir[3];
+	Sub(farPt, nearPt, dir);
+	const float len = sqrtf(Dot(dir, dir));
+	if (len < 1e-4f)
+		return false;
+	float start[3] = { v_origin[0], v_origin[1], v_origin[2] }, end[3];
+	for (int i = 0; i < 3; i++)
+		end[i] = start[i] + dir[i] / len * 8192.0f;
+	pmtrace_t tr;
+	// the world as it is now (ev_hldm.cpp's trace set-up)
+	gEngfuncs.pEventAPI->EV_SetUpPlayerPrediction(false, true);
+	gEngfuncs.pEventAPI->EV_PushPMStates();
+	gEngfuncs.pEventAPI->EV_SetSolidPlayers(-1);
+	gEngfuncs.pEventAPI->EV_SetTraceHull(2);
+	gEngfuncs.pEventAPI->EV_PlayerTrace(start, end, PM_WORLD_ONLY, -1, &tr);
+	gEngfuncs.pEventAPI->EV_PopPMStates();
+	if (tr.startsolid || tr.allsolid || tr.fraction >= 1.0f)
+		return false;
+	for (int i = 0; i < 3; i++)
+	{
+		point[i] = tr.endpos[i];
+		normal[i] = tr.plane.normal[i];
+	}
+	return true;
+}
+
+void EditorWallPlace(const float *point, const float *normal, float width, float height, float *origin, float *angles)
+{
+	// the screen faces out of the surface: AngleVectors' forward = the normal (forward.z = -sin(pitch)); on a floor or
+	// a ceiling the yaw is the view's, so its top points away from the player
+	const float nz = fmaxf(-1.0f, fminf(1.0f, normal[2]));
+	angles[0] = asinf(-nz) * (180.0f / 3.14159265f);
+	angles[1] = fabsf(nz) > 0.99f ? v_angles[1] : atan2f(normal[1], normal[0]) * (180.0f / 3.14159265f);
+	angles[2] = 0.0f;
+	if (angles[1] < 0.0f)
+		angles[1] += 360.0f;
+	vec3_t ang = { angles[0], angles[1], angles[2] };
+	vec3_t fwd, right, up;
+	gEngfuncs.pfnAngleVectors(ang, fwd, right, up);
+	// centered on the point, 1 unit in front of the surface; the origin is the lower-left corner seen from the front
+	// (BuildCorners: the viewer's right is -right)
+	for (int i = 0; i < 3; i++)
+		origin[i] = point[i] + normal[i] * 1.0f + right[i] * (width * 0.5f) - up[i] * (height * 0.5f);
+}
+
+int EditorPlaceLocal(const float *origin, const float *angles, float width, float height, const char *panelName,
+    const char *layoutText)
+{
+	if (!s_bVGui2)
+		return -1;
+	int slot = s_iLocalSlot;
+	for (int i = 0; i < WORLDSCREEN_MAX && slot < 0; i++)
+	{
+		if (!s_Screens[i].used)
+			slot = i;
+	}
+	if (slot < 0)
+		return -1; // the map's screens use every slot
+	Screen &s = s_Screens[slot];
+	const char *name = panelName && WScreen_ValidName(panelName, WSCREEN_MAX_PANELNAME, 0) ? panelName : "editor";
+	if (s.used && strcmp(s.panel, name) != 0)
+		ReleaseSlot(slot);
+	s.used = true;
+	s.entindex = -1; // no entity: the editor's own
+	s.flags = WSCREEN_FLAG_ACTIVE;
+	s.inputDist = 128.0f; // the vgui_screen's default
+	s.bound = false;
+	s.movie = false;
+	BuildCorners(s, origin, angles, width, height);
+	strncpy(s.panel, name, sizeof(s.panel) - 1);
+	s.panel[sizeof(s.panel) - 1] = 0;
+	int w = s.pixelWide, t = s.pixelTall;
+	s.hasPanel = VGui2_WorldScreen_CreateFromText(slot, s.panel, layoutText, w, t);
+	if (s.hasPanel)
+	{
+		s.pixelWide = w;
+		s.pixelTall = t;
+	}
+	s_iLocalSlot = slot;
+	return slot;
+}
+
+void EditorRemoveLocal()
+{
+	if (s_iLocalSlot >= 0 && s_iLocalSlot < WORLDSCREEN_MAX && s_Screens[s_iLocalSlot].entindex == -1)
+		RemoveScreen(s_iLocalSlot);
+	s_iLocalSlot = -1;
+}
+
+int EditorLocalSlot()
+{
+	return s_iLocalSlot;
+}
+
+bool EditorPreview(int slot, const char *layoutText)
+{
+	if (slot < 0 || slot >= WORLDSCREEN_MAX || !s_bVGui2)
+		return false;
+	Screen &s = s_Screens[slot];
+	if (!s.used || s.movie || !s.panel[0])
+		return false;
+	int w = s.pixelWide, t = s.pixelTall;
+	const bool ok = VGui2_WorldScreen_CreateFromText(slot, s.panel, layoutText, w, t);
+	if (ok)
+	{
+		s.hasPanel = true;
+		s.pixelWide = w;
+		s.pixelTall = t;
+	}
+	return ok;
 }
 
 void Printf(const char *fmt, ...)
@@ -959,6 +1190,20 @@ void Printf(const char *fmt, ...)
 	va_end(ap);
 	buf[sizeof(buf) - 1] = 0;
 	gEngfuncs.pfnConsolePrint(buf);
+}
+
+void DebugPrintf(const char *fmt, ...)
+{
+	char buf[1024];
+	va_list ap;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	buf[sizeof(buf) - 1] = 0;
+	if (DebugLevel() > 0)
+		gEngfuncs.pfnConsolePrint(buf);
+	else
+		gEngfuncs.Con_DPrintf("%s", buf);
 }
 } // namespace worldscreen
 
@@ -977,6 +1222,7 @@ void WorldScreen_Reset()
 {
 	for (int i = 0; i < WORLDSCREEN_MAX; i++)
 		RemoveScreen(i);
+	s_iLocalSlot = -1; // the editor's screen goes with the map
 	wsvideo::RemoveAll();
 	s_bWarnedFull = false;
 	wsbsp::Reset();
@@ -1049,6 +1295,13 @@ void WorldScreen_DrawWorld()
 	{
 		if (s_Screens[i].used && s_Screens[i].bound)
 			UpdateCarrier(s_Screens[i]);
+		else if (s_Screens[i].used && s_Screens[i].parent)
+		{
+			// on its parent's drawn pose this frame (no lag behind it); while the parent isn't here, where it was
+			Screen &s = s_Screens[i];
+			if (MoveWith_PlaceOnParent(s.parent, s.localOrigin, s.localAngles, s.origin, s.angles))
+				BuildCorners(s, s.origin, s.angles, s.width, s.height);
+		}
 	}
 
 	// the main view only: the spectator's overview and inset are no aim (and spectators can't use screens)

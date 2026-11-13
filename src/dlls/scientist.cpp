@@ -766,6 +766,10 @@ void CScientist :: TalkInit()
 
 int CScientist :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType)
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 
 	if ( IsAlive() )
 	{
@@ -1317,6 +1321,7 @@ void CSittingScientist :: Precache( void )
 {
 	m_baseSequence = LookupSequence( "sitlookleft" );
 	TalkInit();
+	CTalkMonster::Precache();	// SBO 2.0: "SpeakAs", "UseSentence", "UnUseSentence" on its sentence groups, as CScientist
 }
 
 //=========================================================

@@ -230,15 +230,9 @@ void CTriggerEntityIterator::FireFor( CBaseEntity *pEntity )
 	const char *target = STRING( pev->target );
 	USE_TYPE useType = (USE_TYPE)m_triggerstate;
 
-	if ( !strcmp( target, "!activator" ) )
+	CBaseEntity *pTarget;
+	if ( UTIL_TargetSelector( target, m_hActivator, m_hCaller, &pTarget ) )
 	{
-		CBaseEntity *pTarget = m_hActivator;
-		if ( pTarget )
-			pTarget->Use( pEntity, this, useType, 0.0f );
-	}
-	else if ( !strcmp( target, "!caller" ) )
-	{
-		CBaseEntity *pTarget = m_hCaller;
 		if ( pTarget )
 			pTarget->Use( pEntity, this, useType, 0.0f );
 	}

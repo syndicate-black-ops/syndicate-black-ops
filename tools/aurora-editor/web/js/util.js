@@ -139,3 +139,63 @@ export async function copyText(text) {
 export function escapeHtml(s) {
 	return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
+
+// uploads kept in this browser (IndexedDB): name -> ArrayBuffer | string; every call is safe when storage is blocked
+const DB_NAME = 'aurora-editor', DB_STORE = 'uploads';
+
+function openDb() {
+	return new Promise((resolve, reject) => {
+		const req = window.indexedDB.open(DB_NAME, 1);
+		req.onupgradeneeded = () => req.result.createObjectStore(DB_STORE);
+		req.onsuccess = () => resolve(req.result);
+		req.onerror = () => reject(req.error);
+	});
+}
+
+async function dbRun(mode, fn) {
+	const db = await openDb();
+	try {
+		return await new Promise((resolve, reject) => {
+			const tx = db.transaction(DB_STORE, mode);
+			const out = fn(tx.objectStore(DB_STORE));
+			tx.oncomplete = () => resolve(out && 'result' in out ? out.result : undefined);
+			tx.onerror = () => reject(tx.error);
+			tx.onabort = () => reject(tx.error);
+		});
+	} finally {
+		db.close();
+	}
+}
+
+export const uploadStore = {
+	async all() {
+		try {
+			const out = new Map();
+			const db = await openDb();
+			try {
+				await new Promise((resolve, reject) => {
+					const tx = db.transaction(DB_STORE, 'readonly');
+					const req = tx.objectStore(DB_STORE).openCursor();
+					req.onsuccess = () => {
+						const c = req.result;
+						if (c) { out.set(c.key, c.value); c.continue(); }
+					};
+					tx.oncomplete = () => resolve();
+					tx.onerror = () => reject(tx.error);
+				});
+			} finally {
+				db.close();
+			}
+			return out;
+		} catch { return new Map(); }
+	},
+	async put(name, value) {
+		try { await dbRun('readwrite', (s) => s.put(value, name)); return true; } catch { return false; }
+	},
+	async remove(name) {
+		try { await dbRun('readwrite', (s) => s.delete(name)); return true; } catch { return false; }
+	},
+	async clear() {
+		try { await dbRun('readwrite', (s) => s.clear()); return true; } catch { return false; }
+	},
+};

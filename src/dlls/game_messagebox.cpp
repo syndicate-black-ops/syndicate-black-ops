@@ -229,8 +229,8 @@ void CGameMessageBox::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TY
 }
 
 // featureful: the "position" key is a locus position ([LP]: a vector or an entity's CalcPosition, its origin).
-// SBO has no locus system: "x y z" is that point, a name is that entity's origin (a brush entity without an
-// origin brush: the center of its bounds).
+// SBO reads it as "x y z" (that point) or a name (that entity's origin; a brush entity without an origin brush: the
+// center of its bounds), not as a locus key.
 BOOL CGameMessageBox::CalcPosition( Vector &result )
 {
 	result = pev->origin;

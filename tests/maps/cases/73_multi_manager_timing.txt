@@ -1,0 +1,26 @@
+# multi_manager fires each listed target after its own delay (seconds after the call), in delay order whatever the key
+# order; while it runs it ignores further calls; once done it can be called again
+# covers: multi_manager multi_manager.targetname
+map co_fuzz
+spawn multi_manager targetname mm t_late 2.5 t_now 0 t_mid 1
+activate
+frames 3
+mark call1
+fire mm
+frames 2
+expectn 1 Firing: (t_now)
+expectnot Firing: (t_mid)
+frames 10
+expectn 1 Firing: (t_mid)
+expectnot Firing: (t_late)
+mark call_while_running
+fire mm
+frames 15
+expectn 1 Firing: (t_now)
+expectn 1 Firing: (t_late)
+mark call2_after_done
+fire mm
+frames 30
+expectn 2 Firing: (t_now)
+expectn 2 Firing: (t_mid)
+expectn 2 Firing: (t_late)

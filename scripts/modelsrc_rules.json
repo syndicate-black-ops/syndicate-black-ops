@@ -36,7 +36,7 @@
   "_comment_textures": [
     "Texture names. Every name is lower-cased and accents are removed (cote, poignee).",
     "'generic_texture_names' are placeholder names that different models use for different",
-    "images; they become <model>-<name> (precedent: chainsawsword-null.bmp in the owner's",
+    "images; they become <model>-<name> (precedent: chainsawsword-null.bmp in the",
     "rotating-weapons sources). 'texture_renames' is for one-off cases: {model: {old: new}},",
     "old name as stored in the MDL."
   ],
@@ -105,13 +105,13 @@
     "p_glauncher": {"add_idle_sequence": true},
     "p_katana": {"add_idle_sequence": true},
     "p_wong": {"what": "Fist of Legend player-held model: bare hands", "skip": "intentionally empty (bare hands): nothing to decompile, no sources needed"},
-    "w_grenade": {"what": "Hand grenade world model (weapon_handgrenade) and thrown grenade", "note": "made from the owner's rotating-weapons mesh"},
-    "w_k444": {"what": "K444 world model", "note": "made from the owner's rotating-weapons mesh"},
-    "w_medikit": {"what": "Medikit world model", "note": "made from the owner's rotating-weapons mesh"},
-    "w_rpg": {"what": "RPG world model (weapon_rpg)", "note": "made from the owner's rotating-weapons mesh"},
-    "w_shotgun": {"what": "Saan auto-shotgun world model (weapon_spa)", "note": "made from the owner's rotating-weapons mesh"},
-    "w_sword": {"what": "Energy sword world model (weapon_sword)", "note": "made from the owner's rotating-weapons mesh"},
-    "w_tripmine": {"what": "Tripmine pickup world model (weapon_tripmine)", "note": "made from the owner's rotating-weapons mesh"},
-    "w_warhammer": {"what": "Warhammer world model (weapon_warhammer)", "note": "made from the owner's rotating-weapons mesh"}
+    "w_grenade": {"what": "Hand grenade world model (weapon_handgrenade) and thrown grenade", "note": "made from the rotating-weapons mesh"},
+    "w_k444": {"what": "K444 world model", "note": "made from the rotating-weapons mesh"},
+    "w_medikit": {"what": "Medikit world model", "note": "made from the rotating-weapons mesh"},
+    "w_rpg": {"what": "RPG world model (weapon_rpg)", "note": "made from the rotating-weapons mesh"},
+    "w_shotgun": {"what": "Saan auto-shotgun world model (weapon_spa)", "note": "made from the rotating-weapons mesh"},
+    "w_sword": {"what": "Energy sword world model (weapon_sword)", "note": "made from the rotating-weapons mesh"},
+    "w_tripmine": {"what": "Tripmine pickup world model (weapon_tripmine)", "note": "made from the rotating-weapons mesh"},
+    "w_warhammer": {"what": "Warhammer world model (weapon_warhammer)", "note": "made from the rotating-weapons mesh"}
   }
 }

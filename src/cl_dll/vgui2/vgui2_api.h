@@ -4,7 +4,7 @@
 //          VGUI2 layer. Plain C++ only: safe to include from both worlds.
 //
 // Implemented in:
-//   sbo_bridge.cpp  (SBO world): VGui2_SetEngineFuncs, SboHud_InitChat, SboHud_ChatPrint
+//   sbo_bridge.cpp  (SBO world): VGui2_SetEngineFuncs, SboHud_InitChat, SboHud_ChatPrint, VGui2_SpecTargetViewModel
 //   client_vgui.cpp (SDK world): VGui2_IsAvailable, VGui2_IsCursorVisible, VGui2_Frame
 //   hud_chat.cpp    (SDK world): VGui2_Chat_*
 //   sbo_console.cpp (SDK world): VGui2_Console_*
@@ -190,6 +190,12 @@ void VGui2_DeathNotice_AddEntry(const char *killerName, int killerColor, bool ki
 //! Implemented in death.cpp.
 void VGui2_DeathNotice_SkipNextDeathMsg(int victimIndex);
 
+//! The player-facing name of a DeathMsg / SboDeathMsg weapon code ("wong" -> "Fists"), UTF-8, for the console's kill
+//! lines: the #SBO_Weapon_<code> token of sbo_ui_<language>.txt (the table the spectator info panel names the weapon
+//! in hand with; a "weapon_" prefix is skipped). A code without a token, or no VGUI2, gives the code itself.
+//! Implemented in sbo_spectator_info.cpp.
+void VGui2_WeaponDisplayName(const char *code, char *out, int outSize);
+
 // VGUI2 kill feed internals (hud_deathnotice.cpp, SDK world), driven by death.cpp. Other code calls
 // VGui2_DeathNotice_AddEntry above.
 //! HUD_Init (CHudDeathNotice::Init): creates the panel (once), registers its cvars. False without VGUI2.
@@ -281,6 +287,8 @@ struct SboSpectatorState
 void VGui2_Spectator_SetState(const SboSpectatorState &state);
 // SBO 2.0: a server menu is up: the spectator bars and their texts are not shown (they drew over its window)
 void VGui2_Spectator_SetSuppressed(bool bSuppressed);
+//! The top of the spectator bars' bottom part (bottom bar, watched player's box) in screen pixels, 0: not shown
+int VGui2_Spectator_BottomTop();
 
 //-----------------------------------------------------------------------------
 // CS:CZ tutor window (tutor_text_window.cpp; server: src/dlls/tutor.cpp, env_tutor.cpp; docs/TUTOR_PORT.md)
@@ -299,6 +307,15 @@ void VGui2_Tutor_Reset();
 bool VGui2_GameTimer_Init();
 //! InitHUD (new map / connect): forgets the timers and hides the panel.
 void VGui2_GameTimer_Reset();
+
+//-----------------------------------------------------------------------------
+// trigger_objective list (hud_objectives.cpp; server: src/dlls/trigger_objective.cpp; docs/OBJECTIVES.md)
+//-----------------------------------------------------------------------------
+//! HUD_Init (SboHud_InitChat): creates the HUD list panel, registers hud_objectives, hooks Objective. False without
+//! VGUI2.
+bool VGui2_Objectives_Init();
+//! InitHUD (new map / connect): forgets the objectives (the server sends the list again).
+void VGui2_Objectives_Reset();
 
 //-----------------------------------------------------------------------------
 // game_messagebox message boxes (sbo_message_box.cpp; server: src/dlls/game_messagebox.cpp; docs/MESSAGE_BOX.md)
@@ -354,11 +371,35 @@ bool VGui2_GmHudOwnsScreen();
 //! SBO 2.0 GM mode: the players window's View (view.cpp): the player its picture follows in chase locked and the
 //! picture's rectangle in screen pixels; false: no picture
 bool VGui2_GmPip(int &target, int &x, int &y, int &w, int &h);
+//! The view model of the player this client watches as a spectator, from the server's "SpecHealth2" (sbo_bridge.cpp):
+//! its model index (0: none) while the last message was for this player, -1 when unknown (another player, a server
+//! that doesn't send it, HLTV). view.cpp: the first-person inset over another main view
+int VGui2_SpecTargetViewModel(int player);
 //! The top of the kill feed while the Game Master's nearest players panel is up (pixels), 0 otherwise
 int VGui2_GmKillFeedTop();
 //! The first free line under the Game Master's status strip while it is shown (pixels), 0 otherwise: top-center HUD
 //! elements (the radio bar, the game timer) go below it
 int VGui2_GmStripBottom();
+
+//-----------------------------------------------------------------------------
+// In-game tool windows (controls/sbo_tool_window.cpp) and the color correction editor (sbo_cc_editor.cpp;
+// docs/COLOR_CORRECTION.md "Editor")
+//-----------------------------------------------------------------------------
+//! HUD_Init (SboHud_InitChat, after VGui2_Menus_Init): adds the command colorcorrectionui. False without VGUI2.
+bool VGui2_CcEditor_Init();
+//! HUD_Init, after VGui2_CcEditor_Init: adds the command particleeditorui (the particle editor, sbo_particle_editor.cpp;
+//! docs/AURORA.md "Editor"). False without VGUI2.
+bool VGui2_ParticleEditor_Init();
+//! HUD_Init, after VGui2_ParticleEditor_Init: adds the command worldscreeneditorui (the world screen editor,
+//! sbo_worldscreen_editor.cpp; docs/WORLD_SCREENS.md "Editor"). False without VGUI2.
+bool VGui2_WorldScreenEditor_Init();
+//! A tool window is open (cursor on): the mouse buttons and wheel are VGUI2's (no +attack / +attack2 / wheel
+//! binding runs); the keyboard stays the game's
+bool VGui2_ToolWindows_HaveMouse();
+//! A tool window's text field is being typed in: key presses are the field's (no binding runs; releases still do)
+bool VGui2_ToolWindows_TextInput();
+//! HUD_Init: the command tool_mouselook (mouse look on / off while tool windows are open)
+void VGui2_ToolWindows_RegisterCommands();
 
 //! HUD text menu (sbo_hud_menu.cpp): CHudMenu keeps the ShowMenu logic and pushes its state here; the VGUI2 panel
 //! draws it.

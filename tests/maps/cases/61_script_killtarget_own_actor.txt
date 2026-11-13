@@ -1,0 +1,24 @@
+# co_omega17_v3 CoomerEscape24: scripted_sequence (spawnflags 96, m_fMoveTo 0 here: the stub cannot walk) on "Coomer" with target CoomerRescued and killtarget Coomer
+# covers: scripted_sequence.killtarget scripted_sequence.target
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist targetname Coomer body 1 origin "0 300 0"
+spawn scripted_sequence targetname CoomerEscape24 m_iszEntity Coomer m_iszPlay idle1 m_fMoveTo 0 spawnflags 96 target CoomerRescued killtarget Coomer origin "0 320 0"
+spawn trigger_relay targetname CoomerRescued target cr_sink triggerstate 2
+activate
+frames 20
+useent 1 world
+frames 200
+count monster_scientist
+count scripted_sequence
+expectn 1 Firing: (CoomerRescued)
+expectcount monster_scientist 0

@@ -1,0 +1,21 @@
+# The edits that keep the 1.38 play of named Start ON monstermakers (maps/map_compat.txt for bk_pipes,
+# co_god_damn_the_sun, co_prototype, co_saibercity_v3, co_unxmas; docs/MAP_COMPAT.md): on develop they do what 1.38 did with the original makers (case 99b: none made at the start,
+# none after the first toggle). mk_wait: Start ON with Frequency 1000000000: nothing at the start, its first toggle
+# turns it off, nothing made; mk_cyc: Cyclic, Start ON cleared (the map had 5): one monster per trigger
+map co_fuzz
+cvar mp_makermon 1
+cvar mp_speedmon 1
+spawn monstermaker targetname mk_wait monstertype monster_scientist monstercount 1 delay 1000000000 spawnflags 1 origin "0 1000 0"
+spawn monstermaker targetname mk_cyc monstertype monster_human_assassin monstercount -1 delay 1 spawnflags 4 origin "0 2000 0"
+activate
+frames 30
+mark started
+expectcount monster_scientist 0
+expectcount monster_human_assassin 0
+mark first_trigger
+fire mk_wait
+fire mk_cyc
+frames 30
+expectcount monster_scientist 0
+expectcount monster_human_assassin 1
+expectfield mk_wait nextthink 0

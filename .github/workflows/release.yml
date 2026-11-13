@@ -1,13 +1,14 @@
 # Tag v* (vX.Y.Z, or vX.Y.Z-pre for a pre-release): build, package, sign, publish the GitHub release.
 #   tag       the tag must be v<project(VERSION) in CMakeLists.txt>[-pre]; a "-pre" tag is a GitHub pre-release and
-#             its builds carry that version (SBO_VERSION_OVERRIDE)
+#             its builds carry that version (SBO_VERSION_OVERRIDE); CHANGELOG.md must have the version's section
 #   build     build.yml, RelWithDebInfo, -DSBO_TEST_COMMANDS=OFF
 #   package   scripts/package_full_release.sh, on the runner: sbo-<tag>.zip (syndicate/ and syndicate_addon/),
 #             SHA256SUMS, manifest.json (not signed here: this job has no secrets)
 #   publish   environment "release" (its secret SBO_UPDATE_SIGNING_KEY, the Ed25519 private key as PEM text): signs
 #             manifest.json, checks the signature against the public key the game was built with and that the
-#             game libraries carry that key and this repository, then creates the release (notes = the annotated
-#             tag's message) with sbo-<tag>.zip, SHA256SUMS, manifest.json and manifest.json.sig
+#             game libraries carry that key and this repository, then creates the release (text = the version's
+#             section of CHANGELOG.md, scripts/updater_release.py notes) with sbo-<tag>.zip, SHA256SUMS,
+#             manifest.json and manifest.json.sig
 name: release
 
 on:
@@ -33,7 +34,11 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-          sparse-checkout: CMakeLists.txt
+          sparse-checkout: |
+            CMakeLists.txt
+            CHANGELOG.md
+            scripts/updater_release.py
+            src/cl_dll/updater/updater.cmake
           sparse-checkout-cone-mode: false
       - name: Tag and project version
         id: v
@@ -54,6 +59,9 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"; echo "override=" >> "$GITHUB_OUTPUT"
           fi
           echo "release $version (project $project)"
+      - name: Release notes
+        # the release text is the version's CHANGELOG.md section: fail here, before the build, when it is missing
+        run: python3 scripts/updater_release.py notes "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY"
 
   build:
     needs: tag
@@ -115,6 +123,7 @@ jobs:
         with:
           persist-credentials: false
           sparse-checkout: |
+            CHANGELOG.md
             scripts/updater_release.py
             src/cl_dll/updater/updater.cmake
           sparse-checkout-cone-mode: false
@@ -154,13 +163,9 @@ jobs:
           TAG: ${{ github.ref_name }}
           PRERELEASE: ${{ needs.tag.outputs.prerelease }}
         run: |
-          # notes: the annotated tag's message without its signature (a lightweight tag: the version only)
-          ref=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$TAG" --jq '.object.type + " " + .object.sha')
-          if [ "${ref%% *}" = tag ]; then
-            gh api "repos/$GITHUB_REPOSITORY/git/tags/${ref#* }" --jq .message | sed '/^-----BEGIN PGP SIGNATURE-----/,$d' > "$RUNNER_TEMP/notes.md"
-          else
-            echo "::warning::$TAG is a lightweight tag: no release notes"; echo "SBO ${TAG#v}" > "$RUNNER_TEMP/notes.md"
-          fi
+          # release text: the version's section of CHANGELOG.md (a pre-release uses its release's section)
+          python3 scripts/updater_release.py notes "$TAG" --repo "$GITHUB_REPOSITORY" > "$RUNNER_TEMP/notes.md"
+          { echo "## Release notes"; echo; cat "$RUNNER_TEMP/notes.md"; } >> "$GITHUB_STEP_SUMMARY"
           args=(); [ "$PRERELEASE" = true ] && args+=(--prerelease)
           python3 scripts/updater_release.py publish "$TAG" out/release --repo "$GITHUB_REPOSITORY" --notes "$RUNNER_TEMP/notes.md" "${args[@]}"
           gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json url,assets --jq '.url, (.assets[] | "  " + .name + " " + (.size|tostring))'

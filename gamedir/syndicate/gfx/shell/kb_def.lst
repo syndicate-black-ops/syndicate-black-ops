@@ -6,6 +6,7 @@
 "DEL"			"cloak"
 "p"				"cloak"
 "j"				"cybereye"
+"h"				"objectives"
 "m"				"changemodel"
 "w"				"+forward"
 "UPARROW"		"+forward"

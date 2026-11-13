@@ -1,0 +1,23 @@
+# monstermaker childtriggercondition 11 "See Player, Not In Combat": a scientist child (it never goes into combat) made
+# next to a player fires the maker's childtriggertarget when it sees him. 1.38 ignores the keys
+# covers: monstermaker.childtriggercondition=11
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk11 monstertype monster_scientist monstercount 1 childtriggertarget see_11 childtriggercondition 11 origin "0 300 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useent 0 world
+frames 100
+expectn 1 Firing: (see_11)

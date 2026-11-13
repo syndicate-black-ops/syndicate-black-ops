@@ -1,0 +1,28 @@
+# coop mp_missionendtime 3 (802ed4bf): game_end in a round, the intermission comes 3 s after the result (not before
+# 2 s, by 4 s)
+# covers: game_end
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+cvar mp_missionendtime 3
+spawn game_end targetname ge
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+expectn 1 ROUND START
+fire ge
+frames 20
+expect SUCCESSFULL MISSION
+expectnot SVC_INTERMISSION
+frames 20
+expect SVC_INTERMISSION

@@ -1,0 +1,77 @@
+# monstermaker Monster Type (FGD choices): a maker of each type the 1.38 maps use makes that monster when triggered
+# (Number of Monsters 1, Frequency 0.5)
+# covers: monstermaker monstermaker.monstertype monstermaker.monstertype=monster_hunter monstermaker.monstertype=monster_grunt_hunter monstermaker.monstertype=monster_imp monstermaker.monstertype=monster_imp_hunter monstermaker.monstertype=monster_alien_slave monstermaker.monstertype=monster_human_grunt monstermaker.monstertype=monster_zombie monstermaker.monstertype=monster_zombie_hunter monstermaker.monstertype=monster_werewolf_hunter monstermaker.monstertype=monster_snark monstermaker.monstertype=monster_cyborg monstermaker.monstertype=monster_dark monstermaker.monstertype=monster_barney monstermaker.monstertype=monster_human_assassin monstermaker.monstertype=monster_werewolf monstermaker.monstertype=monster_cyberminotor monstermaker.monstertype=monster_gargantua monstermaker.monstertype=monster_scientist monstermaker.monstertype=monster_zombie_grunt monstermaker.monstertype=monster_ichthyosaur
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk0 monstertype monster_hunter monstercount 1 delay 0.5 origin "0 500 0"
+spawn monstermaker targetname mk1 monstertype monster_grunt_hunter monstercount 1 delay 0.5 origin "300 500 0"
+spawn monstermaker targetname mk2 monstertype monster_imp monstercount 1 delay 0.5 origin "600 500 0"
+spawn monstermaker targetname mk3 monstertype monster_imp_hunter monstercount 1 delay 0.5 origin "900 500 0"
+spawn monstermaker targetname mk4 monstertype monster_alien_slave monstercount 1 delay 0.5 origin "1200 500 0"
+spawn monstermaker targetname mk5 monstertype monster_human_grunt monstercount 1 delay 0.5 origin "0 800 0"
+spawn monstermaker targetname mk6 monstertype monster_zombie monstercount 1 delay 0.5 origin "300 800 0"
+spawn monstermaker targetname mk7 monstertype monster_zombie_hunter monstercount 1 delay 0.5 origin "600 800 0"
+spawn monstermaker targetname mk8 monstertype monster_werewolf_hunter monstercount 1 delay 0.5 origin "900 800 0"
+spawn monstermaker targetname mk9 monstertype monster_snark monstercount 1 delay 0.5 origin "1200 800 0"
+spawn monstermaker targetname mk10 monstertype monster_cyborg monstercount 1 delay 0.5 origin "0 1100 0"
+spawn monstermaker targetname mk11 monstertype monster_dark monstercount 1 delay 0.5 origin "300 1100 0"
+spawn monstermaker targetname mk12 monstertype monster_barney monstercount 1 delay 0.5 origin "600 1100 0"
+spawn monstermaker targetname mk13 monstertype monster_human_assassin monstercount 1 delay 0.5 origin "900 1100 0"
+spawn monstermaker targetname mk14 monstertype monster_werewolf monstercount 1 delay 0.5 origin "1200 1100 0"
+spawn monstermaker targetname mk15 monstertype monster_cyberminotor monstercount 1 delay 0.5 origin "0 1400 0"
+spawn monstermaker targetname mk16 monstertype monster_gargantua monstercount 1 delay 0.5 origin "300 1400 0"
+spawn monstermaker targetname mk17 monstertype monster_scientist monstercount 1 delay 0.5 origin "600 1400 0"
+spawn monstermaker targetname mk18 monstertype monster_zombie_grunt monstercount 1 delay 0.5 origin "900 1400 0"
+spawn monstermaker targetname mk19 monstertype monster_ichthyosaur monstercount 1 delay 0.5 origin "1200 1400 0"
+activate
+frames 10
+fire mk0
+fire mk1
+fire mk2
+fire mk3
+fire mk4
+fire mk5
+fire mk6
+fire mk7
+fire mk8
+fire mk9
+fire mk10
+fire mk11
+fire mk12
+fire mk13
+fire mk14
+fire mk15
+fire mk16
+fire mk17
+fire mk18
+fire mk19
+frames 30
+expectcount monster_hunter 1
+expectcount monster_grunt_hunter 1
+expectcount monster_imp 1
+expectcount monster_imp_hunter 1
+expectcount monster_alien_slave 1
+expectcount monster_human_grunt 1
+expectcount monster_zombie 1
+expectcount monster_zombie_hunter 1
+expectcount monster_werewolf_hunter 1
+expectcount monster_snark 1
+expectcount monster_cyborg 1
+expectcount monster_dark 1
+expectcount monster_barney 1
+expectcount monster_human_assassin 1
+expectcount monster_werewolf 1
+expectcount monster_cyberminotor 1
+expectcount monster_gargantua 1
+expectcount monster_scientist 1
+expectcount monster_zombie_grunt 1
+expectcount monster_ichthyosaur 1

@@ -275,8 +275,11 @@ static void PlayerThink( int playerIndex )
 		}
 	}
 
-	// drop what expired or can't be shown any more, find the next one: highest priority, then the oldest
+	// drop what expired or can't be shown any more, find the next one: highest priority, then the oldest; with the
+	// window open, the next one among those that may replace it (CZ: "Interrupt Now" and at least the shown
+	// message's priority), even when a higher-priority message without interrupt waits too
 	int best = -1;
+	int bestInterrupt = -1;
 	for ( int i = 0; i < state.queueCount; )
 	{
 		CEnvTutor *pTutor = (CEnvTutor *)(CBaseEntity *)state.queue[i].hTutor;
@@ -290,25 +293,29 @@ static void PlayerThink( int playerIndex )
 
 		if ( best < 0 || pTutor->m_parms.priority > ( (CEnvTutor *)(CBaseEntity *)state.queue[best].hTutor )->m_parms.priority )
 			best = i;
+		if ( pTutor->m_parms.interrupt && pTutor->m_parms.priority >= state.shownPriority
+			&& ( bestInterrupt < 0 || pTutor->m_parms.priority > ( (CEnvTutor *)(CBaseEntity *)state.queue[bestInterrupt].hTutor )->m_parms.priority ) )
+			bestInterrupt = i;
 		i++;
+	}
+
+	if ( state.windowOpen )
+	{
+		if ( bestInterrupt < 0 )
+			return;
+		best = bestInterrupt;
 	}
 
 	if ( best < 0 )
 		return;
 
 	CEnvTutor *pNext = (CEnvTutor *)(CBaseEntity *)state.queue[best].hTutor;
-
-	if ( state.windowOpen )
-	{
-		// CZ: "Interrupt Now" and at least the shown message's priority
-		if ( !pNext->m_parms.interrupt || pNext->m_parms.priority < state.shownPriority )
-			return;
-
-		// the new TutorText replaces the window
-		CloseShown( playerIndex, pPlayer, FALSE, TRUE );
-	}
-
 	RemoveQueued( state, best );
+
+	// the new TutorText replaces the window (taken off the queue first: the close target may queue messages)
+	if ( state.windowOpen )
+		CloseShown( playerIndex, pPlayer, FALSE, TRUE );
+
 	Display( playerIndex, pPlayer, pNext );
 }
 

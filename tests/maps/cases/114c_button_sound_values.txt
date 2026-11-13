@@ -1,0 +1,45 @@
+# func_button Sounds (FGD choices): pressed, each plays its sound: 1-10 buttons/button<N>.wav, 14 buttons/lightswitch2.wav;
+# func_rot_button 23 Ratchet Groan buttons/lever3.wav
+# covers: func_button.sounds=1 func_button.sounds=2 func_button.sounds=4 func_button.sounds=5 func_button.sounds=6 func_button.sounds=7 func_button.sounds=8 func_button.sounds=9 func_button.sounds=10 func_button.sounds=14 func_rot_button.sounds=23
+map co_fuzz
+brushsize 32 32 32
+spawn func_button targetname b1 model *1 sounds 1 wait 1 origin "0 0 0"
+spawn func_button targetname b2 model *2 sounds 2 wait 1 origin "100 0 0"
+spawn func_button targetname b4 model *3 sounds 4 wait 1 origin "200 0 0"
+spawn func_button targetname b5 model *4 sounds 5 wait 1 origin "300 0 0"
+spawn func_button targetname b6 model *5 sounds 6 wait 1 origin "400 0 0"
+spawn func_button targetname b7 model *6 sounds 7 wait 1 origin "500 0 0"
+spawn func_button targetname b8 model *7 sounds 8 wait 1 origin "600 0 0"
+spawn func_button targetname b9 model *8 sounds 9 wait 1 origin "700 0 0"
+spawn func_button targetname b10 model *9 sounds 10 wait 1 origin "800 0 0"
+spawn func_button targetname b14 model *10 sounds 14 wait 1 origin "900 0 0"
+spawn func_rot_button targetname r23 model *11 sounds 23 wait 1 origin "0 500 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark press
+useclient 0 1
+useclient 1 1
+useclient 2 1
+useclient 3 1
+useclient 4 1
+useclient 5 1
+useclient 6 1
+useclient 7 1
+useclient 8 1
+useclient 9 1
+useclient 10 1
+frames 3
+expectre SOUND #\d+ func_button ch\d buttons/button1.wav
+expectre SOUND #\d+ func_button ch\d buttons/button2.wav
+expectre SOUND #\d+ func_button ch\d buttons/button4.wav
+expectre SOUND #\d+ func_button ch\d buttons/button5.wav
+expectre SOUND #\d+ func_button ch\d buttons/button6.wav
+expectre SOUND #\d+ func_button ch\d buttons/button7.wav
+expectre SOUND #\d+ func_button ch\d buttons/button8.wav
+expectre SOUND #\d+ func_button ch\d buttons/button9.wav
+expectre SOUND #\d+ func_button ch\d buttons/button10.wav
+expectre SOUND #\d+ func_button ch\d buttons/lightswitch2.wav
+expectre SOUND #\d+ func_rot_button ch\d buttons/lever3.wav

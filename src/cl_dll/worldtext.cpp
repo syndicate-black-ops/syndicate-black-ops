@@ -31,6 +31,7 @@
 #include "mirror.h"
 #include "worldtext.h"
 #include "worldtext_gl.h"
+#include "movewith_client.h"
 
 extern engine_studio_api_t IEngineStudio;
 
@@ -118,7 +119,7 @@ static bool LoadFace( int i )
 	byte *pFile = gEngfuncs.COM_LoadFile( path, 5, &len );
 	if ( !pFile )
 	{
-		gEngfuncs.Con_Printf( "point_worldtext: %s not found, texts in this font are not shown\n", path );
+		gEngfuncs.Con_DPrintf( "point_worldtext: %s not found, texts in this font are not shown\n", path );
 		return false;
 	}
 	std::string err;
@@ -126,7 +127,7 @@ static bool LoadFace( int i )
 	gEngfuncs.COM_FreeFile( pFile );
 	if ( !ok )
 	{
-		gEngfuncs.Con_Printf( "point_worldtext: %s: %s; texts in this font are not shown\n", path, err.c_str() );
+		gEngfuncs.Con_DPrintf( "point_worldtext: %s: %s; texts in this font are not shown\n", path, err.c_str() );
 		return false;
 	}
 
@@ -135,7 +136,7 @@ static bool LoadFace( int i )
 	pFile = gEngfuncs.COM_LoadFile( path, 5, &len );
 	if ( !pFile )
 	{
-		gEngfuncs.Con_Printf( "point_worldtext: %s not found, texts in this font are not shown\n", path );
+		gEngfuncs.Con_DPrintf( "point_worldtext: %s not found, texts in this font are not shown\n", path );
 		return false;
 	}
 	gEngfuncs.COM_FreeFile( pFile );
@@ -144,7 +145,7 @@ static bool LoadFace( int i )
 	if ( f.hSprite <= 0 || SPR_Frames( f.hSprite ) < 2 * f.metrics.frames
 		|| SPR_Width( f.hSprite, 0 ) != f.metrics.frameW || SPR_Height( f.hSprite, 0 ) != f.metrics.frameH )
 	{
-		gEngfuncs.Con_Printf( "point_worldtext: %s does not match its metrics file, texts in this font are not shown\n", path );
+		gEngfuncs.Con_DPrintf( "point_worldtext: %s does not match its metrics file, texts in this font are not shown\n", path );
 		f.hSprite = 0;
 		return false;
 	}
@@ -427,7 +428,7 @@ void WorldText_DrawFrame( void )
 	IEngineStudio.GetViewInfo( view.origin, view.up, view.right, view.forward );
 
 	// the view's cone: HL25 widens a 4:3 field of view for wider screens (Hor+)
-	float fov = (float)gHUD.m_iFOV;
+	float fov = (float)gHUD.m_iRenderFOV;	// the FOV the frame is drawn with (CHud::Think)
 	if ( !( fov >= 10.0f && fov <= 170.0f ) )
 		fov = 90.0f;
 	const float aspect = ( ScreenHeight > 0 ) ? (float)ScreenWidth / ScreenHeight : 4.0f / 3.0f;
@@ -450,6 +451,12 @@ void WorldText_DrawFrame( void )
 			txt.lastState = !txt.ready ? "no font" : "empty";
 			continue;
 		}
+
+		// a text with a parent (movewith): on the parent's drawn pose this frame, so it never lags behind it; while
+		// the parent isn't here, where it was last
+		if ( txt.state.flags & WORLDTEXT_FLAG_PARENT )
+			MoveWith_PlaceOnParent( txt.state.parent, txt.state.localOrigin, txt.state.localAngles, txt.state.origin,
+				txt.state.angles );
 
 		const WTFace &face = s_Faces[txt.face];
 		const float scale = txt.state.size / face.metrics.em;

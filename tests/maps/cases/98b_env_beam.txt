@@ -1,0 +1,38 @@
+# env_beam (FGD) between two info_targets (Start / End Entity). A named beam with Life 0 is hidden until triggered,
+# then drawn with its keys: Width (BoltWidth 30 -> scale), Noise (40 -> body), Texture Scroll (50 -> animtime), Beam
+# Color, Brightness, Sprite Name. 1 Start On with Life 0.5 and Strike again time 1: a beam (TE_BEAMPOINTS, life 5
+# tenths, width 10, color 0 0 255, brightness 100) every 1.5 s. 2 Toggle: each trigger turns it on, then off
+# covers: env_beam env_beam.lightningstart env_beam.lightningend env_beam.renderamt env_beam.rendercolor env_beam.life env_beam.boltwidth env_beam.noiseamplitude env_beam.texture env_beam.texturescroll env_beam.striketime env_beam:1 env_beam:2
+map co_fuzz
+spawn info_target targetname bs origin "0 0 100"
+spawn info_target targetname be origin "0 200 100"
+spawn env_beam targetname bm LightningStart bs LightningEnd be renderamt 150 rendercolor "255 128 0" life 0 BoltWidth 30 NoiseAmplitude 40 texture sprites/laserbeam.spr TextureScroll 50 StrikeTime 0 damage 0 Radius 256
+spawn env_beam targetname bon LightningStart bs LightningEnd be renderamt 100 rendercolor "0 0 255" life 0.5 BoltWidth 10 texture sprites/laserbeam.spr StrikeTime 1 spawnflags 1
+spawn env_beam targetname btog LightningStart bs LightningEnd be renderamt 100 life 0 BoltWidth 10 texture sprites/laserbeam.spr spawnflags 2
+activate
+connect 1 P1
+frames 3
+expectfield bm effects 128
+expectfield btog effects 128
+mark fire
+fire bm
+fire btog
+frames 1
+expectfield bm effects 0
+expectfield bm scale 30
+expectfield bm body 40
+expectfield bm animtime 50
+expectfield bm rendercolor "255 128 0"
+expectfield bm renderamt 150
+expectfield bm model sprites/laserbeam.spr
+expectfield btog effects 0
+mark toggle_off
+fire btog
+frames 2
+expectfield btog effects 128
+frames 4
+expectn 1 MSG svc23 ->all: 0 0 0 100 0 200 100 1 0 0 5 10 0 0 0 255 100 0
+frames 15
+expectn 2 MSG svc23 ->all: 0 0 0 100 0 200 100 1 0 0 5 10 0 0 0 255 100 0
+frames 15
+expectn 3 MSG svc23 ->all: 0 0 0 100 0 200 100 1 0 0 5 10 0 0 0 255 100 0

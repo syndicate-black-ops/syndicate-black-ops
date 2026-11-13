@@ -1,0 +1,24 @@
+# coop: a player touches change_touch in a round: SUCCESSFULL MISSION, intermission
+# covers: change_touch
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn change_touch model models/hgrunt.mdl origin "500 0 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark touch
+touchclient 0 1
+frames 100
+expect SUCCESSFULL MISSION
+expect SVC_INTERMISSION

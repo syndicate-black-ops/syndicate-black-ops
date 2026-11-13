@@ -1,0 +1,22 @@
+# monster_sentry "orientation" 1 (ceiling): it hangs upside down (EF_INVLIGHT); floor (0) has no such effect.
+# aec5d324: the sentry uses CBaseTurret::KeyValue as in the HL SDK (1.38's own KeyValue ignored orientation, turnrate,
+# maxsleep)
+# covers: monster_sentry
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_sentry targetname ceil orientation 1 origin "0 0 200"
+spawn monster_sentry targetname floor orientation 0 origin "300 0 0"
+activate
+frames 20
+dumpent ceil
+dumpent floor
+expectdump ceil effects=16

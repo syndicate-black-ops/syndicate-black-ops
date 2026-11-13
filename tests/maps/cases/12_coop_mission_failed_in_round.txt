@@ -1,0 +1,24 @@
+# coop: mission_failed in a round: FAILED MISSION; 1.38 opens the reload vote (state 2), 2.0 goes to the intermission
+# covers: mission_failed
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn mission_failed targetname mf
+spawn trigger_relay targetname go target mf triggerstate 2
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark fire_mission_failed
+useent 1 world
+frames 150
+expect FAILED MISSION

@@ -17,7 +17,7 @@ const problems = [];
 page.on('console', (m) => { if (m.type() === 'error' || m.type() === 'warning') problems.push(`console ${m.type()}: ${m.text()}`); });
 page.on('pageerror', (e) => problems.push(`page error: ${e.message}`));
 page.on('requestfailed', (r) => problems.push(`request failed: ${r.url()} ${r.failure()?.errorText}`));
-page.on('response', (r) => { if (r.status() >= 400 && !r.url().includes('/api/session/')) problems.push(`HTTP ${r.status()}: ${r.url()}`); });
+page.on('response', (r) => { if (r.status() >= 400) problems.push(`HTTP ${r.status()}: ${r.url()}`); });
 
 await page.goto(url);
 await page.waitForFunction(() => window.__aurora && window.__aurora.S.doc, null, { timeout: 30000 });
@@ -79,11 +79,16 @@ const upload = await page.evaluate(async () => {
 	input.dispatchEvent(new Event('change'));
 	await new Promise((r) => setTimeout(r, 2500));
 	const A = window.__aurora;
-	return { name: A.S.name, uploads: [...A.S.uploads.keys()], game: A.S.gameLog, particles: A.engine.stat(3, 1), session: A.S.session };
+	return { name: A.S.name, uploads: [...A.S.uploads.keys()], game: A.S.gameLog, particles: A.engine.stat(3, 1) };
 });
 console.log('upload:', JSON.stringify(upload));
 if (!upload.uploads.includes('sprites/my-upload.spr') || upload.name !== 'uploaded-test') problems.push('upload failed: ' + JSON.stringify(upload));
 await page.screenshot({ path: `${out}/upload-and-problems.png` });
+
+// uploads stay in this browser: after a reload the sprite is still there
+await page.reload();
+await page.waitForFunction(() => window.__aurora && window.__aurora.S.doc && window.__aurora.S.uploads.has('sprites/my-upload.spr'), null, { timeout: 15000 })
+	.catch(() => problems.push('the uploaded sprite is gone after a reload'));
 
 // share link round trip
 const link = await page.evaluate(async () => {

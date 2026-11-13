@@ -1,0 +1,27 @@
+# monster_imp flag 512 Fade Corpse (FGD base Monster): killed (not gibbed: trigger_hurt damagetype 4096 NEVERGIB), its corpse
+# fades out and is removed; the same monster without the flag keeps its corpse
+# covers: monster_imp:512
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_imp targetname fade spawnflags 512 origin "0 400 0"
+spawn monster_imp targetname stay origin "400 400 0"
+spawn trigger_hurt dmg 1000000 damagetype 4096
+activate
+frames 20
+expectcount monster_imp 2
+mark kill
+touchent 2 0
+touchent 2 1
+frames 300
+dumpclass monster_imp
+expectcount monster_imp 1
+expectdump stay deadflag=2

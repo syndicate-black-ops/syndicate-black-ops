@@ -21,6 +21,7 @@
 #include "soundent.h"
 #include "effects.h"
 #include "customentity.h"
+#include "gamerules.h"
 
 typedef struct 
 {
@@ -173,6 +174,7 @@ void COsprey :: Spawn( void )
 	pev->max_health		= pev->health; // halflife-updated (VS#3261): health-based AI triggers
 
 	m_flFieldOfView = 0; // 180 degrees
+	ApplyCustomMonsterKeys();	// SBO 2.1 (Featureful SetMyFieldOfView): "field_of_view" (and the other custom keys); it never runs MonsterInit
 
 	pev->sequence = 0;
 	ResetSequenceInfo( );
@@ -346,6 +348,13 @@ CBaseMonster *COsprey :: MakeGrunt( Vector vecSrc )
 			}
 			pEntity = Create( "monster_human_grunt", vecSrc, pev->angles );
 			pGrunt = pEntity->MyMonsterPointer( );
+			// SBO 2.1 (Half-Life Unified SDK child classification "!owner_or_default", as monstermaker passes its
+			// "classify" / "respawn_as_playerally"): the Osprey's own "classify" and "is_player_ally" go to its Feds,
+			// so an ally Osprey drops allies; without them the Feds keep their own class
+			if ( m_iClassKey )
+				pGrunt->m_iClassKey = m_iClassKey;
+			if ( m_fReverseRelationship )
+				pGrunt->m_fReverseRelationship = TRUE;
 			pGrunt->pev->movetype = MOVETYPE_FLY;
 			pGrunt->pev->velocity = Vector( 0, 0, RANDOM_FLOAT( -196, -128 ) );
 			pGrunt->SetActivity( ACT_GLIDE );
@@ -529,30 +538,36 @@ void COsprey::Flight( )
 	}
 	else
 	{
-		CBaseEntity *pPlayer = NULL;
+		// SBO 2.1 (Half-Life Unified SDK): in multiplayer the rotor keeps its spawn pitch (110) and the sound is sent
+		// every think, so players who join later hear it. The Doppler pitch is worked out for one player (the first
+		// in the entity list) and sent to everyone; single player keeps it.
+		int pitch = 110;
 
-		pPlayer = UTIL_FindEntityByClassname( NULL, "player" );
-		// UNDONE: this needs to send different sounds to every player for multiplayer.	
-		if (pPlayer)
+		if (!g_pGameRules->IsMultiplayer())
 		{
-			float pitch = DotProduct( m_velocity - pPlayer->pev->velocity, (pPlayer->pev->origin - pev->origin).Normalize() );
-
-			pitch = (int)(100 + pitch / 75.0);
-
-			if (pitch > 250) 
-				pitch = 250;
-			if (pitch < 50)
-				pitch = 50;
-
-			if (pitch == 100)
-				pitch = 101;
-
-			if (pitch != m_iPitch)
+			CBaseEntity *pPlayer = UTIL_FindEntityByClassname( NULL, "player" );
+			// UNDONE: this needs to send different sounds to every player for multiplayer.
+			if (pPlayer)
 			{
-				m_iPitch = pitch;
-				EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_rotor4.wav", 1.0, 0.15, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
-				// ALERT( at_console, "%.0f\n", pitch );
+				pitch = (int)DotProduct( m_velocity - pPlayer->pev->velocity, (pPlayer->pev->origin - pev->origin).Normalize() );
+
+				pitch = 100 + (pitch / 75);
+
+				if (pitch > 250)
+					pitch = 250;
+				if (pitch < 50)
+					pitch = 50;
+
+				if (pitch == 100)
+					pitch = 101;
 			}
+		}
+
+		if (g_pGameRules->IsMultiplayer() || pitch != m_iPitch)
+		{
+			m_iPitch = pitch;
+			EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_rotor4.wav", 1.0, 0.15, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
+			// ALERT( at_console, "%.0f\n", pitch );
 		}
 		// EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_whine1.wav", flVol, 0.2, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
 	}
@@ -590,6 +605,7 @@ void COsprey :: Killed( entvars_t *pevAttacker, int iGib )
 {
 	SboKillfeed_NpcKilled( this, pevAttacker );	// chat-vgui2: kill feed (doesn't chain to CBaseMonster::Killed)
 	NotifyOwnerOfDeath();	// SBO 2.0: frees its monstermaker's live-child slot (HL never did)
+	FireTriggerOnDeath( pevAttacker );	// SBO 2.1: "trigger_on_death" (its own Killed skipped CBaseMonster::Killed's)
 
 	pev->movetype = MOVETYPE_TOSS;
 	pev->gravity = 0.3;

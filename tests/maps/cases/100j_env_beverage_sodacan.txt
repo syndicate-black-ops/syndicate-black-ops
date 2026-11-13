@@ -1,0 +1,10 @@
+# env_beverage fired: an item_sodacan drops with its model precached (36a7bca5; on 1.38 the can's model was never
+# precached by the can itself)
+# covers: env_beverage item_sodacan
+map co_fuzz
+spawn env_beverage targetname bev health 2
+activate
+frames 3
+fire bev
+frames 5
+expectcount item_sodacan 1

@@ -1,0 +1,27 @@
+# monster_apache flag 8 Explode sooner: killed in the air, it explodes 4 s later (15 s without the flag), also with
+# No Wreckage (1024) set; the wreckage itself is the entity suite apache's check (it needs a floor to land on)
+# covers: monster_apache:8
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+spawn monster_apache targetname quick spawnflags 8 origin "0 400 400"
+spawn monster_apache targetname slow origin "800 400 400"
+spawn trigger_hurt dmg 1000000 damagetype 4096
+spawn monster_apache targetname both spawnflags 1032 origin "-800 400 400"
+activate
+frames 20
+touchent 2 0
+touchent 2 1
+touchent 2 3
+frames 80
+expectcount monster_apache 1
+frames 100
+expectcount monster_apache 0

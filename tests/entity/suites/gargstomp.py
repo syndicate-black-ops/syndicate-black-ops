@@ -33,7 +33,7 @@ def arena(t, health):
 
 
 @S.test('a stomp kills a player: the Gargantua is the attacker, DeathMsg weapon "garg_stomp"', players=1, size=ROOM,
-        doc=DOC)
+        doc=DOC, covers=('monster_gargantua',))
 def kill_credit(t):
     arena(t, 20)
     t.wait(20)
@@ -46,7 +46,7 @@ def kill_credit(t):
 
 
 @S.test('the Gargantua is removed while its stomp flies: the stomp kills as its own attacker, no crash', players=1,
-        size=ROOM, doc=DOC)
+        size=ROOM, doc=DOC, covers=('monster_gargantua',))
 def owner_removed(t):
     arena(t, 20)
     t.wait(8.5)                         # the stomp is on its way (spawned at about 6.5 s, hits at about 12 s)
@@ -62,7 +62,7 @@ def owner_removed(t):
 
 
 @S.test('the Gargantua dies (not yet removed) while its stomp flies: the dead Gargantua keeps the credit', players=1,
-        size=ROOM, doc=DOC)
+        size=ROOM, doc=DOC, covers=('monster_gargantua',))
 def owner_dead(t):
     arena(t, 20)
     t.wait(11.2)                        # the stomp reaches the player at about 12 s; the body stays 1.75 s

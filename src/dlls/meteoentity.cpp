@@ -1,15 +1,12 @@
 //
 // meteoentity.cpp
 //
-// SBO: weather entity of 1.38 (meteo_particules), kept so a custom map made for 1.38 still gets its weather.
-//
-// SBO 2.0: 1.38 drew it with its own client emitter (FallingPart message, CFallingPart); it now selects the CS 1.6
-// weather (env_rain / env_snow, ReGameDLL_CS CWeather + cs16-client environment.cpp): at spawn the entity renames
-// itself to env_snow (iType 0 or missing) or env_rain (iType != 0), so CBasePlayer::SendWeatherInfo finds it. The
-// 1.38 tuning keys iParticules, iSize, iVitesse (speed) and iHauteur (height) have no CS equivalent and are ignored;
-// the client's cl_weather sets the intensity. The entity is not in the FGD: new maps use env_rain / env_snow, and
-// the shipped maps that had it (bk_mongolito, br_mongolito, co_carnage, co_kill-the-doc) carry env_rain / env_snow
-// themselves. It plays no sound; a rain sound is the map's own ambient_generic. See docs/WEATHER.md.
+// SBO: meteo_particules, the rain and snow entity of SBO 1.38. It was removed in SBO 2.0 and is not in the FGD; new
+// maps use env_rain / env_snow, and the shipped maps that had it carry env_rain / env_snow themselves. A map that still
+// has one gets, at spawn, an unnamed env_snow (iType 0 or missing) or env_rain (iType != 0) at its origin with no keys
+// (always on, CS's density; triggers.cpp CWeather), a developer console message (developer 1) says so, and the entity
+// removes itself. Its keys iParticules, iSize, iVitesse and iHauteur are ignored; the client's cl_weather sets the
+// intensity. It plays no sound: a rain sound is the map's own ambient_generic. See docs/WEATHER.md.
 //
 
 #include "extdll.h"
@@ -47,10 +44,13 @@ void CMeteoEntity::KeyValue( KeyValueData *pkvd )
 
 void CMeteoEntity::Spawn( void )
 {
-	// becomes a point env_snow / env_rain (see CWeather::Spawn, triggers.cpp)
+	// an unnamed point env_snow / env_rain (triggers.cpp CWeather) in its place
 	const char *pszWeather = m_iType ? "env_rain" : "env_snow";
-	pev->classname = MAKE_STRING( pszWeather );
+	ALERT( at_console, "meteo_particules at (%.0f %.0f %.0f) was removed in SBO 2.0; using %s instead\n",
+		pev->origin.x, pev->origin.y, pev->origin.z, pszWeather );
+	CBaseEntity::Create( (char *)pszWeather, pev->origin, pev->angles );
 	pev->solid = SOLID_NOT;
 	pev->movetype = MOVETYPE_NONE;
 	pev->effects |= EF_NODRAW;
+	UTIL_Remove( this );
 }

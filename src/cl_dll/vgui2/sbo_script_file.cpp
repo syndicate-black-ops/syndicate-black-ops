@@ -278,6 +278,12 @@ int Object::ListRow() const
 
 std::string Object::ConfigCommand() const
 {
+	const std::string name = StripInvalid(cvar);
+	return (setInfo ? "setinfo " : "") + name + " \"" + ConfigValue() + "\"\n";
+}
+
+std::string Object::ConfigValue() const
+{
 	std::string value;
 	switch (type)
 	{
@@ -305,8 +311,7 @@ std::string Object::ConfigCommand() const
 		break;
 	}
 	}
-	const std::string name = StripInvalid(cvar);
-	return (setInfo ? "setinfo " : "") + name + " \"" + value + "\"\n";
+	return value;
 }
 
 bool Description::Parse(const char *data, size_t size, Kind expected)

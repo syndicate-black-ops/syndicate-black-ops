@@ -51,6 +51,14 @@ void Updater::Log(const std::string &line)
 		m_Log(line);
 }
 
+void Updater::DevLog(const std::string &line)
+{
+	if (m_DevLog)
+		m_DevLog(line);
+	else
+		Log(line);
+}
+
 void Updater::Startup()
 {
 	if (m_Cfg.gameDir.empty())
@@ -284,8 +292,13 @@ void Updater::OnReleases(HttpResult &res)
 	if (!m_Result.updateAvailable)
 	{
 		m_State = State::UpToDate;
-		Log("Update check: " + m_Cfg.installedVersion + " is up to date" +
-		    (m_Result.hasLatest ? " (newest release " + VersionText(m_Result.latest.version) + ")" : ""));
+		const std::string line = "Update check: " + m_Cfg.installedVersion + " is up to date" +
+		    (m_Result.hasLatest ? " (newest release " + VersionText(m_Result.latest.version) + ")" : "");
+		// asked for (update_check, the Version tab): always shown; the start's own check: only with developer
+		if (m_bManual)
+			Log(line);
+		else
+			DevLog(line);
 		return;
 	}
 	m_State = State::UpdateAvailable;
@@ -301,8 +314,8 @@ void Updater::OnReleases(HttpResult &res)
 	}
 	if (m_bManual || skipped.empty() || CompareVersions(skipped.c_str(), newest.c_str()) != 0)
 		m_bShowRequest = true;
-	else
-		Log("Update check: " + newest + " was skipped (Check for updates shows it again)");
+	else // only the start's own check gets here (a manual check always shows the result): only with developer
+		DevLog("Update check: " + newest + " was skipped (Check for updates shows it again)");
 }
 
 void Updater::SkipVersion()

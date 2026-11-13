@@ -15,6 +15,7 @@
 #include "extdll.h"
 #include "util.h"
 #include "cbase.h"
+#include "keyvalue.h"
 #include "monsters.h"
 #include "customentity.h"
 #include "effects.h"
@@ -23,6 +24,7 @@
 #include "func_break.h"
 #include "shake.h"
 #include "player.h"	// SoHL env_sky: CEnvSky::SendState
+#include "com_model.h"	// SoHL env_sky: MAX_EDICTS (the sky room's entities)
 #include "animation.h"	// SBO 2.0: env_sprite with a studio model
 #include "locus.h"	// SBO 2.0: Locus keys of gibshooter / env_shooter
 
@@ -41,6 +43,8 @@ class CBubbling : public CBaseEntity
 {
 public:
 	void	Spawn( void );
+	// SBO 2.1 (Spirit of Half-Life): On while it makes bubbles, Off otherwise
+	STATE	GetState( CBaseEntity *pActivator ) { return m_state ? STATE_ON : STATE_OFF; }
 	void	Precache( void );
 	void	KeyValue( KeyValueData *pkvd );
 	
@@ -383,6 +387,9 @@ class CLightning : public CBeam
 {
 public:
 	void	Spawn( void );
+	// SBO 2.1 (Spirit of Half-Life): On while the beam is on, Off while it is off (env_beam, env_lightning; Spirit had
+	// the two the other way round)
+	STATE	GetState( CBaseEntity *pActivator ) { return m_active ? STATE_ON : STATE_OFF; }
 	void	Precache( void );
 	void	KeyValue( KeyValueData *pkvd );
 	void	Activate( void );
@@ -1745,7 +1752,8 @@ void CGibShooter :: ShootThink ( void )
 
 
 // SBO 2.0 (Featureful CShot): an env_shooter's shot ("m_iPhysics" 2-6): a sprite or model that flies; it fires
-// "m_iszTouch" (activator: the shot) and "m_iszTouchOther" (activator: what it hit) when it touches something
+// "m_iszTouch" (activator: the shot) and "m_iszTouchOther" (activator: what it hit; a map wall or floor: the shot,
+// at the hit point) when it touches something
 class CShot : public CSprite
 {
 public:
@@ -1761,8 +1769,10 @@ void CShot::Touch( CBaseEntity *pOther )
 	pev->teleport_time = gpGlobals->time + 0.1;	// not more than every 0.1 s
 	if ( !FStringNull( pev->netname ) )
 		FireTargets( STRING( pev->netname ), this, this, USE_TOGGLE, 0 );
-	if ( !FStringNull( pev->message ) && pOther && pOther->entindex() != 0 )
-		FireTargets( STRING( pev->message ), pOther, this, USE_TOGGLE, 0 );
+	// SBO 2.0: the world too, as the FGD says (Featureful fired it only for an entity); the world is no locus, so
+	// the shot is, at the hit point
+	if ( !FStringNull( pev->message ) && pOther )
+		FireTargets( STRING( pev->message ), pOther->entindex() != 0 ? pOther : this, this, USE_TOGGLE, 0 );
 }
 
 void CShot::Start( float flLife )
@@ -1816,6 +1826,9 @@ class CEnvShooter : public CGibShooter
 	string_t	m_iszTouchOther;
 	int			m_iBloodColor;
 	int			m_iStartGibBody;
+
+	BOOL		m_bMaterialSet;	// SBO 2.0: the map gave "shootsounds" (else None, the FGD's default)
+	BOOL		m_bSpawned;		// SBO 2.1: "shootmodel" can no longer change (it is precached)
 };
 
 LINK_ENTITY_TO_CLASS( env_shooter, CEnvShooter );
@@ -1829,6 +1842,7 @@ TYPEDESCRIPTION CEnvShooter::m_SaveData[] =
 	DEFINE_FIELD( CEnvShooter, m_iszTouchOther, FIELD_STRING ),
 	DEFINE_FIELD( CEnvShooter, m_iBloodColor, FIELD_INTEGER ),
 	DEFINE_FIELD( CEnvShooter, m_iStartGibBody, FIELD_INTEGER ),
+	DEFINE_FIELD( CEnvShooter, m_bSpawned, FIELD_BOOLEAN ),
 };
 IMPLEMENT_SAVERESTORE( CEnvShooter, CGibShooter );
 
@@ -1836,13 +1850,17 @@ void CEnvShooter :: KeyValue( KeyValueData *pkvd )
 {
 	if (FStrEq(pkvd->szKeyName, "shootmodel"))
 	{
-		pev->model = ALLOC_STRING(pkvd->szValue);
+		if ( m_bSpawned )	// SBO 2.1: at run time (trigger_changevalue) the next shot would use a model not precached
+			KeyValue_RefuseNeedsPrecache( pev, pkvd->szKeyName );
+		else
+			pev->model = ALLOC_STRING(pkvd->szValue);
 		pkvd->fHandled = TRUE;
 	}
 	else if (FStrEq(pkvd->szKeyName, "shootsounds"))
 	{
 		int iNoise = atoi(pkvd->szValue);
 		pkvd->fHandled = TRUE;
+		m_bMaterialSet = TRUE;
 		switch( iNoise )
 		{
 		case 0:
@@ -1921,6 +1939,11 @@ void CEnvShooter :: Spawn( void )
 		return;
 	}
 
+	// SBO 2.0: no "Material Sound" key: None (-1, the FGD's default); Half-Life left 0, Glass
+	if ( !m_bMaterialSet )
+		m_iGibMaterial = matNone;
+
+	m_bSpawned = TRUE;
 	CGibShooter::Spawn();
 }
 
@@ -2634,6 +2657,8 @@ class CEnvBeverage : public CBaseDelay
 {
 public:
 	void	Spawn( void );
+	// SBO 2.1 (Spirit of Half-Life): On while it has cans left, Off when empty
+	STATE	GetState( CBaseEntity *pActivator ) { return pev->health > 0 ? STATE_ON : STATE_OFF; }
 	void	Precache( void );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 };
@@ -2766,8 +2791,14 @@ void CItemSoda::CanTouch ( CBaseEntity *pOther )
 // initialisation (EnvSky_SendState from CBasePlayer::UpdateClientData: connect, map change, fullupdate, demo
 // start), and a change goes to all. One env_sky is on at a time: at the start the first one in the map without
 // "Start off", then the last one triggered on; triggering off the one that is on leaves the map without 3D sky.
+// SoHL 1.9 (g-cont, dlls/player.cpp / client.cpp): the entities in the sky room (those in the PVS of the env_sky) go
+// to every player whatever his PVS, so the clients draw them in the sky. SoHL marked them with FL_IMMUNE_WATER at each
+// player's first update; SBO keeps its own list (s_iSkyEntitySerial), made by the env_sky that is on when it comes
+// on and again every second (entities that a monstermaker or a shooter puts there later), and cleared when no
+// env_sky is on. Players and beams are never on it.
 //=========================================================
 #define SF_ENVSKY_START_OFF		0x0001
+#define ENVSKY_RESCAN_INTERVAL	1.0f	// how often the env_sky that is on lists the entities of its sky room again
 
 extern int gmsgSetSky;
 
@@ -2775,6 +2806,7 @@ class CEnvSky : public CPointEntity
 {
 public:
 	void	Spawn( void );
+	void	Activate( void );
 	void	Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void	UpdateOnRemove( void );
 
@@ -2783,6 +2815,9 @@ public:
 	static	TYPEDESCRIPTION m_SaveData[];
 
 	void	SendState( CBasePlayer *pPlayer );	// NULL: to all
+	void	EXPORT SkyEntitiesThink( void );
+	void	RuntimeKeyValueChanged( const char *keyName );	// SBO 2.1
+	void	SetActive( BOOL fActive );
 
 	BOOL	m_fActive;
 };
@@ -2795,6 +2830,75 @@ TYPEDESCRIPTION	CEnvSky::m_SaveData[] =
 };
 
 IMPLEMENT_SAVERESTORE( CEnvSky, CPointEntity );
+
+// The entities of the sky room of the env_sky that is on: by entity index, the edict's serial number when it was
+// listed (the engine changes it when the slot is freed, so a new entity in that slot is not on the list), else -1.
+static int s_iSkyEntitySerial[ MAX_EDICTS ];
+static int s_iSkyEntities = 0;	// how many are listed (0: none; AddToFullPack does nothing more)
+
+void EnvSky_ClearEntities( void )
+{
+	if ( !s_iSkyEntities )
+		return;
+
+	for ( int i = 0; i < MAX_EDICTS; i++ )
+		s_iSkyEntitySerial[ i ] = -1;
+	s_iSkyEntities = 0;
+}
+
+// SoHL 1.9 (CBasePlayer::UpdateClientData): every entity in the PVS of the env_sky, which is in the sky room
+static void EnvSky_ListEntities( CBaseEntity *pSky )
+{
+	for ( int i = 0; i < MAX_EDICTS; i++ )
+		s_iSkyEntitySerial[ i ] = -1;
+	s_iSkyEntities = 0;
+
+	for ( edict_t *pent = UTIL_EntitiesInPVS( pSky->edict() ); !FNullEnt( pent ); pent = pent->v.chain )
+	{
+		const int e = ENTINDEX( pent );
+
+		// players are sent by their own PVS (also one who goes into the sky room); beams (FL_CUSTOMENTITY) are drawn
+		// from their end points, not from the entity, so they would also show in the map view
+		if ( e <= gpGlobals->maxClients || e >= MAX_EDICTS || pent == pSky->edict()
+			|| ( pent->v.flags & ( FL_CLIENT | FL_FAKECLIENT | FL_SPECTATOR | FL_CUSTOMENTITY ) ) )
+			continue;
+
+		s_iSkyEntitySerial[ e ] = pent->serialnumber;
+		s_iSkyEntities++;
+	}
+}
+
+// SBO 2.0: AddToFullPack (client.cpp): is this entity in the sky room of the env_sky that is on?
+bool EnvSky_IsSkyEntity( int e, const edict_t *ent )
+{
+	return s_iSkyEntities && e > 0 && e < MAX_EDICTS && s_iSkyEntitySerial[ e ] == ent->serialnumber;
+}
+
+void CEnvSky :: SetActive( BOOL fActive )
+{
+	m_fActive = fActive;
+
+	if ( fActive )
+	{
+		EnvSky_ListEntities( this );
+		SetThink( &CEnvSky::SkyEntitiesThink );
+		pev->nextthink = gpGlobals->time + ENVSKY_RESCAN_INTERVAL;
+	}
+	else
+	{
+		EnvSky_ClearEntities();
+		SetThink( NULL );
+	}
+}
+
+void CEnvSky :: SkyEntitiesThink( void )
+{
+	if ( !m_fActive )
+		return;
+
+	EnvSky_ListEntities( this );
+	pev->nextthink = gpGlobals->time + ENVSKY_RESCAN_INTERVAL;
+}
 
 // the env_sky that is on, if any
 static CEnvSky *EnvSky_Active( void )
@@ -2819,6 +2923,15 @@ void CEnvSky :: Spawn( void )
 	m_fActive = !FBitSet( pev->spawnflags, SF_ENVSKY_START_OFF ) && !EnvSky_Active();
 }
 
+// ServerActivate (the map's entities have all spawned; also after loading a saved game): the sky room's entities
+void CEnvSky :: Activate( void )
+{
+	CPointEntity::Activate();
+
+	if ( m_fActive )
+		SetActive( TRUE );
+}
+
 void CEnvSky :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	// SoHL: triggering sends the sky again (it was lost after loading a saved game), whatever the use type.
@@ -2827,7 +2940,7 @@ void CEnvSky :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE use
 	{
 		if ( m_fActive )
 		{
-			m_fActive = FALSE;
+			SetActive( FALSE );
 			SendState( NULL );
 		}
 		return;
@@ -2839,9 +2952,22 @@ void CEnvSky :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE use
 	CEnvSky *pOther = EnvSky_Active();
 
 	if ( pOther )
-		pOther->m_fActive = FALSE;
+		pOther->SetActive( FALSE );
 
-	m_fActive = TRUE;
+	SetActive( TRUE );
+	SendState( NULL );
+}
+
+// SBO 2.1: a key changed at run time (trigger_changevalue / trigger_copyvalue: "origin", the scale "frags"): the sky
+// that is on goes to every client again, and a moved camera lists the entities of its new sky room. One that is off
+// sends its keys when it comes on.
+void CEnvSky :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( !m_fActive )
+		return;
+
+	if ( !stricmp( keyName, "origin" ) )
+		EnvSky_ListEntities( this );
 	SendState( NULL );
 }
 
@@ -2850,7 +2976,7 @@ void CEnvSky :: UpdateOnRemove( void )
 	// killtarget: no sky (it was this one)
 	if ( m_fActive )
 	{
-		m_fActive = FALSE;
+		SetActive( FALSE );
 		SendState( NULL );
 	}
 

@@ -25,6 +25,7 @@
 
 #include "cbase.h"
 #include "sbo_test.h"	// SBO_TEST_COMMANDS builds: the test layer (docs/dev/ENTITY_TESTS.md)
+#include "cheat_commands.h"
 
 // Holds engine functionality callbacks
 enginefuncs_t g_engfuncs;
@@ -52,6 +53,7 @@ void DLLEXPORT GiveFnptrsToDll(	enginefuncs_t* pengfuncsFromEngine, globalvars_t
 {
 	memcpy(&g_engfuncs, pengfuncsFromEngine, sizeof(enginefuncs_t));
 	SBO_TEST_CALL( Test_HookEngine( &g_engfuncs ) );	// test builds: trace and seed wrappers (sbo_test.cpp)
+	Cheat_HookEngine( &g_engfuncs );	// SBO 2.0: notes the map's precaches for ent_create / npc_create (cheat_commands.cpp)
 	gpGlobals = pGlobals;
 }
 
@@ -64,6 +66,7 @@ void GiveFnptrsToDll(	enginefuncs_t* pengfuncsFromEngine, globalvars_t *pGlobals
 {
 	memcpy(&g_engfuncs, pengfuncsFromEngine, sizeof(enginefuncs_t));
 	SBO_TEST_CALL( Test_HookEngine( &g_engfuncs ) );	// test builds: trace and seed wrappers (sbo_test.cpp)
+	Cheat_HookEngine( &g_engfuncs );	// SBO 2.0: notes the map's precaches for ent_create / npc_create (cheat_commands.cpp)
 	gpGlobals = pGlobals;
 }
 

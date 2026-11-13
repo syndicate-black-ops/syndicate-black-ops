@@ -1358,6 +1358,30 @@ bool Store::ParseRecord(int op, Reader &r, std::vector<Event> &events, float now
 		}
 		return true;
 	}
+	case OP_WINNER:
+	{
+		const int menu = r.Byte();
+		const int index = r.Short();
+		if (r.Bad())
+		{
+			Fail("short WINNER", menu);
+			return false;
+		}
+		if (menu >= MAX_SERVER_MENUS)
+			return true;
+		Menu *targets[2] = { m_Live[menu].complete ? &m_Live[menu] : nullptr,
+		                     m_bPending[menu] ? &m_Pending[menu] : nullptr };
+		for (Menu *m : targets)
+		{
+			if (!m)
+				continue;
+			// an item that is not defined (or NO_ITEM): none
+			m->winner = index < (int)m->items.size() && m->items[index].defined ? index : NO_ITEM;
+			if (m == &m_Live[menu])
+				events.push_back({ Event::CHANGED, menu, 0, 0 });
+		}
+		return true;
+	}
 	case OP_ITEMPICTURE:
 	{
 		const int menu = r.Byte();

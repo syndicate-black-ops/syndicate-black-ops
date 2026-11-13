@@ -542,7 +542,10 @@ int CHudDeathNotice :: MsgFunc_DeathMsg( const char *pszName, int iSize, void *p
 			if ( !strcmp( killedwith+2, "gauss" ) )
 				strcpy( killedwith, "d_tau cannon" );
 
-			ConsolePrint( killedwith+2 ); // skip over the "d_" part
+			// SBO 2.0: the weapon code's player-facing name ("wong" -> "Fists"; a code without one prints as it is)
+			char szDisplayName[64];
+			VGui2_WeaponDisplayName( killedwith+2, szDisplayName, sizeof( szDisplayName ) ); // skip over the "d_" part
+			ConsolePrint( szDisplayName );
 		}
 
 		ConsolePrint( "\n" );

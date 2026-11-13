@@ -1,0 +1,16 @@
+# trigger_relay 64 "Forward activator" with a delay: the player who called it is still the activator when the delay
+# ends (3a88d857 keeps any activator through the DelayedUse), so the game_text reaches him. On 1.38 the flag does
+# nothing: the relay passes itself, the activator is NULL after the delay and 1.38's game_text crashes on it (see
+# 71f_delay_null_activator_game_text)
+# covers: trigger_relay:64 trigger_relay.delay
+map co_fuzz
+spawn trigger_relay target gt_fwd spawnflags 64 delay 1
+spawn game_text targetname gt_fwd message relay_forward_delayed
+activate
+connect 1 P1
+frames 3
+useclient 0 1
+frames 5
+expectnot MSTR 23 ->#1: relay_forward_delayed
+frames 10
+expectn 1 MSTR 23 ->#1: relay_forward_delayed

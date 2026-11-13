@@ -1,0 +1,22 @@
+# game_counter flag 1 "Remove On fire": removed when it hits the limit; an Off call counts down (fed by a
+# trigger_relay with Trigger State Off), so a counter with a negative limit is reached by counting down
+# covers: game_counter:1 game_counter.health
+map co_fuzz
+spawn game_counter targetname c_once health 2 target once_hit spawnflags 1
+spawn trigger_relay targetname down target c_down triggerstate 0
+spawn game_counter targetname c_down health -2 target down_hit
+activate
+frames 3
+fire c_once
+fire c_once
+frames 2
+expectn 1 Firing: (once_hit)
+expectcount game_counter 1
+fire c_once
+fire down
+frames 1
+expectnot Firing: (down_hit)
+fire down
+frames 1
+expectn 1 Firing: (down_hit)
+expectn 1 Firing: (once_hit)

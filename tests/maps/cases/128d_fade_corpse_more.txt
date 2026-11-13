@@ -1,0 +1,34 @@
+# Monster flag 512 Fade Corpse (FGD base Monster) on monster_generic and monster_furniture: killed (not gibbed:
+# trigger_hurt damagetype 4096 NEVERGIB) with a player in the game, the corpse fades out and is removed; the same
+# monster without the flag keeps its corpse
+# covers: monster_generic:512 monster_furniture:512
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_generic targetname g_fade spawnflags 512 model models/scientist.mdl origin "0 400 0"
+spawn monster_generic targetname g_stay model models/scientist.mdl origin "0 -400 0"
+spawn monster_furniture targetname f_fade spawnflags 512 model models/scientist.mdl origin "400 400 0"
+spawn monster_furniture targetname f_stay model models/scientist.mdl origin "400 -400 0"
+spawn trigger_hurt dmg 1000000 damagetype 4096
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 30
+mark kill
+touchent 4 0
+touchent 4 1
+touchent 4 2
+touchent 4 3
+frames 300
+expectcount monster_generic 1
+expectcount monster_furniture 1
+expectfield g_stay deadflag 2

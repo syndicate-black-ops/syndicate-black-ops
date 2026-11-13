@@ -1,0 +1,26 @@
+# multisource (FGD "fires when every input is on"): its members are the entities whose target is its name; it fires
+# its target when every member's slot is on; a member's second Use turns its slot off again (toggle)
+# covers: multisource multisource.target trigger_relay.target trigger_relay.triggerstate=2
+map co_fuzz
+spawn multisource targetname ms target ms_out
+spawn trigger_relay targetname m1 target ms triggerstate 2
+spawn trigger_relay targetname m2 target ms triggerstate 2
+activate
+frames 3
+mark m1_on
+fire m1
+frames 2
+expectnot Firing: (ms_out)
+mark m2_on
+fire m2
+frames 2
+expectn 1 Firing: (ms_out)
+expect Multisource ms enabled (2 inputs)
+mark m1_off
+fire m1
+frames 2
+expectn 1 Firing: (ms_out)
+mark m1_on_again
+fire m1
+frames 2
+expectn 2 Firing: (ms_out)

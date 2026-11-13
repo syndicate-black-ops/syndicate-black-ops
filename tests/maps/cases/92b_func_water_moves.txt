@@ -1,0 +1,22 @@
+# func_water (FGD: base Door; Wave Height): it moves like a door, Speed 64 units/s and Wait 1, its Contents (skin) are
+# kept, and Wave Height 3.2 becomes the wave amplitude the clients draw (pev->scale = height / 8 = 0.4). Contents
+# themselves (water, slime, lava) are the engine's: entity suite stock_keys
+# covers: func_water.speed func_water.wait func_water.waveheight
+map co_fuzz
+brushsize 64 64 64
+spawn func_water targetname w1 model *1 speed 64 wait 1 skin -3 WaveHeight 3.2
+activate
+connect 1 P1
+frames 3
+expectfield w1 scale 0.4
+expectfield w1 skin -3
+mark fire
+fire w1
+frames 9
+expectfield w1 origin "0 0 0"
+frames 2
+expectfield w1 origin "62 0 0"
+frames 10
+expectfield w1 origin "62 0 0"
+frames 14
+expectfield w1 origin "0 0 0"

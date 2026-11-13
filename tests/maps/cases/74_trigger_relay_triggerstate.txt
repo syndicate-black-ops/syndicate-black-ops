@@ -1,0 +1,23 @@
+# trigger_relay Trigger State: 0 Off, 1 On, 2 Toggle (FGD default), seen through game_counters (On / Toggle count up,
+# Off counts down; each fires at its limit). A relay without the key fires Off (HL SDK: triggerType 0)
+# covers: trigger_relay trigger_relay.triggerstate=0 trigger_relay.triggerstate=1 trigger_relay.triggerstate=2 game_counter
+map co_fuzz
+spawn trigger_relay targetname r_off target c_off triggerstate 0
+spawn trigger_relay targetname r_on target c_on triggerstate 1
+spawn trigger_relay targetname r_toggle target c_toggle triggerstate 2
+spawn trigger_relay targetname r_nokey target c_nokey
+spawn game_counter targetname c_off health -1 target off_down
+spawn game_counter targetname c_on health 1 target on_up
+spawn game_counter targetname c_toggle health 1 target toggle_up
+spawn game_counter targetname c_nokey health -1 target nokey_down
+activate
+frames 3
+fire r_off
+fire r_on
+fire r_toggle
+fire r_nokey
+frames 3
+expectn 1 Firing: (off_down)
+expectn 1 Firing: (on_up)
+expectn 1 Firing: (toggle_up)
+expectn 1 Firing: (nokey_down)

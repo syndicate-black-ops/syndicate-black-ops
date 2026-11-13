@@ -725,6 +725,17 @@ void CIchthyosaur :: RunTask ( Task_t *pTask )
 		{
 			pev->deadflag = DEAD_DEAD;
 
+			// SBO 2.0: "Non-solid corpse" (65536), as CBaseMonster::RunTask TASK_DIE (schedule.cpp)
+			if ( FBitSet( pev->spawnflags, SF_MONSTER_NONSOLID_CORPSE ) )
+			{
+				pev->solid = SOLID_NOT;
+				UTIL_SetSize( pev, Vector( 0, 0, 0 ), Vector( 0, 0, 0 ) );
+			}
+
+			// Fade Corpse (512) or a monstermaker child: fade out like CBaseMonster's TASK_DIE
+			if ( ShouldFadeOnDeath() )
+				SUB_StartFadeOut();
+
 			TaskComplete( );
 		}
 		break;

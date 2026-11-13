@@ -1,0 +1,47 @@
+# Monster flag 512 Fade Corpse (FGD base Monster) on the three turrets: monster_turret, monster_miniturret and
+# monster_sentry with the flag, killed (trigger_hurt), fade their wreck out once the death smoke ends (about 5 s,
+# then about 4 s of fading) and are removed; the same turrets without the flag keep their wreck (dead, deadflag 2).
+# 1.38 kept every turret wreck (TurretDeath / SentryDeath never read the flag): approved difference
+# turret-fade-corpse
+# covers: monster_turret:512 monster_miniturret:512 monster_sentry:512
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_turret targetname turret_fade spawnflags 512 origin "0 400 0"
+spawn monster_turret targetname turret_stay origin "400 400 0"
+spawn monster_miniturret targetname mini_fade spawnflags 512 origin "0 800 0"
+spawn monster_miniturret targetname mini_stay origin "400 800 0"
+spawn monster_sentry targetname sentry_fade spawnflags 512 origin "0 1200 0"
+spawn monster_sentry targetname sentry_stay origin "400 1200 0"
+spawn trigger_hurt dmg 1000000 damagetype 4096
+activate
+frames 20
+expectcount monster_turret 2
+expectcount monster_miniturret 2
+expectcount monster_sentry 2
+mark kill
+touchent 6 0
+touchent 6 1
+touchent 6 2
+touchent 6 3
+touchent 6 4
+touchent 6 5
+frames 300
+mark after_30s
+dumpclass monster_turret
+dumpclass monster_miniturret
+dumpclass monster_sentry
+expectcount monster_turret 1
+expectcount monster_miniturret 1
+expectcount monster_sentry 1
+expectdump turret_stay deadflag=2
+expectdump mini_stay deadflag=2
+expectdump sentry_stay deadflag=2

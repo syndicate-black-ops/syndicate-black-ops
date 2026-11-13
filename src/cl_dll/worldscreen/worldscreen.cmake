@@ -3,11 +3,12 @@
 #   SBO world: worldscreen.cpp (HUD/engine), worldscreen_bsp.cpp (bound screens: faces from the .bsp),
 #              worldscreen_gl.cpp (OpenGL only), worldscreen_video.cpp (movie screens: video/ decoder and audio)
 #              -> client, SBO flags + sbo_compat.h
-#   SDK world: vgui2/world_screen_panel.cpp -> sbo_vgui2_sdk
+#   SDK world: vgui2/world_screen_panel.cpp -> sbo_vgui2_sdk; worldscreen_layout_doc.cpp (plain C++: the world screen
+#              editor's layout text) with it
 
 set(SBO_WORLDSCREEN_DIR "${SBO_SRC_DIR}/cl_dll/worldscreen")
 
-target_sources(sbo_vgui2_sdk PRIVATE ${SBO_VGUI2_DIR}/world_screen_panel.cpp)
+target_sources(sbo_vgui2_sdk PRIVATE ${SBO_VGUI2_DIR}/world_screen_panel.cpp ${SBO_WORLDSCREEN_DIR}/worldscreen_layout_doc.cpp)
 target_include_directories(sbo_vgui2_sdk PRIVATE ${SBO_WORLDSCREEN_DIR})
 
 set(_ws_sbo_sources ${SBO_WORLDSCREEN_DIR}/worldscreen.cpp ${SBO_WORLDSCREEN_DIR}/worldscreen_bsp.cpp

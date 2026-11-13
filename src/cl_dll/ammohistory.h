@@ -16,8 +16,11 @@
 // ammohistory.h
 //
 
-// this is the max number of items in each bucket
-#define MAX_WEAPON_POSITIONS		MAX_WEAPON_SLOTS
+#include <stdint.h>
+#include <vector>
+
+// SBO 2.1 (Half-Life Unified SDK): a bucket holds any number of weapons, at any position 0..255 (WeaponList's byte),
+// kept in position order; positions need not follow each other
 
 class WeaponsResource
 {
@@ -26,7 +29,7 @@ private:
 	WEAPON		rgWeapons[MAX_WEAPONS];	// Weapons Array
 
 	// counts of weapons * ammo
-	WEAPON*		rgSlots[MAX_WEAPON_SLOTS+1][MAX_WEAPON_POSITIONS+1];	// The slots currently in use by weapons.  The value is a pointer to the weapon;  if it's NULL, no weapon is there
+	std::vector<WEAPON*>	rgSlots[MAX_WEAPON_SLOTS];	// the weapons held in each slot (category), in position order
 	int			riAmmo[MAX_AMMO_TYPES];							// count of each ammo type
 
 public:
@@ -39,29 +42,66 @@ public:
 	void Reset( void )
 	{
 		iOldWeaponBits = 0;
-		memset( rgSlots, 0, sizeof rgSlots );
+		for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+			rgSlots[i].clear();
 		memset( riAmmo, 0, sizeof riAmmo );
 	}
 
 ///// WEAPON /////
-	int			iOldWeaponBits;
+	uint64_t	iOldWeaponBits;	// SBO 2.1: weapon ids 0..63 (CHudAmmo::Think)
 
 	// Robustness: ids come from network messages (CurWeapon, WeapPickup); callers handle NULL
 	WEAPON *GetWeapon( int iId ) { return ( iId >= 0 && iId < MAX_WEAPONS ) ? &rgWeapons[iId] : NULL; }
 	void AddWeapon( WEAPON *wp ) 
 	{ 
+		// SBO 2.1: a WeaponList sent again (a plugin moving a weapon to another slot or position) takes a held
+		// weapon out of its old bucket and puts it in the new one
+		WEAPON *pOld = &rgWeapons[ wp->iId ];
+		BOOL fHeld = FALSE;
+		for ( int i = 0; i < MAX_WEAPON_SLOTS; i++ )
+		{
+			for ( size_t j = 0; j < rgSlots[i].size(); j++ )
+			{
+				if ( rgSlots[i][j] == pOld )
+				{
+					rgSlots[i].erase( rgSlots[i].begin() + j );
+					fHeld = TRUE;
+					break;
+				}
+			}
+		}
 		rgWeapons[ wp->iId ] = *wp;	
 		LoadWeaponSprites( &rgWeapons[ wp->iId ] );
+		if ( fHeld )
+			PickupWeapon( &rgWeapons[ wp->iId ] );
 	}
 
+	// SBO 2.1 (Half-Life Unified SDK): sorted insertion, so searches find the weapons in position order; a second
+	// weapon on a taken slot and position is not added
 	void PickupWeapon( WEAPON *wp )
 	{
-		rgSlots[ wp->iSlot ][ wp->iSlotPos ] = wp;
+		if ( wp->iSlot < 0 || wp->iSlot >= MAX_WEAPON_SLOTS || GetWeaponSlot( wp->iSlot, wp->iSlotPos ) )
+			return;
+		std::vector<WEAPON*> &bucket = rgSlots[ wp->iSlot ];
+		size_t i = 0;
+		while ( i < bucket.size() && bucket[i]->iSlotPos <= wp->iSlotPos )
+			i++;
+		bucket.insert( bucket.begin() + i, wp );
 	}
 
 	void DropWeapon( WEAPON *wp )
 	{
-		rgSlots[ wp->iSlot ][ wp->iSlotPos ] = NULL;
+		if ( wp->iSlot < 0 || wp->iSlot >= MAX_WEAPON_SLOTS )
+			return;
+		std::vector<WEAPON*> &bucket = rgSlots[ wp->iSlot ];
+		for ( size_t i = 0; i < bucket.size(); i++ )
+		{
+			if ( bucket[i] == wp )
+			{
+				bucket.erase( bucket.begin() + i );
+				return;
+			}
+		}
 	}
 
 	void DropAllWeapons( void )
@@ -73,7 +113,25 @@ public:
 		}
 	}
 
-	WEAPON* GetWeaponSlot( int slot, int pos ) { return rgSlots[slot][pos]; }
+	WEAPON* GetWeaponSlot( int slot, int pos )
+	{
+		if ( slot < 0 || slot >= MAX_WEAPON_SLOTS )
+			return NULL;
+		for ( size_t i = 0; i < rgSlots[slot].size(); i++ )
+		{
+			if ( rgSlots[slot][i]->iSlotPos == pos )
+				return rgSlots[slot][i];
+		}
+		return NULL;
+	}
+
+	// the highest position held in a slot, -1 for an empty slot (Half-Life Unified SDK)
+	int GetHighestPositionInSlot( int slot ) const
+	{
+		if ( slot < 0 || slot >= MAX_WEAPON_SLOTS || rgSlots[slot].empty() )
+			return -1;
+		return rgSlots[slot].back()->iSlotPos;
+	}
 
 	void LoadWeaponSprites( WEAPON* wp );
 	void LoadAllWeaponSprites( void );

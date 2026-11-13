@@ -27,14 +27,15 @@ def tough(t, player='player1', health='1000'):
 
 def lv(t, name, ratio):
     """A locus_variable that records the number [LR] `ratio` (a player_calc_ratio's name) when fired."""
-    t.point('locus_variable', targetname=name, m_iszRatio=ratio, m_iszPosition='', m_iszVelocity='',
+    t.point('locus_variable', targetname=name, m_iszRatio=ratio, m_iszPosition='0 0 0', m_iszVelocity='0 0 0',
             names=('m_iszRatio',))
 
 
 # ---------------------------------------------------------------------------------------------- trigger_playerfreeze
 
 @S.test('trigger_playerfreeze Freeze / Unfreeze: only the activator; he stays frozen (PreThink keeps him frozen)',
-        players=2, doc=DOC_LOGIC + '#trigger_playerfreeze')
+        players=2, doc=DOC_LOGIC + '#trigger_playerfreeze',
+        covers=('trigger_playerfreeze', 'trigger_playerfreeze.use_type=1', 'trigger_playerfreeze.use_type=-1'))
 def freeze_activator(t):
     t.point('trigger_playerfreeze', targetname='frz', use_type='1')
     t.point('trigger_playerfreeze', targetname='unfrz', use_type='-1')
@@ -51,7 +52,7 @@ def freeze_activator(t):
 
 
 @S.test('trigger_playerfreeze Toggle: frozen, free, frozen; a world activator freezes nobody', players=1,
-        doc=DOC_LOGIC + '#trigger_playerfreeze')
+        doc=DOC_LOGIC + '#trigger_playerfreeze', covers=('trigger_playerfreeze', 'trigger_playerfreeze.use_type=0'))
 def freeze_toggle(t):
     t.point('trigger_playerfreeze', targetname='tg', use_type='0')
     for i in range(3):
@@ -69,7 +70,8 @@ def freeze_toggle(t):
 
 
 @S.test('trigger_playerfreeze Copy input: On freezes, Off unfreezes, Toggle toggles (trigger_relay with each state)',
-        players=1, doc=DOC_LOGIC + '#trigger_playerfreeze')
+        players=1, doc=DOC_LOGIC + '#trigger_playerfreeze',
+        covers=('trigger_playerfreeze', 'trigger_playerfreeze.use_type=2'))
 def freeze_copy(t):
     t.point('trigger_playerfreeze', targetname='cp', use_type='2')
     # Forward activator (64): the targets get the relay's activator, the player
@@ -88,7 +90,9 @@ def freeze_copy(t):
 
 
 @S.test('trigger_playerfreeze All players (SBO): both players frozen, both unfrozen, toggled; fired by the world',
-        players=2, doc=DOC_LOGIC + '#trigger_playerfreeze')
+        players=2, doc=DOC_LOGIC + '#trigger_playerfreeze',
+        covers=('trigger_playerfreeze', 'trigger_playerfreeze:1', 'trigger_playerfreeze.use_type=1',
+                'trigger_playerfreeze.use_type=-1', 'trigger_playerfreeze.use_type=0'))
 def freeze_all(t):
     t.point('trigger_playerfreeze', targetname='all_on', use_type='1', spawnflags='1')
     t.point('trigger_playerfreeze', targetname='all_off', use_type='-1', spawnflags='1')
@@ -115,7 +119,8 @@ def freeze_all(t):
 # ---------------------------------------------------------------------------------------------- trigger_killmonster
 
 @S.test('trigger_killmonster by name: the named zombies die (death animation, corpse stays), another lives; '
-        'Remove on fire: the entity is gone', doc=DOC_LOGIC + '#trigger_killmonster')
+        'Remove on fire: the entity is gone', doc=DOC_LOGIC + '#trigger_killmonster',
+        covers=('trigger_killmonster', 'trigger_killmonster.target', 'trigger_killmonster:1'))
 def kill_by_name(t):
     t.point('monster_zombie', at=(-120, 120, 0), targetname='zm')
     t.point('monster_zombie', at=(120, 120, 0), targetname='zm')
@@ -133,7 +138,9 @@ def kill_by_name(t):
 
 
 @S.test('trigger_killmonster by class name, by squad name, by name and class together; without Remove on fire it '
-        'stays and works again', doc=DOC_LOGIC + '#trigger_killmonster')
+        'stays and works again', doc=DOC_LOGIC + '#trigger_killmonster',
+        covers=('trigger_killmonster', 'trigger_killmonster.target', 'trigger_killmonster.message',
+                'trigger_killmonster.netname'))
 def kill_filters(t):
     t.point('monster_imp', at=(-160, 160, 0), targetname='ki_a')
     t.point('monster_zombie', at=(0, 160, 0), targetname='kz_a', netname='squad_k')
@@ -163,7 +170,8 @@ def kill_filters(t):
     t.expect.not_damaged('kz_a', attacker='k_cls')
 
 
-@S.test('trigger_killmonster Always gib: the monster is gibbed (removed), no corpse', doc=DOC_LOGIC + '#trigger_killmonster')
+@S.test('trigger_killmonster Always gib: the monster is gibbed (removed), no corpse', doc=DOC_LOGIC + '#trigger_killmonster',
+        covers=('trigger_killmonster', 'trigger_killmonster:16'))
 def kill_gib(t):
     t.point('monster_zombie', at=(0, 120, 0), targetname='gz')
     t.point('trigger_killmonster', targetname='kg', target='gz', spawnflags='17')
@@ -177,7 +185,8 @@ def kill_gib(t):
 # ---------------------------------------------------------------------------------------------- trigger_hurt_remote
 
 @S.test('trigger_hurt_remote once: 30 damage to a func_breakable per trigger, exact; Off does nothing',
-        doc=DOC_LOGIC + '#trigger_hurt_remote')
+        doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote.target', 'trigger_hurt_remote.dmg'))
 def hurt_once(t):
     t.brush('func_breakable', targetname='crate', health='100', at=(0, 100, 0))
     t.point('trigger_hurt_remote', targetname='hr', target='crate', dmg='30', damagetype='0', spawnflags='0')
@@ -196,7 +205,9 @@ def hurt_once(t):
 
 
 @S.test('trigger_hurt_remote Constant: a button switches it on (10 every 0.5 s, the presser the attacker), Off stops '
-        'it; Start on: hurting since the map start', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'it; Start on: hurting since the map start', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:2', 'trigger_hurt_remote:4', 'trigger_hurt_remote.delay',
+                'trigger_hurt_remote.dmg'))
 def hurt_constant(t):
     t.brush('func_breakable', targetname='crate', health='500', at=(0, 100, 0))
     t.point('trigger_hurt_remote', targetname='hr', target='crate', dmg='10', delay='0.5', spawnflags='2')
@@ -221,7 +232,7 @@ def hurt_constant(t):
 
 
 @S.test('trigger_hurt_remote Target class name: every entity of the class (func_pushable) is hurt',
-        doc=DOC_LOGIC + '#trigger_hurt_remote')
+        doc=DOC_LOGIC + '#trigger_hurt_remote', covers=('trigger_hurt_remote', 'trigger_hurt_remote.targetclass'))
 def hurt_class(t):
     t.brush('func_pushable', targetname='pa', health='100', at=(-100, 100, 0), spawnflags='128')     # Breakable
     t.brush('func_pushable', targetname='pb', health='100', at=(100, 100, 0), spawnflags='128')
@@ -234,7 +245,8 @@ def hurt_class(t):
 
 
 @S.test('trigger_hurt_remote heals: negative damage +20 on !activator; Instant kill with negative damage: full health',
-        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote.dmg', 'trigger_hurt_remote:1'))
 def hurt_heal(t):
     t.point('trigger_hurt_remote', targetname='heal', target='!activator', dmg='-20', spawnflags='0')
     t.point('trigger_hurt_remote', targetname='full', target='!activator', dmg='-1', spawnflags='1')
@@ -251,7 +263,8 @@ def hurt_heal(t):
 
 
 @S.test('trigger_hurt_remote armor: Do armor damage takes 20 armor (no health damage at 0), -30 gives armor up to 100',
-        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:8', 'trigger_hurt_remote.armordmg'))
 def hurt_armor(t):
     t.point('trigger_hurt_remote', targetname='drain', target='!activator', dmg='0', armordmg='20', spawnflags='8')
     t.point('trigger_hurt_remote', targetname='give', target='!activator', dmg='0', armordmg='-30', spawnflags='8')
@@ -274,7 +287,8 @@ def hurt_armor(t):
 
 
 @S.test('trigger_hurt_remote Ignore armor: the armor stays, the health takes the damage; No camera punch: the view '
-        'is not kicked', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'is not kicked', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:256', 'trigger_hurt_remote:512'))
 def hurt_ignore_armor(t):
     t.point('trigger_hurt_remote', targetname='ign', target='!activator', dmg='20', spawnflags='256')
     t.point('trigger_hurt_remote', targetname='plain', target='!activator', dmg='20', spawnflags='512')
@@ -296,7 +310,8 @@ def hurt_ignore_armor(t):
 
 
 @S.test('trigger_hurt_remote Minimum health 70: 50 damage takes the player to 70, a second hit leaves him at 70',
-        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote.min_health'))
 def hurt_min_health(t):
     t.point('trigger_hurt_remote', targetname='hr', target='!activator', dmg='50', min_health='70', spawnflags='256')
     t.kv('player1', 'max_health', '100')
@@ -313,7 +328,8 @@ def hurt_min_health(t):
 
 
 @S.test('trigger_hurt_remote Constant poison gas with Minimum health 25 (the showcase switch): health never goes '
-        'below 25 and stops changing at Off (no lasting poison damage)', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'below 25 and stops changing at Off (no lasting poison damage)', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:2', 'trigger_hurt_remote.min_health'))
 def hurt_min_health_poison(t):
     t.point('trigger_hurt_remote', targetname='gas', target='!activator', dmg='5', damagetype='131072', delay='0.2',
             min_health='25', spawnflags=str(2 | 512))
@@ -336,7 +352,8 @@ def hurt_min_health_poison(t):
 
 
 @S.test('trigger_hurt_remote Instant kill: a zombie gibs (non-players always gib), "Never gib" leaves a corpse; the '
-        'player who fired it is the attacker', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'player who fired it is the attacker', players=1, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:1', 'trigger_hurt_remote.gib_policy=2'))
 def hurt_instant(t):
     t.point('monster_zombie', at=(-120, 150, 0), targetname='z_gib')
     t.point('monster_zombie', at=(120, 150, 0), targetname='z_keep')
@@ -354,7 +371,8 @@ def hurt_instant(t):
 
 
 @S.test('trigger_hurt_remote corpses: without "Do damage to dead" a corpse is left alone; with it a CLUB hit gibs it, '
-        'and so does an Instant kill', doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'and so does an Instant kill', doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:16', 'trigger_hurt_remote:1'))
 def hurt_corpse(t):
     t.point('monster_zombie', at=(-100, 150, 0), targetname='zc')
     t.point('monster_zombie', at=(100, 150, 0), targetname='zi')
@@ -379,7 +397,8 @@ def hurt_corpse(t):
 
 
 @S.test('trigger_hurt_remote fired by player1 on player2: the entity is the attacker (friendly fire rules), '
-        'player2 is hurt', players=2, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'player2 is hurt', players=2, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote.targetclass'))
 def hurt_other_player(t):
     t.point('trigger_hurt_remote', targetname='hr', targetclass='player', dmg='10', spawnflags='256')
     tough(t, 'player1')
@@ -392,7 +411,8 @@ def hurt_other_player(t):
 
 @S.test('trigger_hurt_remote kills in the kill feed: weapon "trigger_hurt_remote" (the entity is the inflictor) for a '
         'player killed by Instant kill and by damage, and for NPCs (SboDeathMsg, the activator the killer); a hit '
-        'that does not kill does not push the player', players=2, doc=DOC_LOGIC + '#trigger_hurt_remote')
+        'that does not kill does not push the player', players=2, doc=DOC_LOGIC + '#trigger_hurt_remote',
+        covers=('trigger_hurt_remote', 'trigger_hurt_remote:1'))
 def hurt_killfeed(t):
     t.console('mp_friendlyfire 1')
     t.console('mp_killfeed_npc 1')
@@ -452,7 +472,8 @@ def look_room(t, **kv):
 
 
 @S.test('trigger_look: looking at the target for 0.5 s fires it, the player as activator; looking away never does',
-        players=1, doc=DOC_LOGIC + '#trigger_look')
+        players=1, doc=DOC_LOGIC + '#trigger_look',
+        covers=('trigger_look', 'trigger_look.netname', 'trigger_look.target', 'trigger_look.look_time'))
 def look_basic(t):
     look_room(t)
     t.teleport('player1', (0, 0, 0), yaw=270)
@@ -467,7 +488,7 @@ def look_basic(t):
 
 
 @S.test('trigger_look Field of view: 60 degrees off fails with 0.7 (about 45), fires with 0.0 (90 degrees)',
-        players=1, doc=DOC_LOGIC + '#trigger_look')
+        players=1, doc=DOC_LOGIC + '#trigger_look', covers=('trigger_look', 'trigger_look.field_of_view'))
 def look_fov(t):
     look_room(t, field_of_view='0.7', target='hit')
     t.point('info_target', at=(200, -200, 32), targetname='hit90')
@@ -482,7 +503,7 @@ def look_fov(t):
 
 
 @S.test('trigger_look Remove on fire: fires once and is removed; without it: again every look time',
-        players=1, doc=DOC_LOGIC + '#trigger_look')
+        players=1, doc=DOC_LOGIC + '#trigger_look', covers=('trigger_look', 'trigger_look:1'))
 def look_once(t):
     look_room(t, spawnflags='1')
     t.point('info_target', at=(200, -200, 32), targetname='hit2')
@@ -498,7 +519,8 @@ def look_once(t):
 
 
 @S.test('trigger_look Master: nothing while the multisource is off; a relay turns it on: fires; Delay 0.5 and Kill '
-        'target', players=1, doc=DOC_LOGIC + '#trigger_look')
+        'target', players=1, doc=DOC_LOGIC + '#trigger_look',
+        covers=('trigger_look', 'trigger_look.master', 'trigger_look.delay', 'trigger_look.killtarget'))
 def look_master(t):
     t.point('multisource', targetname='ms')
     t.point('trigger_relay', targetname='unlock', target='ms', triggerstate='1')
@@ -517,14 +539,14 @@ def look_master(t):
 
 
 @S.test('trigger_look per player: player2 in the brush looking away does not reset player1\'s time (SBO)',
-        players=2, doc=DOC_LOGIC + '#trigger_look')
+        players=2, doc=DOC_LOGIC + '#trigger_look', covers=('trigger_look', 'trigger_look.look_time'))
 def look_two_players(t):
     look_room(t, look_time='1.0')
     t.teleport('player1', (-40, 0, 0), yaw=90)
     t.look('player1', 0, 90)
     t.teleport('player2', (40, 0, 0), yaw=270)
     t.look('player2', 0, 270)
-    t.wait(1.6)
+    t.wait(2.5)     # well past the 1.0 s look time (a reset by player2 would keep it from ever firing)
     t.teleport('player1', (-200, 0, 0))
     t.teleport('player2', (200, 0, 0))
     t.expect.fired('hit', activator='player1', min=1)
@@ -534,7 +556,7 @@ def look_two_players(t):
 # ---------------------------------------------------------------------------------------------- env_dlight
 
 @S.test('env_dlight: a trigger_relay switches it on (KeyedDLight on: radius, color, its position) and off',
-        doc=DOC_DLIGHT)
+        doc=DOC_DLIGHT, covers=('env_dlight', 'env_dlight.renderamt', 'env_dlight.rendercolor'))
 def dlight_toggle(t):
     t.point('env_dlight', at=(0, 0, 64), targetname='dl', renderamt='200', rendercolor='255 40 10', spawnflags='0')
     t.point('trigger_relay', targetname='r_on', target='dl', triggerstate='1')
@@ -553,7 +575,32 @@ def dlight_toggle(t):
     t.expect.msg('KeyedDLight', count=1, fields={'state': 0}, after='off')
 
 
-@S.test('env_dlight Start on (named): it is on from the map start: the first trigger switches it off', doc=DOC_DLIGHT)
+@S.test('env_dlight Radius and Light color left out (and written blank, which the compilers drop): the FGD defaults '
+        '80 and white; a Radius of 0 written in the map is kept (no light)', doc=DOC_DLIGHT,
+        covers=('env_dlight', 'env_dlight.renderamt', 'env_dlight.rendercolor'))
+def dlight_defaults(t):
+    t.point('env_dlight', at=(0, 0, 64), targetname='dl_out', spawnflags='0')
+    t.point('env_dlight', at=(0, 0, 64), targetname='dl_blank', renderamt='', rendercolor='', spawnflags='0')
+    t.point('env_dlight', at=(0, 0, 64), targetname='dl_zero', renderamt='0', rendercolor='0 0 0', spawnflags='0')
+    t.wait(1.5)
+    t.mark('out')
+    t.fire('dl_out')
+    t.wait(0.2)
+    t.mark('blank')
+    t.fire('dl_blank')
+    t.wait(0.2)
+    t.mark('zero')
+    t.fire('dl_zero')
+    t.wait(0.2)
+    white = {'state': 1, 'radius': 80, 'r': 255, 'g': 255, 'b': 255}
+    t.expect.msg('KeyedDLight', count=1, after='out', within=(0, 0.1), fields=white)
+    t.expect.msg('KeyedDLight', count=1, after='blank', within=(0, 0.1), fields=white)
+    t.expect.msg('KeyedDLight', count=1, after='zero', within=(0, 0.1),
+                 fields={'state': 1, 'radius': 0, 'r': 0, 'g': 0, 'b': 0})
+
+
+@S.test('env_dlight Start on (named): it is on from the map start: the first trigger switches it off', doc=DOC_DLIGHT,
+        covers=('env_dlight', 'env_dlight:2'))
 def dlight_start_on(t):
     t.point('env_dlight', at=(0, 0, 64), targetname='dl', renderamt='100', spawnflags='2')
     t.fire('dl')
@@ -563,7 +610,7 @@ def dlight_start_on(t):
 
 
 @S.test('env_dlight Duration 0.5 + Only once: off 0.5 s after a func_button turns it on, then removed', players=1,
-        doc=DOC_DLIGHT)
+        doc=DOC_DLIGHT, covers=('env_dlight', 'env_dlight.health', 'env_dlight:1'))
 def dlight_duration(t):
     t.point('env_dlight', at=(0, 0, 64), targetname='dl', renderamt='150', health='0.5', spawnflags='1')
     t.brush('func_button', targetname='btn', target='dl', size=(16, 16, 16), at=(-150, 0, 40), spawnflags='1', wait='0')
@@ -576,7 +623,8 @@ def dlight_duration(t):
 
 
 @S.test('env_dlight Position is Locus Entity: on a func_wall (drawn: the client follows it, its index sent); on an '
-        'info_target (no model): its origin, nothing to follow', doc=DOC_DLIGHT)
+        'info_target (no model): its origin, nothing to follow', doc=DOC_DLIGHT,
+        covers=('env_dlight', 'env_dlight.message', 'env_dlight:8'))
 def dlight_entity(t):
     t.brush('func_wall', targetname='wall', size=(32, 32, 32), at=(100, 100, 0))
     t.point('info_target', at=(-100, 100, 50), targetname='tgt')
@@ -595,7 +643,8 @@ def dlight_entity(t):
 
 
 @S.test('env_dlight Track position updates on !activator (a position): the light moves with the player (position '
-        'messages), none while he stands still', players=1, doc=DOC_DLIGHT)
+        'messages), none while he stands still', players=1, doc=DOC_DLIGHT,
+        covers=('env_dlight', 'env_dlight.message', 'env_dlight:4'))
 def dlight_track(t):
     t.point('env_dlight', at=(0, 0, 64), targetname='dl', message='!activator', renderamt='100', spawnflags='4')
     t.teleport('player1', (-100, 0, 0))
@@ -616,7 +665,10 @@ def dlight_track(t):
 # ---------------------------------------------------------------------------------------------- locus_beam
 
 @S.test('locus_beam Entity & Entity with !activator: a beam from an info_target to the activator, named, its target '
-        'fired with the beam as activator', players=1, doc=DOC_LOCUS + '#locus_beam')
+        'fired with the beam as activator', players=1, doc=DOC_LOCUS + '#locus_beam',
+        covers=('locus_beam', 'locus_beam.m_iszStart', 'locus_beam.m_iszEnd', 'locus_beam.impulse=0',
+                'locus_beam.m_iWidth', 'locus_beam.renderamt', 'locus_beam.m_iszTargetName', 'locus_beam.target',
+                'locus_beam.m_fDuration'))
 def beam_ents(t):
     t.point('info_target', at=(0, 150, 64), targetname='src')
     t.point('info_target', at=(-200, -200, 32), targetname='after')
@@ -635,9 +687,31 @@ def beam_ents(t):
     t.expect.removed('bm')                          # Duration 0.5
 
 
+@S.test('locus_beam End at left out or blank is *locus (the FGD default): the beam ends on the activator',
+        players=1, doc=DOC_LOCUS + '#locus_beam', covers=('locus_beam.m_iszEnd',))
+def beam_end_blank(t):
+    t.point('info_target', at=(0, 150, 64), targetname='src')
+    t.point('locus_beam', targetname='la', m_iszStart='src', impulse='0', m_iszTargetName='ba',
+            names=('m_iszStart',))
+    t.point('locus_beam', targetname='lb', m_iszStart='src', m_iszEnd='', impulse='0', m_iszTargetName='bb',
+            names=('m_iszStart',))
+    t.fire('la', activator='player1')
+    t.fire('lb', activator='player1')
+    t.wait(0.1)
+    t.snap('b', 'ba', 'skin', 'rendermode')
+    t.snap('b', 'bb', 'skin', 'rendermode')
+    t.expect.spawned('ba', count=1)
+    t.expect.spawned('bb', count=1)
+    for n in ('ba', 'bb'):
+        t.expect.value('b', n, 'rendermode', 1, op='==')    # BEAM_ENTPOINT: from the info_target to the activator
+        t.expect.value('b', n, 'skin', 1)                   # end entity: player1 (index 1)
+
+
 @S.test('locus_beam Entity & Entity between two info_targets and to the activator: point entities are positions '
         '(the clients never get them), as env_beam: points / point-entity beams that the clients draw', players=1,
-        doc=DOC_LOCUS + '#locus_beam')
+        doc=DOC_LOCUS + '#locus_beam',
+        covers=('locus_beam', 'locus_beam.m_iszStart', 'locus_beam.m_iszEnd', 'locus_beam.impulse=0',
+                'locus_beam.m_fDuration'))
 def beam_point_entities(t):
     t.point('info_target', at=(-150, 150, 64), targetname='pa')
     t.point('info_target', at=(150, 150, 64), targetname='pb')
@@ -665,7 +739,7 @@ def beam_point_entities(t):
 
 
 @S.test('locus_beam Position & Position from calc_position (an entity\'s origin + offset) and Position & Direction',
-        doc=DOC_LOCUS + '#locus_beam')
+        doc=DOC_LOCUS + '#locus_beam', covers=('locus_beam', 'locus_beam.impulse=2', 'locus_beam.impulse=3'))
 def beam_points(t):
     t.point('info_target', at=(-100, 100, 32), targetname='anchor')
     t.point('calc_position', targetname='cp', netname='anchor', impulse='0', message='0 0 48', names=('netname',))
@@ -688,7 +762,7 @@ def beam_points(t):
 
 @S.test('locus_beam Damage 100 per second, Damage type Shock: a func_breakable in the beam takes about 100 a second '
         'from the activator and breaks; Decal end and End sparks: sparks at the end', players=1,
-        doc=DOC_LOCUS + '#locus_beam')
+        doc=DOC_LOCUS + '#locus_beam', covers=('locus_beam', 'locus_beam.m_fDamage', 'locus_beam:32'))
 def beam_damage(t):
     t.brush('func_breakable', targetname='crate', health='90', at=(0, 100, 0), size=(48, 48, 96))
     t.point('info_target', at=(-200, 100, 48), targetname='b_a')
@@ -708,7 +782,7 @@ def beam_damage(t):
 
 
 @S.test('locus_beam without damage, sparks or decals: a plain beam (no think, no sparks); Start sparks alone: sparks',
-        doc=DOC_LOCUS + '#locus_beam')
+        doc=DOC_LOCUS + '#locus_beam', covers=('locus_beam', 'locus_beam:16'))
 def beam_plain_vs_sparks(t):
     t.point('locus_beam', targetname='plain', m_iszStart='-100 0 48', m_iszEnd='100 0 48', impulse='2',
             m_iszTargetName='bplain')
@@ -727,7 +801,8 @@ def beam_plain_vs_sparks(t):
 
 @S.test('locus_beam: a sprite name changed after the load (trigger_changevalue) is not precached late: the beam uses '
         'the map-load sprite; trigger_hurt_remote Delay set to -1 hurts every 0.1 s, not every frame',
-        doc=DOC_LOCUS + '#locus_beam')
+        doc=DOC_LOCUS + '#locus_beam',
+        covers=('locus_beam', 'locus_beam.m_iszSprite', 'trigger_hurt_remote', 'trigger_hurt_remote.delay'))
 def runtime_keys(t):
     t.point('locus_beam', targetname='lb', m_iszStart='-100 0 48', m_iszEnd='100 0 48', impulse='2',
             m_iszTargetName='brt', m_fDuration='0.5')
@@ -754,7 +829,10 @@ def runtime_keys(t):
 # ---------------------------------------------------------------------------------------------- player_calc_ratio
 
 @S.test('player_calc_ratio health and armor, absolute and fraction (read through locus_variable)', players=1,
-        doc=DOC_LOCUS + '#player_calc_ratio')
+        doc=DOC_LOCUS + '#player_calc_ratio',
+        covers=('player_calc_ratio', 'player_calc_ratio.calc_param=0', 'player_calc_ratio.calc_param=1',
+                'player_calc_ratio.value_notion=0', 'player_calc_ratio.value_notion=1', 'locus_variable',
+                'locus_variable.m_iszRatio'))
 def calc_health_armor(t):
     for n, p, v in (('ph', '0', '0'), ('phf', '0', '1'), ('pa', '1', '0'), ('paf', '1', '1')):
         t.point('player_calc_ratio', targetname=n, calc_param=p, value_notion=v)
@@ -775,7 +853,10 @@ def calc_health_armor(t):
 
 
 @S.test('player_calc_ratio ammo of the loadout weapon (fa18m): reserve, with the clip (more), fractions in 0..1; '
-        'maximum speed', players=1, doc=DOC_LOCUS + '#player_calc_ratio')
+        'maximum speed', players=1, doc=DOC_LOCUS + '#player_calc_ratio',
+        covers=('player_calc_ratio', 'player_calc_ratio.calc_param=2', 'player_calc_ratio.calc_param=3',
+                'player_calc_ratio.calc_param=5', 'player_calc_ratio.value_notion=0',
+                'player_calc_ratio.value_notion=1', 'player_calc_ratio.ammo_name=fa18m'))
 def calc_ammo_speed(t):
     for n, p, v in (('am', '2', '0'), ('amc', '3', '0'), ('amf', '2', '1'), ('amcf', '3', '1')):
         t.point('player_calc_ratio', targetname=n, calc_param=p, value_notion=v, ammo_name='fa18m')
@@ -797,7 +878,8 @@ def calc_ammo_speed(t):
 
 
 @S.test('player_calc_ratio fails without a player in play: the world as activator, no ammo name, the inventory type',
-        players=1, doc=DOC_LOCUS + '#player_calc_ratio')
+        players=1, doc=DOC_LOCUS + '#player_calc_ratio',
+        covers=('player_calc_ratio', 'player_calc_ratio.calc_param=0', 'player_calc_ratio.calc_param=2'))
 def calc_fail(t):
     t.point('player_calc_ratio', targetname='ph', calc_param='0', value_notion='0')
     t.point('player_calc_ratio', targetname='noammo', calc_param='2', value_notion='0')
@@ -817,7 +899,9 @@ def calc_fail(t):
 # ---------------------------------------------------------------------------------------------- spectators (last)
 
 @S.test('spectators are not players: All players freeze, hurt by class "player", trigger_look and player_calc_ratio '
-        'leave player2 alone once he spectates', players=2, doc=DOC_LOGIC)
+        'leave player2 alone once he spectates', players=2, doc=DOC_LOGIC,
+        covers=('trigger_playerfreeze', 'trigger_playerfreeze:1', 'trigger_hurt_remote',
+                'trigger_hurt_remote.targetclass', 'trigger_look', 'player_calc_ratio'))
 def spectator(t):
     t.point('trigger_playerfreeze', targetname='frz', use_type='1', spawnflags='1')
     t.point('trigger_playerfreeze', targetname='unfrz', use_type='-1', spawnflags='1')

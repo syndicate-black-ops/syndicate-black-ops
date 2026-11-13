@@ -32,6 +32,8 @@ class CRecharge : public CBaseToggle
 public:
 	void Spawn( );
 	void Precache( void );
+	// SBO 2.1 (Spirit of Half-Life): In Use while it charges a player, On while it has charge left, Off when empty
+	virtual STATE GetState( CBaseEntity *pActivator ) { return m_iOn ? STATE_IN_USE : ( m_iJuice > 0 ? STATE_ON : STATE_OFF ); }
 	void EXPORT Off(void);
 	void EXPORT Recharge(void);
 	void KeyValue( KeyValueData *pkvd );

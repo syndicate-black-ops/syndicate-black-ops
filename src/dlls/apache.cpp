@@ -23,12 +23,14 @@
 #include "effects.h"
 #include "player.h"
 #include "sbo_monster.h"
+#include "gamerules.h"
 
 extern DLL_GLOBAL int		g_iSkillLevel;
 
 #define SF_WAITFORTRIGGER	(0x04 | 0x40) // UNDONE: Fix!
-#define SF_NOWRECKAGE		0x08
+#define SF_EXPLODE_SOONER	0x08	// "Explode sooner": the wreck explodes 4 s after death, not 15 (Half-Life's "NoWreckage" flag)
 #define SF_FIRE_ROCKETS		0x20 // SBO 2.0: fires hvr_rockets as in HL (1.38's apache never did; docs/APACHE.md)
+#define SF_NO_WRECKAGE		0x400 // SBO 2.0: the crash leaves no burning wreck and no scattered gibs (docs/APACHE.md)
 #define APACHE_ROCKET_AIM_CONE	0.5	// SBO 2.0: no path: rockets aimed at an enemy within 60 degrees of the nose
 
 class CApache : public CBaseMonster
@@ -146,6 +148,7 @@ void CApache :: Spawn( void )
 	pev->max_health		= pev->health; // halflife-updated (VS#3262): health-based AI triggers need max_health
 
 	m_flFieldOfView = -0.707; // 270 degrees
+	ApplyCustomMonsterKeys();	// SBO 2.1 (Featureful SetMyFieldOfView): "field_of_view" (and the other custom keys); it never runs MonsterInit
 
 	pev->sequence = 0;
 	ResetSequenceInfo( );
@@ -258,6 +261,7 @@ void CApache :: Killed( entvars_t *pevAttacker, int iGib )
 {
 	SboKillfeed_NpcKilled( this, pevAttacker );	// chat-vgui2: kill feed (doesn't chain to CBaseMonster::Killed)
 	NotifyOwnerOfDeath();	// SBO 2.0: frees its monstermaker's live-child slot (HL never did)
+	FireTriggerOnDeath( pevAttacker );	// SBO 2.1: "trigger_on_death" (its own Killed skipped CBaseMonster::Killed's)
 
 	pev->movetype = MOVETYPE_TOSS;
 	pev->gravity = 0.3;
@@ -273,7 +277,7 @@ void CApache :: Killed( entvars_t *pevAttacker, int iGib )
 	pev->takedamage = DAMAGE_NO;
 	pev->deadflag = DEAD_DYING; // halflife-updated (VS#3262): AITRIGGER_DEATH tests deadflag
 
-	if (pev->spawnflags & SF_NOWRECKAGE)
+	if (pev->spawnflags & SF_EXPLODE_SOONER)
 	{
 		m_flNextRocket = gpGlobals->time + 4.0;
 	}
@@ -421,7 +425,7 @@ void CApache :: DyingThink( void )
 
 		EMIT_SOUND(ENT(pev), CHAN_STATIC, "weapons/mortarhit.wav", 1.0, 0.3);
 
-		if (/*!(pev->spawnflags & SF_NOWRECKAGE) && */(pev->flags & FL_ONGROUND))
+		if (!(pev->spawnflags & SF_NO_WRECKAGE) && (pev->flags & FL_ONGROUND))
 		{
 			CBaseEntity *pWreckage = Create( "cycler_wreckage", pev->origin, pev->angles );
 			// SET_MODEL( ENT(pWreckage->pev), STRING(pev->model) );
@@ -434,6 +438,8 @@ void CApache :: DyingThink( void )
 
 		// gibs
 		vecSpot = pev->origin + (pev->mins + pev->maxs) * 0.5;
+		if ( !(pev->spawnflags & SF_NO_WRECKAGE) )
+		{
 		MESSAGE_BEGIN( MSG_PVS, SVC_TEMPENTITY, vecSpot );
 			WRITE_BYTE( TE_BREAKMODEL);
 
@@ -468,6 +474,7 @@ void CApache :: DyingThink( void )
 
 			WRITE_BYTE( BREAK_METAL );
 		MESSAGE_END();
+		}
 
 		SetThink( &CApache::SUB_Remove );
 		pev->nextthink = gpGlobals->time + 0.1;
@@ -805,30 +812,31 @@ void CApache :: Flight( void )
 	}
 	else
 	{
-		CBaseEntity *pPlayer = NULL;
+		// SBO 2.1 (Half-Life Unified SDK): in multiplayer the rotor keeps its spawn pitch (110). The Doppler pitch is
+		// worked out for one player (the first in the entity list) and sent to everyone, so the others heard the
+		// rotor pitch follow that player's movement; single player keeps the Doppler pitch.
+		int pitch = 110;
 
-		pPlayer = UTIL_FindEntityByClassname( NULL, "player" );
-		// UNDONE: this needs to send different sounds to every player for multiplayer.	
-		if (pPlayer)
+		if (!g_pGameRules->IsMultiplayer())
 		{
+			CBaseEntity *pPlayer = UTIL_FindEntityByClassname( NULL, "player" );
+			// UNDONE: this needs to send different sounds to every player for multiplayer.
+			if (pPlayer)
+			{
+				pitch = (int)DotProduct( pev->velocity - pPlayer->pev->velocity, (pPlayer->pev->origin - pev->origin).Normalize() );
 
-			float pitch = DotProduct( pev->velocity - pPlayer->pev->velocity, (pPlayer->pev->origin - pev->origin).Normalize() );
+				pitch = 100 + (pitch / 50);
 
-			pitch = (int)(100 + pitch / 50.0);
-
-			if (pitch > 250) 
-				pitch = 250;
-			if (pitch < 50)
-				pitch = 50;
-			if (pitch == 100)
-				pitch = 101;
-
-			float flVol = (m_flForce / 100.0) + .1;
-			if (flVol > 1.0) 
-				flVol = 1.0;
-
-			EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_rotor2.wav", RotorVolume(), 0.3, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
+				if (pitch > 250)
+					pitch = 250;
+				if (pitch < 50)
+					pitch = 50;
+				if (pitch == 100)
+					pitch = 101;
+			}
 		}
+
+		EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_rotor2.wav", RotorVolume(), 0.3, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
 		// EMIT_SOUND_DYN(ENT(pev), CHAN_STATIC, "apache/ap_whine1.wav", flVol, 0.2, SND_CHANGE_PITCH | SND_CHANGE_VOL, pitch);
 	
 		// ALERT( at_console, "%.0f %.2f\n", pitch, flVol );
@@ -997,6 +1005,10 @@ void CApache :: ShowDamage( void )
 
 int CApache :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType )
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	if (pevInflictor->owner == edict())
 		return 0;
 

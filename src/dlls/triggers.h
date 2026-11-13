@@ -29,6 +29,13 @@ public:
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	// SBO 2.1 (Spirit of Half-Life env_fog): On while it is active (an unnamed one always is), Off while it is off
+	STATE GetState( CBaseEntity *pActivator ) { return FBitSet( pev->spawnflags, SF_FOG_ACTIVE ) ? STATE_ON : STATE_OFF; }
+	// SBO 2.1: a key changed at run time (trigger_changevalue / trigger_copyvalue): Spawn's rule again, and the
+	// players in the game get the fog in the next frame (after the change's origin update)
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
+	void EXPORT ResendThink( void );
 
 	int m_iStartDist;
 	int m_iEndDist;
@@ -57,6 +64,6 @@ class CBasePlayer;
 // PROTOTYPE (docs/WEATHER.md "env_fogzone prototype"): the zones' boxes, colors, densities and states for the client,
 // which draws their haze and their fog itself (cl_dll/tri.cpp). pOnly: one zone (toggled), else the whole list.
 void FogZone_Send( CBasePlayer *pPlayer, CEnvFogZone *pOnly = NULL );
-void WeatherVol_SendAll( CBasePlayer *pPlayer );	// SBO 2.0: func_rainvolume / func_snowvolume (triggers.cpp)
+void WeatherVol_SendAll( CBasePlayer *pPlayer );	// SBO 2.0: env_rain / env_snow, func_rainvolume / func_snowvolume (triggers.cpp)
 
 #endif // TRIGGERS_H

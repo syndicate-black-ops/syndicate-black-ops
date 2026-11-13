@@ -9,9 +9,12 @@
 // (monstermaker "warpball"). FALSE: no such env_warpball.
 BOOL GuideWarpball_Play( const char *szName, const Vector &vecOrigin, edict_t *pSoundEnt );
 
-// guide_monsters.cpp: the active monster_targets an automatic func_tank shoots at (they count as a player or a
-// player ally); returns how many it put in pList
-int GuideMonsterTargets_ForTank( CBaseEntity **pList, int iMax );
+// guide_monsters.cpp: the next active monster_target an automatic func_tank shoots at (it counts as a player or a
+// player ally), from iCursor (start at 0; it moves past the one returned). NULL: no more
+CBaseEntity *GuideMonsterTargets_NextForTank( int &iCursor );
+
+// guide_monsters.cpp: empties the monster_target list (worldspawn: the new map's ones add themselves at spawn)
+void GuideMonsterTargets_Reset( void );
 
 // guide_monsters.cpp: asks a free monster (alive, not in a script, not fighting) to walk / run at least flMinDist
 // away from vecSpot (Featureful CBaseMonster::AskMoveAwayFromSpot; monstermaker "make_blocker_move_away"). FALSE: it

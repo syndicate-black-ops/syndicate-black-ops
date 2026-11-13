@@ -1,0 +1,370 @@
+{
+  "_about": "The coverage gate's shared FGD bases (etest/coverage.py, etest/code_paths.py). A key of one of these bases is counted on every class that inherits it. A test on one class credits the key on the other classes of the base only when their C++ class keeps the base's code for it: a class whose own code replaces a method in the key's list (its override never calls the ancestor's), or never reaches a method in needs_call, needs its own test or an exemption. cpp: the base's C++ class. every_key: methods every key goes through (an override counts only when it does not call the ancestor's). keys: per FGD key (lower case), or key=value for one choice value, the methods its effect goes through. uses: per key (lower case, without a value), names (helpers, members) an override may use to apply the key itself: an override whose body uses one keeps the key's path (it counts as extending). own_cases: per key, per method, case labels (C++ case names) whose own handling in an override that calls the ancestor's still counts as the class's own code (a GetSchedule that decides MONSTERSTATE_ALERT itself, before the base's code reads the key). parts: the FGD base classes a base is built from (its keys are defined there; they count as the base's).",
+  "bases": {
+    "Monster": {
+      "cpp": "CBaseMonster",
+      "every_key": [
+        "KeyValue"
+      ],
+      "needs_call": {
+        "MonsterInit": [
+          "MonsterInit",
+          "RunAI",
+          "Look",
+          "Listen",
+          "GetSchedule"
+        ]
+      },
+      "keys": {
+        "unkillable": [
+          "TakeDamage"
+        ],
+        "triggertarget": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage",
+          "Killed",
+          "GibMonster"
+        ],
+        "triggercondition": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage",
+          "Killed",
+          "GibMonster"
+        ],
+        "triggercondition=0": [],
+        "triggercondition=1": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggercondition=2": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggercondition=3": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggercondition=4": [
+          "TakeDamage",
+          "Killed",
+          "GibMonster"
+        ],
+        "triggercondition=7": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggercondition=8": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggercondition=9": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggercondition=10": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggercondition=11": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggercondition=12": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggercondition=13": [
+          "MonsterInit",
+          "RunAI",
+          "TakeHealth"
+        ],
+        "triggeraltcondition": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage",
+          "Killed",
+          "GibMonster"
+        ],
+        "triggeraltcondition=0": [],
+        "triggeraltcondition=1": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggeraltcondition=2": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggeraltcondition=3": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggeraltcondition=4": [
+          "TakeDamage",
+          "Killed",
+          "GibMonster"
+        ],
+        "triggeraltcondition=7": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggeraltcondition=8": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggeraltcondition=9": [
+          "MonsterInit",
+          "RunAI",
+          "Listen"
+        ],
+        "triggeraltcondition=10": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggeraltcondition=11": [
+          "MonsterInit",
+          "RunAI",
+          "Look"
+        ],
+        "triggeraltcondition=12": [
+          "MonsterInit",
+          "RunAI",
+          "TakeDamage"
+        ],
+        "triggeraltcondition=13": [
+          "MonsterInit",
+          "RunAI",
+          "TakeHealth"
+        ],
+        "trigger_on_death": [
+          "Killed"
+        ],
+        "bloodcolor": [
+          "MonsterInit",
+          "BloodColor",
+          "TraceAttack"
+        ],
+        "gibmodel": [
+          "MonsterInit",
+          "GibMonster",
+          "Killed"
+        ],
+        "gib_policy": [
+          "Killed",
+          "GibMonster"
+        ],
+        "field_of_view": [
+          "MonsterInit",
+          "Look"
+        ],
+        "soundmask": [
+          "MonsterInit",
+          "Listen"
+        ],
+        "classify": [
+          "MonsterInit",
+          "IRelationship",
+          "Look"
+        ],
+        "is_player_ally": [
+          "MonsterInit",
+          "IRelationship",
+          "Look"
+        ],
+        "prisonerto": [
+          "MonsterInit",
+          "IRelationship",
+          "Look"
+        ],
+        "ignoredby": [
+          "MonsterInit",
+          "IRelationship",
+          "Look"
+        ],
+        "freeroam": [
+          "MonsterInit",
+          "GetSchedule"
+        ],
+        "active_alert": [
+          "MonsterInit",
+          "GetSchedule"
+        ]
+      },
+      "uses": {
+        "unkillable": [
+          "m_fUnkillable"
+        ],
+        "triggertarget": [
+          "FCheckAITrigger",
+          "FCheckAITriggerCondition"
+        ],
+        "triggercondition": [
+          "FCheckAITrigger",
+          "FCheckAITriggerCondition"
+        ],
+        "triggeraltcondition": [
+          "FCheckAITrigger",
+          "FCheckAITriggerCondition"
+        ],
+        "trigger_on_death": [
+          "m_iszTriggerOnDeath"
+        ],
+        "bloodcolor": [
+          "m_bloodColor",
+          "BloodColor"
+        ],
+        "gibmodel": [
+          "m_iszGibModel",
+          "CallGibMonster"
+        ],
+        "gib_policy": [
+          "ShouldGibMonster",
+          "m_iGibPolicy",
+          "CallGibMonster"
+        ],
+        "field_of_view": [
+          "m_flFieldOfView",
+          "FInViewCone"
+        ],
+        "soundmask": [
+          "SoundMaskWithCustom"
+        ],
+        "classify": [
+          "KeyedClass",
+          "IRelationship",
+          "ClassRelationship"
+        ],
+        "is_player_ally": [
+          "KeyedClass",
+          "IRelationship",
+          "ClassRelationship"
+        ],
+        "prisonerto": [
+          "m_iPrisonerTo"
+        ],
+        "ignoredby": [
+          "m_iIgnoredBy"
+        ],
+        "freeroam": [
+          "GetFreeroamSchedule",
+          "m_iFreeRoam"
+        ],
+        "active_alert": [
+          "m_iActiveAlert",
+          "bits_MEMORY_SHOULD_ROAM_IN_ALERT"
+        ]
+      },
+      "own_cases": {
+        "freeroam": {
+          "GetSchedule": [
+            "MONSTERSTATE_IDLE",
+            "MONSTERSTATE_ALERT"
+          ]
+        },
+        "active_alert": {
+          "GetSchedule": [
+            "MONSTERSTATE_ALERT"
+          ]
+        }
+      },
+      "parts": ["MonsterCore", "MonsterTriggers", "MonsterBody", "MonsterSound", "MonsterRoam", "MonsterUnkillable", "MonsterFlags", "MonsterGag", "MonsterFadeCorpse", "MonsterNonSolidCorpse", "MonsterActOutOfPVS", "MonsterQuiet", "MonsterClip"]
+    },
+    "TalkMonster": {
+      "cpp": "CTalkMonster",
+      "every_key": [
+        "KeyValue"
+      ],
+      "keys": {
+        "suspicious": [
+          "TakeDamage",
+          "StartMonster"
+        ],
+        "tolerance": [
+          "TakeDamage"
+        ],
+        "alert_friends": [
+          "Killed",
+          "TakeDamage"
+        ],
+        "refusalsentence": [
+          "FollowerUse"
+        ],
+        "speakas": [
+          "Precache"
+        ],
+        "voicepitch": [
+          "TalkInit",
+          "PainSound",
+          "DeathSound",
+          "FIdleSpeak"
+        ],
+        "followfailpolicy": [
+          "GetScheduleOfType"
+        ],
+        "followage_policy": [
+          "FollowerUse"
+        ],
+        "usesentence": [
+          "FollowerUse",
+          "Precache"
+        ],
+        "unusesentence": [
+          "FollowerUse",
+          "Precache"
+        ]
+      },
+      "uses": {
+        "suspicious": [
+          "m_fStartSuspicious"
+        ],
+        "tolerance": [
+          "m_iTolerance",
+          "ReactToPlayerHit"
+        ],
+        "alert_friends": [
+          "ShouldAlertFriendsOnDeath",
+          "m_iAlertFriendsPolicy"
+        ],
+        "refusalsentence": [
+          "m_iszDecline"
+        ],
+        "speakas": [
+          "ApplySpeakAs",
+          "m_iszSpeakAs"
+        ],
+        "voicepitch": [
+          "GetVoicePitch"
+        ],
+        "followfailpolicy": [
+          "FollowFailPolicy"
+        ],
+        "followage_policy": [
+          "UseFollowAllowed",
+          "ScriptedFollowAllowed"
+        ],
+        "usesentence": [
+          "m_iszUse"
+        ],
+        "unusesentence": [
+          "m_iszUnUse"
+        ]
+      }
+    }
+  }
+}

@@ -26,7 +26,9 @@
 #include "saverestore.h"
 #include "nodes.h"
 #include "doors.h"
+#include "movewith.h"	// SBO 2.0: a child mover's moves are in its parent's frame
 #include "sbo_test.h"	// SBO_TEST_COMMANDS builds: the test layer (docs/dev/ENTITY_TESTS.md)
+#include "alias.h"	// SBO 2.1: alias changes wait for the end of FireTargets
 
 extern CGraph WorldGraph;
 
@@ -113,6 +115,7 @@ void CBaseEntity::UpdateOnRemove( void )
 	}
 	if ( pev->globalname )
 		gGlobalState.EntitySetState( pev->globalname, GLOBAL_DEAD );
+	MoveWith_EntityRemoved( edict() );	// SBO 2.0 movewith: the child ambient sounds playing on it stop with it
 }
 
 // Convenient way to delay removing oneself
@@ -142,6 +145,7 @@ TYPEDESCRIPTION	CBaseDelay::m_SaveData[] =
 	DEFINE_FIELD( CBaseDelay, m_flDelay, FIELD_FLOAT ),
 	DEFINE_FIELD( CBaseDelay, m_iszKillTarget, FIELD_STRING ),
 	DEFINE_FIELD( CBaseDelay, m_hActivator, FIELD_EHANDLE ),	// SBO 2.0 (Featureful c0d5b843, 1645afbe)
+	DEFINE_FIELD( CBaseDelay, m_hDelayedCaller, FIELD_EHANDLE ),	// SBO 2.1
 };
 
 IMPLEMENT_SAVERESTORE( CBaseDelay, CBaseEntity );
@@ -192,6 +196,8 @@ void CBaseEntity :: SUB_UseTargets( CBaseEntity *pActivator, USE_TYPE useType, f
 }
 
 
+// SBO 2.0 (Half-Life Unified SDK): the target may end in '*' (every entity whose name starts with the rest) or be
+// "!activator" / "!caller" (UTIL_FindEntityByTargetname; docs/ENTITY_TRIGGERING.md)
 void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value )
 {
 	edict_t *pentTarget = NULL;
@@ -201,13 +207,50 @@ void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *
 	ALERT( at_aiconsole, "Firing: (%s)\n", targetName );
 	SBO_TEST_CALL( Test_TraceFire( targetName, pActivator, pCaller, useType, value ) );
 
+	CBaseEntity *pSelected;
+	BOOL bSelector = UTIL_TargetSelector( targetName, pActivator, pCaller, &pSelected );
+	size_t nameLen = strlen( targetName );
+	// SBO 2.1: an alias ("*name") may name the entity firing too, as a wildcard may
+	BOOL bWildcard = nameLen && ( targetName[ nameLen - 1 ] == '*' || targetName[0] == '*' );
+
+	Alias_FireTargetsBegin();	// SBO 2.1 (Spirit): alias changes made by these targets wait until the firing is done
+
 	for (;;)
 	{
-		pentTarget = FIND_ENTITY_BY_TARGETNAME(pentTarget, targetName);
-		if (FNullEnt(pentTarget))
-			break;
+		CBaseEntity *pTarget;
+		if ( bSelector )
+		{
+			pTarget = pSelected;	// one entity (or none)
+			pSelected = NULL;
+			if ( !pTarget )
+				break;
 
-		CBaseEntity *pTarget = CBaseEntity::Instance( pentTarget );
+			// SBO: the caller is the entity firing ("!caller" is itself; a trigger_relay is its own "!activator"):
+			// using it again would repeat without end (the Unified SDK recursed until the server crashed)
+			if ( pTarget == pCaller )
+			{
+				ALERT( at_aiconsole, "%s \"%s\": target %s is itself, not triggered\n", STRING( pCaller->pev->classname ),
+					STRING( pCaller->pev->targetname ), targetName );
+				break;
+			}
+		}
+		else
+		{
+			pentTarget = FIND_ENTITY_BY_TARGETNAME(pentTarget, targetName);
+			if (FNullEnt(pentTarget))
+				break;
+			pTarget = CBaseEntity::Instance( pentTarget );
+
+			// SBO 2.1: a wildcard never matches the entity firing (a relay "room1_relay" targeting "room1_*" would
+			// trigger itself without end), as the selectors above
+			if ( bWildcard && pTarget && pTarget == pCaller )
+			{
+				ALERT( at_aiconsole, "%s \"%s\": target %s matches itself, not triggered\n", STRING( pCaller->pev->classname ),
+					STRING( pCaller->pev->targetname ), targetName );
+				continue;
+			}
+		}
+
 		if ( pTarget && !(pTarget->pev->flags & FL_KILLME) )	// Don't use dying ents
 		{
 			ALERT( at_aiconsole, "Found: %s, firing (%s)\n", STRING(pTarget->pev->classname), targetName );
@@ -215,6 +258,8 @@ void FireTargets( const char *targetName, CBaseEntity *pActivator, CBaseEntity *
 			pTarget->Use( pActivator, pCaller, useType, value );
 		}
 	}
+
+	Alias_FireTargetsDone();
 }
 
 LINK_ENTITY_TO_CLASS( DelayedUse, CBaseDelay );
@@ -249,35 +294,68 @@ void CBaseDelay :: SUB_UseTargets( CBaseEntity *pActivator, USE_TYPE useType, fl
 
 		// SBO 2.0 (Featureful c0d5b843): any activator is kept (Half-Life kept only a player, in pev->owner)
 		pTemp->m_hActivator = pActivator;
+		pTemp->m_hDelayedCaller = this;	// SBO 2.1: CMultiSource::Use toggles this entity's slot
 
 		return;
 	}
 
-	//
-	// kill the killtargets
-	//
+	SUB_KillTargets( pActivator );
 
-	if ( m_iszKillTarget )
-	{
-		edict_t *pentKillTarget = NULL;
-
-		ALERT( at_aiconsole, "KillTarget: %s\n", STRING(m_iszKillTarget) );
-		pentKillTarget = FIND_ENTITY_BY_TARGETNAME( NULL, STRING(m_iszKillTarget) );
-		while ( !FNullEnt(pentKillTarget) )
-		{
-			UTIL_Remove( CBaseEntity::Instance(pentKillTarget) );
-
-			ALERT( at_aiconsole, "killing %s\n", STRING( pentKillTarget->v.classname ) );
-			pentKillTarget = FIND_ENTITY_BY_TARGETNAME( pentKillTarget, STRING(m_iszKillTarget) );
-		}
-	}
-	
 	//
 	// fire targets
 	//
 	if (!FStringNull(pev->target))
 	{
 		FireTargets( STRING(pev->target), pActivator, this, useType, value );
+	}
+}
+
+// SBO 2.0: removes the KillTarget entities (SUB_UseTargets, trigger_changetarget): "!activator" / "!caller" (this
+// entity), a name or a wildcard; a player is never removed, and a wildcard never matches this entity
+void CBaseDelay :: SUB_KillTargets( CBaseEntity *pActivator )
+{
+	if ( m_iszKillTarget )
+	{
+		edict_t *pentKillTarget = NULL;
+		const char *szKillTarget = STRING(m_iszKillTarget);
+
+		ALERT( at_aiconsole, "KillTarget: %s\n", szKillTarget );
+
+		// SBO 2.0 (Half-Life Unified SDK): "!activator" / "!caller" (the caller is this entity) and wildcards (the
+		// FIND_ENTITY_BY_TARGETNAME search); a player is never removed (UTIL_IsRemovableEntity)
+		CBaseEntity *pSelected;
+		if ( UTIL_TargetSelector( szKillTarget, pActivator, this, &pSelected ) )
+		{
+			if ( pSelected && !pSelected->IsPlayer() )
+			{
+				UTIL_Remove( pSelected );
+				ALERT( at_aiconsole, "killing %s\n", STRING( pSelected->pev->classname ) );
+			}
+			else if ( pSelected )
+				ALERT( at_aiconsole, "Can't kill \"%s\": players are never removed\n", STRING( pSelected->pev->classname ) );
+		}
+		else
+		{
+			size_t killLen = strlen( szKillTarget );
+			BOOL bWildcard = killLen && ( szKillTarget[ killLen - 1 ] == '*' || szKillTarget[0] == '*' );	// SBO 2.1: or an alias
+			pentKillTarget = FIND_ENTITY_BY_TARGETNAME( NULL, szKillTarget );
+			while ( !FNullEnt(pentKillTarget) )
+			{
+				CBaseEntity *pKill = CBaseEntity::Instance( pentKillTarget );
+				// SBO 2.1: a wildcard never matches the entity firing (it would remove itself), as in FireTargets
+				if ( bWildcard && pKill == this )
+					ALERT( at_aiconsole, "%s \"%s\": killtarget %s matches itself, not removed\n", STRING( pev->classname ),
+						STRING( pev->targetname ), szKillTarget );
+				else if ( pKill && pKill->IsPlayer() )
+					ALERT( at_aiconsole, "Can't kill \"%s\": players are never removed\n", STRING( pentKillTarget->v.classname ) );
+				else
+				{
+					UTIL_Remove( pKill );
+					ALERT( at_aiconsole, "killing %s\n", STRING( pentKillTarget->v.classname ) );
+				}
+				pentKillTarget = FIND_ENTITY_BY_TARGETNAME( pentKillTarget, szKillTarget );
+			}
+		}
 	}
 }
 
@@ -390,16 +468,21 @@ void CBaseToggle ::  LinearMove( Vector	vecDest, float flSpeed )
 	
 	m_vecFinalDest = vecDest;
 
+	// SBO 2.0 movewith: a child mover moves its own pose, in the frame of its parent as placed (movewith.cpp); its
+	// positions (m_vecPosition1/2) are the editor's
+	Vector vecOrigin = pev->origin;
+	MoveWith_GetOwnPose( this, &vecOrigin, NULL );
+
 	// Already there?
-	if (vecDest == pev->origin)
+	if (vecDest == vecOrigin)
 	{
 		LinearMoveDone();
 		return;
 	}
-		
+
 	// set destdelta to the vector needed to move
-	Vector vecDestDelta = vecDest - pev->origin;
-	
+	Vector vecDestDelta = vecDest - vecOrigin;
+
 	// divide vector length by speed to get time to reach dest
 	float flTravelTime = vecDestDelta.Length() / flSpeed;
 
@@ -408,7 +491,7 @@ void CBaseToggle ::  LinearMove( Vector	vecDest, float flSpeed )
 	SetThink( &CBaseToggle::LinearMoveDone );
 
 	// scale the destdelta vector by the time spent traveling to get velocity
-	pev->velocity = vecDestDelta / flTravelTime;
+	MoveWith_SetOwnVelocity( this, vecDestDelta / flTravelTime );	// pev->velocity unless a child
 }
 
 
@@ -419,8 +502,8 @@ After moving, set origin to exact final destination, call "move done" function
 */
 void CBaseToggle :: LinearMoveDone( void )
 {
-	UTIL_SetOrigin(pev, m_vecFinalDest);
-	pev->velocity = g_vecZero;
+	MoveWith_SetOwnOrigin( this, m_vecFinalDest );	// UTIL_SetOrigin unless a child
+	MoveWith_SetOwnVelocity( this, g_vecZero );
 	pev->nextthink = -1;
 	if ( m_pfnCallWhenMoveDone )
 		(this->*m_pfnCallWhenMoveDone)();
@@ -473,15 +556,19 @@ void CBaseToggle :: AngularMove( Vector vecDestAngle, float flSpeed )
 	
 	m_vecFinalAngle = vecDestAngle;
 
+	// SBO 2.0 movewith: a child mover turns its own pose (see LinearMove)
+	Vector vecAngles = pev->angles;
+	MoveWith_GetOwnPose( this, NULL, &vecAngles );
+
 	// Already there?
-	if (vecDestAngle == pev->angles)
+	if (vecDestAngle == vecAngles)
 	{
 		AngularMoveDone();
 		return;
 	}
-	
+
 	// set destdelta to the vector needed to move
-	Vector vecDestDelta = vecDestAngle - pev->angles;
+	Vector vecDestDelta = vecDestAngle - vecAngles;
 	
 	// divide by speed to get time to reach dest
 	float flTravelTime = vecDestDelta.Length() / flSpeed;
@@ -491,7 +578,7 @@ void CBaseToggle :: AngularMove( Vector vecDestAngle, float flSpeed )
 	SetThink( &CBaseToggle::AngularMoveDone );
 
 	// scale the destdelta vector by the time spent traveling to get velocity
-	pev->avelocity = vecDestDelta / flTravelTime;
+	MoveWith_SetOwnAvelocity( this, vecDestDelta / flTravelTime );	// pev->avelocity unless a child
 }
 
 
@@ -502,8 +589,8 @@ After rotating, set angle to exact final angle, call "move done" function
 */
 void CBaseToggle :: AngularMoveDone( void )
 {
-	pev->angles = m_vecFinalAngle;
-	pev->avelocity = g_vecZero;
+	MoveWith_SetOwnAngles( this, m_vecFinalAngle );	// pev->angles unless a child
+	MoveWith_SetOwnAvelocity( this, g_vecZero );
 	pev->nextthink = -1;
 	if ( m_pfnCallWhenMoveDone )
 		(this->*m_pfnCallWhenMoveDone)();

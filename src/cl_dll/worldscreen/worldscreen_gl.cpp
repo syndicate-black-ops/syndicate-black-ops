@@ -280,7 +280,7 @@ void Expect(bool ok, unsigned int bit, const char *what)
 	if (ok || (s_iWarned & bit))
 		return;
 	s_iWarned |= bit;
-	worldscreen::Printf("worldscreen: unexpected engine GL state: %s (see worldscreen_status)\n", what);
+	worldscreen::DebugPrintf("worldscreen: unexpected engine GL state: %s (see worldscreen_status)\n", what);
 }
 
 const char *ErrorName(GLenum e)

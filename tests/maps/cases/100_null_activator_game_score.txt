@@ -1,0 +1,35 @@
+# game_score, game_player_team and game_player_equip fired by func_breakables (their targets get no activator, HL SDK):
+# nothing happens and the map goes on (74c5ad52, halflife-updated #246 / #189: 1.38 called a
+# method on the NULL activator and crashed). A player activator still gets the points
+# covers: game_score game_score.points game_player_team game_player_equip
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn game_score targetname gs points 5
+spawn game_player_team targetname gpt
+spawn game_player_equip targetname gpe weapon_rc28 1
+spawn func_breakable model *1 health 20 material 1 target gs
+spawn func_breakable model *1 health 20 material 1 target gpt
+spawn func_breakable model *1 health 20 material 1 target gpe
+spawn trigger_relay targetname after target after_sink triggerstate 2
+activate
+connect 1 P1
+frames 3
+useclient 3 1
+useclient 4 1
+useclient 5 1
+frames 3
+fire after
+frames 3
+expectn 1 Firing: (gs)
+expectn 1 Firing: (gpt)
+expectn 1 Firing: (gpe)
+expect Firing: (after_sink)

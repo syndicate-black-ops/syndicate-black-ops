@@ -1,0 +1,29 @@
+# coop: round players are counted by a scan of the players in play (5ea7ac96), not by counters: P2 leaves in the round,
+# then P1 (the only one left) is killed: FAILED ROUND at once
+# covers: trigger_hurt
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+spawn trigger_hurt dmg 100000 damagetype 0
+activate
+connect 1 P1
+connect 2 P2
+frames 3
+cmd 1 item 1
+cmd 2 item 1
+frames 260
+expect ROUND START
+disconnect 2
+frames 20
+expectnot FAILED ROUND
+touchclient 0 1
+frames 60
+expectn 1 FAILED ROUND

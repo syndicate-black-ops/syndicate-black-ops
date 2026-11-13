@@ -1,0 +1,13 @@
+# trigger_changetarget "Delay before trigger" (FGD base Targetx, delay 2): the target's new target is set 2 s after
+# the trigger, as a delayed SUB_UseTargets fires (1.38 set it at once; decision changetarget-delay)
+# covers: trigger_changetarget.delay
+map co_fuzz
+spawn trigger_relay targetname relay target old_t
+spawn trigger_changetarget targetname ct target relay m_iszNewTarget new_t delay 2
+activate
+frames 3
+fire ct
+frames 5
+expectfield relay target old_t
+frames 20
+expectfield relay target new_t

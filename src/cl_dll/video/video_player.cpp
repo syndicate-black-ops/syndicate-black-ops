@@ -63,7 +63,7 @@ void Stop( const char *why )
 		return;
 
 	if ( s_bPlaying && why )
-		gEngfuncs.Con_Printf( "Video: %s stopped (%s, %d frames)\n", s_szName, why, s_Decoder.FramesDecoded() );
+		gEngfuncs.Con_DPrintf( "Video: %s stopped (%s, %d frames)\n", s_szName, why, s_Decoder.FramesDecoded() );
 
 	s_bPlaying = false;
 	VGui2_Video_SetEscapeGuard( false );
@@ -95,7 +95,7 @@ bool Play( const char *video, const char *audio )
 	char path[VIDEO_MAX_PATH];
 	if ( !VideoShared_MakePath( video, true, path, sizeof( path ) ) )
 	{
-		gEngfuncs.Con_Printf( "Video: video name \"%s\" refused: %s\n", video ? video : "", VideoShared_NameError( video, true ) );
+		gEngfuncs.Con_DPrintf( "Video: video name \"%s\" refused: %s\n", video ? video : "", VideoShared_NameError( video, true ) );
 		return false;
 	}
 
@@ -103,13 +103,13 @@ bool Play( const char *video, const char *audio )
 	s_pFile = LoadFile( path, length );
 	if ( !s_pFile )
 	{
-		gEngfuncs.Con_Printf( "Video: %s not found\n", path );
+		gEngfuncs.Con_DPrintf( "Video: %s not found\n", path );
 		return false;
 	}
 
 	if ( !s_Decoder.Open( s_pFile, (size_t)length ) )
 	{
-		gEngfuncs.Con_Printf( "Video: %s: %s\n", path, s_Decoder.Error() ? s_Decoder.Error() : "cannot be read" );
+		gEngfuncs.Con_DPrintf( "Video: %s: %s\n", path, s_Decoder.Error() ? s_Decoder.Error() : "cannot be read" );
 		FreeFile();
 		return false;
 	}
@@ -121,13 +121,13 @@ bool Play( const char *video, const char *audio )
 		int audioLength = 0;
 		byte *data = NULL;
 		if ( !VideoShared_MakePath( audio, false, audioPath, sizeof( audioPath ) ) )
-			gEngfuncs.Con_Printf( "Video: sound name \"%s\" refused: %s\n", audio, VideoShared_NameError( audio, false ) );
+			gEngfuncs.Con_DPrintf( "Video: sound name \"%s\" refused: %s\n", audio, VideoShared_NameError( audio, false ) );
 		else if ( ( data = LoadFile( audioPath, audioLength ) ) == NULL )
-			gEngfuncs.Con_Printf( "Video: %s not found\n", audioPath );
+			gEngfuncs.Con_DPrintf( "Video: %s not found\n", audioPath );
 		else
 		{
 			if ( !s_Decoder.OpenAudioFile( data, (size_t)audioLength ) )
-				gEngfuncs.Con_Printf( "Video: %s is not Ogg Vorbis\n", audioPath );
+				gEngfuncs.Con_DPrintf( "Video: %s is not Ogg Vorbis\n", audioPath );
 			gEngfuncs.COM_FreeFile( data );
 		}
 	}
@@ -143,7 +143,7 @@ bool Play( const char *video, const char *audio )
 	s_bWasAlive = !CL_IsDead();
 	VGui2_Video_SetEscapeGuard( true );
 
-	gEngfuncs.Con_Printf( "Video: playing %s (%dx%d, %.2f fps, %s%s%s; %d bytes)\n", path, s_Decoder.Width(),
+	gEngfuncs.Con_DPrintf( "Video: playing %s (%dx%d, %.2f fps, %s%s%s; %d bytes)\n", path, s_Decoder.Width(),
 		s_Decoder.Height(), s_Decoder.FrameRate(), sound ? "sound" : ( rate > 0 ? "no sound device" : "no sound" ),
 		( !sound && rate > 0 ) ? ": " : "", ( !sound && rate > 0 ) ? VideoAudio_Error() : "", length );
 	return true;

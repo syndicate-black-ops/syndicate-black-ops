@@ -156,7 +156,8 @@ static struct
 	void (*COM_FreeFile)( void * );
 	model_s *(*LoadMapSprite)( const char * );
 	void (*Con_Printf)( const char *, ... );
-} gEngfuncs = { Eng_GetLevelName, Eng_LoadFile, Eng_ParseFile, Eng_FreeFile, Eng_LoadMapSprite, Eng_Printf };
+	void (*Con_DPrintf)( const char *, ... );
+} gEngfuncs = { Eng_GetLevelName, Eng_LoadFile, Eng_ParseFile, Eng_FreeFile, Eng_LoadMapSprite, Eng_Printf, Eng_Printf };
 
 // ---- the part of CHudSpectator the functions use, with a guard after each array they write
 #define GUARD 0x5B0C0DE5u

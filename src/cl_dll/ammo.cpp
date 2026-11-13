@@ -18,6 +18,7 @@
 // implementation of CHudAmmo class
 //
 
+#include <vector>	// before cl_util.h (its min and max macros): ammohistory.h uses it
 #include "hud.h"
 #include "cl_util.h"
 #include "parsemsg.h"
@@ -199,32 +200,41 @@ void WeaponsResource :: LoadWeaponSprites( WEAPON *pWeapon )
 // Returns the first weapon for a given slot.
 WEAPON *WeaponsResource :: GetFirstPos( int iSlot )
 {
-	WEAPON *pret = NULL;
+	if ( iSlot < 0 || iSlot >= MAX_WEAPON_SLOTS )
+		return NULL;
 
-	for (int i = 0; i < MAX_WEAPON_POSITIONS; i++)
+	for ( size_t i = 0; i < rgSlots[iSlot].size(); i++ )
 	{
-		if ( rgSlots[iSlot][i] && HasAmmo( rgSlots[iSlot][i] ) )
+		if ( HasAmmo( rgSlots[iSlot][i] ) )
+			return rgSlots[iSlot][i];
+	}
+
+	return NULL;
+}
+
+
+// SBO 2.1 (Half-Life Unified SDK): the next weapon with ammo after the one at iSlotPos, in position order
+WEAPON* WeaponsResource :: GetNextActivePos( int iSlot, int iSlotPos )
+{
+	if ( iSlot < 0 || iSlot >= MAX_WEAPON_SLOTS )
+		return NULL;
+
+	std::vector<WEAPON*> &weapons = rgSlots[iSlot];
+
+	for ( size_t i = 0; i < weapons.size(); i++ )
+	{
+		if ( weapons[i]->iSlotPos == iSlotPos )
 		{
-			pret = rgSlots[iSlot][i];
+			while ( ++i < weapons.size() )
+			{
+				if ( HasAmmo( weapons[i] ) )
+					return weapons[i];
+			}
 			break;
 		}
 	}
 
-	return pret;
-}
-
-
-WEAPON* WeaponsResource :: GetNextActivePos( int iSlot, int iSlotPos )
-{
-	if ( iSlotPos >= MAX_WEAPON_POSITIONS || iSlot >= MAX_WEAPON_SLOTS )
-		return NULL;
-
-	WEAPON *p = gWR.rgSlots[ iSlot ][ iSlotPos+1 ];
-	
-	if ( !p || !gWR.HasAmmo(p) )
-		return GetNextActivePos( iSlot, iSlotPos + 1 );
-
-	return p;
+	return NULL;
 }
 
 
@@ -239,6 +249,7 @@ DECLARE_MESSAGE(m_Ammo, AmmoPickup);	// flashes an ammo pickup record
 DECLARE_MESSAGE(m_Ammo, WeapPickup);    // flashes a weapon pickup record
 DECLARE_MESSAGE(m_Ammo, HideWeapon);	// hides the weapon, ammo, and crosshair displays temporarily
 DECLARE_MESSAGE(m_Ammo, ItemPickup);
+DECLARE_MESSAGE(m_Ammo, WeaponsHigh);	// SBO 2.1: the weapons he holds with ids 32..63
 
 DECLARE_COMMAND(m_Ammo, Slot1);
 DECLARE_COMMAND(m_Ammo, Slot2);
@@ -278,6 +289,7 @@ int CHudAmmo::Init(void)
 	HOOK_MESSAGE(WeapPickup);
 	HOOK_MESSAGE(ItemPickup);
 	HOOK_MESSAGE(HideWeapon);
+	HOOK_MESSAGE(WeaponsHigh);
 	HOOK_MESSAGE(AmmoX);
 
 	HOOK_COMMAND("slot1", Slot1);
@@ -315,6 +327,7 @@ void CHudAmmo::Reset(void)
 
 	gpActiveSel = NULL;
 	gHUD.m_iHideHUDDisplay = 0;
+	gHUD.m_iWeaponBitsHigh = 0;	// SBO 2.1: the server sends WeaponsHigh again after every ResetHUD
 	m_fOnTarget = FALSE;
 	m_iLastFOV = 0;
 	m_iLastObserverMode = 0;
@@ -330,6 +343,14 @@ int CHudAmmo::VidInit(void)
 {
 	// Load sprites for buckets (top row of weapon menu)
 	m_HUD_bucket0 = gHUD.GetSpriteIndex( "bucket1" );
+	// SBO 2.1 (Half-Life Unified SDK): one sprite per slot by name, 10 becomes 0; hud.txt has bucket1-5 and bucket0,
+	// so slots 6-9 draw their number instead (DrawWList)
+	for ( int iBucket = 0; iBucket < MAX_WEAPON_SLOTS; iBucket++ )
+	{
+		char szBucket[16];
+		sprintf( szBucket, "bucket%d", ( iBucket + 1 ) % 10 );
+		m_HUD_buckets[ iBucket ] = gHUD.GetSpriteIndex( szBucket );
+	}
 	m_HUD_selection = gHUD.GetSpriteIndex( "selection" );
 
 	ghsprBuckets = gHUD.GetSprite(m_HUD_bucket0);
@@ -370,9 +391,11 @@ void CHudAmmo::Think(void)
 	if ( gHUD.m_fPlayerDead )
 		return;
 
-	if ( gHUD.m_iWeaponBits != gWR.iOldWeaponBits )
+	// SBO 2.1 (Half-Life Unified SDK): weapon ids 0..63
+	const uint64_t weaponBits = (uint64_t)(unsigned int)gHUD.m_iWeaponBits | ( (uint64_t)gHUD.m_iWeaponBitsHigh << 32 );
+	if ( weaponBits != gWR.iOldWeaponBits )
 	{
-		gWR.iOldWeaponBits = gHUD.m_iWeaponBits;
+		gWR.iOldWeaponBits = weaponBits;
 
 		for (int i = MAX_WEAPONS-1; i > 0; i-- )
 		{
@@ -380,7 +403,7 @@ void CHudAmmo::Think(void)
 
 			if ( p && p->iId != 0 )	// halflife-updated: skip unused weapon slots (iId 0 = WEAPON_NONE)
 			{
-				if ( gHUD.m_iWeaponBits & ( 1 << p->iId ) )
+				if ( gHUD.HasWeaponBit( p->iId ) )
 					gWR.PickupWeapon( p );
 				else
 					gWR.DropWeapon( p );
@@ -451,7 +474,7 @@ void WeaponsResource :: SelectSlot( int iSlot, int fAdvance, int iDirection )
 		return;
 	}
 
-	if ( iSlot > MAX_WEAPON_SLOTS )
+	if ( iSlot < 0 || iSlot >= MAX_WEAPON_SLOTS )
 		return;
 
 	if ( gHUD.m_fPlayerDead || gHUD.m_iHideHUDDisplay & ( HIDEHUD_WEAPONS | HIDEHUD_ALL ) )
@@ -465,7 +488,7 @@ void WeaponsResource :: SelectSlot( int iSlot, int fAdvance, int iDirection )
 	if (!(gHUD.m_iWeaponBits & (1<<(WEAPON_SUIT)) ))
 		return;
 
-	if ( ! ( gHUD.m_iWeaponBits & ~(1<<(WEAPON_SUIT)) ))
+	if ( !gHUD.HasAnyWeapon() )	// SBO 2.1: ids 32..63 too
 		return;
 
 	WEAPON *p = NULL;
@@ -564,6 +587,15 @@ int CHudAmmo::MsgFunc_ItemPickup( const char *pszName, int iSize, void *pbuf )
 	return 1;
 }
 
+
+// SBO 2.1 (Half-Life Unified SDK "Weapons", HLU #98): long, the weapons he holds with ids 32..63, bit (id - 32).
+// Ids 0..31 come with the client data (CHud::UpdateClientData); CHudAmmo::Think picks both up
+int CHudAmmo::MsgFunc_WeaponsHigh( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+	gHUD.m_iWeaponBitsHigh = (unsigned int)READ_LONG();
+	return 1;
+}
 
 int CHudAmmo::MsgFunc_HideWeapon( const char *pszName, int iSize, void *pbuf )
 {
@@ -729,16 +761,14 @@ int CHudAmmo::MsgFunc_WeaponList(const char *pszName, int iSize, void *pbuf )
 		Weapon.iMax2 = -1;
 
 	Weapon.iSlot = READ_CHAR();
-	Weapon.iSlotPos = READ_CHAR();
+	Weapon.iSlotPos = READ_BYTE();	// SBO 2.1: any position 0..255 (Half-Life Unified SDK; the server writes a byte)
 	Weapon.iId = READ_CHAR();
 	Weapon.iFlags = READ_BYTE();
 	Weapon.iClip = 0;
 
 	if ( Weapon.iId < 0 || Weapon.iId >= MAX_WEAPONS )
 		return 0;
-	if ( Weapon.iSlot < 0 || Weapon.iSlot >= MAX_WEAPON_SLOTS + 1 )
-		return 0;
-	if ( Weapon.iSlotPos < 0 || Weapon.iSlotPos >= MAX_WEAPON_POSITIONS + 1 )
+	if ( Weapon.iSlot < 0 || Weapon.iSlot >= MAX_WEAPON_SLOTS )	// SBO 2.1: slots 1..10
 		return 0;
 	if ( Weapon.iAmmoType < -1 || Weapon.iAmmoType >= MAX_AMMO_TYPES )
 		return 0;
@@ -852,7 +882,9 @@ void CHudAmmo::UserCmd_NextWeapon(void)
 	{
 		for ( ; slot < MAX_WEAPON_SLOTS; slot++ )
 		{
-			for ( ; pos < MAX_WEAPON_POSITIONS; pos++ )
+			const int highestPosition = gWR.GetHighestPositionInSlot( slot );	// SBO 2.1 (Half-Life Unified SDK)
+
+			for ( ; pos <= highestPosition; pos++ )
 			{
 				WEAPON *wsp = gWR.GetWeaponSlot( slot, pos );
 
@@ -893,8 +925,8 @@ void CHudAmmo::UserCmd_PrevWeapon(void)
 	if ( !gpActiveSel || gpActiveSel == (WEAPON*)1 )
 		gpActiveSel = m_pWeapon;
 
-	int pos = MAX_WEAPON_POSITIONS-1;
 	int slot = MAX_WEAPON_SLOTS-1;
+	int pos = gWR.GetHighestPositionInSlot( slot );	// SBO 2.1 (Half-Life Unified SDK)
 	if ( gpActiveSel )
 	{
 		pos = gpActiveSel->iSlotPos - 1;
@@ -916,10 +948,11 @@ void CHudAmmo::UserCmd_PrevWeapon(void)
 				}
 			}
 
-			pos = MAX_WEAPON_POSITIONS-1;
+			pos = gWR.GetHighestPositionInSlot( slot - 1 );
 		}
 		
 		slot = MAX_WEAPON_SLOTS-1;
+		pos = gWR.GetHighestPositionInSlot( slot );
 	}
 
 	gpActiveSel = NULL;
@@ -1143,8 +1176,18 @@ int CHudAmmo::DrawWList(float flTime)
 		}
 	}
 		
+	// SBO 2.1 (Half-Life Unified SDK): how many slots to draw: the first 5 always, a higher one only when the player
+	// holds a weapon there or in a slot above it
+	int slotsToDraw = MAX_WEAPON_SLOTS;
+	for ( int slot = MAX_WEAPON_SLOTS; slot > MAX_ALWAYS_VISIBLE_WEAPON_SLOTS; --slot )
+	{
+		if ( gWR.GetHighestPositionInSlot( slot - 1 ) != -1 )
+			break;
+		--slotsToDraw;
+	}
+
 	// Draw top line
-	for ( i = 0; i < MAX_WEAPON_SLOTS; i++ )
+	for ( i = 0; i < slotsToDraw; i++ )
 	{
 		int iWidth;
 
@@ -1156,7 +1199,6 @@ int CHudAmmo::DrawWList(float flTime)
 			a = 192;
 
 		ScaleColors(r, g, b, 255);
-		SPR_Set(gHUD.GetSprite(m_HUD_bucket0 + i), r, g, b );
 
 		// make active slot wide enough to accomodate gun pictures
 		if ( i == iActiveSlot )
@@ -1170,7 +1212,20 @@ int CHudAmmo::DrawWList(float flTime)
 		else
 			iWidth = giBucketWidth;
 
-		SPR_DrawAdditive(0, x, y, &gHUD.GetSpriteRect(m_HUD_bucket0 + i));
+		if ( m_HUD_buckets[i] >= 0 )
+		{
+			SPR_Set( gHUD.GetSprite( m_HUD_buckets[i] ), r, g, b );
+			SPR_DrawAdditive( 0, x, y, &gHUD.GetSpriteRect( m_HUD_buckets[i] ) );
+		}
+		else
+		{
+			// SBO 2.1: no sprite for this slot in hud.txt: its number in a box of the bucket's size
+			char szNum[4];
+			sprintf( szNum, "%d", ( i + 1 ) % 10 );
+			FillRGBA( x, y, giBucketWidth, giBucketHeight, r, g, b, 64 );
+			gHUD.DrawHudString( x + giBucketWidth / 4, y + ( giBucketHeight - gHUD.m_scrinfo.iCharHeight ) / 2,
+				x + giBucketWidth, szNum, r, g, b );
+		}
 		
 		x += iWidth + 5;
 	}
@@ -1180,7 +1235,7 @@ int CHudAmmo::DrawWList(float flTime)
 	x = 10;
 
 	// Draw all of the buckets
-	for (i = 0; i < MAX_WEAPON_SLOTS; i++)
+	for (i = 0; i < slotsToDraw; i++)
 	{
 		y = giBucketHeight + 10;
 
@@ -1193,7 +1248,7 @@ int CHudAmmo::DrawWList(float flTime)
 			if ( p )
 				iWidth = p->rcActive.right - p->rcActive.left;
 
-			for ( int iPos = 0; iPos < MAX_WEAPON_POSITIONS; iPos++ )
+			for ( int iPos = 0; iPos <= gWR.GetHighestPositionInSlot( i ); iPos++ )	// SBO 2.1: any position
 			{
 				p = gWR.GetWeaponSlot( i, iPos );
 
@@ -1244,7 +1299,7 @@ int CHudAmmo::DrawWList(float flTime)
 
 			UnpackRGB(r,g,b, RGB_YELLOWISH);
 
-			for ( int iPos = 0; iPos < MAX_WEAPON_POSITIONS; iPos++ )
+			for ( int iPos = 0; iPos <= gWR.GetHighestPositionInSlot( i ); iPos++ )	// SBO 2.1: any position
 			{
 				WEAPON *p = gWR.GetWeaponSlot( i, iPos );
 				

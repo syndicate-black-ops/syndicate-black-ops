@@ -122,7 +122,7 @@ int MsgFunc_ServerMenu(const char *pszName, int iSize, void *pbuf)
 	std::vector<servermenu::Event> events;
 	s_Store.Parse((const unsigned char *)pbuf, iSize > 0 ? (size_t)iSize : 0, events, Now());
 	if (s_Store.TakeErrorToReport())
-		gEngfuncs.Con_Printf("%s", s_Store.LastError().c_str());
+		gEngfuncs.Con_DPrintf("%s", s_Store.LastError().c_str());
 	for (const servermenu::Event &e : events)
 	{
 		switch (e.kind)

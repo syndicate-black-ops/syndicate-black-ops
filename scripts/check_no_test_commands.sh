@@ -5,7 +5,7 @@
 #   scripts/check_no_test_commands.sh <hl.so|hl.dll|client.so|client.dll> ...
 set -uo pipefail
 [ $# -gt 0 ] || { echo "usage: $0 <library> ..." >&2; exit 2; }
-CMDS='test_(run|trace|seed|mark|time|snap|player|join|cmd|userinfo|flags|spawn|teleport|move|look|fire|kv|damage|round|quit|precache_first|cl_[a-z_]+|skipmenus)'
+CMDS='test_(run|trace|seed|mark|time|snap|player|join|cmd|userinfo|flags|spawn|teleport|move|look|fire|kv|damage|round|quit|precache_first|inventory|cl_[a-z_]+|skipmenus)'
 status=0
 for f in "$@"; do
   [ -f "$f" ] || { echo "$f: missing" >&2; status=1; continue; }

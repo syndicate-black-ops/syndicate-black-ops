@@ -11,7 +11,7 @@ ROOM = (512, 512, 1024)
 
 
 @S.test('Wong: no world model; placed in the air it falls and is picked up, game_player_equip gives it', players=1,
-        size=ROOM)
+        size=ROOM, covers=('game_player_equip', 'game_player_equip:1', 'player_weaponstrip'))
 def wong_no_model(t):
     t.point('player_weaponstrip', targetname='strip')
     t.point('game_player_equip', targetname='equip', spawnflags='1', weapon_wong='1')     # Use Only

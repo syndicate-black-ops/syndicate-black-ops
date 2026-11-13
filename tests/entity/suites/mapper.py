@@ -27,7 +27,11 @@ def door(t, name, at=(0, 96, 0), **kv):
 
 
 # ---------------------------------------------------------------------------------------------- trigger_condition
-@S.test('trigger_condition: constant check of a breakable health < 50 fires message, then netname', doc=LOGIC)
+@S.test('trigger_condition: constant check of a breakable health < 50 fires message, then netname', doc=LOGIC,
+        covers=('trigger_condition', 'trigger_condition.target', 'trigger_condition.m_iszValueName',
+                'trigger_condition.m_iszCheckValue', 'trigger_condition.m_iCheckType=2', 'trigger_condition.netname',
+                'trigger_condition.message', 'trigger_condition.m_iCheckBehaviour=0',
+                'trigger_condition.m_fCheckInterval', 'trigger_condition:1'))
 def condition_constant(t):
     t.brush('func_breakable', targetname='crate', health='100')
     t.point('trigger_condition', targetname='cond', target='crate', m_iszValueName='health', m_iszCheckValue='50',
@@ -45,7 +49,9 @@ def condition_constant(t):
     t.expect.not_used('yes', within=(0, 0.25))
 
 
-@S.test('trigger_condition: cyclic mode evaluates on each trigger', doc=LOGIC)
+@S.test('trigger_condition: cyclic mode evaluates on each trigger', doc=LOGIC,
+        covers=('trigger_condition', 'trigger_condition:32', 'trigger_condition.m_iszValueName',
+                'trigger_condition.m_iCheckType=0', 'trigger_condition.netname', 'trigger_condition.message'))
 def condition_cyclic(t):
     info(t, 'var', **{'$i_n': '1'})
     t.point('trigger_condition', targetname='cond', target='var', m_iszValueName='$i_n', m_iszCheckValue='1',
@@ -64,7 +70,9 @@ def condition_cyclic(t):
 
 
 # ---------------------------------------------------------------------------------------------- trigger_random / timer
-@S.test('trigger_random: each trigger fires exactly one of its targets', doc=LOGIC)
+@S.test('trigger_random: each trigger fires exactly one of its targets', doc=LOGIC,
+        covers=('trigger_random', 'trigger_random.target1', 'trigger_random.target2', 'trigger_random.target3',
+                'trigger_random.target_count'))
 def random_one(t):
     t.point('trigger_random', targetname='rnd', target1='a', target2='b', target3='c', target_count='3')
     for n in 'abc':
@@ -78,7 +86,8 @@ def random_one(t):
     t.expect.used('@info_target', caller='rnd', count=12)
 
 
-@S.test('trigger_random "not repetitive" with two targets alternates', doc=LOGIC)
+@S.test('trigger_random "not repetitive" with two targets alternates', doc=LOGIC,
+        covers=('trigger_random', 'trigger_random:32', 'trigger_random.target_count'))
 def random_alternate(t):
     t.point('trigger_random', targetname='rnd', target1='a', target2='b', target_count='2', spawnflags='32')
     info(t, 'a')
@@ -105,7 +114,9 @@ def random_unique(t):
     t.expect.fired('empty', caller='rnd', count=1)
 
 
-@S.test('trigger_timer: fires every 0.2 s, stops at trigger_number 3 with trigger_on_limit', doc=LOGIC)
+@S.test('trigger_timer: fires every 0.2 s, stops at trigger_number 3 with trigger_on_limit', doc=LOGIC,
+        covers=('trigger_timer', 'trigger_timer.target', 'trigger_timer.min_delay', 'trigger_timer.max_delay',
+                'trigger_timer.trigger_number', 'trigger_timer.trigger_on_limit'))
 def timer(t):
     t.point('trigger_timer', targetname='tm', target='tick', min_delay='0.2', max_delay='0.2', trigger_number='3',
             trigger_on_limit='limit')
@@ -120,7 +131,7 @@ def timer(t):
     t.expect.order('tick', 'limit')
 
 
-@S.test('trigger_timer: OFF stops it', doc=LOGIC)
+@S.test('trigger_timer: OFF stops it', doc=LOGIC, covers=('trigger_timer',))
 def timer_off(t):
     t.point('trigger_timer', targetname='tm', target='tick', min_delay='0.2', max_delay='0.2')
     info(t, 'tick')
@@ -134,7 +145,10 @@ def timer_off(t):
 
 
 # ---------------------------------------------------------------------------------------------- iterator
-@S.test('trigger_entity_iterator: fires its target once per matching entity, activator = the entity', doc=LOGIC)
+@S.test('trigger_entity_iterator: fires its target once per matching entity, activator = the entity', doc=LOGIC,
+        covers=('trigger_entity_iterator', 'trigger_entity_iterator.name_filter', 'trigger_entity_iterator.target',
+                'trigger_entity_iterator.triggerstate=2', 'trigger_entity_iterator.run_mode=0',
+                'trigger_entity_iterator.trigger_after_run'))
 def iterator(t):
     for i in range(3):
         t.point('info_target', at=(-100 + 100 * i, 0, 0), targetname='item')
@@ -152,7 +166,8 @@ def iterator(t):
 
 
 # ---------------------------------------------------------------------------------------------- trigger_relay flags
-@S.test('trigger_relay: flag 64 forwards the activator, flag 128 passes the caller, none = the relay', doc=LOGIC)
+@S.test('trigger_relay: flag 64 forwards the activator, flag 128 passes the caller, none = the relay', doc=LOGIC,
+        covers=('trigger_relay', 'trigger_relay:64', 'trigger_relay:128'))
 def relay_flags(t):
     info(t, 'act')
     info(t, 'cal')
@@ -169,7 +184,8 @@ def relay_flags(t):
     t.expect.fired('o3', activator='plain', count=1)
 
 
-@S.test('trigger_relay: Copy Input (-1) passes ON / OFF on, Reverse Input (-2) swaps them', doc=LOGIC)
+@S.test('trigger_relay: Copy Input (-1) passes ON / OFF on, Reverse Input (-2) swaps them', doc=LOGIC,
+        covers=('trigger_relay', 'trigger_relay.triggerstate=-1', 'trigger_relay.triggerstate=-2'))
 def relay_copy(t):
     t.point('trigger_relay', targetname='copy', target='o1', triggerstate='-1')
     t.point('trigger_relay', targetname='rev', target='o2', triggerstate='-2')
@@ -187,7 +203,7 @@ def relay_copy(t):
 
 
 # ---------------------------------------------------------------------------------------------- obey trigger mode
-@S.test('Obey Trigger Mode 0 (default, stock): a closed door opens on OFF', doc=LOGIC)
+@S.test('Obey Trigger Mode 0 (default, stock): a closed door opens on OFF', doc=LOGIC, covers=('func_door',))
 def obey0(t):
     door(t, 'd')
     t.fire('d', use='off')
@@ -196,7 +212,8 @@ def obey0(t):
     t.expect.value('s', 'd', 'origin', [0, 0, 88], tol=0.5)
 
 
-@S.test('Obey Trigger Mode 1: a closed door ignores OFF, opens on ON', doc=LOGIC)
+@S.test('Obey Trigger Mode 1: a closed door ignores OFF, opens on ON', doc=LOGIC,
+        covers=('func_door', 'func_door.m_iObeyTriggerMode=1'))
 def obey1(t):
     door(t, 'd', m_iObeyTriggerMode='1')
     t.fire('d', use='off')
@@ -209,7 +226,8 @@ def obey1(t):
     t.expect.value('after_on', 'd', 'origin', [0, 0, 88], tol=0.5)
 
 
-@S.test('Obey Trigger Mode 2: OFF while opening reverses a Toggle door (flag 32)', doc=LOGIC)
+@S.test('Obey Trigger Mode 2: OFF while opening reverses a Toggle door (flag 32)', doc=LOGIC,
+        covers=('func_door', 'func_door.m_iObeyTriggerMode=2', 'func_door:32'))
 def obey2(t):
     door(t, 'd', m_iObeyTriggerMode='2', spawnflags='32')
     t.fire('d', use='on')
@@ -220,7 +238,8 @@ def obey2(t):
     t.expect.value('s', 'd', 'origin', [0, 0, 0], tol=0.5)
 
 
-@S.test('Obey Trigger Mode 1 on trigger_hurt: ON twice leaves it on, OFF turns it off', doc=LOGIC)
+@S.test('Obey Trigger Mode 1 on trigger_hurt: ON twice leaves it on, OFF turns it off', doc=LOGIC,
+        covers=('trigger_hurt', 'trigger_hurt.m_iObeyTriggerMode=1'))
 def obey_hurt(t):
     t.trigger('trigger_hurt', size=(64, 64, 64), at=(0, 120, 0), targetname='h', dmg='0', m_iObeyTriggerMode='1')
     t.trigger('trigger_hurt', size=(64, 64, 64), at=(100, 120, 0), targetname='h0', dmg='0')
@@ -239,7 +258,8 @@ def obey_hurt(t):
 
 
 # ---------------------------------------------------------------------------------------------- env_state, calc_state, ~master
-@S.test('env_state: turnontime 0.5 fires target ON and noise1 after the delay; OFF fires target OFF', doc=STATE)
+@S.test('env_state: turnontime 0.5 fires target ON and noise1 after the delay; OFF fires target OFF', doc=STATE,
+        covers=('env_state', 'env_state.target', 'env_state.noise1', 'env_state.noise2', 'env_state.turnontime'))
 def env_state(t):
     t.point('env_state', targetname='st', target='out', noise1='on_snd', noise2='off_snd', turnontime='0.5',
             turnofftime='0', names=('noise1', 'noise2'))
@@ -257,7 +277,8 @@ def env_state(t):
     t.expect.fired('off_snd', count=1, after='off', within=(0, 0.1))
 
 
-@S.test('env_state as master: a door is locked while the state is off and opens when it is on', doc=STATE)
+@S.test('env_state as master: a door is locked while the state is off and opens when it is on', doc=STATE,
+        covers=('env_state', 'func_door.master'))
 def state_master(t):
     t.point('env_state', targetname='st')
     door(t, 'd', master='st')
@@ -273,7 +294,8 @@ def state_master(t):
     t.expect.value('open', 'd', 'origin', [0, 0, 88], tol=0.5)
 
 
-@S.test('~master: a door with master "~st" opens while st is off, is locked while it is on', doc=STATE)
+@S.test('~master: a door with master "~st" opens while st is off, is locked while it is on', doc=STATE,
+        covers=('env_state', 'env_state:1', 'func_door.master'))
 def not_master(t):
     t.point('env_state', targetname='st')
     t.point('env_state', targetname='st2', spawnflags='1')
@@ -288,7 +310,10 @@ def not_master(t):
     t.expect.value('s', 'd2', 'origin', [0, 0, 0], tol=0.5)
 
 
-@S.test('calc_state: AND / OR of two env_states fire target ON or OFF and fire_when_true / false', doc=STATE)
+@S.test('calc_state: AND / OR of two env_states fire target ON or OFF and fire_when_true / false', doc=STATE,
+        covers=('calc_state', 'calc_state.left_operand', 'calc_state.right_operand', 'calc_state.operation=0',
+                'calc_state.operation=1', 'calc_state.target', 'calc_state.fire_when_false',
+                'calc_state.fire_when_true', 'env_state:1'))
 def calc_state(t):
     t.point('env_state', targetname='a', spawnflags='1')
     t.point('env_state', targetname='b')
@@ -307,8 +332,141 @@ def calc_state(t):
     t.expect.fired('or_true', count=1)
 
 
+# ---------------------------------------------------------------------------------------------- button_target master
+def face_target(t, **kv):
+    """A button_target ("Use Activates") 40 units in front of player1, who looks at it."""
+    t.brush('button_target', size=(32, 8, 32), at=(0, 16, 48), tex='+0~ANZYG1', targetname='bt', target='out', **kv)
+    t.teleport('player1', (0, -24, 0), yaw=90)
+    t.look('player1', 0, 90)
+
+
+@S.test('button_target master: while the env_state is off a shot, +use and a trigger leave it off and fire nothing; '
+        'on: each toggles its frame and fires ON / OFF', players=1,
+        covers=('button_target', 'button_target.master', 'button_target.target', 'button_target:1'))
+def button_target_master(t):
+    t.point('env_state', targetname='st')
+    info(t, 'out')
+    face_target(t, master='st', spawnflags='1')
+    t.wait(0.3)
+    t.mark('locked')
+    t.damage('bt', 10, 0, 'player1')
+    t.move('player1', 0, 0, 3, '+use')
+    t.wait(0.2)
+    t.fire('bt', activator='player1')
+    t.wait(0.1)
+    t.snap('locked', 'bt', 'frame')
+    t.fire('st', use='on')
+    t.wait(0.1)
+    t.damage('bt', 10, 0, 'player1')
+    t.wait(0.1)
+    t.snap('shot', 'bt', 'frame')
+    t.mark('use')
+    t.move('player1', 0, 0, 3, '+use')
+    t.wait(0.2)
+    t.snap('used', 'bt', 'frame')
+    t.fire('bt', activator='player1')
+    t.wait(0.1)
+    t.snap('fired', 'bt', 'frame')
+    t.expect.used('bt', activator='player1', after='locked', min=3)    # all three reached its Use while locked
+    t.expect.value('locked', 'bt', 'frame', 0)
+    t.expect.value('shot', 'bt', 'frame', 1)
+    t.expect.value('used', 'bt', 'frame', 0)
+    t.expect.value('fired', 'bt', 'frame', 1)
+    t.expect.fired('out', activator='player1', use=USE_ON, count=2)   # unlocked shot and trigger; none while locked
+    t.expect.fired('out', activator='player1', use=USE_OFF, count=1, after='use')
+
+
+@S.test('button_target master, Start On: while locked a trigger still turns it off (fires OFF) and it stays off, as '
+        'a locked func_button with Toggle that is pushed in still comes back out and fires, and is not pushed again',
+        players=1,
+        covers=('button_target', 'button_target.master', 'button_target:2', 'func_button.master', 'func_button:32',
+                'env_state:1'))
+def button_target_master_on(t):
+    t.point('env_state', targetname='st', spawnflags='1')     # Start On: unlocked until turned off
+    info(t, 'out')
+    info(t, 'fbout')
+    face_target(t, master='st', spawnflags='3')
+    t.brush('func_button', size=(32, 8, 32), at=(0, 120, 48), tex='+0~ANZYG1', targetname='fb', target='fbout',
+            master='st', spawnflags='32', angles='0 90 0', speed='400', lip='4')
+    t.wait(0.3)
+    t.fire('fb', activator='player1')           # unlocked: pushed in, fires
+    t.wait(0.3)
+    t.fire('st', use='off')
+    t.wait(0.1)
+    t.mark('locked')
+    t.fire('bt', activator='player1')           # on -> off while locked
+    t.fire('fb', activator='player1')           # pushed in -> comes back out while locked, fires at home
+    t.wait(0.3)
+    t.snap('off', 'bt', 'frame')
+    t.mark('again')
+    t.fire('bt', activator='player1')           # off -> on refused
+    t.fire('fb', activator='player1')           # out -> in refused
+    t.wait(0.3)
+    t.snap('still', 'bt', 'frame')
+    t.expect.value('off', 'bt', 'frame', 0)
+    t.expect.value('still', 'bt', 'frame', 0)
+    t.expect.fired('out', use=USE_OFF, count=1, after='locked')
+    t.expect.fired('out', count=1, after='locked')
+    t.expect.fired('fbout', count=1, after='locked', within=(0, 0.3))
+    t.expect.fired('fbout', count=0, after='again')
+
+
+# ---------------------------------------------------------------------------------------------- trigger_hurt master
+@S.test('trigger_hurt master: a player standing in it while the env_state is off is not hurt and the target does not '
+        'fire; on: he is hurt and it fires', players=1,
+        covers=('trigger_hurt', 'trigger_hurt.master', 'trigger_hurt.target'))
+def trigger_hurt_master(t):
+    t.point('env_state', targetname='st')
+    info(t, 'out')
+    t.trigger('trigger_hurt', size=(96, 96, 72), at=(0, 64, 0), dmg='10', target='out', master='st')
+    t.wait(0.2)
+    t.mark('locked')
+    t.teleport('player1', (0, 64, 0))
+    t.wait(1.2)
+    t.mark('open')
+    t.fire('st', use='on')
+    t.wait(1.2)
+    t.teleport('player1', (0, -150, 0))
+    t.expect.not_damaged('player1', after='locked', within=(0, 1.1))
+    t.expect.not_fired('out', after='locked', within=(0, 1.1))
+    t.expect.damaged('player1', after='open', min=1)
+    t.expect.fired('out', activator='player1', after='open', min=1)
+
+
+# ---------------------------------------------------------------------------------------------- game_zone_player master
+@S.test('game_zone_player master: while the env_state is off a trigger fires neither the in target nor the counter; '
+        'on: the player in the zone fires the in target and the counter gets 1', players=1,
+        covers=('game_zone_player', 'game_zone_player.master', 'game_zone_player.intarget', 'game_zone_player.incount'))
+def zone_master(t):
+    t.point('env_state', targetname='st')
+    info(t, 'in')
+    info(t, 'cnt')
+    t.trigger('game_zone_player', size=(128, 128, 96), at=(0, 64, 0), targetname='zone', intarget='in',
+              incount='cnt', master='st')
+    t.teleport('player1', (0, 64, 0))
+    t.wait(0.3)
+    t.mark('locked')
+    t.fire('zone', activator='player1')
+    t.wait(0.2)
+    t.mark('open')
+    t.fire('st', use='on')
+    t.wait(0.1)
+    t.fire('zone', activator='player1')
+    t.wait(0.2)
+    t.teleport('player1', (0, -150, 0))
+    t.expect.used('zone', activator='player1', after='locked', min=2)
+    t.expect.not_fired('in', after='locked', within=(0, 0.2))
+    t.expect.not_fired('cnt', after='locked', within=(0, 0.2))
+    t.expect.fired('in', activator='player1', after='open', count=1)
+    t.expect.fired('cnt', use=USE_SET, after='open', count=1)
+
+
 # ---------------------------------------------------------------------------------------------- locus / calc
-@S.test('calc_eval_number 7 x 6 stores 42 in a game_number (SET), trigger_compare passes', doc=LOCUS)
+@S.test('calc_eval_number 7 x 6 stores 42 in a game_number (SET), trigger_compare passes', doc=LOCUS,
+        covers=('calc_eval_number', 'calc_eval_number.left_operand', 'calc_eval_number.right_operand',
+                'calc_eval_number.operation=2', 'calc_eval_number.store_result', 'calc_eval_number.target',
+                'game_number', 'trigger_compare', 'trigger_compare.initial_value', 'trigger_compare.compare_value',
+                'trigger_compare.testtype=0', 'trigger_compare.pass_target', 'trigger_compare.fail_target'))
 def calc_eval(t):
     t.point('game_number', targetname='num', frags='0')
     t.point('calc_eval_number', targetname='calc', left_operand='7', right_operand='6', operation='2',
@@ -326,7 +484,9 @@ def calc_eval(t):
     t.expect.not_fired('fail')
 
 
-@S.test('calc_eval_number divide by zero fires trigger_on_fail, stores nothing', doc=LOCUS)
+@S.test('calc_eval_number divide by zero fires trigger_on_fail, stores nothing', doc=LOCUS,
+        covers=('calc_eval_number', 'calc_eval_number.operation=3', 'calc_eval_number.store_result',
+                'calc_eval_number.trigger_on_fail'))
 def calc_div0(t):
     t.point('game_number', targetname='num', frags='5')
     t.point('calc_eval_number', targetname='calc', left_operand='7', right_operand='0', operation='3',
@@ -339,7 +499,8 @@ def calc_div0(t):
     t.expect.fired('failed', count=1)
 
 
-@S.test('game_number: ON adds 1, OFF subtracts 1, SET sets the value', doc=LOCUS)
+@S.test('game_number: ON adds 1, OFF subtracts 1, SET sets the value', doc=LOCUS,
+        covers=('game_number', 'game_number.frags'))
 def game_number(t):
     t.point('game_number', targetname='num', frags='10')
     t.fire('num', use='on')
@@ -352,7 +513,8 @@ def game_number(t):
     t.expect.value('b', 'num', 'frags', 3)
 
 
-@S.test('locus: env_explosion at a named position (mid-air: exact)', doc=LOCUS)
+@S.test('locus: env_explosion at a named position (mid-air: exact)', doc=LOCUS,
+        covers=('env_explosion', 'env_explosion.target'))
 def locus_explosion(t):
     info(t, 'spot', at=(40, 20, 200))
     t.point('env_explosion', targetname='boom', target='spot', iMagnitude='50', spawnflags='1')
@@ -364,7 +526,8 @@ def locus_explosion(t):
 
 
 @S.test('calc_position impulse 11 (Body): a scientist\'s body target, 42 above its origin (center 36, eyes 60)',
-        doc=LOCUS)
+        doc=LOCUS,
+        covers=('calc_position', 'calc_position.netname', 'calc_position.impulse=11', 'env_explosion.target'))
 def calc_position_body(t):
     t.point('monster_scientist', at=(150, 100, 0), targetname='sci')
     t.point('calc_position', targetname='pos', netname='sci', impulse='11', names=('netname',))
@@ -379,7 +542,8 @@ def calc_position_body(t):
     t.expect.distance('s', 'boom', 'sci', 41.5, 42.5, flat=False)
 
 
-@S.test('locus: monstermaker spawns its child at spawnorigin', doc=LOCUS)
+@S.test('locus: monstermaker spawns its child at spawnorigin', doc=LOCUS,
+        covers=('monstermaker', 'monstermaker.spawnorigin'))
 def locus_maker(t):
     info(t, 'spot', at=(150, 100, 0))
     t.point('monstermaker', targetname='mk', monstertype='monster_scientist', netname='kid', spawnorigin='spot',
@@ -393,7 +557,9 @@ def locus_maker(t):
 
 
 # ---------------------------------------------------------------------------------------------- env_render
-@S.test('env_render fade: end values in pev at once, netname fired at the end, RenderFade sent', doc='ENV_RENDER.md')
+@S.test('env_render fade: end values in pev at once, netname fired at the end, RenderFade sent', doc='ENV_RENDER.md',
+        covers=('env_render', 'env_render.target', 'env_render.rendermode', 'env_render.renderamt', 'env_render.frags',
+                'env_render.netname'))
 def render_fade(t):
     t.brush('func_wall', at=(0, 96, 0), targetname='wall', rendermode='0', renderamt='255')
     t.point('env_render', targetname='rf', target='wall', rendermode='2', renderamt='100', frags='1',
@@ -410,7 +576,8 @@ def render_fade(t):
     t.expect.msg('RenderFade', min=1, after='go', within=(0, 0.1))
 
 
-@S.test('env_render: Remove targets (32) removes an info_target target after its fade', doc='ENV_RENDER.md')
+@S.test('env_render: Remove targets (32) removes an info_target target after its fade', doc='ENV_RENDER.md',
+        covers=('env_render', 'env_render:32'))
 def render_remove_info(t):
     t.point('info_target', at=(0, 96, 0), targetname='prop', rendermode='2', renderamt='255')
     t.point('env_render', targetname='rf', target='prop', rendermode='2', renderamt='0', frags='0.5', spawnflags='32')
@@ -419,7 +586,8 @@ def render_remove_info(t):
     t.expect.removed('prop')
 
 
-@S.test('env_render: Remove targets (32) removes a cycler (model) target after its fade', doc='ENV_RENDER.md')
+@S.test('env_render: Remove targets (32) removes a cycler (model) target after its fade', doc='ENV_RENDER.md',
+        covers=('env_render', 'env_render:32'))
 def render_remove_point(t):
     t.point('cycler', at=(0, 96, 0), targetname='prop', model='models/zombie.mdl', rendermode='2', renderamt='255')
     t.point('env_render', targetname='rf', target='prop', rendermode='2', renderamt='0', frags='0.5', spawnflags='32')
@@ -428,7 +596,8 @@ def render_remove_point(t):
     t.expect.removed('prop')
 
 
-@S.test('env_render: Remove targets (32) removes a monster target after its fade', doc='ENV_RENDER.md')
+@S.test('env_render: Remove targets (32) removes a monster target after its fade', doc='ENV_RENDER.md',
+        covers=('env_render', 'env_render:32'))
 def render_remove_monster(t):
     t.point('monster_scientist', at=(0, 96, 0), targetname='sci', rendermode='2', renderamt='255')
     t.point('env_render', targetname='rf', target='sci', rendermode='2', renderamt='0', frags='0.5', spawnflags='32')
@@ -437,7 +606,8 @@ def render_remove_monster(t):
     t.expect.removed('sci')
 
 
-@S.test('env_render: Remove targets (32) removes a brush target after its fade', doc='ENV_RENDER.md')
+@S.test('env_render: Remove targets (32) removes a brush target after its fade', doc='ENV_RENDER.md',
+        covers=('env_render', 'env_render:32'))
 def render_remove(t):
     t.brush('func_wall', at=(0, 96, 0), targetname='wall', rendermode='2', renderamt='255')
     t.point('env_render', targetname='rf', target='wall', rendermode='2', renderamt='0', frags='0.5', spawnflags='32')
@@ -476,7 +646,7 @@ def compat(t):
 
 # ---------------------------------------------------------------------------------------------- trigger_jump / safe fall
 @S.test('trigger_jump launches a player onto its target and fires trigger_on_jump', doc='TRIGGER_JUMP.md', players=1,
-        size=(512, 512, 512))
+        size=(512, 512, 512), covers=('trigger_jump', 'trigger_jump.target', 'trigger_jump.trigger_on_jump'))
 def jump(t):
     t.brush('func_wall', size=(96, 96, 128), at=(150, 150, 0), tex='666CAISSE', targetname='ledge')
     info(t, 'land', at=(150, 150, 128 + 36))
@@ -510,7 +680,7 @@ def fall_hurts(t):
 
 
 @S.test('trigger_safe_fall: the same fall through the volume does not hurt', players=1, size=(512, 512, 1024),
-        doc='TRIGGER_JUMP.md')
+        doc='TRIGGER_JUMP.md', covers=('trigger_safe_fall',))
 def fall_safe(t):
     fall(t, True)
     t.expect.not_damaged('player1', after='drop')
@@ -535,7 +705,7 @@ def monsterjump(t, **kv):
 
 
 @S.test('trigger_monsterjump throws a monster walking into it over a gap, then switches itself off', players=1,
-        doc=LOGIC)
+        doc=LOGIC, covers=('trigger_monsterjump',))
 def monsterjump_walk(t):
     monsterjump(t)
     t.fire('mj', use='on')
@@ -551,7 +721,7 @@ def monsterjump_walk(t):
 
 
 @S.test('trigger_monsterjump off: the monster stops at the edge; On (Obey Trigger Mode) throws it at once', players=1,
-        doc=LOGIC)
+        doc=LOGIC, covers=('trigger_monsterjump',))
 def monsterjump_on(t):
     monsterjump(t)
     t.fire('mk')                                    # named: the trigger starts off
@@ -568,7 +738,7 @@ def monsterjump_on(t):
 
 
 @S.test('trigger_monsterjump speed and height keys: speed 1, height 1 does not throw the monster over the gap',
-        players=1, doc=LOGIC)
+        players=1, doc=LOGIC, covers=('trigger_monsterjump', 'trigger_monsterjump.speed', 'trigger_monsterjump.height'))
 def monsterjump_keys(t):
     monsterjump(t, speed='1', height='1')
     t.fire('mj', use='on')
@@ -581,9 +751,37 @@ def monsterjump_keys(t):
     t.expect.not_used('landed', after='go')         # 1.38: 200 / 150 threw it across
 
 
+@S.test('trigger_monsterjump master: while the env_state is off the monster waits at the edge; on, it is thrown',
+        players=1, doc=LOGIC, covers=('trigger_monsterjump', 'trigger_monsterjump.master'))
+def monsterjump_master(t):
+    """1.38 (as Half-Life) offered Master on trigger_monsterjump but never checked it: the locked trigger threw the
+    monster anyway. A monster standing still touches nothing, so after the walk the trigger is turned off and on (its
+    ToggleUse makes everything touch it again, as in monsterjump_on): once while locked, once after the unlock."""
+    t.point('env_state', targetname='st')
+    monsterjump(t, master='st')
+    t.fire('mj', use='on')
+    t.wait(0.1)
+    t.snap('on', 'mj', 'solid')
+    t.mark('go')
+    t.fire('mk')
+    t.wait(8)
+    t.fire('mj', use='off')                         # locked: the touch again does nothing
+    t.fire('mj', use='on')
+    t.wait(1)
+    t.mark('unlock')
+    t.fire('st', use='on')
+    t.wait(0.1)
+    t.fire('mj', use='off')
+    t.fire('mj', use='on')
+    t.wait(2)
+    t.expect.value('on', 'mj', 'solid', 1)          # SOLID_TRIGGER: on, but locked by its master
+    t.expect.not_used('landed', after='go', within=(0, 9))
+    t.expect.used('landed', min=1, after='unlock', within=(0, 2.1))
+
+
 # ---------------------------------------------------------------------------------------------- nuclear_explosion
 @S.test('nuclear_explosion: the afterglow is scheduled (glow lifetime v8) and the entity stays to be fired again',
-        players=1)
+        players=1, covers=('nuclear_explosion', 'nuclear_explosion.v8'))
 def nuke_afterglow(t):
     """1.38 set the AfterGlow think without a nextthink: it never ran. Now it runs v8 tenths of a second after the
     Use; the entity is kept (co_zylom's button fires its garg_boom every 3 s). No damage: v11 0."""
@@ -622,25 +820,31 @@ def camera(t, flags, **kv):
     t.expect.value('after', 'player1', 'flags', 4096, op='!&')    # cleared at the camera's end
 
 
-@S.test('trigger_camera "Instant Move" (64): full path speed from the first frame', players=1, doc=LOGIC)
+@S.test('trigger_camera "Instant Move" (64): full path speed from the first frame', players=1, doc=LOGIC,
+        covers=('trigger_camera', 'trigger_camera:4', 'trigger_camera.target', 'trigger_camera.moveto',
+                'trigger_camera:64'))
 def camera_instant(t):
     camera(t, 64)
     t.expect.value('run', 'cam', 'velocity', [0, 100, 0], tol=1)
 
 
-@S.test('trigger_camera without Instant Move (control): accelerates', players=1, doc=LOGIC)
+@S.test('trigger_camera without Instant Move (control): accelerates', players=1, doc=LOGIC,
+        covers=('trigger_camera', 'trigger_camera:4', 'trigger_camera.target', 'trigger_camera.moveto'))
 def camera_accel(t):
     camera(t, 0)
     t.expect.value('run', 'cam', 'velocity.y', 90, op='<')      # 500 u/s^2 for 0.1 s: about 50
 
 
-@S.test('trigger_camera "Instant Follow Turn" (65536): faces its target at once, no avelocity', players=1, doc=LOGIC)
+@S.test('trigger_camera "Instant Follow Turn" (65536): faces its target at once, no avelocity', players=1, doc=LOGIC,
+        covers=('trigger_camera', 'trigger_camera:4', 'trigger_camera.target', 'trigger_camera.moveto',
+                'trigger_camera:65536'))
 def camera_turn(t):
     camera(t, 65536)
     t.expect.value('run', 'cam', 'avelocity', [0, 0, 0], tol=0.01)
 
 
-@S.test('trigger_camera turnspeed 80 turns twice as fast as the default 40', players=1, doc=LOGIC)
+@S.test('trigger_camera turnspeed 80 turns twice as fast as the default 40', players=1, doc=LOGIC,
+        covers=('trigger_camera', 'trigger_camera.turnspeed'))
 def camera_turnspeed(t):
     # the same place and start angles: the first turn rate is proportional to turnspeed
     info(t, 'look', at=(200, 200, 40))
@@ -660,7 +864,7 @@ def camera_turnspeed(t):
 
 # ---------------------------------------------------------------------------------------------- editor placeholder models
 @S.test('env_model with the FGD default model (models/editor/env_model.mdl): removed at spawn, never precached',
-        doc='ENV_MODEL.md')
+        doc='ENV_MODEL.md', covers=('env_model', 'env_model.model'))
 def env_model_editor_placeholder(t):
     t.point('env_model', targetname='placeholder', model='models/editor/env_model.mdl')
     t.point('env_model', at=(0, 96, 0), targetname='real', model='models/zombie.mdl')    # control
@@ -671,7 +875,7 @@ def env_model_editor_placeholder(t):
 
 
 @S.test('env_static with the FGD default model (models/editor/env_static.mdl): removed at spawn, never offered for '
-        'download', doc='ENV_STATIC.md')
+        'download', doc='ENV_STATIC.md', covers=('env_static', 'env_static.model'))
 def env_static_editor_placeholder(t):
     t.point('env_static', targetname='placeholder', model='models/editor/env_static.mdl')
     t.point('env_static', at=(0, 96, 0), targetname='real', model='models/zombie.mdl')   # control

@@ -1,0 +1,29 @@
+# monstermaker flag 1 Start ON (FGD: "start making monsters as soon as monstermaker spawns"): a named maker with it
+# makes its first monster Frequency (1 s) after the start, as a maker without a name does, and its first trigger
+# turns it off (it is on). 1.38 made none: Spawn set MakerThink but no nextthink (Half-Life SDK bug; fixed as
+# Featureful does, nextthink = time + delay), and the first trigger turned it off. The 5 custom maps with named
+# Start ON makers keep their 1.38 play through maps/map_compat.txt (docs/MAP_COMPAT.md); the stock co_escape and
+# co_hellraiser ship unchanged, so their waves come from the map start until their trigger (case 99d)
+# covers: monstermaker:1
+map co_fuzz
+cvar mp_makermon 1
+cvar mp_speedmon 1
+spawn monstermaker targetname mk_on monstertype monster_scientist monstercount 2 delay 1 spawnflags 1 origin "0 1000 0"
+spawn monstermaker targetname mk_off monstertype monster_human_assassin monstercount 2 delay 1 origin "0 2000 0"
+activate
+frames 15
+mark started
+expectcount monster_scientist 1
+expectcount monster_human_assassin 0
+mark trigger_both
+fire mk_on
+fire mk_off
+frames 5
+expectcount monster_human_assassin 1
+expectcount monster_scientist 1
+# 3 s on: mk_on stays off (no next think), mk_off (turned on) keeps trying (its spot is taken by its first child)
+mark later
+frames 30
+expectcount monster_scientist 1
+expectfield mk_on nextthink 0
+field mk_off nextthink

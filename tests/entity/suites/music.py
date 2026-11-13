@@ -17,7 +17,8 @@ AG_EVERYWHERE, AG_START_SILENT, AG_NOT_TOGGLED = 1, 16, 32
 
 
 @S.test('ambient_music Start Silent + Loop: the first trigger sends loop for everybody, the second a stop', players=1,
-        doc=DOC + '#ambient_music')
+        doc=DOC + '#ambient_music',
+        covers=('ambient_music', 'ambient_music.message', 'ambient_music:1', 'ambient_music:2'))
 def music_toggle(t):
     t.point('ambient_music', targetname='mus', message='test_music/loop_a.mp3', spawnflags=str(START_SILENT | MUSIC_LOOP))
     t.wait(0.2)
@@ -33,7 +34,8 @@ def music_toggle(t):
 
 
 @S.test('ambient_music: a second track replaces the first; stopping the replaced one does not stop it', players=1,
-        doc=DOC + '#ambient_music')
+        doc=DOC + '#ambient_music',
+        covers=('ambient_music', 'ambient_music.message', 'ambient_music:1', 'ambient_music:2'))
 def music_replace(t):
     t.point('ambient_music', targetname='m1', message='test_music/one.mp3', spawnflags=str(START_SILENT))
     t.point('ambient_music', targetname='m2', message='test_music/two.mp3', spawnflags=str(START_SILENT | MUSIC_LOOP))
@@ -56,7 +58,7 @@ def music_replace(t):
 
 
 @S.test('ambient_music: a joining player gets the current track (MSG_ONE at its HUD init)', players=1,
-        doc=DOC + '#what-players-get')
+        doc=DOC + '#what-players-get', covers=('ambient_music', 'ambient_music.message'))
 def music_late_join(t):
     t.point('ambient_music', targetname='mus', message='test_music/late.mp3', spawnflags=str(START_SILENT | MUSIC_LOOP))
     t.wait(0.2)
@@ -74,7 +76,7 @@ def music_late_join(t):
 
 
 @S.test('ambient_music: a path that is not a plain sound/....mp3 name is refused (entity removed, nothing sent)',
-        players=1, doc=DOC + '#ambient_music')
+        players=1, doc=DOC + '#ambient_music', covers=('ambient_music', 'ambient_music.message'))
 def music_bad_path(t):
     t.point('ambient_music', targetname='bad1', message='test_music/two words.mp3', spawnflags=str(START_SILENT))
     t.point('ambient_music', targetname='bad2', message='../../valve/media/Half-Life01.mp3', spawnflags=str(START_SILENT))
@@ -88,7 +90,8 @@ def music_bad_path(t):
     t.expect.no_msg('MapMusic', after='go')
 
 
-@S.test('ambient_generic with an .mp3 plays it as music; Play Mode Loop loops it', players=1, doc=DOC + '#mp3-as-the-sound')
+@S.test('ambient_generic with an .mp3 plays it as music; Play Mode Loop loops it', players=1, doc=DOC + '#mp3-as-the-sound',
+        covers=('ambient_generic', 'ambient_generic.message', 'ambient_generic.playmode=2', 'ambient_generic:16'))
 def generic_mp3(t):
     t.point('ambient_generic', targetname='gen', message='test_music/generic.mp3', health='10', playmode='2',
             spawnflags=str(AG_START_SILENT))
@@ -106,7 +109,7 @@ def generic_mp3(t):
 
 
 @S.test('ambient_generic Play Mode Loop on a WAV without cue points: the server restarts it once per length', players=1,
-        doc=DOC + '#play-mode-playmode')
+        doc=DOC + '#play-mode-playmode', covers=('ambient_generic', 'ambient_generic.playmode=2'))
 def playmode_loop(t):
     # anzym/gun2.wav: 1.04 s, no cue points
     t.point('ambient_generic', targetname='lp', message='anzym/gun2.wav', health='10', playmode='2',
@@ -124,7 +127,8 @@ def playmode_loop(t):
 
 
 @S.test('ambient_generic Play Mode on a WAV the game cannot read: the default behavior, no sound every frame',
-        players=1, doc=DOC + '#play-mode-playmode')
+        players=1, doc=DOC + '#play-mode-playmode',
+        covers=('ambient_generic', 'ambient_generic.playmode=2', 'ambient_generic.playmode=6'))
 def playmode_missing_wav(t):
     # Before the fix the forced loop of a file without a length re-armed its think every frame and sent a sound
     # message each time.

@@ -25,6 +25,7 @@
 #include "cbase.h"
 #include "nodes.h"
 #include "soundent.h"
+#include "inventory.h"	// SBO 2.0 inventory
 #include "client.h"
 #include "decals.h"
 #include "skill.h"
@@ -36,14 +37,19 @@
 #include "teamplay_gamerules.h"
 #include "sequence.h"	// SBO 2.0: Sequence_LevelInit
 #include "objecthint.h"	// SBO 2.0: ObjectHint_Reset
+#include "light_origin.h"	// SBO 2.0: LightOrigin_Reset
 #include "gmmode.h"	// SBO 2.0: GmMode_Precache
+#include "alias.h"	// SBO 2.1: Alias_Reset
 
 extern CGraph WorldGraph;
 extern CSoundEnt *pSoundEnt;
 
 extern CBaseEntity				*g_pLastSpawn;
 extern void GlobalMp3_Reset( void );	// sound.cpp
+extern void Limitator_ResetForMap( void );	// SBO 2.0: limitator.cpp
+extern void GuideMonsterTargets_Reset( void );	// guide_monsters.cpp
 DLL_GLOBAL edict_t				*g_pBodyQueueHead;
+DLL_GLOBAL string_t				g_iszChapterTitle;	// SBO 2.0: worldspawn "chaptertitle" (CBasePlayer::UpdateClientData)
 CGlobalState					gGlobalState;
 extern DLL_GLOBAL	int			gDisplayTitle;
 
@@ -493,6 +499,8 @@ extern DLL_GLOBAL BOOL		g_fGameOver;
 extern int gUniqueId;
 extern int gFUniqueId;
 
+static BOOL s_fMapSkyName = FALSE;	// SBO 2.1: the map being loaded set "skyname" (CWorld::KeyValue, CWorld::Precache)
+
 void CWorld :: Spawn( void )
 {
 	// halflife-updated: ignore extra "worldspawn" entities (see Precache)
@@ -526,7 +534,21 @@ void CWorld :: Precache( void )
 	g_pLastSpawn = NULL;
 	g_fFogZones = FALSE;	// SBO 2.0: set again by this map's env_fogzone entities (triggers.cpp)
 	ObjectHint_Reset();		// SBO 2.0: set again by this map's "objecthint" keys (objecthint.cpp)
+	LightOrigin_Reset();	// SBO 2.0: set again by this map's "lightorigin" keys (light_origin.cpp)
 	GlobalMp3_Reset();		// SevenKewp: no music yet; set again by this map's ambient_music entities (sound.cpp)
+	Limitator_ResetForMap();	// SBO 2.0: no Limitator, default reserves; set again by this map's Limitator
+	GuideMonsterTargets_Reset();	// SBO 2.0: filled again by this map's monster_targets (guide_monsters.cpp)
+	Alias_Reset();			// SBO 2.1: no alias change waits from the last map (alias.cpp)
+	Inventory_MapStart();	// SBO 2.0 inventory: a new map starts with no items held anywhere
+	UTIL_PrecachedClasses_Reset();	// SBO 2.1: filled again by this map's precaches and entities (util.h)
+
+	// SBO 2.1 (Half-Life Unified SDK, game_end): each map starts with an empty global state table. The engine clears it
+	// only on "map", not on "changelevel", so an entity with a "globalname" that was removed (a broken func_breakable)
+	// stayed away every time the map came back, and one whose "globalname" another map had used first was made
+	// dormant. The world spawns before every other entity, so the map's own entities fill the table again.
+	// Saved games are not supported (client.cpp restarts the map), so no transition state is lost.
+	gGlobalState.ClearStates();
+
 	
 #if 1
 	CVAR_SET_STRING("sv_gravity", "800"); // 67ft/sec
@@ -547,6 +569,13 @@ void CWorld :: Precache( void )
 	CVAR_SET_STRING( "sv_skyvec_x", "0" );
 	CVAR_SET_STRING( "sv_skyvec_y", "0" );
 	CVAR_SET_STRING( "sv_skyvec_z", "0" );
+
+	// SBO 2.1 (Half-Life Unified SDK): a map without a "skyname" gets Half-Life's default sky (desert, the default of
+	// the engine's sv_skyname) instead of keeping the sky of the map before it. The worldspawn's keys are read before
+	// it spawns, so a map's own "skyname" (CWorld::KeyValue) has already been seen here.
+	if ( !s_fMapSkyName )
+		CVAR_SET_STRING( "sv_skyname", "desert" );
+	s_fMapSkyName = FALSE;	// for the next map
 
 
 	// Set up game rules
@@ -704,18 +733,14 @@ void CWorld :: Precache( void )
 	else
 		CVAR_SET_FLOAT( "sv_zmax", 4096 );
 
+	// SBO 2.0: the chapter title goes to every player once, when they first enter the game on this map (players
+	// who join later too; CBasePlayer::UpdateClientData). Half-Life (and 1.38) made an env_message 0.3 s into the
+	// map with no activator, which showed it to player 1 only.
+	g_iszChapterTitle = pev->netname;
 	if ( pev->netname )
 	{
 		ALERT( at_aiconsole, "Chapter title: %s\n", STRING(pev->netname) );
-		CBaseEntity *pEntity = CBaseEntity::Create( "env_message", g_vecZero, g_vecZero, NULL );
-		if ( pEntity )
-		{
-			pEntity->SetThink( &CWorld::SUB_CallUseToggle );
-			pEntity->pev->message = pev->netname;
-			pev->netname = 0;
-			pEntity->pev->nextthink = gpGlobals->time + 0.3;
-			pEntity->pev->spawnflags = SF_MESSAGE_ONCE;
-		}
+		pev->netname = 0;
 	}
 
 	if ( pev->spawnflags & SF_WORLD_DARK )
@@ -748,6 +773,11 @@ void CWorld :: KeyValue( KeyValueData *pkvd )
 	{
 		// Sent over net now.
 		CVAR_SET_STRING( "sv_skyname", pkvd->szValue );
+		// SBO 2.1: seen while the map loads (the world has not spawned yet), CWorld::Precache keeps it; else it sets
+		// the default sky. A change at run time (trigger_changevalue) does not count for the next map.
+		extern bool g_worldExists;
+		if ( !g_worldExists )
+			s_fMapSkyName = TRUE;
 		pkvd->fHandled = TRUE;
 	}
 	else if ( FStrEq(pkvd->szKeyName, "sounds") )

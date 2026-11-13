@@ -1,0 +1,398 @@
+# Locked / Unlocked Sound and Sentence (FGD LockedSounds) on func_door, func_door_rotating, func_water and func_button:
+# with its master locked, a player touching the door (using the button) hears the Locked Sound (buttons/button<N>.wav,
+# 12 latchlocked1) and the Locked Sentence (the first of its group: 1 NA, 2 ND, 3 NF, 4 NFIRE, 5 NCHEM, 6 NRAD,
+# 7 NCON, 8 NH, 9 NG; the stub logs a sentence as "!<index>" in sound/sentences.txt); with the master open, the
+# Unlocked Sound (13 latchunlocked1, 14 lightswitch2) and the Unlocked Sentence (1 EA, 2 ED, 3 EF, 4 EFIRE, 5 ECHEM,
+# 6 ERAD, 7 ECON, 8 EH). Each class gets every value once
+# Value 0 (None) on each class: a locked and an unlocked touch / use of that entity adds no sound and no sentence
+# covers: func_door.locked_sound func_door.unlocked_sound func_door.locked_sentence func_door.unlocked_sentence func_door.locked_sound=2 func_door.locked_sound=8 func_door.locked_sound=10 func_door.locked_sound=11 func_door.locked_sound=12 func_door.unlocked_sound=1 func_door.unlocked_sound=3 func_door.unlocked_sound=4 func_door.unlocked_sound=5 func_door.unlocked_sound=6 func_door.unlocked_sound=7 func_door.unlocked_sound=8 func_door.unlocked_sound=9 func_door.unlocked_sound=10 func_door.unlocked_sound=13 func_door.unlocked_sound=14 func_door.locked_sentence=1 func_door.locked_sentence=2 func_door.locked_sentence=3 func_door.locked_sentence=4 func_door.locked_sentence=5 func_door.locked_sentence=6 func_door.locked_sentence=7 func_door.locked_sentence=8 func_door.locked_sentence=9 func_door.unlocked_sentence=1 func_door.unlocked_sentence=2 func_door.unlocked_sentence=3 func_door.unlocked_sentence=4 func_door.unlocked_sentence=5 func_door.unlocked_sentence=6 func_door.unlocked_sentence=7 func_door.unlocked_sentence=8 func_door_rotating.locked_sound func_door_rotating.unlocked_sound func_door_rotating.locked_sentence func_door_rotating.unlocked_sentence func_door_rotating.locked_sound=2 func_door_rotating.locked_sound=8 func_door_rotating.locked_sound=10 func_door_rotating.locked_sound=11 func_door_rotating.locked_sound=12 func_door_rotating.unlocked_sound=1 func_door_rotating.unlocked_sound=3 func_door_rotating.unlocked_sound=4 func_door_rotating.unlocked_sound=5 func_door_rotating.unlocked_sound=6 func_door_rotating.unlocked_sound=7 func_door_rotating.unlocked_sound=8 func_door_rotating.unlocked_sound=9 func_door_rotating.unlocked_sound=10 func_door_rotating.unlocked_sound=13 func_door_rotating.unlocked_sound=14 func_door_rotating.locked_sentence=1 func_door_rotating.locked_sentence=2 func_door_rotating.locked_sentence=3 func_door_rotating.locked_sentence=4 func_door_rotating.locked_sentence=5 func_door_rotating.locked_sentence=6 func_door_rotating.locked_sentence=7 func_door_rotating.locked_sentence=8 func_door_rotating.locked_sentence=9 func_door_rotating.unlocked_sentence=1 func_door_rotating.unlocked_sentence=2 func_door_rotating.unlocked_sentence=3 func_door_rotating.unlocked_sentence=4 func_door_rotating.unlocked_sentence=5 func_door_rotating.unlocked_sentence=6 func_door_rotating.unlocked_sentence=7 func_door_rotating.unlocked_sentence=8 func_water.locked_sound func_water.unlocked_sound func_water.locked_sentence func_water.unlocked_sentence func_water.locked_sound=2 func_water.locked_sound=8 func_water.locked_sound=10 func_water.locked_sound=11 func_water.locked_sound=12 func_water.unlocked_sound=1 func_water.unlocked_sound=3 func_water.unlocked_sound=4 func_water.unlocked_sound=5 func_water.unlocked_sound=6 func_water.unlocked_sound=7 func_water.unlocked_sound=8 func_water.unlocked_sound=9 func_water.unlocked_sound=10 func_water.unlocked_sound=13 func_water.unlocked_sound=14 func_water.locked_sentence=1 func_water.locked_sentence=2 func_water.locked_sentence=3 func_water.locked_sentence=4 func_water.locked_sentence=5 func_water.locked_sentence=6 func_water.locked_sentence=7 func_water.locked_sentence=8 func_water.locked_sentence=9 func_water.unlocked_sentence=1 func_water.unlocked_sentence=2 func_water.unlocked_sentence=3 func_water.unlocked_sentence=4 func_water.unlocked_sentence=5 func_water.unlocked_sentence=6 func_water.unlocked_sentence=7 func_water.unlocked_sentence=8 func_button.locked_sound func_button.unlocked_sound func_button.locked_sentence func_button.unlocked_sentence func_button.locked_sound=2 func_button.locked_sound=8 func_button.locked_sound=10 func_button.locked_sound=11 func_button.locked_sound=12 func_button.unlocked_sound=1 func_button.unlocked_sound=3 func_button.unlocked_sound=4 func_button.unlocked_sound=5 func_button.unlocked_sound=6 func_button.unlocked_sound=7 func_button.unlocked_sound=8 func_button.unlocked_sound=9 func_button.unlocked_sound=10 func_button.unlocked_sound=13 func_button.unlocked_sound=14 func_button.locked_sentence=1 func_button.locked_sentence=2 func_button.locked_sentence=3 func_button.locked_sentence=4 func_button.locked_sentence=5 func_button.locked_sentence=6 func_button.locked_sentence=7 func_button.locked_sentence=8 func_button.locked_sentence=9 func_button.unlocked_sentence=1 func_button.unlocked_sentence=2 func_button.unlocked_sentence=3 func_button.unlocked_sentence=4 func_button.unlocked_sentence=5 func_button.unlocked_sentence=6 func_button.unlocked_sentence=7 func_button.unlocked_sentence=8 func_door.locked_sound=0 func_door.unlocked_sound=0 func_door.locked_sentence=0 func_door.unlocked_sentence=0 func_door_rotating.locked_sound=0 func_door_rotating.unlocked_sound=0 func_door_rotating.locked_sentence=0 func_door_rotating.unlocked_sentence=0 func_water.locked_sound=0 func_water.unlocked_sound=0 func_water.locked_sentence=0 func_water.unlocked_sentence=0 func_button.locked_sound=0 func_button.unlocked_sound=0 func_button.locked_sentence=0 func_button.unlocked_sentence=0
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+brushsize 64 64 64
+spawn multisource targetname ms
+spawn trigger_relay targetname key target ms triggerstate 1
+spawn func_door model *1 master ms speed 640 wait -1 locked_sound 2 locked_sentence 1
+spawn func_door model *2 master ms speed 640 wait -1 locked_sound 8 locked_sentence 2
+spawn func_door model *3 master ms speed 640 wait -1 locked_sound 10 locked_sentence 3
+spawn func_door model *4 master ms speed 640 wait -1 locked_sound 11 locked_sentence 4
+spawn func_door model *5 master ms speed 640 wait -1 locked_sound 12 locked_sentence 5
+spawn func_door model *6 master ms speed 640 wait -1 locked_sound 2 locked_sentence 6
+spawn func_door model *7 master ms speed 640 wait -1 locked_sound 8 locked_sentence 7
+spawn func_door model *8 master ms speed 640 wait -1 locked_sound 10 locked_sentence 8
+spawn func_door model *9 master ms speed 640 wait -1 locked_sound 11 locked_sentence 9
+spawn func_door model *10 master ms speed 640 wait -1 unlocked_sound 1 unlocked_sentence 1
+spawn func_door model *11 master ms speed 640 wait -1 unlocked_sound 3 unlocked_sentence 2
+spawn func_door model *12 master ms speed 640 wait -1 unlocked_sound 4 unlocked_sentence 3
+spawn func_door model *13 master ms speed 640 wait -1 unlocked_sound 5 unlocked_sentence 4
+spawn func_door model *14 master ms speed 640 wait -1 unlocked_sound 6 unlocked_sentence 5
+spawn func_door model *15 master ms speed 640 wait -1 unlocked_sound 7 unlocked_sentence 6
+spawn func_door model *16 master ms speed 640 wait -1 unlocked_sound 8 unlocked_sentence 7
+spawn func_door model *17 master ms speed 640 wait -1 unlocked_sound 9 unlocked_sentence 8
+spawn func_door model *18 master ms speed 640 wait -1 unlocked_sound 10 unlocked_sentence 1
+spawn func_door model *19 master ms speed 640 wait -1 unlocked_sound 13 unlocked_sentence 2
+spawn func_door model *20 master ms speed 640 wait -1 unlocked_sound 14 unlocked_sentence 3
+spawn func_door_rotating model *21 master ms speed 640 wait -1 locked_sound 2 locked_sentence 1
+spawn func_door_rotating model *22 master ms speed 640 wait -1 locked_sound 8 locked_sentence 2
+spawn func_door_rotating model *23 master ms speed 640 wait -1 locked_sound 10 locked_sentence 3
+spawn func_door_rotating model *24 master ms speed 640 wait -1 locked_sound 11 locked_sentence 4
+spawn func_door_rotating model *25 master ms speed 640 wait -1 locked_sound 12 locked_sentence 5
+spawn func_door_rotating model *26 master ms speed 640 wait -1 locked_sound 2 locked_sentence 6
+spawn func_door_rotating model *27 master ms speed 640 wait -1 locked_sound 8 locked_sentence 7
+spawn func_door_rotating model *28 master ms speed 640 wait -1 locked_sound 10 locked_sentence 8
+spawn func_door_rotating model *29 master ms speed 640 wait -1 locked_sound 11 locked_sentence 9
+spawn func_door_rotating model *30 master ms speed 640 wait -1 unlocked_sound 1 unlocked_sentence 1
+spawn func_door_rotating model *31 master ms speed 640 wait -1 unlocked_sound 3 unlocked_sentence 2
+spawn func_door_rotating model *32 master ms speed 640 wait -1 unlocked_sound 4 unlocked_sentence 3
+spawn func_door_rotating model *33 master ms speed 640 wait -1 unlocked_sound 5 unlocked_sentence 4
+spawn func_door_rotating model *34 master ms speed 640 wait -1 unlocked_sound 6 unlocked_sentence 5
+spawn func_door_rotating model *35 master ms speed 640 wait -1 unlocked_sound 7 unlocked_sentence 6
+spawn func_door_rotating model *36 master ms speed 640 wait -1 unlocked_sound 8 unlocked_sentence 7
+spawn func_door_rotating model *37 master ms speed 640 wait -1 unlocked_sound 9 unlocked_sentence 8
+spawn func_door_rotating model *38 master ms speed 640 wait -1 unlocked_sound 10 unlocked_sentence 1
+spawn func_door_rotating model *39 master ms speed 640 wait -1 unlocked_sound 13 unlocked_sentence 2
+spawn func_door_rotating model *40 master ms speed 640 wait -1 unlocked_sound 14 unlocked_sentence 3
+spawn func_water model *41 master ms speed 640 wait -1 locked_sound 2 locked_sentence 1
+spawn func_water model *42 master ms speed 640 wait -1 locked_sound 8 locked_sentence 2
+spawn func_water model *43 master ms speed 640 wait -1 locked_sound 10 locked_sentence 3
+spawn func_water model *44 master ms speed 640 wait -1 locked_sound 11 locked_sentence 4
+spawn func_water model *45 master ms speed 640 wait -1 locked_sound 12 locked_sentence 5
+spawn func_water model *46 master ms speed 640 wait -1 locked_sound 2 locked_sentence 6
+spawn func_water model *47 master ms speed 640 wait -1 locked_sound 8 locked_sentence 7
+spawn func_water model *48 master ms speed 640 wait -1 locked_sound 10 locked_sentence 8
+spawn func_water model *49 master ms speed 640 wait -1 locked_sound 11 locked_sentence 9
+spawn func_water model *50 master ms speed 640 wait -1 unlocked_sound 1 unlocked_sentence 1
+spawn func_water model *51 master ms speed 640 wait -1 unlocked_sound 3 unlocked_sentence 2
+spawn func_water model *52 master ms speed 640 wait -1 unlocked_sound 4 unlocked_sentence 3
+spawn func_water model *53 master ms speed 640 wait -1 unlocked_sound 5 unlocked_sentence 4
+spawn func_water model *54 master ms speed 640 wait -1 unlocked_sound 6 unlocked_sentence 5
+spawn func_water model *55 master ms speed 640 wait -1 unlocked_sound 7 unlocked_sentence 6
+spawn func_water model *56 master ms speed 640 wait -1 unlocked_sound 8 unlocked_sentence 7
+spawn func_water model *57 master ms speed 640 wait -1 unlocked_sound 9 unlocked_sentence 8
+spawn func_water model *58 master ms speed 640 wait -1 unlocked_sound 10 unlocked_sentence 1
+spawn func_water model *59 master ms speed 640 wait -1 unlocked_sound 13 unlocked_sentence 2
+spawn func_water model *60 master ms speed 640 wait -1 unlocked_sound 14 unlocked_sentence 3
+spawn func_button model *61 master ms wait -1 locked_sound 2 locked_sentence 1
+spawn func_button model *62 master ms wait -1 locked_sound 8 locked_sentence 2
+spawn func_button model *63 master ms wait -1 locked_sound 10 locked_sentence 3
+spawn func_button model *64 master ms wait -1 locked_sound 11 locked_sentence 4
+spawn func_button model *65 master ms wait -1 locked_sound 12 locked_sentence 5
+spawn func_button model *66 master ms wait -1 locked_sound 2 locked_sentence 6
+spawn func_button model *67 master ms wait -1 locked_sound 8 locked_sentence 7
+spawn func_button model *68 master ms wait -1 locked_sound 10 locked_sentence 8
+spawn func_button model *69 master ms wait -1 locked_sound 11 locked_sentence 9
+spawn func_button model *70 master ms wait -1 unlocked_sound 1 unlocked_sentence 1
+spawn func_button model *71 master ms wait -1 unlocked_sound 3 unlocked_sentence 2
+spawn func_button model *72 master ms wait -1 unlocked_sound 4 unlocked_sentence 3
+spawn func_button model *73 master ms wait -1 unlocked_sound 5 unlocked_sentence 4
+spawn func_button model *74 master ms wait -1 unlocked_sound 6 unlocked_sentence 5
+spawn func_button model *75 master ms wait -1 unlocked_sound 7 unlocked_sentence 6
+spawn func_button model *76 master ms wait -1 unlocked_sound 8 unlocked_sentence 7
+spawn func_button model *77 master ms wait -1 unlocked_sound 9 unlocked_sentence 8
+spawn func_button model *78 master ms wait -1 unlocked_sound 10 unlocked_sentence 1
+spawn func_button model *79 master ms wait -1 unlocked_sound 13 unlocked_sentence 2
+spawn func_button model *80 master ms wait -1 unlocked_sound 14 unlocked_sentence 3
+spawn func_door model *81 master ms speed 640 wait -1 locked_sound 0 unlocked_sound 0 locked_sentence 0 unlocked_sentence 0
+spawn func_door_rotating model *82 master ms speed 640 wait -1 locked_sound 0 unlocked_sound 0 locked_sentence 0 unlocked_sentence 0
+spawn func_water model *83 master ms speed 640 wait -1 locked_sound 0 unlocked_sound 0 locked_sentence 0 unlocked_sentence 0
+spawn func_button model *84 master ms wait -1 locked_sound 0 unlocked_sound 0 locked_sentence 0 unlocked_sentence 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark func_door_locked
+touchclient 2 1
+touchclient 3 1
+touchclient 4 1
+touchclient 5 1
+touchclient 6 1
+touchclient 7 1
+touchclient 8 1
+touchclient 9 1
+touchclient 10 1
+frames 2
+expectn 1 ch2 !240 vol=
+expectn 1 ch2 !268 vol=
+expectn 1 ch2 !283 vol=
+expectn 1 ch2 !289 vol=
+expectn 1 ch2 !291 vol=
+expectn 1 ch2 !293 vol=
+expectn 1 ch2 !295 vol=
+expectn 1 ch2 !297 vol=
+expectn 1 ch2 !300 vol=
+expectn 2 ch3 buttons/button10.wav vol=
+expectn 2 ch3 buttons/button11.wav vol=
+expectn 2 ch3 buttons/button2.wav vol=
+expectn 2 ch3 buttons/button8.wav vol=
+expectn 1 ch3 buttons/latchlocked1.wav vol=
+mark func_door_rotating_locked
+touchclient 22 1
+touchclient 23 1
+touchclient 24 1
+touchclient 25 1
+touchclient 26 1
+touchclient 27 1
+touchclient 28 1
+touchclient 29 1
+touchclient 30 1
+frames 2
+expectn 2 ch2 !240 vol=
+expectn 2 ch2 !268 vol=
+expectn 2 ch2 !283 vol=
+expectn 2 ch2 !289 vol=
+expectn 2 ch2 !291 vol=
+expectn 2 ch2 !293 vol=
+expectn 2 ch2 !295 vol=
+expectn 2 ch2 !297 vol=
+expectn 2 ch2 !300 vol=
+expectn 4 ch3 buttons/button10.wav vol=
+expectn 4 ch3 buttons/button11.wav vol=
+expectn 4 ch3 buttons/button2.wav vol=
+expectn 4 ch3 buttons/button8.wav vol=
+expectn 2 ch3 buttons/latchlocked1.wav vol=
+mark func_water_locked
+touchclient 42 1
+touchclient 43 1
+touchclient 44 1
+touchclient 45 1
+touchclient 46 1
+touchclient 47 1
+touchclient 48 1
+touchclient 49 1
+touchclient 50 1
+frames 2
+expectn 3 ch2 !240 vol=
+expectn 3 ch2 !268 vol=
+expectn 3 ch2 !283 vol=
+expectn 3 ch2 !289 vol=
+expectn 3 ch2 !291 vol=
+expectn 3 ch2 !293 vol=
+expectn 3 ch2 !295 vol=
+expectn 3 ch2 !297 vol=
+expectn 3 ch2 !300 vol=
+expectn 6 ch3 buttons/button10.wav vol=
+expectn 6 ch3 buttons/button11.wav vol=
+expectn 6 ch3 buttons/button2.wav vol=
+expectn 6 ch3 buttons/button8.wav vol=
+expectn 3 ch3 buttons/latchlocked1.wav vol=
+mark func_button_locked
+touchclient 82 1
+touchclient 83 1
+touchclient 84 1
+useclient 85 1
+useclient 62 1
+useclient 63 1
+useclient 64 1
+useclient 65 1
+useclient 66 1
+useclient 67 1
+useclient 68 1
+useclient 69 1
+useclient 70 1
+frames 2
+expectn 4 ch2 !240 vol=
+expectn 4 ch2 !268 vol=
+expectn 4 ch2 !283 vol=
+expectn 4 ch2 !289 vol=
+expectn 4 ch2 !291 vol=
+expectn 4 ch2 !293 vol=
+expectn 4 ch2 !295 vol=
+expectn 4 ch2 !297 vol=
+expectn 4 ch2 !300 vol=
+expectn 8 ch3 buttons/button10.wav vol=
+expectn 8 ch3 buttons/button11.wav vol=
+expectn 8 ch3 buttons/button2.wav vol=
+expectn 8 ch3 buttons/button8.wav vol=
+expectn 4 ch3 buttons/latchlocked1.wav vol=
+mark unlock
+fire key
+frames 70
+mark func_door_unlocked
+touchclient 11 1
+touchclient 12 1
+touchclient 13 1
+touchclient 14 1
+touchclient 15 1
+touchclient 16 1
+touchclient 17 1
+touchclient 18 1
+touchclient 19 1
+touchclient 20 1
+touchclient 21 1
+frames 2
+expectn 4 ch2 !240 vol=
+expectn 2 ch2 !259 vol=
+expectn 4 ch2 !268 vol=
+expectn 2 ch2 !276 vol=
+expectn 4 ch2 !283 vol=
+expectn 2 ch2 !286 vol=
+expectn 4 ch2 !289 vol=
+expectn 1 ch2 !290 vol=
+expectn 4 ch2 !291 vol=
+expectn 1 ch2 !292 vol=
+expectn 4 ch2 !293 vol=
+expectn 1 ch2 !294 vol=
+expectn 4 ch2 !295 vol=
+expectn 1 ch2 !296 vol=
+expectn 4 ch2 !297 vol=
+expectn 4 ch2 !300 vol=
+expectn 1 ch2 !302 vol=
+expectn 1 ch3 buttons/button1.wav vol=
+expectn 9 ch3 buttons/button10.wav vol=
+expectn 8 ch3 buttons/button11.wav vol=
+expectn 8 ch3 buttons/button2.wav vol=
+expectn 1 ch3 buttons/button3.wav vol=
+expectn 1 ch3 buttons/button4.wav vol=
+expectn 1 ch3 buttons/button5.wav vol=
+expectn 1 ch3 buttons/button6.wav vol=
+expectn 1 ch3 buttons/button7.wav vol=
+expectn 9 ch3 buttons/button8.wav vol=
+expectn 1 ch3 buttons/button9.wav vol=
+expectn 4 ch3 buttons/latchlocked1.wav vol=
+expectn 1 ch3 buttons/latchunlocked1.wav vol=
+expectn 1 ch3 buttons/lightswitch2.wav vol=
+mark func_door_rotating_unlocked
+touchclient 31 1
+touchclient 32 1
+touchclient 33 1
+touchclient 34 1
+touchclient 35 1
+touchclient 36 1
+touchclient 37 1
+touchclient 38 1
+touchclient 39 1
+touchclient 40 1
+touchclient 41 1
+frames 2
+expectn 4 ch2 !240 vol=
+expectn 4 ch2 !259 vol=
+expectn 4 ch2 !268 vol=
+expectn 4 ch2 !276 vol=
+expectn 4 ch2 !283 vol=
+expectn 4 ch2 !286 vol=
+expectn 4 ch2 !289 vol=
+expectn 2 ch2 !290 vol=
+expectn 4 ch2 !291 vol=
+expectn 2 ch2 !292 vol=
+expectn 4 ch2 !293 vol=
+expectn 2 ch2 !294 vol=
+expectn 4 ch2 !295 vol=
+expectn 2 ch2 !296 vol=
+expectn 4 ch2 !297 vol=
+expectn 4 ch2 !300 vol=
+expectn 2 ch2 !302 vol=
+expectn 2 ch3 buttons/button1.wav vol=
+expectn 10 ch3 buttons/button10.wav vol=
+expectn 8 ch3 buttons/button11.wav vol=
+expectn 8 ch3 buttons/button2.wav vol=
+expectn 2 ch3 buttons/button3.wav vol=
+expectn 2 ch3 buttons/button4.wav vol=
+expectn 2 ch3 buttons/button5.wav vol=
+expectn 2 ch3 buttons/button6.wav vol=
+expectn 2 ch3 buttons/button7.wav vol=
+expectn 10 ch3 buttons/button8.wav vol=
+expectn 2 ch3 buttons/button9.wav vol=
+expectn 4 ch3 buttons/latchlocked1.wav vol=
+expectn 2 ch3 buttons/latchunlocked1.wav vol=
+expectn 2 ch3 buttons/lightswitch2.wav vol=
+mark func_water_unlocked
+touchclient 51 1
+touchclient 52 1
+touchclient 53 1
+touchclient 54 1
+touchclient 55 1
+touchclient 56 1
+touchclient 57 1
+touchclient 58 1
+touchclient 59 1
+touchclient 60 1
+touchclient 61 1
+frames 2
+expectn 4 ch2 !240 vol=
+expectn 6 ch2 !259 vol=
+expectn 4 ch2 !268 vol=
+expectn 6 ch2 !276 vol=
+expectn 4 ch2 !283 vol=
+expectn 6 ch2 !286 vol=
+expectn 4 ch2 !289 vol=
+expectn 3 ch2 !290 vol=
+expectn 4 ch2 !291 vol=
+expectn 3 ch2 !292 vol=
+expectn 4 ch2 !293 vol=
+expectn 3 ch2 !294 vol=
+expectn 4 ch2 !295 vol=
+expectn 3 ch2 !296 vol=
+expectn 4 ch2 !297 vol=
+expectn 4 ch2 !300 vol=
+expectn 3 ch2 !302 vol=
+expectn 3 ch3 buttons/button1.wav vol=
+expectn 11 ch3 buttons/button10.wav vol=
+expectn 8 ch3 buttons/button11.wav vol=
+expectn 8 ch3 buttons/button2.wav vol=
+expectn 3 ch3 buttons/button3.wav vol=
+expectn 3 ch3 buttons/button4.wav vol=
+expectn 3 ch3 buttons/button5.wav vol=
+expectn 3 ch3 buttons/button6.wav vol=
+expectn 3 ch3 buttons/button7.wav vol=
+expectn 11 ch3 buttons/button8.wav vol=
+expectn 3 ch3 buttons/button9.wav vol=
+expectn 4 ch3 buttons/latchlocked1.wav vol=
+expectn 3 ch3 buttons/latchunlocked1.wav vol=
+expectn 3 ch3 buttons/lightswitch2.wav vol=
+mark func_button_unlocked
+touchclient 82 1
+touchclient 83 1
+touchclient 84 1
+useclient 85 1
+useclient 71 1
+useclient 72 1
+useclient 73 1
+useclient 74 1
+useclient 75 1
+useclient 76 1
+useclient 77 1
+useclient 78 1
+useclient 79 1
+useclient 80 1
+useclient 81 1
+frames 2
+expectn 4 ch2 !240 vol=
+expectn 8 ch2 !259 vol=
+expectn 4 ch2 !268 vol=
+expectn 8 ch2 !276 vol=
+expectn 4 ch2 !283 vol=
+expectn 8 ch2 !286 vol=
+expectn 4 ch2 !289 vol=
+expectn 4 ch2 !290 vol=
+expectn 4 ch2 !291 vol=
+expectn 4 ch2 !292 vol=
+expectn 4 ch2 !293 vol=
+expectn 4 ch2 !294 vol=
+expectn 4 ch2 !295 vol=
+expectn 4 ch2 !296 vol=
+expectn 4 ch2 !297 vol=
+expectn 4 ch2 !300 vol=
+expectn 4 ch2 !302 vol=
+expectn 4 ch3 buttons/button1.wav vol=
+expectn 12 ch3 buttons/button10.wav vol=
+expectn 8 ch3 buttons/button11.wav vol=
+expectn 8 ch3 buttons/button2.wav vol=
+expectn 4 ch3 buttons/button3.wav vol=
+expectn 4 ch3 buttons/button4.wav vol=
+expectn 4 ch3 buttons/button5.wav vol=
+expectn 4 ch3 buttons/button6.wav vol=
+expectn 4 ch3 buttons/button7.wav vol=
+expectn 12 ch3 buttons/button8.wav vol=
+expectn 4 ch3 buttons/button9.wav vol=
+expectn 4 ch3 buttons/latchlocked1.wav vol=
+expectn 4 ch3 buttons/latchunlocked1.wav vol=
+expectn 4 ch3 buttons/lightswitch2.wav vol=

@@ -29,6 +29,11 @@
 // SBO 2.0, from Featureful: trigger_camera flags the player code reads (triggers.cpp CTriggerCamera)
 #define SF_CAMERA_PLAYER_INVULNERABLE		256			// "Player Invulnerable": no damage while the camera has the view
 #define SF_CAMERA_STOP_BY_PLAYER_INPUT_USE	(1<<25)		// "Stop by player input" = USE input (key, set at spawn)
+// SBO 2.0 (docs/OBJECTIVES.md "Cameras"): "Hide HUD and crosshair": while the camera has the view the player's HUD is
+// hidden (HIDEHUD_ALL in HideWeapon, CBasePlayer::UpdateClientData); chat and game_text stay. Free in the HL SDK,
+// Featureful and Sven Co-op layouts (2048, free on trigger_camera itself, is the engine's "Not in Deathmatch": such an
+// entity is never spawned in multiplayer); no map sets it (scan 2026-11-08)
+#define SF_CAMERA_HIDE_HUD					(1<<17)
 
 //
 // Player PHYSICS FLAGS bits
@@ -217,6 +222,11 @@ public:
 	int			m_iClientHideHUD;
 	int			m_iFOV;			// field of view
 	int			m_iClientFOV;	// client's known FOV
+	// SBO 2.1 (Half-Life Unified SDK, HLU #98): the weapons with ids 32..63 he holds, bit (id - 32); ids 0..30 and
+	// the suit (31) stay in pev->weapons. Server plugins read and set it by name (AMXX gamedata); the client
+	// learns it from the WeaponsHigh message (UpdateClientData)
+	int			m_iWeaponBitsHigh;
+	int			m_iClientWeaponBitsHigh;	// the m_iWeaponBitsHigh the client last got (0 after every ResetHUD)
 	// usable player items 
 	CBasePlayerItem	*m_rgpPlayerItems[MAX_ITEM_TYPES];
 	CBasePlayerItem *m_pActiveItem;
@@ -264,6 +274,7 @@ public:
 	virtual void StopSneaking( void ) { m_tSneaking = gpGlobals->time + 30; }
 	virtual BOOL IsSneaking( void ) { return m_tSneaking <= gpGlobals->time; }
 	virtual BOOL IsAlive( void ) { return (pev->deadflag == DEAD_NO) && pev->health > 0; }
+	virtual STATE GetState( CBaseEntity *pActivator );	// SBO 2.1: On while in play (alive, not a spectator or Game Master)
 	virtual BOOL ShouldFadeOnDeath( void ) { return FALSE; }
 	virtual	BOOL IsPlayer( void ) { return TRUE; }			// Spectators should return FALSE for this, they aren't "players" as far as game logic is concerned
 
@@ -277,6 +288,29 @@ public:
 	void PackDeadPlayerItems( void );
 	void RemoveAllItems( BOOL removeSuit );
 	BOOL SwitchWeapon( CBasePlayerItem *pWeapon );
+
+	// SBO 2.1 (Half-Life Unified SDK): the weapon bits of ids 0..63 (pev->weapons below 32, m_iWeaponBitsHigh above)
+	BOOL HasWeaponBit( int iId ) const
+	{
+		if ( iId < 0 || iId >= MAX_WEAPONS )
+			return FALSE;
+		return iId < 32 ? ( pev->weapons & ( 1u << iId ) ) != 0 : ( m_iWeaponBitsHigh & ( 1u << ( iId - 32 ) ) ) != 0;
+	}
+	void SetWeaponBit( int iId )
+	{
+		if ( iId >= 0 && iId < 32 )
+			pev->weapons |= ( 1u << iId );
+		else if ( iId >= 32 && iId < MAX_WEAPONS )
+			m_iWeaponBitsHigh |= ( 1u << ( iId - 32 ) );
+	}
+	void ClearWeaponBit( int iId )
+	{
+		if ( iId >= 0 && iId < 32 )
+			pev->weapons &= ~( 1u << iId );
+		else if ( iId >= 32 && iId < MAX_WEAPONS )
+			m_iWeaponBitsHigh &= ~( 1u << ( iId - 32 ) );
+	}
+	BOOL HasAnyWeaponBits( void ) const { return pev->weapons != 0 || m_iWeaponBitsHigh != 0; }	// the suit counts
 
 	// JOHN:  sends custom messages if player HUD data has changed  (eg health, ammo)
 	virtual void UpdateClientData( void );
@@ -343,6 +377,7 @@ public:
 	void	SetFlashlightFlicker( BOOL flicker );
 	int		m_iSuppressedCaps;
 	int		m_iClientSuppressedCaps;	// the capabilities the client last got (-1: send again)
+	int		m_iClientCheats;			// SBO 2.1: the sv_cheats value the client last got in "Cheats" (-1: send again)
 	float	m_flSpeedOverride;
 	BOOL	m_bSpeedOverrideAbsolute;
 	float	m_flSpeedBase;				// the max speed the game set (weapon, zoom, level, legs), before the override
@@ -395,7 +430,7 @@ public:
 	Vector AutoaimDeflection( Vector &vecSrc, float flDist, float flDelta  );
 
 	void ForceClientDllUpdate( void );  // Forces all client .dll specific data to be resent to client.
-	void SendWeatherInfo( void );	// ReGameDLL_CS: ReceiveW (env_rain/func_rain, env_snow/func_snow)
+	void SendWeatherInfo( void );	// ReGameDLL_CS: ReceiveW (SBO 2.0: 0, the weather follows in WeatherVol)
 	void SendParticleEmitters( void );	// SBO: PlayerSpawn, FlammePos, FumeePos (Flamme_particules, Fumee_particules)
 
 	// SBO 2.0 env_fogzone (triggers.cpp; XDM environment.cpp): the fog this player's client has
@@ -478,6 +513,7 @@ public:
 	// SBO 2.0 spectator mode (observer.cpp; toggled by the "spectate" command or /spec in chat, client.cpp): out of
 	// the rounds until the player toggles it off; kept across changelevel and reconnects (client.cpp)
 	BOOL m_bSpectating;
+	BOOL m_bChapterTitleShown;	// SBO 2.0: the map's chapter title (worldspawn "chaptertitle") was sent to this player
 	float m_flNextSpectateToggle;	// the mode can't be toggled again before this time (anti-spam)
 	float m_flNextFullUpdate;		// "fullupdate" (client.cpp) is ignored before this time
 	BOOL m_bSpectateIdPending;		// identity not validated by Steam yet: asked again every frame (client.cpp)
@@ -546,14 +582,19 @@ public:
 	float m_flTeleportCmdYaw;		// its yaw, turned
 	BOOL m_bTeleportAddAngle;		// pev->avelocity.y holds the turn for the engine's svc_addangle (fixangle 2)
 
-	// SBO 2.0 impulse 212 (cheat, player.cpp CheatImpulseCommands / FastMoveUpdate): the player's max speed is held
-	// at FASTMOVE_MAXSPEED. The game's own speed code keeps writing pev->maxspeed as before (weapon deploy, zoom,
-	// leg hit, level-up); each such write is taken as the normal speed and replaced by the fast one, so turning it
-	// off gives back the speed the game has set last.
-	void FastMoveUpdate( void );	// PreThink and UpdateClientData
-	void FastMoveOff( void );
-	BOOL m_bFastMove;
-	float m_flFastMoveNormalSpeed;	// the speed without impulse 212 (the last one the game set)
+	// SBO 2.0 cheat speeds (sv_cheats): impulse 212 holds the max speed at FASTMOVE_MAXSPEED, cheat_speed <n> at n
+	// times the normal speed (capped at FASTMOVE_MAXSPEED). Both go through ApplySpeedOverride, on top of the game's
+	// own speed (class, level, armor, legs, weapon, zoom: m_flSpeedBase) and player_speed, so the game's speed code
+	// keeps writing pev->maxspeed as before and turning the cheat off gives back the speed the game has set last.
+	// The last of the two commands wins; cheat_speed 1 ends either. Ends at death, when spectating and at respawn.
+	void CheatSpeed( float flScale );	// cheat_speed (cheat_commands.cpp): 1 ends any cheat speed
+	BOOL m_bFastMove;				// a cheat speed is on
+	float m_flFastMoveScale;		// cheat_speed's multiplier; 0: impulse 212 (FASTMOVE_MAXSPEED)
+
+	// SBO 2.0 cheats from the Half-Life Unified SDK (cheat_commands.cpp; Spawn ends them)
+	BOOL m_bCheatUnkillable;		// cheat_unkillable: health never drops below 1 (TakeDamage)
+	BOOL m_bCheatInfiniteAir;		// cheat_infiniteair: no drowning (WaterMove)
+	BOOL m_bCheatInfiniteArmor;	// cheat_infinitearmor: armor still absorbs damage but isn't used up (TakeDamage)
 
 	float m_flNextCyberLight;	// SBO 2.0 cybereye: the next lights ahead of the view (PostThink, CYBEREYE_LIGHT_INTERVAL)
 
@@ -603,7 +644,7 @@ void SboModeInfo_ClientInit( CBasePlayer *pPlayer );
 void SboModeInfo_Frame( void );
 
 // SBO 2.0: spectator target info (observer.cpp Observer_SendTargetInfo; "SpecHealth2" message: byte player, short
-// health, short armor, byte weapon id, byte flags, byte BR rounds won). Must match the client
+// health, short armor, byte weapon id, byte flags, byte BR rounds won, short view model). Must match the client
 // (cl_dll/vgui2/sbo_bridge.cpp).
 #define SPECINFO_LEGS_BROKEN	1	// flags: the player's legs are broken
 // Broken legs are a speed, as they always were in SBO: a living player whose m_iSboMaxSpeed is below this. 130 is the

@@ -1,0 +1,100 @@
+# func_breakable Material type, Spawn On Break, Explode Magnitude, Gibs Direction (FGD Breakable). Each material
+# breaks with its own sound and gib type (TE_BREAKMODEL flags): 0 Glass bustglass / 1, 1 Wood bustcrate / 8, 2 Metal
+# bustmetal / 2, 3 Flesh bustflesh / 4, 4 Cinder Block bustconcrete / 64, 5 Ceiling Tile bustceiling / 0, 6 Computer
+# bustmetal / 2, 8 Rocks bustconcrete / 64; 7 Unbreakable Glass does not break. Spawn On Break 1 / 14 / 15 / 17 / 18 /
+# 19 / 20 leaves a battery, RPG, RPG clip, hand grenade, tripmine, satchel, snark. Explode Magnitude 100: an explosion
+# (TE_EXPLOSION) at its center that breaks a breakable next to it; without it, none. Gibs Direction 0 Random: the gibs'
+# base velocity is 0 (the client scatters them)
+# covers: func_breakable.material func_breakable.material=0 func_breakable.material=1 func_breakable.material=2 func_breakable.material=3 func_breakable.material=4 func_breakable.material=5 func_breakable.material=6 func_breakable.material=7 func_breakable.material=8 func_breakable.spawnobject func_breakable.spawnobject=0 func_breakable.spawnobject=1 func_breakable.spawnobject=14 func_breakable.spawnobject=15 func_breakable.spawnobject=17 func_breakable.spawnobject=18 func_breakable.spawnobject=19 func_breakable.spawnobject=20 func_breakable.explodemagnitude func_breakable.explosion=0
+map co_fuzz
+brushsize 64 64 64
+spawn func_breakable targetname m0 model *1 health 10 material 0
+spawn func_breakable targetname m1 model *2 health 10 material 1
+spawn func_breakable targetname m2 model *3 health 10 material 2
+spawn func_breakable targetname m3 model *4 health 10 material 3
+spawn func_breakable targetname m4 model *5 health 10 material 4
+spawn func_breakable targetname m5 model *6 health 10 material 5
+spawn func_breakable targetname m6 model *7 health 10 material 6
+spawn func_breakable targetname m7 model *8 health 10 material 7
+spawn func_breakable targetname m8 model *9 health 10 material 8
+spawn func_breakable targetname o1 model *10 health 10 spawnobject 1 material 1
+spawn func_breakable targetname o14 model *11 health 10 spawnobject 14 material 1
+spawn func_breakable targetname o15 model *12 health 10 spawnobject 15 material 1
+spawn func_breakable targetname o17 model *13 health 10 spawnobject 17 material 1
+spawn func_breakable targetname o18 model *14 health 10 spawnobject 18 material 1
+spawn func_breakable targetname o19 model *15 health 10 spawnobject 19 material 1
+spawn func_breakable targetname o20 model *16 health 10 spawnobject 20 material 1
+spawn func_breakable targetname o0 model *17 health 10 spawnobject 0 material 1
+spawn func_breakable targetname ex model *18 health 10 explodemagnitude 100 material 1 origin "4000 0 0"
+spawn func_breakable targetname victim model *19 health 10 material 1 origin "4080 0 0"
+spawn func_breakable targetname rnd model *20 health 10 explosion 0 material 1 origin "0 3000 0"
+spawn trigger_hurt model *21 dmg 50 damagetype 0 origin "0 2900 0"
+activate
+connect 1 P1
+frames 3
+mark materials
+fire m0
+frames 1
+expectn 1 ch2 debris/bustglass
+expectn 1 0 25 1
+fire m1
+frames 1
+expectn 1 ch2 debris/bustcrate
+expectn 1 0 25 8
+fire m2
+frames 1
+expectn 1 ch2 debris/bustmetal
+expectn 1 0 25 2
+fire m3
+frames 1
+expectn 1 ch2 debris/bustflesh
+expectn 1 0 25 4
+fire m4
+frames 1
+expectn 1 ch2 debris/bustconcrete
+expectn 1 0 25 64
+fire m5
+frames 1
+expectn 1 ch2 debris/bustceiling
+expectn 1 0 25 0
+fire m6
+frames 1
+expectn 2 ch2 debris/bustmetal
+expectn 2 0 25 2
+fire m7
+frames 1
+expectdump m7 solid=4
+fire m8
+frames 1
+expectn 2 ch2 debris/bustconcrete
+expectn 2 0 25 64
+expectn 0 MSG svc23 ->area: 3 
+mark objects
+fire o1
+fire o14
+fire o15
+fire o17
+fire o18
+fire o19
+fire o20
+fire o0
+frames 3
+expectn 9 ch2 debris/bustcrate
+expectcount item_battery 1
+expectcount weapon_rpg 1
+expectcount ammo_rpgclip 1
+expectcount weapon_handgrenade 1
+expectcount weapon_tripmine 1
+expectcount weapon_satchel 1
+expectcount weapon_snark 1
+expectn 0 MSG svc23 ->area: 3 
+mark explode
+fire ex
+frames 3
+expect MSG svc23 ->area: 3 4000 0 0 
+expectcount func_breakable 2
+mark random
+touchent 20 19
+frames 3
+expectn 1 MSG svc23 ->area: 108 0 3000 0 64 64 64 0 0 0 10
+expectcount func_breakable 1

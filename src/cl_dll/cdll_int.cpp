@@ -28,6 +28,8 @@ extern "C"
 #include "pm_shared.h"
 }
 
+#include "mover_prediction.h"	// SBO 2.0: mover prediction
+
 #include <string.h>
 #include "viewport.h"
 #include "vgui2/vgui2_api.h"
@@ -36,6 +38,7 @@ extern "C"
 #include "particleman.h"
 #include "IParticleMan_Active.h"
 #include "environment.h"
+#include "movewith_client.h"	// SBO 2.0: entity parenting
 
 #define DLLEXPORT __declspec( dllexport )
 
@@ -51,6 +54,7 @@ void CL_UnloadParticleMan( void );
 void InitInput (void);
 void EV_HookEvents( void );
 void IN_Commands( void );
+void IN_CursorFrame( void );
 
 /*
 ========================== 
@@ -127,7 +131,19 @@ void DLLEXPORT HUD_PlayerMove( struct playermove_s *ppmove, int server )
 #ifdef SBO_TEST_COMMANDS
 	Materials_TestFrame();	// test_cl_materials: footsteps printed by pm_shared.c
 #endif
+	// SBO 2.0 mover prediction (docs/MOVER_PREDICTION.md) and movewith (docs/MOVEWITH.md), the client's prediction
+	// only: the movers where the server will have them when this command runs, then the movewith children composed on
+	// them, then the player carried and pushed by both
+	if ( !server )
+	{
+		MoverPrediction_PlaceMovers( ppmove );
+		MoveWith_PlayerMove( ppmove );
+		MoverPrediction_MovePlayer( ppmove );
+	}
 	PM_Move( ppmove, server );
+
+	if ( !server )
+		MoverPrediction_PostMove( ppmove );
 }
 
 int DLLEXPORT Initialize( cl_enginefunc_t *pEnginefuncs, int iVersion )
@@ -171,6 +187,7 @@ char g_szMapStateLevel[64];
 int DLLEXPORT HUD_VidInit( void )
 {
 	gHUD.VidInit();
+	MoveWith_VidInit();	// SBO 2.0 movewith: the client-placed children of the last map
 
 	// SBO 2.0: a new map starts with no fog, no fog zones and no weather until the server's messages (InitHUD resets
 	// them too). This does not rely on InitHUD alone: on the playtest of 2026-10-17 the previous map's fog and rain
@@ -307,6 +324,9 @@ void DLLEXPORT HUD_Frame( double time )
 
 	VGui2_Frame();
 	VGui2_Updater_Frame();
+
+	// the cursor of a dialog or menu shown after a disconnect (IN_MouseMove no longer runs)
+	IN_CursorFrame();
 
 	// SBO 2.0: SBO ships no config.cfg (unpacking a build never overwrites a player's settings) but default.cfg. On the
 	// first frame (the engine has run its startup config by then: syndicate/config.cfg, or Half-Life's from valve/ when

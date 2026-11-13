@@ -1,0 +1,37 @@
+# co_crackdown_v1: scientist "Janitor" (spawnflags 402, TriggerCondition 4 -> JanitorKilled) removed by trigger_relay RemoveJanitor's killtarget; feds JohnFed (grunts, dark_grunt Ff 1, cyborg) removed by RemoveFeds
+# covers: trigger_relay.killtarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist targetname Janitor spawnflags 402 TriggerCondition 4 TriggerTarget JanitorKilled origin "0 300 0"
+spawn trigger_relay targetname RemoveJanitor killtarget Janitor triggerstate 2 spawnflags 1
+spawn trigger_relay targetname JanitorKilled target jk_sink triggerstate 2
+spawn monster_human_grunt targetname JohnFed weapons 1 origin "300 300 0"
+spawn monster_human_grunt targetname JohnFed weapons 1 origin "300 400 0"
+spawn dark_grunt targetname JohnFed weapons 1 Ff 1 origin "300 500 0"
+spawn monster_cyborg targetname JohnFed weapons 8 origin "600 500 0"
+spawn trigger_relay targetname RemoveFeds killtarget JohnFed triggerstate 2 spawnflags 1
+activate
+frames 30
+count monster_scientist
+count monster_human_grunt
+useent 1 world
+useent 7 world
+frames 30
+count monster_scientist
+count monster_human_grunt
+count dark_grunt
+count monster_cyborg
+expectn 0 Firing: (JanitorKilled)
+expectcount monster_scientist 0
+expectcount monster_human_grunt 0
+expectcount dark_grunt 0
+expectcount monster_cyborg 0

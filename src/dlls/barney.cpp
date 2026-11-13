@@ -623,6 +623,10 @@ static BOOL IsFacing( entvars_t *pevTest, const Vector &reference )
 
 int CBarney :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType)
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	// SBO 2.0: XP for damage to a living barney (2 per point, mp_XP 1), before the damage, as CHGrunt::TakeDamage and
 	// the other monsters give it
 	if ( IsAlive() )

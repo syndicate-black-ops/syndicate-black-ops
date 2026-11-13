@@ -1,0 +1,40 @@
+# path_corner "New Train rot. Speed" (yaw_speed, FGD): a fired func_train leaving p1 (yaw_speed 30) turns at 30
+# degrees a second while it moves (avelocity yaw 30), keeps that rate past p2 (yaw_speed 0: no change), and stops
+# turning while it waits at p3 (Wait for retrigger, 1); fired again it turns at 30 again. A second train whose
+# corners all set 0 (every map's value but co_mictlanparty's B_16) keeps its own avelocity (0 10 0), moving and
+# stopped, as in 1.38. 1.38 never read the key: the first train never turned (approved difference
+# path-corner-yaw-speed). The stub moves movers by their think times
+# covers: path_corner.yaw_speed
+map co_fuzz
+brushsize 64 64 64
+spawn func_train targetname tr model *1 target p1 speed 100
+spawn path_corner targetname p1 origin "0 0 0" target p2 yaw_speed 30
+spawn path_corner targetname p2 origin "100 0 0" target p3 yaw_speed 0
+spawn path_corner targetname p3 origin "300 0 0" target p1 spawnflags 1
+spawn func_train targetname spin model *2 target a1 speed 100 avelocity "0 10 0"
+spawn path_corner targetname a1 origin "0 512 0" target a2 yaw_speed 0
+spawn path_corner targetname a2 origin "100 512 0" target a1 spawnflags 1
+activate
+connect 1 P1
+frames 3
+expectfield tr avelocity "0 0 0"
+mark go
+fire tr
+fire spin
+frames 5
+mark t0.5_leaving_p1
+expectfield tr avelocity "0 30 0"
+expectfield spin avelocity "0 10 0"
+frames 10
+mark t1.5_past_p2
+expectfield tr avelocity "0 30 0"
+frames 25
+mark t4_waiting_p3
+expectfield tr origin "300 0 0"
+expectfield tr avelocity "0 0 0"
+expectfield spin origin "100 512 0"
+expectfield spin avelocity "0 10 0"
+fire tr
+frames 5
+mark t4.5_again
+expectfield tr avelocity "0 30 0"

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Offline tests of the updater (src/cl_dll/updater, docs/UPDATER.md) with ASan/UBSan: JSON, versions, the release
 # list, paths, manifests, the install plan, markdown, SHA-256, Ed25519, inflate, the installer (rollback, crash
-# recovery, files in use) and a whole update through a fake HTTP server, on a scratch folder. Needs g++, gcc, python3.
+# recovery, files in use) and a whole update through a fake HTTP server, on a scratch folder; and the newest
+# CHANGELOG.md section rendered as the update dialog shows it. Needs g++, gcc, python3.
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
 T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
@@ -22,4 +23,6 @@ open(sys.argv[1], "wb").write(c.compress(plain) + c.flush())
 open(sys.argv[2], "wb").write(plain)
 PY
 mkdir -p "$T/scratch"
-"$T/updater_test" "$T/scratch" "$T/data.deflate" "$T/data.txt"
+VERSION=$(sed -n 's/^project([a-z]* VERSION \([0-9.]*\).*/\1/p' "$ROOT/CMakeLists.txt")
+python3 "$ROOT/scripts/updater_release.py" notes "$VERSION" > "$T/notes.md"
+"$T/updater_test" "$T/scratch" "$T/data.deflate" "$T/data.txt" "$T/notes.md"

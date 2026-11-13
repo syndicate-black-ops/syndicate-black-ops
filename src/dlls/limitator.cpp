@@ -29,10 +29,42 @@ public:
 
 LINK_ENTITY_TO_CLASS( Limitator, CLimitator );
 
+// SBO 2.0: called by the world before the map's other entities spawn (CWorld::Precache). No Limitator yet, and each
+// weapN starts as the reserve the loadout gives without a Limitator (coop.cpp), so a weapN a placed Limitator leaves
+// out gives that reserve with the loadout and with each ammo_reserve pickup (1.38: the value of the last map that set
+// it, or 1).
+void Limitator_ResetForMap( void )
+{
+	Limitat = 0;
+	m_Rc28 = 120;
+	m_K444 = 140;
+	m_Canon = 180;
+	m_Pm66 = 150;
+	m_Fa18 = 250;
+	m_Federal = 210;
+	m_Spa = 160;
+	m_Ben = 120;
+	m_Sw = 50;
+	m_Nm33 = 150;
+	m_Mini = 100;
+}
+
 void CLimitator::Spawn( void )
 {
 	pev->solid = SOLID_NOT;
 	Limitat = 1;
+
+	// 0 or below means no reserve ammo; above 900, the most each weapon carries, gives 900.
+	int *values[11] = { &m_Rc28, &m_K444, &m_Canon, &m_Pm66, &m_Fa18, &m_Federal, &m_Spa, &m_Ben, &m_Sw, &m_Nm33,
+		&m_Mini };
+	for ( int i = 0; i < 11; i++ )
+	{
+		int &v = *values[i];
+		if ( v < 0 )
+			v = 0;
+		else if ( v > 900 )
+			v = 900;
+	}
 }
 
 void CLimitator::KeyValue( KeyValueData *pkvd )
@@ -93,26 +125,4 @@ void CLimitator::KeyValue( KeyValueData *pkvd )
 		pkvd->fHandled = TRUE;
 	}
 
-	if ( m_Rc28 > 910 || m_Rc28 < 1 )
-		m_Rc28 = 1;
-	if ( m_K444 > 910 || m_K444 < 1 )
-		m_K444 = 1;
-	if ( m_Canon > 910 || m_Canon < 1 )
-		m_Canon = 1;
-	if ( m_Pm66 > 910 || m_Pm66 < 1 )
-		m_Pm66 = 1;
-	if ( m_Fa18 > 910 || m_Fa18 < 1 )
-		m_Fa18 = 1;
-	if ( m_Federal > 910 || m_Federal < 1 )
-		m_Federal = 1;
-	if ( m_Spa > 910 || m_Spa < 1 )
-		m_Spa = 1;
-	if ( m_Ben > 910 || m_Ben < 1 )
-		m_Ben = 1;
-	if ( m_Sw > 910 || m_Sw < 1 )
-		m_Sw = 1;
-	if ( m_Nm33 > 910 || m_Nm33 < 1 )
-		m_Nm33 = 1;
-	if ( m_Mini > 910 || m_Mini < 1 )
-		m_Mini = 1;
 }

@@ -1,0 +1,20 @@
+# trigger_auto "Global State to Read": fires only if that global state is On at the map start (env_global flag 1 "Set
+# Initial State"); Off, Dead or a state nobody set: it never fires (it does not wait for the state)
+# covers: trigger_auto.globalstate env_global:1 env_global.initialstate=0 env_global.initialstate=1 env_global.initialstate=2
+map co_fuzz
+spawn env_global globalstate gs_on initialstate 1 spawnflags 1
+spawn env_global globalstate gs_off initialstate 0 spawnflags 1
+spawn env_global globalstate gs_dead initialstate 2 spawnflags 1
+spawn env_global targetname later_on globalstate gs_unset triggermode 1
+spawn trigger_auto target auto_on globalstate gs_on
+spawn trigger_auto target auto_off globalstate gs_off
+spawn trigger_auto target auto_dead globalstate gs_dead
+spawn trigger_auto target auto_unset globalstate gs_unset
+activate
+frames 10
+fire later_on
+frames 20
+expectn 1 Firing: (auto_on)
+expectnot Firing: (auto_off)
+expectnot Firing: (auto_dead)
+expectnot Firing: (auto_unset)

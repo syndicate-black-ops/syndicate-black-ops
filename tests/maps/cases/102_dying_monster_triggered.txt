@@ -1,0 +1,27 @@
+# a named monster killed, then fired by its name while it dies and after: it stays dead (03c2ff48, halflife-updated
+# VS#3061: MonsterUse set a dying monster back to ALERT; SBO keeps "triggering a living monster alerts it")
+# covers: monster_zombie
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_zombie targetname z origin "0 300 0"
+spawn trigger_hurt dmg 1000 damagetype 4096
+activate
+connect 1 P1
+frames 10
+touchent 1 0
+frames 1
+fire z
+frames 30
+fire z
+frames 30
+dumpent z
+expectdump z deadflag=2

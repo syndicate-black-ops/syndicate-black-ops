@@ -1,0 +1,18 @@
+# a "volume" of nan or inf reads as unset (c12216b9): func_rotating and scripted_sentence play their sounds at the default
+# volume with a message for the mapper; 1.38 sent the sound with volume NaN (undefined in the engine)
+# covers: func_rotating.volume scripted_sentence.volume
+map co_fuzz
+spawn func_rotating model *1 targetname rot2 volume nan sounds 2 speed 100
+spawn func_rotating model *1 targetname rot3 volume inf sounds 1 speed 100
+spawn scripted_sentence targetname say entity talker sentence !BA_HELLO0 volume nan duration 1
+spawn monster_barney targetname talker origin "0 100 0"
+activate
+connect 1 P1
+frames 3
+fire rot2
+fire rot3
+fire say
+frames 10
+expectn 1 func_rotating "rot2": volume "nan" is not a number, using the default
+expectn 1 func_rotating "rot3": volume "inf" is not a number, using the default
+expectn 1 scripted_sentence "say": volume "nan" is not a number, using the default

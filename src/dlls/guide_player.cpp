@@ -387,7 +387,7 @@ public:
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT StartThink( void );
-	void Play( CBaseEntity *pActivator );
+	BOOL Play( CBaseEntity *pActivator );
 	void Stop( void );
 
 	int m_iChannel;
@@ -462,13 +462,15 @@ void CAmbientExtraSpeaker::Spawn( void )
 	}
 }
 
+// with the default target (the activator) nobody is there at the map start: it stays off, so the first trigger
+// plays it
 void CAmbientExtraSpeaker::StartThink( void )
 {
-	Play( NULL );
-	m_fActive = TRUE;
+	m_fActive = Play( NULL );
 }
 
-void CAmbientExtraSpeaker::Play( CBaseEntity *pActivator )
+// TRUE when the sound started
+BOOL CAmbientExtraSpeaker::Play( CBaseEntity *pActivator )
 {
 	CBaseEntity *pTarget = NULL;
 	if ( FStringNull( pev->target ) || FStrEq( STRING( pev->target ), "*player" ) )
@@ -476,14 +478,15 @@ void CAmbientExtraSpeaker::Play( CBaseEntity *pActivator )
 	else
 		pTarget = Locus_FindEntity( NULL, STRING( pev->target ), pActivator );
 	if ( !pTarget )
-		return;
+		return FALSE;
 
 	Stop();
 	CBaseEntity *pSpeaker = ExtraSpeaker_For( pTarget );
 	if ( !pSpeaker )
-		return;
+		return FALSE;
 	m_hSpeaker = pSpeaker;
 	EMIT_SOUND_DYN( pSpeaker->edict(), m_iChannel, STRING( pev->message ), pev->health * 0.1, m_flAttenuation, 0, m_iPitch );
+	return TRUE;
 }
 
 void CAmbientExtraSpeaker::Stop( void )
@@ -507,8 +510,5 @@ void CAmbientExtraSpeaker::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, U
 		m_fActive = FALSE;
 	}
 	else
-	{
-		Play( pActivator );
-		m_fActive = TRUE;
-	}
+		m_fActive = Play( pActivator );
 }

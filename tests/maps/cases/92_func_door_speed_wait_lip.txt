@@ -1,0 +1,43 @@
+# func_door / func_door_rotating speed, wait, lip, distance (FGD): a 64 unit door with Lip 8 stops 54 units along its
+# direction (HL: its size - 2 - lip) after 0.54 s at Speed 100; Wait 2: it stays open 2 s, then closes; Speed 50
+# takes twice as long, Wait -1 stays open. A rotating door turns Distance 90 degrees at Speed 45 (2 s), stays 1 s
+# (Wait 1) and turns back. The stub moves movers by their think times (no physics): the positions below are the
+# ends of each move
+# covers: func_door.speed func_door.wait func_door.lip func_door_rotating.speed func_door_rotating.wait func_door_rotating.distance
+map co_fuzz
+brushsize 64 64 128
+spawn func_door targetname d1 model *1 speed 100 wait 2 lip 8
+spawn func_door targetname d2 model *2 speed 50 wait -1 angles "0 90 0"
+spawn func_door_rotating targetname r1 model *3 speed 45 wait 1 distance 90
+activate
+connect 1 P1
+frames 3
+mark fire
+fire d1
+fire d2
+fire r1
+frames 5
+mark t0.5
+expectfield d1 origin "0 0 0"
+frames 2
+mark t0.7
+expectfield d1 origin "54 0 0"
+expectfield d2 origin "0 0 0"
+frames 11
+mark t1.8
+expectfield d2 origin "0 62 0"
+expectfield r1 angles "0 0 0"
+frames 4
+mark t2.2
+expectfield r1 angles "0 90 0"
+frames 3
+mark t2.5
+expectfield d1 origin "54 0 0"
+frames 10
+mark t3.5
+expectfield d1 origin "0 0 0"
+expectfield r1 angles "0 90 0"
+frames 20
+mark t5.5
+expectfield r1 angles "0 0 0"
+expectfield d2 origin "0 62 0"

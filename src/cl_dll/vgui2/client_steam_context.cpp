@@ -58,7 +58,7 @@ void CClientSteamContext::Activate()
 	m_bLoggedOn = (SteamUser() && SteamUtils() && SteamUser()->BLoggedOn());
 	char buf[64];
 	snprintf(buf, sizeof(buf), "CClientSteamContext logged on = %d\n", m_bLoggedOn ? 1 : 0);
-	sbo::ConsolePrint(buf);
+	sbo::DevPrint(buf);
 #endif
 }
 

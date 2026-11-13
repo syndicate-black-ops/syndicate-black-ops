@@ -1,0 +1,37 @@
+# monstermaker childtriggercondition 0 "No Trigger": a childtriggertarget alone fires nothing, not even at death.
+# 2 "Take Damage": hurt by a trigger_hurt (no monster or player attacker: the HL SDK sets no damage condition, see
+# 81d_monster_condition_2_take_damage) the child does not fire; killed, it does (CBaseMonster::Killed sets the light
+# damage condition so the trigger is not missed). 1.38 ignores the keys
+# covers: monstermaker.childtriggercondition=0 monstermaker.childtriggercondition=2
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk0 monstertype monster_scientist monstercount 1 childtriggertarget child_none origin "0 300 0"
+spawn monstermaker targetname mk2 monstertype monster_scientist monstercount 1 childtriggertarget child_damage childtriggercondition 2 origin "0 500 0"
+spawn trigger_hurt model *1 dmg 10 damagetype 0
+spawn trigger_hurt model *2 dmg 1000000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useent 0 world
+useent 1 world
+frames 30
+mark hurt
+touchclass 2 monster_scientist
+frames 20
+expectnot Firing: (child_damage)
+mark killed
+touchclass 3 monster_scientist
+frames 30
+expectnot Firing: (child_none)
+expectn 1 Firing: (child_damage)

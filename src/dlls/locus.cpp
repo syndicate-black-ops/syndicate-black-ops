@@ -19,6 +19,7 @@
 //   * locus_variable's marker entities stop being made when the map is close to the edict limit.
 //   * "*player" is the activator when it is a player (as Featureful in multiplayer); spectators never activate.
 //   * game_number and locus_variable take "round_reset" (round_hooks.h).
+//   * A blank or absent key whose FGD default is "*locus" is "*locus" (Locus_KeyOrLocus).
 //=========================================================
 
 // LOCUS_FUZZ (tests/locus): only the value parsing and the clamp, on stub headers
@@ -58,7 +59,7 @@ CBaseEntity *Locus_FindEntity( CBaseEntity *pStart, const char *szName, CBaseEnt
 	if ( !szName || !szName[0] )
 		return NULL;
 
-	if ( FStrEq( szName, "*locus" ) || FStrEq( szName, "!activator" ) )
+	if ( FStrEq( szName, "*locus" ) )
 	{
 		if ( pActivator && ( pStart == NULL || pActivator->eoffset() > pStart->eoffset() ) )
 			return pActivator;
@@ -73,7 +74,8 @@ CBaseEntity *Locus_FindEntity( CBaseEntity *pStart, const char *szName, CBaseEnt
 		return NULL;
 	}
 
-	return UTIL_FindEntityByTargetname( pStart, szName );
+	// "!activator" and the other target selectors, wildcards ("room1_*") and plain names (docs/ENTITY_TRIGGERING.md)
+	return UTIL_FindEntityByTargetname( pStart, szName, pActivator );
 }
 
 void Locus_StringToRandomVector( float *pVector, const char *pString )
@@ -278,6 +280,21 @@ BOOL TryCalcLocus_Color( CBaseEntity *pEntity, CBaseEntity *pLocus, const char *
 
 #ifndef LOCUS_FUZZ
 
+// SBO 2.0: a blank or absent "what to work from" key is "*locus", its FGD default (Featureful and Spirit failed or
+// used nothing: a map from another editor, or a key cleared at run time, would not work as the FGD says)
+const char *Locus_KeyOrLocus( string_t iszKey )
+{
+	if ( FStringNull( iszKey ) || !STRING( iszKey )[0] )
+		return "*locus";
+	return STRING( iszKey );
+}
+
+void Locus_DefaultToLocus( string_t &iszKey )
+{
+	if ( FStringNull( iszKey ) || !STRING( iszKey )[0] )
+		iszKey = MAKE_STRING( "*locus" );
+}
+
 // SBO: an attachment of a studio model that has it (Featureful: any CBaseAnimating; Spirit: any entity)
 static BOOL Locus_GetAttachment( CBaseEntity *pEntity, int iAttachment, Vector &origin, Vector &angles )
 {
@@ -302,17 +319,24 @@ static BOOL Locus_GetAttachment( CBaseEntity *pEntity, int iAttachment, Vector &
 class CCalcPosition : public CPointEntity
 {
 public:
+	void Spawn( void );
 	BOOL CalcPosition( CBaseEntity *pLocus, Vector *outVector );
 };
 
 LINK_ENTITY_TO_CLASS( calc_position, CCalcPosition );
 LINK_ENTITY_TO_CLASS( calc_posfroment, CCalcPosition );	// Spirit of Half-Life 1.8
 
+void CCalcPosition::Spawn( void )
+{
+	CPointEntity::Spawn();
+	Locus_DefaultToLocus( pev->netname );	// SBO 2.0: blank "Entity to use" is *locus
+}
+
 BOOL CCalcPosition::CalcPosition( CBaseEntity *pLocus, Vector *outVector )
 {
 	LOCUS_GUARD();
 
-	CBaseEntity *pSubject = Locus_FindEntity( NULL, STRING( pev->netname ), pLocus );
+	CBaseEntity *pSubject = Locus_FindEntity( NULL, Locus_KeyOrLocus( pev->netname ), pLocus );
 	if ( !pSubject )
 	{
 		ALERT( at_console, "%s \"%s\" failed to find target entity \"%s\"\n", STRING( pev->classname ), STRING( pev->targetname ), STRING( pev->netname ) );
@@ -381,6 +405,7 @@ BOOL CCalcPosition::CalcPosition( CBaseEntity *pLocus, Vector *outVector )
 		}
 		if ( !pSubject->CalcPosition( pLocus, outVector ) )
 			return FALSE;
+		*outVector = vecOffset + *outVector;	// SBO 2.0: Add offset as every other choice (Spirit / Featureful left it out)
 		break;
 	case 11: // body (Featureful 30fc2f71): the point monsters aim at
 		*outVector = vecOffset + pSubject->BodyTarget( pSubject->pev->origin );
@@ -445,7 +470,7 @@ static BOOL ClampToMinMax( CBaseEntity *pLocus, float &fBasis, string_t iszMin, 
 					while ( ( fBasis < fMin || fBasis > fMax ) && steps++ < LOCUS_CLAMP_STEPS )
 					{
 						if ( fBasis < fMin )
-							fBasis = fMin + fMax - fBasis;
+							fBasis = fMin + fMin - fBasis;
 						else
 							fBasis = fMax + fMax - fBasis;
 					}
@@ -532,6 +557,10 @@ public:
 
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
+	// SBO 2.1: "noise" / "noise1" (min / max) are numbers or names, not sounds: they may change at run time
+	BOOL RuntimeKeyNeedsPrecache( const char *keyName );
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -558,10 +587,56 @@ IMPLEMENT_SAVERESTORE( CCalcRatio, CPointEntity );
 void CCalcRatio::Spawn( void )
 {
 	CPointEntity::Spawn();
+	Locus_DefaultToLocus( pev->target );	// SBO 2.0: blank "Based on number" is *locus
 	m_iszMin = pev->noise;
 	pev->noise = iStringNull;
 	m_iszMax = pev->noise1;
 	pev->noise1 = iStringNull;
+}
+
+// SBO 2.1: calc_ratio and the calc velocity entities keep a value in an entvars sound field ("noise", "noise1"),
+// which Spawn moves into a member. At run time (trigger_changevalue / trigger_copyvalue) the key is not refused as a
+// sound, the new value moves into the member in the same way, and the member is what GetKeyValue reads.
+static BOOL Locus_IsValueField( const char *keyName, const char *field1, const char *field2 = NULL )
+{
+	return !stricmp( keyName, field1 ) || ( field2 && !stricmp( keyName, field2 ) );
+}
+
+static void Locus_TakeField( string_t &field, string_t &member )
+{
+	member = field;
+	field = iStringNull;
+}
+
+static CKeyValue Locus_StringKey( const char *keyName, string_t value )
+{
+	CKeyValue keyvalue = g_emptyKeyValue;
+	keyvalue.keyType = KEY_TYPE_STRING;
+	keyvalue.keyName = keyName;
+	keyvalue.sVal = value;
+	return keyvalue;
+}
+
+BOOL CCalcRatio::RuntimeKeyNeedsPrecache( const char *keyName )
+{
+	return !Locus_IsValueField( keyName, "noise", "noise1" ) && CPointEntity::RuntimeKeyNeedsPrecache( keyName );
+}
+
+CKeyValue CCalcRatio::GetKeyValue( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		return Locus_StringKey( "noise", m_iszMin );
+	if ( Locus_IsValueField( keyName, "noise1" ) )
+		return Locus_StringKey( "noise1", m_iszMax );
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+void CCalcRatio::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		Locus_TakeField( pev->noise, m_iszMin );
+	else if ( Locus_IsValueField( keyName, "noise1" ) )
+		Locus_TakeField( pev->noise1, m_iszMax );
 }
 
 void CCalcRatio::KeyValue( KeyValueData *pkvd )
@@ -585,7 +660,7 @@ BOOL CCalcRatio::CalcRatio( CBaseEntity *pLocus, float *outResult )
 	LOCUS_GUARD();
 
 	float fBasis = 0;
-	if ( !TryCalcLocus_Ratio( pLocus, STRING( pev->target ), fBasis ) )
+	if ( !TryCalcLocus_Ratio( pLocus, Locus_KeyOrLocus( pev->target ), fBasis ) )
 		return FALSE;
 
 	fBasis = ApplyCastMode( fBasis, m_baseCastMode );
@@ -663,6 +738,11 @@ static BOOL TryCalcLocus_Vector( CBaseEntity *pEntity, CBaseEntity *pLocus, cons
 class CCalcNumFromVec : public CPointEntity
 {
 public:
+	void Spawn( void )
+	{
+		CPointEntity::Spawn();
+		Locus_DefaultToLocus( pev->target );	// SBO 2.0: blank "Vector to use" is *locus
+	}
 	void KeyValue( KeyValueData *pkvd )
 	{
 		if ( FStrEq( pkvd->szKeyName, "vector_type" ) )
@@ -682,16 +762,12 @@ BOOL CCalcNumFromVec::CalcRatio( CBaseEntity *pLocus, float *outResult )
 {
 	LOCUS_GUARD();
 
-	if ( FStringNull( pev->target ) )
-	{
-		ALERT( at_console, "No base vector given for %s \"%s\"\n", STRING( pev->classname ), STRING( pev->targetname ) );
-		return FALSE;
-	}
-
+	// SBO 2.0: a blank "Vector to use" is *locus (Featureful: "No base vector given", no value)
+	const char *szVector = Locus_KeyOrLocus( pev->target );
 	Vector vecA;
-	if ( !TryCalcLocus_Vector( this, pLocus, STRING( pev->target ), vecA, pev->weapons ) )
+	if ( !TryCalcLocus_Vector( this, pLocus, szVector, vecA, pev->weapons ) )
 	{
-		ALERT( at_console, "%s: Couldn't get the vector value from %s\n", STRING( pev->classname ), STRING( pev->target ) );
+		ALERT( at_console, "%s: Couldn't get the vector value from %s\n", STRING( pev->classname ), szVector );
 		return FALSE;
 	}
 
@@ -814,6 +890,10 @@ public:
 	BOOL CalcVelocity( CBaseEntity *pLocus, Vector *outResult );
 
 	void Spawn( void );
+	// SBO 2.1: "noise" (the factor) is a number or a name, not a sound: it may change at run time
+	BOOL RuntimeKeyNeedsPrecache( const char *keyName );
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -834,8 +914,27 @@ IMPLEMENT_SAVERESTORE( CCalcSubVelocity, CPointEntity );
 void CCalcSubVelocity::Spawn( void )
 {
 	CPointEntity::Spawn();
+	Locus_DefaultToLocus( pev->netname );	// SBO 2.0: blank "Entity to use" is *locus
 	m_iszFactor = pev->noise;
 	pev->noise = iStringNull;
+}
+
+BOOL CCalcSubVelocity::RuntimeKeyNeedsPrecache( const char *keyName )
+{
+	return !Locus_IsValueField( keyName, "noise" ) && CPointEntity::RuntimeKeyNeedsPrecache( keyName );
+}
+
+CKeyValue CCalcSubVelocity::GetKeyValue( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		return Locus_StringKey( "noise", m_iszFactor );
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+void CCalcSubVelocity::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		Locus_TakeField( pev->noise, m_iszFactor );
 }
 
 BOOL CCalcSubVelocity::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
@@ -843,15 +942,12 @@ BOOL CCalcSubVelocity::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
 	LOCUS_GUARD();
 
 	// Note: this loses the original pLocus. This is how it's coded in all versions of SoHL
-	pLocus = Locus_FindEntity( NULL, STRING( pev->netname ), pLocus );
+	pLocus = Locus_FindEntity( NULL, Locus_KeyOrLocus( pev->netname ), pLocus );
 	if ( !pLocus )
 	{
 		ALERT( at_console, "%s \"%s\" failed to find target entity \"%s\"\n", STRING( pev->classname ), STRING( pev->targetname ), STRING( pev->netname ) );
 		return FALSE;
 	}
-
-	Vector vecAngles;
-	Vector vecJunk;
 
 	switch ( pev->impulse )
 	{
@@ -863,12 +959,9 @@ BOOL CCalcSubVelocity::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
 	case 6:
 	case 7:
 	case 8:
-		if ( !Locus_GetAttachment( pLocus, pev->impulse - 5, vecJunk, vecAngles ) )
-		{
-			ALERT( at_console, "%s \"%s\": \"%s\" has no attachment %d\n", STRING( pev->classname ), STRING( pev->targetname ), STRING( pLocus->pev->classname ), pev->impulse - 4 );
-			return FALSE;
-		}
-		return ConvertAngles( pLocus, vecAngles, outResult );
+		// Spirit's attachment directions: the engine's GetAttachment gives no angles, so there is no value
+		ALERT( at_console, "%s \"%s\": no attachment direction (Value to calculate from %d)\n", STRING( pev->classname ), STRING( pev->targetname ), pev->impulse );
+		return FALSE;
 	case 10:
 	{
 		if ( pLocus == this )
@@ -936,6 +1029,10 @@ public:
 	BOOL CalcVelocity( CBaseEntity *pLocus, Vector *outVector );
 
 	void Spawn( void );
+	// SBO 2.1: "noise" (the factor) is a number or a name, not a sound: it may change at run time
+	BOOL RuntimeKeyNeedsPrecache( const char *keyName );
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -956,20 +1053,37 @@ IMPLEMENT_SAVERESTORE( CCalcVelocityPath, CPointEntity );
 void CCalcVelocityPath::Spawn( void )
 {
 	CPointEntity::Spawn();
+	Locus_DefaultToLocus( pev->target );	// SBO 2.0: blank "Start position" is *locus
 	m_iszFactor = pev->noise;
 	pev->noise = iStringNull;
+}
+
+BOOL CCalcVelocityPath::RuntimeKeyNeedsPrecache( const char *keyName )
+{
+	return !Locus_IsValueField( keyName, "noise" ) && CPointEntity::RuntimeKeyNeedsPrecache( keyName );
+}
+
+CKeyValue CCalcVelocityPath::GetKeyValue( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		return Locus_StringKey( "noise", m_iszFactor );
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+void CCalcVelocityPath::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		Locus_TakeField( pev->noise, m_iszFactor );
 }
 
 BOOL CCalcVelocityPath::CalcVelocity( CBaseEntity *pLocus, Vector *outVector )
 {
 	LOCUS_GUARD();
 
-	Vector vecStart = pev->origin;
-	if ( !FStringNull( pev->target ) )
-	{
-		if ( !TryCalcLocus_Position( this, pLocus, STRING( pev->target ), vecStart ) )
-			return FALSE;
-	}
+	// SBO 2.0: a blank "Start position" is *locus (Featureful: this entity's origin, which the FGD default never gave)
+	Vector vecStart;
+	if ( !TryCalcLocus_Position( this, pLocus, Locus_KeyOrLocus( pev->target ), vecStart ) )
+		return FALSE;
 
 	Vector vecOffs = g_vecZero;
 	float fFactor = 1;
@@ -1046,6 +1160,10 @@ public:
 	BOOL CalcVelocity( CBaseEntity *pLocus, Vector *outResult );
 
 	void Spawn( void );
+	// SBO 2.1: "noise" (the factor) is a number or a name, not a sound: it may change at run time
+	BOOL RuntimeKeyNeedsPrecache( const char *keyName );
+	CKeyValue GetKeyValue( const char *keyName );
+	void RuntimeKeyValueChanged( const char *keyName );
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );
 	static	TYPEDESCRIPTION m_SaveData[];
@@ -1066,8 +1184,27 @@ IMPLEMENT_SAVERESTORE( CCalcVelocityPolar, CPointEntity );
 void CCalcVelocityPolar::Spawn( void )
 {
 	CPointEntity::Spawn();
+	Locus_DefaultToLocus( pev->netname );	// SBO 2.0: blank "Based on vector" is *locus
 	m_iszFactor = pev->noise;
 	pev->noise = iStringNull;
+}
+
+BOOL CCalcVelocityPolar::RuntimeKeyNeedsPrecache( const char *keyName )
+{
+	return !Locus_IsValueField( keyName, "noise" ) && CPointEntity::RuntimeKeyNeedsPrecache( keyName );
+}
+
+CKeyValue CCalcVelocityPolar::GetKeyValue( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		return Locus_StringKey( "noise", m_iszFactor );
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+void CCalcVelocityPolar::RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( Locus_IsValueField( keyName, "noise" ) )
+		Locus_TakeField( pev->noise, m_iszFactor );
 }
 
 BOOL CCalcVelocityPolar::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
@@ -1075,7 +1212,7 @@ BOOL CCalcVelocityPolar::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
 	LOCUS_GUARD();
 
 	Vector vecBasis = g_vecZero;
-	TryCalcLocus_Velocity( this, pLocus, STRING( pev->netname ), vecBasis );
+	TryCalcLocus_Velocity( this, pLocus, Locus_KeyOrLocus( pev->netname ), vecBasis );
 	Vector vecAngles = UTIL_VecToAngles( vecBasis ) + pev->angles;
 	Vector vecOffset = g_vecZero;
 	if ( pev->message )
@@ -1095,7 +1232,11 @@ BOOL CCalcVelocityPolar::CalcVelocity( CBaseEntity *pLocus, Vector *outResult )
 		fFactor = fFactor * vecBasis.Length();
 
 	UTIL_MakeVectors( vecAngles );
-	*outResult = ( gpGlobals->v_forward * fFactor ) + vecOffset;
+	Vector vecResult = gpGlobals->v_forward * fFactor;
+	// Spirit of Half-Life 1.8: VecToAngles gives an upward vector a positive pitch, MakeVectors turns a positive pitch
+	// downward, so the up / down part is mirrored back (without it a vector with a Z part came out upside down)
+	vecResult.z = -vecResult.z;
+	*outResult = vecResult + vecOffset;
 	return TRUE;
 }
 
@@ -1199,6 +1340,10 @@ void CLocusVariable::Spawn( void )
 {
 	CPointEntity::Spawn();
 	SetMovedir( pev );
+	// SBO 2.0: a blank or absent key records *locus, the FGD default
+	Locus_DefaultToLocus( m_iszPosition );
+	Locus_DefaultToLocus( m_iszVelocity );
+	Locus_DefaultToLocus( m_iszRatio );
 	m_vecSpawnOrigin = pev->origin;
 	m_vecSpawnMovedir = pev->movedir;
 }
@@ -1219,12 +1364,15 @@ void CLocusVariable::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	Vector vecPos = g_vecZero;
 	Vector vecDir = g_vecZero;
 	float fRatio = 0;
-	if ( m_iszPosition )
-		TryCalcLocus_Position( this, pActivator, STRING( m_iszPosition ), vecPos );
-	if ( m_iszVelocity )
-		TryCalcLocus_Velocity( this, pActivator, STRING( m_iszVelocity ), vecDir );
-	if ( m_iszRatio )
-		TryCalcLocus_Ratio( pActivator, STRING( m_iszRatio ), fRatio );
+
+	// SBO 2.0: a key that can't be computed (a missing entity, a calc entity that fails) gives no value: nothing is
+	// stored, made or fired this time (docs/LOCUS.md; Featureful stored 0 0 0 / 0 for it). A blank key is *locus.
+	if ( !TryCalcLocus_Position( this, pActivator, Locus_KeyOrLocus( m_iszPosition ), vecPos ) )
+		return;
+	if ( !TryCalcLocus_Velocity( this, pActivator, Locus_KeyOrLocus( m_iszVelocity ), vecDir ) )
+		return;
+	if ( !TryCalcLocus_Ratio( pActivator, Locus_KeyOrLocus( m_iszRatio ), fRatio ) )
+		return;
 
 	if ( m_iszTargetName )
 	{

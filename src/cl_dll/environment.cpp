@@ -15,6 +15,10 @@
 //  * no weather on the spectator's overview map; with a camera inset it is around the inset's camera (tri.cpp);
 //  * particles can be refused at the particle cap (CMiniMem::MaxParticles): every `new` is checked;
 //  * ReceiveW replaces the current weather (no duplicate warnings when it is resent on each respawn).
+//  * SBO 2.0: env_rain / env_snow keys and the rain / snow volumes arrive in WeatherVol (MsgFunc_WeatherVol), which
+//    sets the RainData / SnowData fields cs16-client's Rain / Snow messages set.
+//  * SBO 2.0: a weather's own wind (Spirit of Half-Life's rain_modify wind: a fixed sideways speed and a random
+//    spread per drop / flake, cl_dll/rain.cpp), which replaces the CS wind for that weather (WeatherData::WindVelocity).
 //  * a ceiling of the env_sky tool texture (SoHL 3D sky, no face) counts as sky (SkyAbove).
 // See docs/WEATHER.md.
 //
@@ -102,6 +106,7 @@ enum
 #define SF_WEATHER_GO_THROUGH_BRUSH_ENTITIES (1 << 8)
 #define SF_WEATHER_IGNORE_WATER (1 << 9)
 #define WEATHER_BRUSH_ENTITY (1 << 12)
+#define WEATHER_FIXED_WIND (1 << 13)	// SBO 2.0: the server's wind_x / wind_y (triggers.cpp WEATHERVOL_FIXED_WIND)
 
 #define SF_RAIN_ACTIVE SF_WEATHER_ACTIVE
 #define SF_RAIN_NOT_AFFECTED_BY_WIND SF_WEATHER_NOT_AFFECTED_BY_WIND
@@ -237,8 +242,27 @@ WeatherData::WeatherData():
 	location(0.0f,0.0f,0.0f),
 	absmin(0.0f,0.0f,0.0f),
 	absmax(0.0f,0.0f,0.0f),
-	updateTime(0.0f)
+	updateTime(0.0f),
+	windX(0.0f),
+	windY(0.0f),
+	windRandX(0.0f),
+	windRandY(0.0f)
 {}
+
+bool WeatherData::HasFixedWind() const
+{
+	return (flags & WEATHER_FIXED_WIND) != 0;
+}
+
+// SBO 2.0: Spirit's random spread on the sideways speed of a new drop / flake (-randX..randX, -randY..randY), on the
+// fixed wind or the CS wind. No spread: no extra random calls.
+void WeatherData::AddWindSpread(Vector& velocity) const
+{
+	if (windRandX > 0.0f)
+		velocity.x += Com_RandomFloat(-windRandX, windRandX);
+	if (windRandY > 0.0f)
+		velocity.y += Com_RandomFloat(-windRandY, windRandY);
+}
 
 bool WeatherData::IsLocalizedPoint() const
 {
@@ -744,6 +768,8 @@ void CEnvironment::Initialize()
 
 	m_flWeatherValue = gHUD.cl_weather ? gHUD.cl_weather->value : 0.0f;
 	m_iSavedWeatherType = 0;
+	m_savedRains.clear();
+	m_savedSnows.clear();
 
 	RestoreWeather();
 }
@@ -754,36 +780,54 @@ void CEnvironment::RestoreWeather()
 	{
 		RainData rainData;
 		rainData.flags = SF_RAIN_ACTIVE;
-
-		if (!m_pRainSprite)
-			m_pRainSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_RAINDROP].path);
-		rainData.rainSprite = m_pRainSprite;
-
-		if (!m_pGasPuffSprite)
-			m_pGasPuffSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_WINDPUFF].path);
-		rainData.windPuffSprite = m_pGasPuffSprite;
-
-		if (!m_pRainSplash)
-			m_pRainSplash = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_SPLASH].path);
-		rainData.splashSprite = m_pRainSplash;
-
-		if (!m_pRipple)
-			m_pRipple = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_RIPPLE].path);
-		rainData.rippleSprite = m_pRipple;
-
+		SetRainSprites(rainData);
 		AddRain(rainData);
 	}
 	else if (m_iSavedWeatherType == 2)
 	{
 		SnowData snowData;
 		snowData.flags = SF_SNOW_ACTIVE;
-
-		if (!m_pSnowSprite)
-			m_pSnowSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_SNOWFLAKE].path);
-		snowData.snowSprite = m_pSnowSprite;
-
+		SetSnowSprites(snowData);
 		AddSnow(snowData);
 	}
+
+	// SBO 2.0: the server's env_rain / env_snow (WeatherVol); the sprites are loaded again (video restart)
+	for (RainData rainData : m_savedRains)
+	{
+		SetRainSprites(rainData);
+		AddRain(rainData);
+	}
+	for (SnowData snowData : m_savedSnows)
+	{
+		SetSnowSprites(snowData);
+		AddSnow(snowData);
+	}
+}
+
+void CEnvironment::SetRainSprites(RainData& rainData)
+{
+	if (!m_pRainSprite)
+		m_pRainSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_RAINDROP].path);
+	rainData.rainSprite = m_pRainSprite;
+
+	if (!m_pGasPuffSprite)
+		m_pGasPuffSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_WINDPUFF].path);
+	rainData.windPuffSprite = m_pGasPuffSprite;
+
+	if (!m_pRainSplash)
+		m_pRainSplash = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_SPLASH].path);
+	rainData.splashSprite = m_pRainSplash;
+
+	if (!m_pRipple)
+		m_pRipple = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_RIPPLE].path);
+	rainData.rippleSprite = m_pRipple;
+}
+
+void CEnvironment::SetSnowSprites(SnowData& snowData)
+{
+	if (!m_pSnowSprite)
+		m_pSnowSprite = LoadSprite(WEATHER_SPRITES[WEATHER_SPRITE_SNOWFLAKE].path);
+	snowData.snowSprite = m_pSnowSprite;
 }
 
 void CEnvironment::Reset()
@@ -1323,8 +1367,18 @@ CPartRainDrop* CEnvironment::CreateRaindrop( const Vector& vecOrigin, const Rain
 
 	if (rainData.RaindropsAffectedByWind())
 	{
-		pParticle->m_vVelocity.x = m_vecWind.x * Com_RandomFloat( 1.0f, 2.0f );
-		pParticle->m_vVelocity.y = m_vecWind.y * Com_RandomFloat( 1.0f, 2.0f );
+		// SBO 2.0: the weather's own wind (Spirit: every drop the same, plus the spread)
+		if (rainData.HasFixedWind())
+		{
+			pParticle->m_vVelocity.x = rainData.windX;
+			pParticle->m_vVelocity.y = rainData.windY;
+		}
+		else
+		{
+			pParticle->m_vVelocity.x = m_vecWind.x * Com_RandomFloat( 1.0f, 2.0f );
+			pParticle->m_vVelocity.y = m_vecWind.y * Com_RandomFloat( 1.0f, 2.0f );
+		}
+		rainData.AddWindSpread( pParticle->m_vVelocity );
 	}
 	else
 	{
@@ -1387,8 +1441,10 @@ CPartWind* CEnvironment::CreateWindParticle( const Vector& vecOrigin, const Rain
 
 	//pParticle->m_iFrame = UTIL_RandomLong( m_pGasPuffSprite->numframes / 2, m_pGasPuffSprite->numframes );
 
-	pParticle->m_vVelocity.x = m_vecWind.x / Com_RandomFloat( 1.0f, 2.0f );
-	pParticle->m_vVelocity.y = m_vecWind.y / Com_RandomFloat( 1.0f, 2.0f );
+	// SBO 2.0: the puffs blow with the weather's own wind when it has one
+	const Vector vecWind = rainData.HasFixedWind() ? Vector( rainData.windX, rainData.windY, 0.0f ) : m_vecWind;
+	pParticle->m_vVelocity.x = vecWind.x / Com_RandomFloat( 1.0f, 2.0f );
+	pParticle->m_vVelocity.y = vecWind.y / Com_RandomFloat( 1.0f, 2.0f );
 
 	if( Com_RandomFloat( 0.0, 1.0 ) < 0.1 )
 	{
@@ -1451,8 +1507,18 @@ void CEnvironment::CreateSnowFlake( const Vector& vecOrigin, const SnowData& sno
 
 	if (snowData.SnowflakesAffectedByWind())
 	{
-		pParticle->m_vVelocity.x = m_vecWind.x / Com_RandomFloat( 1.0, 2.0 );
-		pParticle->m_vVelocity.y = m_vecWind.y / Com_RandomFloat( 1.0, 2.0 );
+		// SBO 2.0: the weather's own wind (Spirit: every flake the same, plus the spread)
+		if (snowData.HasFixedWind())
+		{
+			pParticle->m_vVelocity.x = snowData.windX;
+			pParticle->m_vVelocity.y = snowData.windY;
+		}
+		else
+		{
+			pParticle->m_vVelocity.x = m_vecWind.x / Com_RandomFloat( 1.0, 2.0 );
+			pParticle->m_vVelocity.y = m_vecWind.y / Com_RandomFloat( 1.0, 2.0 );
+		}
+		snowData.AddWindSpread( pParticle->m_vVelocity );
 	}
 	else
 	{
@@ -1481,7 +1547,7 @@ void CEnvironment::CreateSnowFlake( const Vector& vecOrigin, const SnowData& sno
 			pParticle->m_vVelocity.z = -75.0;
 		}
 	}
-	else
+	else if (!snowData.HasFixedWind())	// SBO 2.0: the CS wind's gusts; a fixed wind is the same for every flake
 	{
 		pParticle->m_vVelocity.x *= 0.5;
 		pParticle->m_vVelocity.y *= 0.5;
@@ -1516,20 +1582,19 @@ int CEnvironment::MsgFunc_ReceiveW(const char *pszName, int iSize, void *pbuf)
 
 	const int weatherType = READ_BYTE();
 
+	// SBO: the server resends ReceiveW on every respawn; replace the weather instead of adding a duplicate. SBO 2.0:
+	// every whole-map weather goes, the server's env_rain / env_snow too (SBO's server sends 0 and then those in
+	// WeatherVol); the volumes stay
+	RemoveGlobalWeather();
+
 	if( weatherType == 0 )
 	{
 		m_iSavedWeatherType = 0;
-		RemoveRain(0);
-		RemoveSnow(0);
 		return 1;
 	}
 
 	if (weatherType < 1 || weatherType > 2)
 		return 1;
-
-	// SBO: the server resends ReceiveW on every respawn; replace the weather instead of adding a duplicate
-	RemoveRain(0);
-	RemoveSnow(0);
 
 	m_iSavedWeatherType = weatherType;
 
@@ -1538,9 +1603,12 @@ int CEnvironment::MsgFunc_ReceiveW(const char *pszName, int iSize, void *pbuf)
 	return 1;
 }
 
-// SBO 2.0: a rain or snow volume (server: triggers.cpp CWeatherVolume::Send). The volume keeps the server's entity
-// index, so a resend (respawn, switched on / off) replaces it; type 0 removes it. A size, speed or life of 0 keeps the
-// CS default. Volume spawning is cs16-client's (WeatherData::IsVolume: anywhere in the box, PVS check of the box).
+// SBO 2.0: a rain or snow (server: triggers.cpp CWeatherBase::Send): an env_rain / env_snow (whole-map weather around
+// the view, like ReceiveW's) or, with the brush flag, a func_rainvolume / func_snowvolume. It keeps the server's entity
+// index, so a resend (respawn, switched on / off, a key changed at run time) replaces it; type 0 removes it. An
+// intensity, update period, size, speed or life of 0 keeps the CS default. The wind: with WEATHER_FIXED_WIND the
+// weather's own (wind x / y), else the CS wind; the spread (0: none) on either. Volume spawning is cs16-client's
+// (WeatherData::IsVolume: anywhere in the box, PVS check of the box).
 int CEnvironment::MsgFunc_WeatherVol(const char *pszName, int iSize, void *pbuf)
 {
 	BEGIN_READ( pbuf, iSize );
@@ -1562,27 +1630,45 @@ int CEnvironment::MsgFunc_WeatherVol(const char *pszName, int iSize, void *pbuf)
 	const int speed1 = READ_SHORT();
 	const int speed2 = READ_SHORT();
 	const float life = READ_SHORT() / 100.0f;
+	const float windX = (float)READ_SHORT();
+	const float windY = (float)READ_SHORT();
+	const int randX = READ_SHORT();
+	const int randY = READ_SHORT();
 
 	// index 0 is the global weather (ReceiveW); a volume never has it
 	if ( entIndex <= 0 )
 		return 1;
 
+	const bool bVolume = ( flags & WEATHER_BRUSH_ENTITY ) != 0;
+
 	RemoveRain( entIndex );
 	RemoveSnow( entIndex );
+	auto IsIndex = [entIndex]( const WeatherData& data ) { return data.entIndex == entIndex; };
+	m_savedRains.erase( std::remove_if( m_savedRains.begin(), m_savedRains.end(), IsIndex ), m_savedRains.end() );
+	m_savedSnows.erase( std::remove_if( m_savedSnows.begin(), m_savedSnows.end(), IsIndex ), m_savedSnows.end() );
 
 	if ( type != 1 && type != 2 )
 		return 1;
-	if ( !( absmax.x > absmin.x && absmax.y > absmin.y && absmax.z > absmin.z ) )
+	if ( bVolume && !( absmax.x > absmin.x && absmax.y > absmin.y && absmax.z > absmin.z ) )
 		return 1;
 
 	auto SetBase = [&]( WeatherData& data )
 	{
 		data.entIndex = entIndex;
 		data.flags = flags;
-		data.intensity = (short)( intensity < 0 ? 0 : ( intensity > 1000 ? 1000 : intensity ) );
-		data.updatePeriod = updatePeriod < 0.05f ? 0.05f : updatePeriod;
-		data.absmin = absmin;
-		data.absmax = absmax;
+		data.windX = windX;
+		data.windY = windY;
+		data.windRandX = randX > 0 ? (float)randX : 0.0f;
+		data.windRandY = randY > 0 ? (float)randY : 0.0f;
+		if ( intensity > 0 )
+			data.intensity = (short)( intensity > 1000 ? 1000 : intensity );
+		if ( updatePeriod > 0 )
+			data.updatePeriod = updatePeriod < 0.05f ? 0.05f : updatePeriod;
+		if ( bVolume )
+		{
+			data.absmin = absmin;
+			data.absmax = absmax;
+		}
 	};
 
 	if ( type == 1 )
@@ -1600,19 +1686,10 @@ int CEnvironment::MsgFunc_WeatherVol(const char *pszName, int iSize, void *pbuf)
 		if ( life > 0 )
 			rainData.raindropLife = life;
 
-		if ( !m_pRainSprite )
-			m_pRainSprite = LoadSprite( WEATHER_SPRITES[WEATHER_SPRITE_RAINDROP].path );
-		if ( !m_pGasPuffSprite )
-			m_pGasPuffSprite = LoadSprite( WEATHER_SPRITES[WEATHER_SPRITE_WINDPUFF].path );
-		if ( !m_pRainSplash )
-			m_pRainSplash = LoadSprite( WEATHER_SPRITES[WEATHER_SPRITE_SPLASH].path );
-		if ( !m_pRipple )
-			m_pRipple = LoadSprite( WEATHER_SPRITES[WEATHER_SPRITE_RIPPLE].path );
-		rainData.rainSprite = m_pRainSprite;
-		rainData.windPuffSprite = m_pGasPuffSprite;
-		rainData.splashSprite = m_pRainSplash;
-		rainData.rippleSprite = m_pRipple;
+		SetRainSprites( rainData );
 		AddRain( rainData );
+		if ( !bVolume )
+			m_savedRains.push_back( rainData );
 	}
 	else
 	{
@@ -1629,10 +1706,10 @@ int CEnvironment::MsgFunc_WeatherVol(const char *pszName, int iSize, void *pbuf)
 		if ( life > 0 )
 			snowData.snowflakeLife = life;
 
-		if ( !m_pSnowSprite )
-			m_pSnowSprite = LoadSprite( WEATHER_SPRITES[WEATHER_SPRITE_SNOWFLAKE].path );
-		snowData.snowSprite = m_pSnowSprite;
+		SetSnowSprites( snowData );
 		AddSnow( snowData );
+		if ( !bVolume )
+			m_savedSnows.push_back( snowData );
 	}
 	return 1;
 }
@@ -1646,6 +1723,18 @@ void CEnvironment::RemoveRain(int entIndex)
 		m_rains.erase(it);
 }
 
+void CEnvironment::RemoveGlobalWeather()
+{
+	m_rains.erase(std::remove_if(m_rains.begin(), m_rains.end(), [](const RainData& data) {
+		return !data.IsVolume();
+	}), m_rains.end());
+	m_snows.erase(std::remove_if(m_snows.begin(), m_snows.end(), [](const SnowData& data) {
+		return !data.IsVolume();
+	}), m_snows.end());
+	m_savedRains.clear();
+	m_savedSnows.clear();
+}
+
 void CEnvironment::AddRain(const RainData &rainData)
 {
 	auto it = std::find_if(m_rains.begin(), m_rains.end(), [&](const RainData& data) {
@@ -1653,7 +1742,7 @@ void CEnvironment::AddRain(const RainData &rainData)
 	});
 	if (it != m_rains.end())
 	{
-		gEngfuncs.Con_Printf("Rain with index %d already exists!\n", rainData.entIndex);
+		gEngfuncs.Con_DPrintf("Rain with index %d already exists!\n", rainData.entIndex);
 		return;
 	}
 	m_rains.push_back(rainData);
@@ -1675,7 +1764,7 @@ void CEnvironment::AddSnow(const SnowData &snowData)
 	});
 	if (it != m_snows.end())
 	{
-		gEngfuncs.Con_Printf("Snow with index %d already exists!\n", snowData.entIndex);
+		gEngfuncs.Con_DPrintf("Snow with index %d already exists!\n", snowData.entIndex);
 		return;
 	}
 	m_snows.push_back(snowData);

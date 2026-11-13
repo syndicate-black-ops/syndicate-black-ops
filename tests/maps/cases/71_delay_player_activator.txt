@@ -1,0 +1,17 @@
+# a delayed target keeps the player who fired it: a player touches a trigger_once (delay 1) whose target is a
+# game_text without "All Players": after the delay the text goes to that player only (1.38 kept a player too;
+# 3a88d857 keeps any activator). Nothing reaches him before the delay; the trigger_once is gone after firing
+# covers: trigger_once trigger_once.delay trigger_once.target game_text game_text.message
+map co_fuzz
+spawn trigger_once model *1 target gt delay 1
+spawn game_text targetname gt message act_text_player
+activate
+connect 1 P1
+frames 3
+mark touch
+touchclient 0 1
+frames 5
+expectnot MSTR 23 ->#1: act_text_player
+frames 10
+expectn 1 MSTR 23 ->#1: act_text_player
+expectcount trigger_once 0

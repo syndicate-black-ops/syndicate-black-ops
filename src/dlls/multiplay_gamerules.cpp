@@ -750,7 +750,7 @@ void CHalfLifeMultiplay :: PlayerKilled( CBasePlayer *pVictim, entvars_t *pKille
 
 	if ( pVictim->pev == pKiller )  
 	{  // killed self
-		// SBO 2.0: no points lost on br_ maps (CBr::PlayerKilled ends here; owner: a loss only held the match up).
+		// SBO 2.0: no points lost on br_ maps (CBr::PlayerKilled ends here; a loss only held the match up).
 		// 1.38: -5 there too; sp_ (teamplay) keeps it
 		if ( m_Mode != MODE_BR )
 			pKiller->frags -= 5;
@@ -785,6 +785,8 @@ void CHalfLifeMultiplay :: PlayerKilled( CBasePlayer *pVictim, entvars_t *pKille
 	}
 #endif
 }
+
+static BOOL SboKillfeed_IsTurret( entvars_t *pev );	// SBO 2.0: a game turret (kill feed: its own name, the turret icon)
 
 //=========================================================
 // Deathnotice. 
@@ -826,6 +828,11 @@ void CHalfLifeMultiplay::DeathNotice( CBasePlayer *pVictim, entvars_t *pKiller, 
 	else
 	{
 		killer_weapon_name = SboKillfeed_InflictorCode( pevInflictor );
+
+		// SBO 2.0: a game turret's own kill (its rocket fired with nobody at the controls: the tank is the attacker)
+		// is sent under the turret's own name too (SboKillfeed_InflictorCode)
+		if ( SboKillfeed_IsTurret( pKiller ) )
+			killer_weapon_name = STRING( pKiller->classname );
 	}
 
 	// strip the monster_* or weapon_* from the inflictor's classname
@@ -1863,7 +1870,10 @@ void CHalfLifeMultiplay :: SendMOTDToClient( edict_t *client )
 // level-up), in coop; frags in br, Bounty Killer and for Game Masters.
 // The ScoreInfo "playerclass" short (0 in Half-Life deathmatch, unused by SBO) is 1 for Bounty Killer's hunted
 // (m_bHunted == 1), in play or dead, else 0: the role stays with a hunted who killed himself or was killed by the
-// world, and the team number alone (2 while dead) does not say so.
+// world, and the team number alone (2 while dead) does not say so. Bit 2 (SBO_SB_CLASS_LOST) is set while the
+// server has had no command from the player's client for SBO_SB_LOST_TIME seconds (crashed or timed out, still in
+// the slot until the engine drops him): the scoreboard lists him under Ghosts. Display only: his category, counts
+// and chat prefix stay as they are.
 //
 // Messages: TeamNames (5 labels; team 1's label is "" while no GM is active, as the plugin did), TeamInfo
 // (player, category name) and ScoreInfo (player, level/frags, deaths, 0, team). GameMode 1 (UpdateGameMode) so the
@@ -1879,6 +1889,9 @@ extern int gmsgSboXP;
 #define SBO_BASE_LEVEL_BONUS		300
 #define SBO_LEVEL_BONUS_STEP		5
 #define SBO_SB_MAXPLAYERS			32
+#define SBO_SB_CLASS_HUNTED			1	// ScoreInfo playerclass bits (SboScoreboard_GetClass)
+#define SBO_SB_CLASS_LOST			2
+#define SBO_SB_LOST_TIME			5.0	// seconds without a command from the client (PreThink) = connection lost
 
 static const char *s_pszSboTeams[6] = { "", "Game Master", "Dead Ops", "No Loadout", "Alive Ops", "Spectators" };
 static const char *s_pszSboTeamsBK[6] = { "", "Hunted", "Dead Ops", "No Loadout", "Alive Ops", "Spectators" };
@@ -1979,10 +1992,18 @@ static int SboScoreboard_GetScore( CBasePlayer *pPlayer )
 	return ( pPlayer->m_iSboSpeed - SBO_BASE_LEVEL_BONUS ) / SBO_LEVEL_BONUS_STEP;
 }
 
-// ScoreInfo playerclass: Bounty Killer: 1 = the hunted, alive or dead (see the header)
+// ScoreInfo playerclass bits: Bounty Killer's hunted, alive or dead; the connection lost (see the header)
 static int SboScoreboard_GetClass( CBasePlayer *pPlayer )
 {
-	return ( SboScoreboard_IsBK() && pPlayer->m_bHunted == 1 ) ? 1 : 0;
+	int iClass = ( SboScoreboard_IsBK() && pPlayer->m_bHunted == 1 ) ? SBO_SB_CLASS_HUNTED : 0;
+
+	// m_flAfkLastThink: the time of the client's last command (PreThink runs once per usercmd; AfkThink is in it, but
+	// not during the intermission, when nobody counts as lost). Bots run their commands from the server.
+	if ( !g_fGameOver && !( pPlayer->pev->flags & FL_FAKECLIENT ) && pPlayer->m_flAfkLastThink > 0
+		&& gpGlobals->time - pPlayer->m_flAfkLastThink > SBO_SB_LOST_TIME )
+		iClass |= SBO_SB_CLASS_LOST;
+
+	return iClass;
 }
 
 static void SboScoreboard_WriteTeamInfo( int iDest, edict_t *pTo, int iClient, const char *pszTeam )
@@ -2122,8 +2143,10 @@ void SboScoreboard_ClientDisconnected( edict_t *pEntity )
 		pPlayer->m_szTeamName[0] = 0;
 	}
 
-	// clear the scoreboard entry
+	// clear the scoreboard entry: team name and score (a client keeps the last ScoreInfo of a slot, so the next player
+	// in it would show this one's team number and score until his own InitHUD)
 	SboScoreboard_WriteTeamInfo( MSG_ALL, NULL, i, "" );
+	SboScoreboard_WriteScoreInfo( MSG_ALL, NULL, i, 0, 0, 0, 0 );
 }
 
 // Full scoreboard for a client entering the game (CHalfLifeMultiplay::InitHUD).
@@ -2558,15 +2581,16 @@ typedef struct
 	const char *pszDisplay;
 } sbo_kf_name_t;
 
-// the plugin's kMonsterMappings: classname without "monster_" (also projectiles and other things that kill players)
+// kill feed and server log names, by classname without "monster_" (also projectiles and other things that kill
+// players); hunter, repel and heavy-weapons variants carry their base monster's name, never a suffix
 static const sbo_kf_name_t s_SboKfNpcNames[] =
 {
 	{ "apache",				"Apache" },
 	{ "osprey",				"Osprey" },
-	{ "barney",				"Barney" },
-	{ "cyborg",				"Big Cyborg" },
-	{ "dark",				"Sectum Streuoum" },
-	{ "plasma",				"Big Cyborg" },
+	{ "barney",				"Cop" },
+	{ "cyborg",				"Cyborg" },
+	{ "dark",				"Sectum" },
+	{ "plasma",				"Cyborg" },
 	{ "gargantua",			"Gargantua" },
 	{ "garg_stomp",			"Gargantua" },
 	{ "grunt_hunter",		"Fed" },
@@ -2574,16 +2598,16 @@ static const sbo_kf_name_t s_SboKfNpcNames[] =
 	{ "dark_grunt",			"Fed" },
 	{ "human_grunt",		"Fed" },
 	{ "human_assassin",		"Assassin" },
-	{ "grunt_repel",		"Grunt" },
+	{ "grunt_repel",		"Fed" },
 	{ "alien_slave",		"Demon Slave" },
-	{ "hunter",				"Alien Slave" },
+	{ "hunter",				"Demon Slave" },
 	{ "ichthyosaur",		"Ichthyosaur" },
 	{ "imp",				"Imp" },
 	{ "imp_hunter",			"Imp" },
 	{ "squidspit",			"Imp" },
 	{ "imp_baspit",			"Imp" },
-	{ "cyberminotor",		"Big Streum" },
-	{ "scientist",			"Sectum" },
+	{ "cyberminotor",		"Cyber Minotaur" },
+	{ "scientist",			"Scientist" },
 	{ "turret",				"Auto Turret" },
 	{ "miniturret",			"Mini Auto Turret" },
 	{ "sentry",				"Sentry Gun" },
@@ -2680,6 +2704,50 @@ int SboKillfeed_Headshot( CBaseEntity *pVictim )
 	return ( pMonster && g_pMultiDamageTarget == pVictim && pMonster->m_LastHitGroup == HITGROUP_HEAD ) ? 1 : 0;
 }
 
+// A game turret: the func_tank family and the turret monsters (monster_turret / monster_miniturret / monster_sentry).
+// Matched by the full class name, so a plugin entity named like a stripped code (the Sentry Gun plugin's entity,
+// class "sentry") is not one.
+static BOOL SboKillfeed_IsTurret( entvars_t *pev )
+{
+	static const char *s_pszTurrets[] = { "func_tank", "func_tanklaser", "func_tankrocket", "func_tankmortar",
+		"monster_turret", "monster_miniturret", "monster_sentry" };
+
+	if ( !pev || FStringNull( pev->classname ) )
+		return FALSE;
+	for ( int i = 0; i < ARRAYSIZE( s_pszTurrets ); i++ )
+	{
+		if ( !strcmp( STRING( pev->classname ), s_pszTurrets[i] ) )
+			return TRUE;
+	}
+	return FALSE;
+}
+
+// The class name of the game turret the damage came from, NULL if none: the turret itself (bullets; a
+// func_tanklaser's beam, whose inflictor is the tank), a func_tankrocket's rocket fired by the player at its controls
+// (CRpgRocket::TankRocketTouch; a rocket fired with nobody at the controls has the tank as its attacker, DeathNotice
+// checks that), or a func_tankmortar's explosion (ExplosionCreate: the tank is its owner).
+static const char *SboKillfeed_FromTurret( entvars_t *pevInflictor )
+{
+	if ( !pevInflictor || FStringNull( pevInflictor->classname ) )
+		return NULL;
+	if ( SboKillfeed_IsTurret( pevInflictor ) )
+		return STRING( pevInflictor->classname );
+
+	const char *pszClass = STRING( pevInflictor->classname );
+	if ( !strcmp( pszClass, "rpg_rocket" ) )
+	{
+		CBaseEntity *pInflictor = CBaseEntity::Instance( pevInflictor );
+		if ( pInflictor && pInflictor->m_pfnTouch
+			== static_cast <void (CBaseEntity::*)(CBaseEntity *)> ( &CRpgRocket::TankRocketTouch ) )
+			return "func_tankrocket";	// only CFuncTankRocket::Fire sets TankRocketTouch
+		return NULL;
+	}
+	if ( !strcmp( pszClass, "env_explosion" ) && pevInflictor->owner && !pevInflictor->owner->free
+		&& SboKillfeed_IsTurret( VARS( pevInflictor->owner ) ) )
+		return STRING( VARS( pevInflictor->owner )->classname );
+	return NULL;
+}
+
 // The DeathMsg weapon code of an inflictor that is not the killer (DeathNotice, SboKillfeed_NpcKilled): its classname
 // (stripped of weapon_ / monster_ / func_ by the callers), as in HL. One exception: contact grenades
 // (CGrenade::ShootContact / ShootContact2: the grenade launcher, also the MP5's and the grunts' M203) and hand grenades
@@ -2689,9 +2757,18 @@ int SboKillfeed_Headshot( CBaseEntity *pVictim )
 // The plasma bolt (class "plasma") is the SW2's (d_plasma, the plasma sniper's icon) only when a player fired it; a Big
 // Cyborg's bolt (CCyborg fires the same CPlasma) is the NPC's own attack: it is sent as its shooter's classname
 // ("monster_cyborg" -> "cyborg", no d_ icon: the skull, like the other NPCs' own attacks), or "world" without one.
+//
+// Game turrets (SboKillfeed_FromTurret) are sent under the turret's own class name, also for what they fire: a
+// func_tankrocket's rocket is "tankrocket" (not "rpg_rocket", the player's RPG), a func_tankmortar's blast
+// "tankmortar" (not "env_explosion"). hud.txt gives all seven codes (tank, tanklaser, tankrocket, tankmortar,
+// turret, miniturret, sentry) the turret icon. The Sentry Gun plugin sends its own kills as "sentrygun".
 const char *SboKillfeed_InflictorCode( entvars_t *pevInflictor )
 {
 	const char *pszClass = STRING( pevInflictor->classname );
+
+	const char *pszTurret = SboKillfeed_FromTurret( pevInflictor );
+	if ( pszTurret )
+		return pszTurret;
 
 	if ( !strcmp( pszClass, "plasma" ) )
 	{

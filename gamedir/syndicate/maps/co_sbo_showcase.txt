@@ -14,7 +14,7 @@ Mission:
 
 You are in operation, don't kill your teammates.
 The round starts after a certain time when at least one of the players chooses
-his equipment.
+their equipment.
 The round will be finished when all the players are dead or when the objectives of the
 mission are accomplished.
 

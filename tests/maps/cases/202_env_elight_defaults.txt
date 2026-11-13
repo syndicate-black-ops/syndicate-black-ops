@@ -1,0 +1,18 @@
+# Tier 5. env_elight Radius (renderamt) and Light color (rendercolor): left out or blank give the FGD defaults 64 and
+# "255 255 255"; values written in the map are kept, a Radius of 0 included (no light)
+# covers: env_elight.renderamt env_elight.rendercolor
+map co_fuzz
+spawn env_elight targetname e_out
+spawn env_elight targetname e_blank renderamt "" rendercolor ""
+spawn env_elight targetname e_zero renderamt 0 rendercolor "0 0 0"
+spawn env_elight targetname e_set renderamt 200 rendercolor "10 20 30"
+activate
+frames 3
+expectfield e_out renderamt 64
+expectfield e_out rendercolor "255 255 255"
+expectfield e_blank renderamt 64
+expectfield e_blank rendercolor "255 255 255"
+expectfield e_zero renderamt 0
+expectfield e_zero rendercolor "0 0 0"
+expectfield e_set renderamt 200
+expectfield e_set rendercolor "10 20 30"

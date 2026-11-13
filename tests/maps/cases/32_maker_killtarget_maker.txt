@@ -1,0 +1,28 @@
+# a trigger_relay killtargets an active monstermaker (co_boarding, co_cathedral, co_funk_city, co_necropolis, co_station_v1 pattern): no more children; its living children stay
+# covers: trigger_relay.killtarget monstermaker
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk monstertype monster_zombie monstercount -1 m_imaxlivechildren 5 delay 1 origin "0 500 0"
+spawn trigger_relay targetname kill_mk killtarget mk triggerstate 2
+spawn trigger_hurt dmg 1000000 damagetype 8192
+activate
+frames 2
+useent 0 world
+frames 25
+count monster_zombie
+useent 1 world
+frames 5
+count monstermaker
+touchclass 2 monster_zombie
+frames 100
+count monster_zombie
+expectcount monstermaker 0

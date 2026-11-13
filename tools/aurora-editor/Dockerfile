@@ -4,9 +4,10 @@
 # Optional named contexts (each defaults to the repository's own files, or to nothing):
 #   --build-context aurora_src=<dir>     particlesys/particlemgr sources to compile (default src/cl_dll/aurora)
 #   --build-context extra_assets=<dir>   more files over the shipped assets (aurora/, sprites/ ...)
-#   --build-context valve_sprites=<dir>  Half-Life's valve/sprites: VALVE CONTENT, LOCAL TEST IMAGES ONLY
-#                                        (never in an image that is pushed or published; default: none). Only the
-#                                        sprites listed in tools/aurora-editor/valve-sprites.allow are copied.
+#   --build-context valve_sprites=<dir>  Half-Life's valve/sprites (default: none). Only the particle sprites listed
+#                                        in tools/aurora-editor/valve-sprites.allow are copied.
+# Targets: the default (last) stage is the container (server/server.py); --target static --output type=local,dest=<dir>
+# writes the same editor as a static site (tools/aurora-editor/publish.sh).
 
 # ---- the game's particle code (overridable) ----
 FROM scratch AS aurora_src
@@ -40,9 +41,8 @@ RUN mkdir -p /out && cd /in && for f in *; do \
       if grep -v '^#' /allow.txt | grep -qxF "$n"; then cp "$f" "/out/$n"; fi; \
     done && ls /out | wc -l
 
-# ---- runtime: static editor + upload server (Python standard library only) ----
-FROM python:3.12-slim
-RUN useradd --system --uid 10001 --home-dir /app editor
+# ---- the editor and its assets ----
+FROM python:3.12-slim AS app
 WORKDIR /app
 COPY tools/aurora-editor/server/ server/
 COPY tools/aurora-editor/web/ web/
@@ -52,7 +52,18 @@ COPY gamedir/syndicate/aurora/ assets/sbo/aurora/
 COPY gamedir/syndicate/sprites/ assets/sbo/sprites/
 COPY --from=extra_assets / assets/sbo/
 COPY --from=valve_filter /out/ assets/valve/sprites/
+
+# ---- static site (publish.sh): web/, assets/index.json, the assets at their lower-case names ----
+FROM app AS static_export
+RUN python3 server/server.py --export /site
+
+FROM scratch AS static
+COPY --from=static_export /site/ /
+
+# ---- runtime: the editor served by server/server.py (Python standard library only) ----
+FROM app
+RUN useradd --system --uid 10001 --home-dir /app editor
 USER editor
-ENV AURORA_PORT=8095 AURORA_DATA=/tmp/aurora-sessions
+ENV AURORA_PORT=8095
 EXPOSE 8095
 CMD ["python3", "-u", "server/server.py"]

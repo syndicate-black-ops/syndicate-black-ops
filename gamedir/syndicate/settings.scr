@@ -75,7 +75,7 @@ DESCRIPTION SERVER_OPTIONS
 
 	"mp_hardcore"
 	{
-		"percentage of team must be killed for a round failed (from 0 to 100)(co_)"
+		"Team deaths to lose a round (%)"
 		{ NUMBER 0.000000 100.000000 }
 		{ "100.000000" }
 	}
@@ -141,6 +141,7 @@ DESCRIPTION SERVER_OPTIONS
 			"Normal" "1"
 			"high" "2"
 			"fast" "3"
+			"Off" "-1"
 		}
 		{ "1.000000" }
 	}
@@ -168,14 +169,14 @@ DESCRIPTION SERVER_OPTIONS
 
 	"mp_easymode"
 	{
-		"maximum number of rounds x 1.5 (only in co_map)"
+		"Easy mode"
 		{ BOOL }
 		{ "1" }
 	}
 
 	"mp_gmmode"
 	{
-		"game master (gm) mode :allows to create monsters in game "
+		"Game Master (GM) mode"
 		{ BOOL }
 		{ "0" }
 	}

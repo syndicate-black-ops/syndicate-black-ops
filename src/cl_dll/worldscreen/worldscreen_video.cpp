@@ -165,7 +165,7 @@ bool Define(int slot, const char *movie, float elapsed, int flags, int volume, i
 	char path[VIDEO_MAX_PATH];
 	if (!VideoShared_MakePath(movie, true, path, sizeof(path)))
 	{
-		worldscreen::Printf("worldscreen: screen %d: movie name \"%s\" refused: %s\n", slot, movie ? movie : "",
+		worldscreen::DebugPrintf("worldscreen: screen %d: movie name \"%s\" refused: %s\n", slot, movie ? movie : "",
 			VideoShared_NameError(movie, true));
 		Remove(slot);
 		return false;
@@ -178,14 +178,14 @@ bool Define(int slot, const char *movie, float elapsed, int flags, int volume, i
 		const int file = LoadFile(path);
 		if (file < 0)
 		{
-			worldscreen::Printf("worldscreen: screen %d: %s not found\n", slot, path);
+			worldscreen::DebugPrintf("worldscreen: screen %d: %s not found\n", slot, path);
 			return false;
 		}
 		CVideoDecoder *dec = new CVideoDecoder;
 		dec->SetBottomUp(true); // OpenGL's row order: one upload (wsgl::UploadPicture)
 		if (!dec->Open(s_Files[file].data, (size_t)s_Files[file].length))
 		{
-			worldscreen::Printf("worldscreen: screen %d: %s: %s\n", slot, path, dec->Error() ? dec->Error() : "cannot be read");
+			worldscreen::DebugPrintf("worldscreen: screen %d: %s: %s\n", slot, path, dec->Error() ? dec->Error() : "cannot be read");
 			delete dec;
 			ReleaseFile(file);
 			return false;
@@ -206,7 +206,7 @@ bool Define(int slot, const char *movie, float elapsed, int flags, int volume, i
 	m.audioSynced = false;
 	wide = m.dec->Width();
 	tall = m.dec->Height();
-	worldscreen::Printf("worldscreen: screen %d plays %s (%dx%d, %.2f fps, %.1f s, %s%s), at %.1f s\n", slot, path, wide,
+	worldscreen::DebugPrintf("worldscreen: screen %d plays %s (%dx%d, %.2f fps, %.1f s, %s%s), at %.1f s\n", slot, path, wide,
 	    tall, m.dec->FrameRate(), m.duration, (flags & WSCREEN_FLAG_LOOP) ? "loop, " : "",
 	    (flags & WSCREEN_FLAG_NOSOUND) || !m.dec->AudioRate() ? "no sound" : ((flags & WSCREEN_FLAG_SOUND2D) ? "2D sound" : "3D sound"),
 	    elapsed);
@@ -225,7 +225,7 @@ void SetFlags(int slot, int flags)
 		m.start = gEngfuncs.GetClientTime(); // started (again): from the beginning
 		m.pictureTime = -1;
 		m.audioSynced = false;
-		worldscreen::Printf("worldscreen: screen %d starts %s\n", slot, m.name);
+		worldscreen::DebugPrintf("worldscreen: screen %d starts %s\n", slot, m.name);
 	}
 }
 

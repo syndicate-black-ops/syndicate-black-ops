@@ -18,11 +18,15 @@
 #include <math.h>
 #include "hud.h"
 #include "cl_util.h"
+#include "pm_shared.h"	// SBO 2.0: OBS_MAP_FREE, OBS_MAP_CHASE
 
 #include "viewport.h"
 #include "map_music.h"	// SBO 2.0: ambient_music
 #include "worldscreen/worldscreen.h"
 #include "video/video_player.h"	// SBO 2.0: game_playvideo
+#include "overlay.h"	// SBO 2.0: env_overlay
+#include "inventory.h"	// SBO 2.0: inventory HUD row
+#include "colorcorrection.h"	// SBO 2.0: color_correction
 
 #define MAX_LOGO_FRAMES 56
 
@@ -39,6 +43,8 @@ bool ServerMenu_HidesHud();	// SBO 2.0: vgui2/sbo_server_menu_bridge.cpp
 
 float HUD_GetFOV( void );
 
+#include "client_os_shared.h"	// SBO 2.0: cl_sbo_os
+
 extern float IN_GetMouseSensitivity( void );	// HL25: clamped sensitivity
 
 // Think
@@ -53,6 +59,10 @@ void CHud::Think(void)
 			pList->p->Think();
 		pList = pList->pNext;
 	}
+
+	// SBO 2.0 client info: cl_sbo_os always names the build's OS (the server reads it with a cvar query)
+	if ( m_pCvarClientOS && strcmp( m_pCvarClientOS->string, CLIENT_OS_VALUE ) )
+		gEngfuncs.Cvar_Set( (char *)CLIENT_OS_CVAR, (char *)CLIENT_OS_VALUE );
 
 	newfov = HUD_GetFOV();
 	if ( newfov == 0 )
@@ -91,6 +101,26 @@ void CHud::Think(void)
 	{
 		m_iFOV = gHUD.m_Spectator.GetFOV();	// default_fov->value;
 	}
+
+	// SBO 2.0: over a map overview the server sends the watched player's FOV (observer.cpp
+	// Observer_CheckProperties) for the first-person inset. The main view is the map, so the HUD keeps the
+	// spectator's own FOV (no zoomed crosshair, scope overlay or mouse sensitivity); the frame is drawn with the
+	// watched player's FOV only while the first-person inset shows that player, and the overview pass makes up
+	// for it (OverviewFovScale). Before: the zoom went into the whole frame, so a zoomed player zoomed the map.
+	m_iRenderFOV = m_iFOV;
+	if ( !gEngfuncs.IsSpectateOnly() && ( g_iUser1 == OBS_MAP_FREE || g_iUser1 == OBS_MAP_CHASE ) )
+	{
+		if ( m_Spectator.InsetMode() != INSET_IN_EYE )
+			m_iRenderFOV = OwnFOV();
+		m_iFOV = OwnFOV();
+		m_flMouseSensitivity = 0;
+	}
+}
+
+int CHud::OwnFOV( void )
+{
+	int fov = default_fov ? (int)default_fov->value : 0;
+	return fov > 0 ? fov : 90;
 }
 
 // Redraw
@@ -144,6 +174,14 @@ int CHud :: Redraw( float flTime, int intermission )
 
 	m_iIntermission = intermission;
 
+	// SBO 2.0: color_correction: the frame's last view, if it had no view model to grade it after (before env_overlay
+	// and the HUD, which keep their colors)
+	ColorCorr_FrameEnd();
+
+	// SBO 2.0: env_overlay: under the HUD (the HUD and the VGUI2 panels are drawn over it); a map's picture, not a
+	// HUD element: hud_draw and the HUD hiding don't hide it
+	Overlay_Redraw( flTime );
+
 	// if no redrawing is necessary
 	// return 0;
 	
@@ -155,8 +193,11 @@ int CHud :: Redraw( float flTime, int intermission )
 		{
 			if ( !intermission )
 			{
-				// SBO 2.0: no HUD while a server menu is up (vgui2/sbo_server_menu.h)
-				if ( (pList->p->m_iFlags & HUD_ACTIVE) && !(m_iHideHUDDisplay & HIDEHUD_ALL) && !ServerMenu_HidesHud() )
+				// SBO 2.0: no HUD while a server menu is up (vgui2/sbo_server_menu.h). The map's game_text / env_message
+				// text (m_Message) stays while the HUD is hidden (HIDEHUD_ALL: a trigger_camera's "Hide HUD and
+				// crosshair"): a camera scene's captions
+				if ( (pList->p->m_iFlags & HUD_ACTIVE) && ( !(m_iHideHUDDisplay & HIDEHUD_ALL) || pList->p == &m_Message )
+					&& !ServerMenu_HidesHud() )
 					pList->p->Draw(flTime);
 			}
 			else
@@ -167,7 +208,12 @@ int CHud :: Redraw( float flTime, int intermission )
 
 			pList = pList->pNext;
 		}
+
+		// SBO 2.0: the inventory row, hidden as the HUD elements are
+		if ( !intermission && !(m_iHideHUDDisplay & HIDEHUD_ALL) && !ServerMenu_HidesHud() )
+			Inventory_Redraw( flTime );
 	}
+
 
 	// are we in demo mode? do we need to draw the logo in the top corner?
 	if (m_iLogo)

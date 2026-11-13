@@ -17,6 +17,7 @@
 #include "entity_state.h"
 #include "cl_entity.h"
 #include "dlight.h"
+#include "light_origin.h"	// SBO 2.0: info_light_origin
 #include "triangleapi.h"
 
 #include <stdio.h>
@@ -36,12 +37,40 @@
 #include "studio_attachments.h"	// SBO 2.0: attachments of transparent models for their followers
 #include "head_scale.h"	// SBO 2.0: players' head scales
 #include "head_scale_shared.h"
+#include "studio_interp.h"	// SBO 2.0: step interpolation fraction
 #define SBO_SERVER_MENU_PREVIEW_ENGINE
 #include "server_menu_preview.h"	// SBO 2.0: server menus' model preview
 #include "server_menu_preview_gl.h"	// SBO 2.0: server menus' model preview: backer and frame cut
+#include "movewith_client.h"	// SBO 2.0 movewith
 
 // Global engine <-> studio model rendering code interface
 engine_studio_api_t IEngineStudio;
+
+// SBO 2.0 info_light_origin (light_origin.cpp, Trinity renderer): the engine lights the model from the lightmap under
+// the point it is given (the entity's origin and the rotation matrix's origin); a model whose map entity names a
+// marker gets the marker's position for this call only, then its own again (dynamic and entity lights after it
+// measure from where the model really is).
+static void StudioDynamicLight_LightOrigin( cl_entity_t *ent, alight_t *lighting, float (*rotation)[3][4] )
+{
+	vec3_t lightOrigin;
+	if ( !LightOrigin_Get( ent, lightOrigin ) )
+	{
+		IEngineStudio.StudioDynamicLight( ent, lighting );
+		return;
+	}
+	vec3_t saveOrigin, saveRotation;
+	VectorCopy( ent->origin, saveOrigin );
+	for ( int i = 0; i < 3; i++ )
+	{
+		saveRotation[i] = (*rotation)[i][3];
+		(*rotation)[i][3] = lightOrigin[i];
+	}
+	VectorCopy( lightOrigin, ent->origin );
+	IEngineStudio.StudioDynamicLight( ent, lighting );
+	VectorCopy( saveOrigin, ent->origin );
+	for ( int i = 0; i < 3; i++ )
+		(*rotation)[i][3] = saveRotation[i];
+}
 
 /////////////////////
 // Implementation of CStudioModelRenderer.h
@@ -456,7 +485,14 @@ void CStudioModelRenderer::StudioSetUpTransform (int trivial_accept)
 
 	//Con_DPrintf("Angles %4.2f prev %4.2f for %i\n", angles[PITCH], m_pCurrentEntity->index);
 	//Con_DPrintf("movetype %d %d\n", m_pCurrentEntity->movetype, m_pCurrentEntity->aiment );
-	if (m_pCurrentEntity->curstate.movetype == MOVETYPE_STEP) 
+	if ( MoveWith_IsPlaced( m_pCurrentEntity ) )
+	{
+		// SBO 2.0 movewith: a child placed on its parent (movewith_client.cpp) is drawn where it was placed. Its
+		// entity state holds its local pose: neither the state's angles nor the step interpolation from the last
+		// states (MOVETYPE_STEP, which the engine sets for EFLAG_SLERP) apply to it
+		VectorCopy( m_pCurrentEntity->angles, angles );
+	}
+	else if (m_pCurrentEntity->curstate.movetype == MOVETYPE_STEP) 
 	{
 		float			f = 0;
 		float			d;
@@ -466,12 +502,8 @@ void CStudioModelRenderer::StudioSetUpTransform (int trivial_accept)
 		// NOTE:  Because we need to interpolate multiplayer characters, the interpolation time limit
 		//  was increased to 1.0 s., which is 2x the max lag we are accounting for.
 
-		if ( ( m_clTime < m_pCurrentEntity->curstate.animtime + 1.0f ) &&
-			 ( m_pCurrentEntity->curstate.animtime != m_pCurrentEntity->latched.prevanimtime ) )
-		{
-			f = (m_clTime - m_pCurrentEntity->curstate.animtime) / (m_pCurrentEntity->curstate.animtime - m_pCurrentEntity->latched.prevanimtime);
-			//Con_DPrintf("%4.2f %.2f %.2f\n", f, m_pCurrentEntity->curstate.animtime, m_clTime);
-		}
+		// SBO 2.0: an animation-time interval under the network's resolution is no new update (studio_interp.h)
+		f = StudioStepFraction( m_clTime, m_pCurrentEntity->curstate.animtime, m_pCurrentEntity->latched.prevanimtime );
 
 		if (m_fDoInterp)
 		{
@@ -1303,6 +1335,9 @@ int CStudioModelRenderer::StudioDrawModel( int flags )
 	IEngineStudio.SetRenderModel( m_pRenderModel );
 
 	StudioSetUpTransform( 0 );
+#ifdef SBO_TEST_COMMANDS
+	MoveWith_TraceDraw( m_pCurrentEntity, (*m_protationmatrix) );	// SBO 2.0 movewith: test_cl_mw_trace's last index as drawn
+#endif
 
 	// SBO 2.0: env_mirror: the mirrors this model is seen in; a model out of view can still be seen in one
 	int nMirrors = ( flags & STUDIO_RENDER ) ? StudioFindMirrors( 0 ) : 0;
@@ -1351,7 +1386,7 @@ int CStudioModelRenderer::StudioDrawModel( int flags )
 	if (flags & STUDIO_RENDER)
 	{
 		lighting.plightvec = dir;
-		IEngineStudio.StudioDynamicLight(m_pCurrentEntity, &lighting );
+		StudioDynamicLight_LightOrigin( m_pCurrentEntity, &lighting, m_protationmatrix );	// SBO 2.0: info_light_origin
 		ServerMenuPreview_LightFloor( m_pCurrentEntity, &lighting );	// SBO 2.0: a preview reads in a dark spot
 
 		IEngineStudio.StudioEntityLight( &lighting );
@@ -2009,9 +2044,57 @@ void CStudioModelRenderer::StudioComputeAttachments( cl_entity_t *ent )
 	IEngineStudio.StudioSetHeader( m_pStudioHeader );
 	IEngineStudio.SetRenderModel( m_pRenderModel );
 
-	StudioSetUpTransform( 0 );
+	StudioSetUpTransform( 0 );
+	StudioSetupBones( );
+	StudioCalcAttachments( );
+}
+
+/*
+====================
+StudioAttachmentModelSpace
+
+SBO 2.0 movewith: attachment n of the entity's model in model space (origin 0, angles 0, the model's scale) for its
+animation this frame, as StudioCalcAttachments places it. A model riding a parent's attachment is placed from it and
+the parent's pose of this frame: the attachments of the parent's last draw are those of last frame's pose, and for a
+parent that is itself a placed child, of its local pose. Leaves the entity's attachments as they were.
+====================
+*/
+bool CStudioModelRenderer::StudioAttachmentModelSpace( cl_entity_t *ent, int n, float *out )
+{
+	studiohdr_t *phdr = ent && ent->model && ent->model->type == mod_studio ? (studiohdr_t *)IEngineStudio.Mod_Extradata( ent->model ) : NULL;
+
+	if ( !phdr || n < 0 || n >= phdr->numattachments || phdr->numattachments > 4 || phdr->numbones <= 0 )
+		return false;
+	if ( ent->curstate.movetype == MOVETYPE_FOLLOW )
+		return false;	// its bones are its parent's (StudioMergeBones)
+
+	m_pCurrentEntity = ent;
+	IEngineStudio.GetTimes( &m_nFrameCount, &m_clTime, &m_clOldTime );
+	m_pPlayerInfo = NULL;
+	m_pRenderModel = ent->model;
+	m_pStudioHeader = phdr;
+	IEngineStudio.StudioSetHeader( m_pStudioHeader );
+	IEngineStudio.SetRenderModel( m_pRenderModel );
+
+	// the model's own frame: no rotation, at the origin, with its scale
+	float flScale = StudioModelScale( );
+	for ( int i = 0; i < 3; i++ )
+	{
+		for ( int j = 0; j < 4; j++ )
+			(*m_protationmatrix)[i][j] = ( i == j ) ? flScale : 0.0f;
+	}
 	StudioSetupBones( );
-	StudioCalcAttachments( );
+
+	mstudioattachment_t *pattachment = (mstudioattachment_t *)((byte *)m_pStudioHeader + m_pStudioHeader->attachmentindex) + n;
+	vec3_t org;
+	VectorScale( pattachment->org, flScale, org );
+	VectorTransform( org, (*m_plighttransform)[pattachment->bone], out );
+	return true;
+}
+
+bool StudioAttachments_ModelSpace( struct cl_entity_s *ent, int n, float *out )
+{
+	return g_StudioRenderer.StudioAttachmentModelSpace( ent, n, out );
 }
 
 /*

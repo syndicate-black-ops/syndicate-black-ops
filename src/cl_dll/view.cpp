@@ -27,7 +27,15 @@
 #include "hltv.h"
 #include "parsemsg.h"
 #include "mirror.h"	// SBO 2.0: env_mirror
+#include "entity_types.h"	// SoHL env_sky: ET_NORMAL (EnvSky_AddEntity)
+#include "view.h"
+#include <string.h>
+#include "colorcorrection.h"	// SBO 2.0: color_correction
 #include "vgui2/vgui2_api.h"	// SBO 2.0: VGui2_GmPip, the GM players window's View
+#include "mover_prediction.h"	// SBO 2.0: mover prediction (MoverPrediction_ViewOrigin)
+#ifdef SBO_TEST_COMMANDS
+#include "movewith_client.h"	// test_cl_mw_trace: MoveWith_TraceView
+#endif
 
 // Spectator Mode
 extern "C" 
@@ -1510,7 +1518,23 @@ void V_CalcSpectatorRefdef ( struct ref_params_s * pparams )
 
 			cl_entity_t	 * gunModel = gEngfuncs.GetViewModel();
 
-			if ( lastWeaponModelIndex != ent->curstate.weaponmodel )
+			// SBO 2.0: the target's own view model, which the server sends with its state ("SpecHealth2"). The SDK's
+			// guess from the weapon model below finds none when a plugin draws the third-person weapon itself and
+			// leaves the player's weapon model empty (production's packed_models_sbo): no weapon in the inset then.
+			// The guess stays for HLTV and a server that doesn't send it.
+			int iViewModel = gEngfuncs.IsSpectateOnly() ? -1 : VGui2_SpecTargetViewModel( g_iUser2 );
+
+			if ( iViewModel >= 0 )
+			{
+				if ( lastViewModelIndex != iViewModel )
+				{
+					lastViewModelIndex = iViewModel;
+					if ( lastViewModelIndex )
+						gEngfuncs.pfnWeaponAnim(0,0);	// reset weapon animation
+				}
+				lastWeaponModelIndex = -1;	// the guess runs again if the server's model goes away
+			}
+			else if ( lastWeaponModelIndex != ent->curstate.weaponmodel )
 			{
 				// weapon model changed
 
@@ -1677,13 +1701,152 @@ SoHL (LRC, cl_dll/view.cpp V_CalcNormalRefdef; AJH in SoHL 1.8: the scale) env_s
 while the sky is on: first from the sky camera in the map's sky room (with the view's angles and field of view), then
 the view itself. The engine calls V_CalcRefdef again while nextView is set and clears only the depth buffer between
 the two, so where the view has no face (the env_sky tool texture leaves none) the sky room drawn first stays on screen.
-The second pass draws the whole sky room PVS from its camera: the sky room's world only, no client models or effects
-(gHUD.m_bSkyDrawPass). See docs/ENV_SKY.md.
+The first pass draws the whole sky room PVS from its camera: the sky room's world and the entities in the sky room
+(EnvSky_AddEntity below), none of the client's own effects (gHUD.m_bSkyDrawPass). See docs/ENV_SKY.md.
 SBO 2.0: around every view that draws the world, not in V_CalcNormalRefdef only: first and third person,
 every spectator camera, the picture-in-picture inset, intermission. The view is worked out once, before the sky room
 is drawn, and set back as it was for its own pass (SoHL ran the first-person view code a second time).
 ==================
 */
+
+/*
+==================
+EnvSky_AddEntity, EnvSky_IsSkyEntity, EnvSky_HideEntities / EnvSky_ShowEntities
+
+SoHL 1.9 (g-cont): the server sends the entities in the sky room to every player (dlls/client.cpp AddToFullPack)
+and the sky pass draws them. SoHL drew them in both passes, so the view also showed them where they are, above the
+map, through its env_sky faces; and SoHL 1.8 (StudioModelRenderer.cpp StudioDrawModel) drew in the sky pass only
+the models marked kRenderFxEntInPVS, because the others are around the view and would be drawn into the sky.
+SBO 2.0: the server marks the state of a sky entity with kRenderFxSkyEntityBit (common/const.h); this takes the bit
+off again before anything reads renderfx (the mapper's render FX stay as they are) and lists the entity for the
+frame. The sky pass draws the sky entities and no other model (GameStudioModelRenderer.cpp R_StudioDrawModel); the
+view draws no sky entity: models are left out there too, and brush entities and sprites, which the engine draws
+itself from one entity list for both passes, are moved behind the view's camera (out of its view) for the view's
+pass and put back after it (HUD_DrawTransparentTriangles).
+==================
+*/
+#define ENVSKY_MAX_ENTITIES	512		// the engine's visible entity list
+
+static bool s_bSkyEntity[ MAX_EDICTS ];		// by entity index: its last state from the server was a sky entity's
+static int s_iSkyEntityMsg[ MAX_EDICTS ];	// the state (messagenum) that had the bit
+static cl_entity_t *s_pSkyEnts[ ENVSKY_MAX_ENTITIES ];	// this frame's sky entities
+static int s_iSkyEnts = 0;
+static bool s_bSkyEntsNewFrame = true;		// the next HUD_AddEntity starts the next frame's list
+static bool s_bSkyEntsHidden = false;		// moved out of the view being drawn
+static vec3_t s_vecSkyEntsHidden;			// where to
+static vec3_t s_vecSkyEntOrigin[ ENVSKY_MAX_ENTITIES ];			// and where each was
+static vec3_t s_vecSkyEntAttachment[ ENVSKY_MAX_ENTITIES ][ 4 ];	// with its attachments (sprites on them)
+
+static bool EnvSky_AtHidden( const float *v )
+{
+	return v[ 0 ] == s_vecSkyEntsHidden[ 0 ] && v[ 1 ] == s_vecSkyEntsHidden[ 1 ] && v[ 2 ] == s_vecSkyEntsHidden[ 2 ];
+}
+
+void EnvSky_ShowEntities( void )
+{
+	if ( !s_bSkyEntsHidden )
+		return;
+
+	s_bSkyEntsHidden = false;
+
+	for ( int i = 0; i < s_iSkyEnts; i++ )
+	{
+		cl_entity_t *ent = s_pSkyEnts[ i ];
+
+		// unless the engine has set it again for a new frame
+		if ( EnvSky_AtHidden( ent->origin ) )
+			VectorCopy( s_vecSkyEntOrigin[ i ], ent->origin );
+
+		for ( int j = 0; j < 4; j++ )
+		{
+			if ( EnvSky_AtHidden( ent->attachment[ j ] ) )
+				VectorCopy( s_vecSkyEntAttachment[ i ][ j ], ent->attachment[ j ] );
+		}
+	}
+}
+
+static void EnvSky_HideEntities( const struct ref_params_s *pparams )
+{
+	if ( !s_iSkyEnts || s_bSkyEntsHidden )
+		return;
+
+	// far behind the camera: outside the view's frustum, whatever the entity's size
+	vec3_t forward;
+	AngleVectors( pparams->viewangles, forward, NULL, NULL );
+	VectorMA( pparams->vieworg, -65536.0f, forward, s_vecSkyEntsHidden );
+
+	for ( int i = 0; i < s_iSkyEnts; i++ )
+	{
+		cl_entity_t *ent = s_pSkyEnts[ i ];
+
+		VectorCopy( ent->origin, s_vecSkyEntOrigin[ i ] );
+		VectorCopy( s_vecSkyEntsHidden, ent->origin );
+
+		for ( int j = 0; j < 4; j++ )
+		{
+			VectorCopy( ent->attachment[ j ], s_vecSkyEntAttachment[ i ][ j ] );
+			VectorCopy( s_vecSkyEntsHidden, ent->attachment[ j ] );
+		}
+	}
+
+	s_bSkyEntsHidden = true;
+}
+
+// HUD_AddEntity (entity.cpp), every entity of every frame
+void EnvSky_AddEntity( int type, struct cl_entity_s *ent )
+{
+	if ( s_bSkyEntsNewFrame )
+	{
+		EnvSky_ShowEntities();	// in case a view was not ended (HUD_DrawTransparentTriangles not called)
+		s_iSkyEnts = 0;
+		s_bSkyEntsNewFrame = false;
+	}
+
+	const int index = ent->index;
+
+	if ( type != ET_NORMAL || index <= 0 || index >= MAX_EDICTS )
+		return;
+
+	// the bit comes with each state from the server (messagenum); between two states curstate keeps it taken off
+	if ( ent->curstate.renderfx & kRenderFxSkyEntityBit )
+	{
+		ent->curstate.renderfx &= ~kRenderFxSkyEntityBit;
+		s_bSkyEntity[ index ] = true;
+		s_iSkyEntityMsg[ index ] = ent->curstate.messagenum;
+	}
+	else if ( ent->curstate.messagenum != s_iSkyEntityMsg[ index ] )
+		s_bSkyEntity[ index ] = false;
+
+	if ( s_bSkyEntity[ index ] && s_iSkyEnts < ENVSKY_MAX_ENTITIES )
+		s_pSkyEnts[ s_iSkyEnts++ ] = ent;
+}
+
+// HUD_CreateEntities (entity.cpp), after the frame's HUD_AddEntity calls
+void EnvSky_CreateEntities( void )
+{
+	if ( s_bSkyEntsNewFrame )
+		s_iSkyEnts = 0;		// no entity this frame
+
+	s_bSkyEntsNewFrame = true;
+}
+
+// GameStudioModelRenderer.cpp: draw this model in the sky pass (and only there)?
+bool EnvSky_IsSkyEntity( const struct cl_entity_s *ent )
+{
+	const int index = ent->index;
+
+	return index > 0 && index < MAX_EDICTS && s_bSkyEntity[ index ] && ent == gEngfuncs.GetEntityByIndex( index );
+}
+
+// HUD_VidInit (hud.cpp): a new map
+void EnvSky_Reset( void )
+{
+	EnvSky_ShowEntities();
+	memset( s_bSkyEntity, 0, sizeof( s_bSkyEntity ) );
+	memset( s_iSkyEntityMsg, 0, sizeof( s_iSkyEntityMsg ) );
+	s_iSkyEnts = 0;
+	s_bSkyEntsNewFrame = true;
+}
 static bool s_bSkyViewPending = false;	// the sky room is being drawn: the next call is the view itself
 static vec3_t s_vecSkyViewOrigin;		// that view's origin
 static int s_iSkyViewNext = 0;			// and its nextView (1: the spectator's inset follows)
@@ -1695,7 +1858,12 @@ static void V_SkyViewStart( struct ref_params_s *pparams )
 {
 	// the spectator's overview map draws no world
 	if ( gHUD.m_iSkyMode != SKY_ON || pparams->onlyClientDraw )
+	{
+		EnvSky_HideEntities( pparams );	// no sky pass (the sky was just switched off): no sky entity either
 		return;
+	}
+
+	EnvSky_ShowEntities();
 
 	VectorCopy( pparams->vieworg, s_vecSkyViewOrigin );
 	s_iSkyViewNext = pparams->nextView;
@@ -1732,6 +1900,9 @@ static bool V_SkyViewDone( struct ref_params_s *pparams )
 
 	VectorCopy( s_vecSkyViewOrigin, pparams->vieworg );
 	pparams->nextView = s_iSkyViewNext;
+
+	// the sky entities were drawn in the sky; the view leaves them out
+	EnvSky_HideEntities( pparams );
 	return true;
 }
 
@@ -1882,6 +2053,9 @@ void V_ResetViewModelRender( void )
 }
 void DLLEXPORT V_CalcRefdef( struct ref_params_s *pparams )
 {
+	// SBO 2.0: color_correction: the view before this one, if it had no view model to grade it after
+	ColorCorr_Flush();
+
 	// SoHL env_sky: the sky room of this view is drawn, now the view itself (worked out in the call before)
 	if ( V_SkyViewDone( pparams ) )
 		return;
@@ -1908,6 +2082,8 @@ void DLLEXPORT V_CalcRefdef( struct ref_params_s *pparams )
 	}
 	else if ( !pparams->paused )
 	{
+		// SBO 2.0 mover prediction: a rider's view moves with the mover he stands on as it is drawn
+		MoverPrediction_ViewOrigin( pparams->simorg );
 		V_CalcNormalRefdef ( pparams );
 	}
 
@@ -1925,6 +2101,13 @@ void DLLEXPORT V_CalcRefdef( struct ref_params_s *pparams )
 		// SBO 2.0: and the watched player the floor of the full-screen overview
 		gHUD.m_Spectator.UpdateWatchedHeight();
 	}
+#ifdef SBO_TEST_COMMANDS
+	if ( bMainView )
+		MoveWith_TraceView( pparams->simorg, pparams->vieworg );	// test_cl_mw_trace: the view each frame
+#endif
+
+	// SBO 2.0: color_correction: the weights of the draws that follow come from this view's origin (not the sky room's)
+	ColorCorr_SetView( pparams->vieworg, gHUD.m_Spectator.m_bOverviewDrawPass, !bMainView );
 
 	// SoHL env_sky: the sky room first, then this view
 	V_SkyViewStart( pparams );

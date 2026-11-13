@@ -1,0 +1,19 @@
+# a delayed target removed before the delay ends: nothing is found when the DelayedUse fires, nothing breaks; a delay
+# into a killtarget of an entity already gone: no crash
+# covers: trigger_relay.delay trigger_relay.killtarget
+map co_fuzz
+spawn trigger_relay targetname r1 target gone delay 1 killtarget also_gone
+spawn trigger_relay targetname gone target never_fired
+spawn info_target targetname also_gone
+spawn trigger_relay targetname remover killtarget gone
+spawn trigger_relay targetname remover2 killtarget also_gone
+activate
+frames 3
+fire r1
+frames 2
+fire remover
+fire remover2
+frames 15
+expect Firing: (gone)
+expectnot Firing: (never_fired)
+expectcount info_target 0

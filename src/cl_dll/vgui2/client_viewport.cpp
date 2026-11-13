@@ -25,6 +25,7 @@
 #include "sbo_options.h"
 #include "sbo_server_browser.h"
 #include "sbo_server_menu.h"
+#include "../colorcorrection.h"
 
 CClientViewport *g_pViewport = nullptr;
 CGameUIViewport *g_pGameUIViewport = nullptr;
@@ -106,6 +107,27 @@ void CMenuCursorHelper::Update(bool bWantCursor)
 }
 
 //-----------------------------------------------------------------------------
+// CColorCorrMenuHook
+//-----------------------------------------------------------------------------
+CColorCorrMenuHook::CColorCorrMenuHook()
+    : BaseClass(nullptr, "SboColorCorrMenuHook")
+{
+	SetParent(g_pEngineVGui->GetPanel(PANEL_GAMEUIDLL));
+	SetBounds(0, 0, 1, 1);
+	SetPaintBackgroundEnabled(false);
+	SetPaintBorderEnabled(false);
+	SetKeyBoardInputEnabled(false);
+	SetMouseInputEnabled(false);
+	SetZPos(-1000); // painted before GameUI's own panels
+}
+
+void CColorCorrMenuHook::Paint()
+{
+	// a view the view model or CHud::Redraw already graded is not graded again
+	ColorCorr_FrameEnd();
+}
+
+//-----------------------------------------------------------------------------
 // CGameUIViewport
 //-----------------------------------------------------------------------------
 CGameUIViewport::CGameUIViewport()
@@ -120,6 +142,8 @@ CGameUIViewport::CGameUIViewport()
 	SetScheme(vgui2::scheme()->LoadSchemeFromFile(VGUI2_ROOT_DIR "resource/clientsourcescheme.res", "ClientSourceScheme"));
 	SetProportional(false);
 	SetSize(0, 0);
+
+	new CColorCorrMenuHook();
 }
 
 void CGameUIViewport::Frame()

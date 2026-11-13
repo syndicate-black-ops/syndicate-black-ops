@@ -603,6 +603,10 @@ void CHZombieGrunt :: TraceAttack( entvars_t *pevAttacker, float flDamage, Vecto
 //=========================================================
 int CHZombieGrunt :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType )
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	Forget( bits_MEMORY_INCOVER );
 
 	if ( IsAlive() )

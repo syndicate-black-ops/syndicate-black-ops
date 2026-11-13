@@ -176,8 +176,20 @@ public:
 	{
 		if (level < 0 || level > MAX_LEVEL)
 			level = MAX_LEVEL;
+		return MakeWheel(m_iWheelTextures[level], level, true);
+	}
 
-		if (m_iWheelTextures[level] == -1)
+	//! the plain picker's wheel: full brightness, no floor; drawn in the grey of the brightness (RGB scales with the
+	//! HSV value, so that is exactly the wheel at that value)
+	int GetPlainWheelTexture()
+	{
+		return MakeWheel(m_iPlainWheelTexture, MAX_LEVEL, false);
+	}
+
+private:
+	int MakeWheel(int &texture, int level, bool bFloor)
+	{
+		if (texture == -1)
 		{
 			std::vector<unsigned char> data(WHEEL_SIZE * WHEEL_SIZE * PIXEL_SIZE);
 			const float center = WHEEL_SIZE / 2.0f;
@@ -201,7 +213,8 @@ public:
 					// as the chat will draw it: no darker than the brightness floor
 					Color rgb;
 					HSVtoRGB(ClampHue(hue), sat, LevelToValue(level), rgb);
-					rgb = ClampColorCodeBrightness(rgb);
+					if (bFloor)
+						rgb = ClampColorCodeBrightness(rgb);
 
 					float alpha = radius - dist + 0.5f; // one soft pixel at the rim
 					alpha = alpha < 0.f ? 0.f : (alpha > 1.f ? 1.f : alpha);
@@ -214,12 +227,14 @@ public:
 				}
 			}
 
-			m_iWheelTextures[level] = vgui2::surface()->CreateNewTextureID(true);
-			vgui2::surface()->DrawSetTextureRGBA(m_iWheelTextures[level], data.data(), WHEEL_SIZE, WHEEL_SIZE, true, false);
+			texture = vgui2::surface()->CreateNewTextureID(true);
+			vgui2::surface()->DrawSetTextureRGBA(texture, data.data(), WHEEL_SIZE, WHEEL_SIZE, true, false);
 		}
 
-		return m_iWheelTextures[level];
+		return texture;
 	}
+
+public:
 
 	//! a white disc (bRing: a ring an eighth of the size thick) for a circle drawn size pixels wide
 	int GetCircleTexture(int size, bool bRing)
@@ -287,6 +302,7 @@ private:
 	static constexpr int NUM_CIRCLE_SIZES = 4; // 16, 32, 64, 128
 
 	int m_iWheelTextures[MAX_LEVEL + 1] = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 };
+	int m_iPlainWheelTexture = -1;
 	int m_iCircleTextures[2][NUM_CIRCLE_SIZES] = { { -1, -1, -1, -1 }, { -1, -1, -1, -1 } };
 };
 
@@ -556,8 +572,17 @@ public:
 		CHudChatColorPicker *pPicker = GetPicker(this);
 		const int size = GetWide() < GetTall() ? GetWide() : GetTall();
 
-		vgui2::surface()->DrawSetTexture(gTexMgr.GetWheelTexture(pPicker->GetLevel()));
-		vgui2::surface()->DrawSetColor(Color(255, 255, 255, 255));
+		if (pPicker->IsPlain())
+		{
+			const int grey = (int)(255.f * pPicker->GetLevel() / (float)PLAIN_MAX_LEVEL + 0.5f);
+			vgui2::surface()->DrawSetTexture(gTexMgr.GetPlainWheelTexture());
+			vgui2::surface()->DrawSetColor(Color(grey, grey, grey, 255));
+		}
+		else
+		{
+			vgui2::surface()->DrawSetTexture(gTexMgr.GetWheelTexture(pPicker->GetLevel()));
+			vgui2::surface()->DrawSetColor(Color(255, 255, 255, 255));
+		}
 		vgui2::surface()->DrawTexturedRect(0, 0, size, size);
 
 		// the marker, while a wheel color is selected (or being picked)
@@ -620,20 +645,26 @@ public:
 		int wide, tall;
 		GetSize(wide, tall);
 
-		for (int level = MAX_LEVEL; level >= MIN_LEVEL; level--)
+		for (int level = pPicker->GetMaxLevel(); level >= pPicker->GetMinLevel(); level--)
 		{
 			int y0, y1;
 			GetCell(level, tall, y0, y1);
-			vgui2::surface()->DrawSetColor(CHudChat::GetChatColorDisplay(CHudChatColorPicker::MakeColor(pPicker->GetHue(), pPicker->GetSat(), level)));
+			vgui2::surface()->DrawSetColor(pPicker->GetDisplayColor(pPicker->MakePickerColor(pPicker->GetHue(), pPicker->GetSat(), level)));
 			vgui2::surface()->DrawFilledRect(0, y0, wide, y1);
 		}
 
 		vgui2::surface()->DrawSetColor(Color(0, 0, 0, 160));
 		vgui2::surface()->DrawOutlinedRect(0, 0, wide, tall);
 
-		// the selected level
+		// the selected level (a plain picker's levels are thin: a marker a few pixels tall around it)
 		int y0, y1;
 		GetCell(pPicker->GetLevel(), tall, y0, y1);
+		if (y1 - y0 < 5)
+		{
+			const int mid = (y0 + y1) / 2;
+			y0 = std::max(0, mid - 2);
+			y1 = std::min(tall, y0 + 5);
+		}
 		vgui2::surface()->DrawSetColor(Color(0, 0, 0, 255));
 		vgui2::surface()->DrawOutlinedRect(0, y0, wide, y1);
 		vgui2::surface()->DrawSetColor(Color(255, 255, 255, 255));
@@ -652,20 +683,22 @@ protected:
 		if (tall <= 0)
 			return;
 
-		const int cells = MAX_LEVEL - MIN_LEVEL + 1;
+		CHudChatColorPicker *pPicker = GetPicker(this);
+		const int cells = pPicker->GetMaxLevel() - pPicker->GetMinLevel() + 1;
 		int cell = y * cells / tall; // 0 = top = brightest
 		if (y < 0)
 			cell = 0;
 		if (cell > cells - 1)
 			cell = cells - 1;
-		GetPicker(this)->SetLevel(MAX_LEVEL - cell);
+		pPicker->SetLevel(pPicker->GetMaxLevel() - cell);
 	}
 
 private:
-	static void GetCell(int level, int tall, int &y0, int &y1)
+	void GetCell(int level, int tall, int &y0, int &y1)
 	{
-		const int cells = MAX_LEVEL - MIN_LEVEL + 1;
-		const int cell = MAX_LEVEL - level;
+		CHudChatColorPicker *pPicker = GetPicker(this);
+		const int cells = pPicker->GetMaxLevel() - pPicker->GetMinLevel() + 1;
+		const int cell = pPicker->GetMaxLevel() - level;
 		y0 = cell * tall / cells;
 		y1 = (cell + 1) * tall / cells;
 	}
@@ -937,10 +970,57 @@ ChatColor CHudChatColorPicker::MakeColor(float hue, float sat, int level)
 	return ChatColor::FromRGB(ClampColorCodeBrightness(rgb));
 }
 
+ChatColor CHudChatColorPicker::MakePickerColor(float hue, float sat, int level) const
+{
+	if (!IsPlain())
+		return MakeColor(hue, sat, level);
+	level = level < 0 ? 0 : (level > PLAIN_MAX_LEVEL ? PLAIN_MAX_LEVEL : level);
+	Color rgb;
+	HSVtoRGB(ClampHue(hue), sat < 0.f ? 0.f : (sat > 100.f ? 100.f : sat), 100.f * level / (float)PLAIN_MAX_LEVEL, rgb);
+	return ChatColor::FromRGB(rgb);
+}
+
+Color CHudChatColorPicker::GetDisplayColor(const ChatColor &color) const
+{
+	return IsPlain() ? color.GetRGB() : CHudChat::GetChatColorDisplay(color);
+}
+
+int CHudChatColorPicker::GetMinLevel() const
+{
+	return IsPlain() ? 0 : MIN_LEVEL;
+}
+
+int CHudChatColorPicker::GetMaxLevel() const
+{
+	return IsPlain() ? PLAIN_MAX_LEVEL : MAX_LEVEL;
+}
+
 void CHudChatColorPicker::SetMetrics(int cell, int maxTall)
 {
 	if (cell < 8)
 		cell = 8;
+
+	if (IsPlain())
+	{
+		// [ wheel ][ brightness bar ], nothing else
+		int wheel = 7 * cell;
+		const int room = maxTall - 2 * PICKER_PADDING;
+		if (wheel > room)
+			wheel = room;
+		if (wheel < 3 * cell)
+			wheel = 3 * cell;
+		int barWide = cell * 3 / 4;
+		if (barWide < 10)
+			barWide = 10;
+		m_iCell = cell;
+		m_iWheelSize = wheel;
+		m_iBarWide = barWide;
+		m_iSwatchSize = 0;
+		m_iTargetTall = 0;
+		SetSize(2 * PICKER_PADDING + wheel + PICKER_GAP + barWide, 2 * PICKER_PADDING + wheel);
+		InvalidateLayout();
+		return;
+	}
 
 	// [ Chat ][ Name ]       (o)   the edited setting; the circle: the name color, while "Name" is selected
 	// [ wheel ][ brightness bar ]
@@ -987,11 +1067,17 @@ void CHudChatColorPicker::PerformLayout()
 	m_pTargets[1]->SetBounds(PICKER_PADDING + targetWide - 1, PICKER_PADDING, targetWide, m_iTargetTall); // shared edge
 	// one setting: no switch (the circle right of it still shows the edited color)
 	for (CTargetPanel *pTarget : m_pTargets)
-		pTarget->SetVisible(Host()->HasPickerTargets());
+		pTarget->SetVisible(Host()->HasPickerTargets() && !IsPlain());
 
-	const int top = PICKER_PADDING + m_iTargetTall + PICKER_GAP;
+	const int top = IsPlain() ? PICKER_PADDING : PICKER_PADDING + m_iTargetTall + PICKER_GAP;
 	m_pWheel->SetBounds(PICKER_PADDING, top, m_iWheelSize, m_iWheelSize);
 	m_pBrightness->SetBounds(PICKER_PADDING + m_iWheelSize + PICKER_GAP, top, m_iBarWide, m_iWheelSize);
+
+	// a plain color: no quick picks
+	for (CSwatchPanel *pSwatch : m_pSwatches)
+		pSwatch->SetVisible(!IsPlain());
+	if (IsPlain())
+		return;
 
 	// the row, spread over the popup's width
 	const int y = top + m_iWheelSize + PICKER_GAP;
@@ -1011,6 +1097,8 @@ void CHudChatColorPicker::Paint()
 	vgui2::surface()->DrawFilledRect(0, 0, wide, tall);
 	vgui2::surface()->DrawSetColor(Color(255, 255, 255, 64));
 	vgui2::surface()->DrawOutlinedRect(0, 0, wide, tall);
+	if (IsPlain())
+		return; // the color field shows the color itself
 
 	// the edited setting's color - the chat color with "Chat" selected, the name color with "Name" (the one being
 	// picked while dragging; a ring for none) - in a small circle right of the switch, the same on both tabs;
@@ -1032,10 +1120,16 @@ void CHudChatColorPicker::SetColor(const ChatColor &color)
 	if (!color.IsNone())
 	{
 		float hue, sat, val;
-		RGBtoHSV(CHudChat::GetChatColorDisplay(color), hue, sat, val);
-		m_flHue = ClampHue(hue);
-		m_flSat = sat;
-		m_iLevel = (int)(val * MAX_LEVEL / 100.f + 0.5f);
+		RGBtoHSV(GetDisplayColor(color), hue, sat, val);
+		// a grey (or black) has no hue: the wheel keeps the one it had
+		if (sat > 0.f && val > 0.f)
+		{
+			m_flHue = ClampHue(hue);
+			m_flSat = sat;
+		}
+		else if (val > 0.f || !IsPlain())
+			m_flSat = sat;
+		m_iLevel = (int)(val * GetMaxLevel() / 100.f + 0.5f);
 	}
 
 	SetLevel(m_iLevel);
@@ -1049,10 +1143,13 @@ void CHudChatColorPicker::SetHueSat(float hue, float sat)
 
 void CHudChatColorPicker::SetLevel(int level)
 {
-	m_iLevel = level < MIN_LEVEL ? MIN_LEVEL : (level > MAX_LEVEL ? MAX_LEVEL : level);
+	m_iLevel = level < GetMinLevel() ? GetMinLevel() : (level > GetMaxLevel() ? GetMaxLevel() : level);
 
 	// the level's wheel is made here (opening the popup, moving the bar), not while painting
-	gTexMgr.GetWheelTexture(m_iLevel);
+	if (IsPlain())
+		gTexMgr.GetPlainWheelTexture();
+	else
+		gTexMgr.GetWheelTexture(m_iLevel);
 }
 
 void CHudChatColorPicker::CancelDrag()

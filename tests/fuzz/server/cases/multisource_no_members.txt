@@ -1,7 +1,12 @@
-# a multisource nobody targets, used: m_rgTriggered[-1] ^= 1
+# a multisource nobody targets, Used: it has no slot to toggle (the HL SDK wrote the int before m_rgTriggered, out of
+# bounds); with no members IsTriggered is true, so it fires its target (HL SDK, 1.38), without a console message.
+# Under the ASan/UBSan harness: no out-of-bounds report.
 map co_fuzz
-spawn multisource targetname m
+spawn multisource targetname m target relay_out
+spawn trigger_relay targetname relay_out target relay_out_sink
 activate
-frames 2
+frames 5
 use 0 world
 frames 2
+expect Firing: (relay_out)
+expectn 0 MultiSrc:Used by non member

@@ -1,0 +1,23 @@
+# monster TriggerCondition 11 "See Player, Not In Combat" (FGD Monster base): a human grunt with a player in view (the stub puts every
+# client in every PVS and its traces hit nothing) fires its TriggerTarget when it sees the player while not yet in combat
+# covers: monster_human_grunt.triggercondition=11 monster_human_grunt.triggertarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_human_grunt TriggerCondition 11 TriggerTarget cond_11 origin "0 300 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark in_view
+frames 100
+expectn 1 Firing: (cond_11)

@@ -106,6 +106,9 @@ public:
 
 	int		m_iFrustration;
 
+	float	m_flNextStepTime;	// SBO 2.1 (Half-Life Unified SDK): this Assassin's next footstep (RunAI)
+	BOOL	m_fStepLeft;		// the foot of its last footstep
+
 	int		m_iShell;
 
 	int		m_iFf;	// SBO: "Ff" keyvalue; 1 = don't take damage from allies
@@ -127,6 +130,8 @@ TYPEDESCRIPTION	CHAssassin::m_SaveData[] =
 
 	DEFINE_FIELD( CHAssassin, m_iTargetRanderamt, FIELD_INTEGER ),
 	DEFINE_FIELD( CHAssassin, m_iFrustration, FIELD_INTEGER ),
+	DEFINE_FIELD( CHAssassin, m_flNextStepTime, FIELD_TIME ),
+	DEFINE_FIELD( CHAssassin, m_fStepLeft, FIELD_BOOLEAN ),
 };
 
 IMPLEMENT_SAVERESTORE( CHAssassin, CBaseMonster );
@@ -258,6 +263,10 @@ void CHAssassin :: Shoot ( void )
 //=========================================================
 int CHAssassin :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float flDamage, int bitsDamageType )
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	if ( m_iFf == 1 )
 	{
 		CBaseEntity *pAttacker = CBaseEntity::Instance( pevAttacker );
@@ -821,14 +830,22 @@ void CHAssassin :: RunAI( void )
 
 	if (m_Activity == ACT_RUN || m_Activity == ACT_WALK)
 	{
-		static int iStep = 0;
-		iStep = ! iStep;
-		if (iStep)
+		// SBO 2.1 (Half-Life Unified SDK): each Assassin times its own footsteps, as the player's movement code does
+		// (0.4 s walking, 0.3 s running, left and right foot in turn). One counter shared by every Assassin played a
+		// step on every other RunAI call of any of them, so with several Assassins some never made a sound and others
+		// stepped twice as often. RunAI runs 10 times a second, so a step can come up to 0.1 s late.
+		if ( m_flNextStepTime < gpGlobals->time )
 		{
-			switch( RANDOM_LONG( 0, 3 ) )
+			m_flNextStepTime = gpGlobals->time + ( m_Activity == ACT_WALK ? 0.4 : 0.3 );
+
+			m_fStepLeft = !m_fStepLeft;
+
+			switch( RANDOM_LONG( 0, 1 ) + ( m_fStepLeft ? 2 : 0 ) )
 			{
+			// right foot
 			case 0:	EMIT_SOUND( ENT(pev), CHAN_BODY, "player/pl_step1.wav", 0.5, ATTN_NORM);	break;
 			case 1:	EMIT_SOUND( ENT(pev), CHAN_BODY, "player/pl_step3.wav", 0.5, ATTN_NORM);	break;
+			// left foot
 			case 2:	EMIT_SOUND( ENT(pev), CHAN_BODY, "player/pl_step2.wav", 0.5, ATTN_NORM);	break;
 			case 3:	EMIT_SOUND( ENT(pev), CHAN_BODY, "player/pl_step4.wav", 0.5, ATTN_NORM);	break;
 			}
@@ -914,6 +931,21 @@ void CHAssassin :: RunTask ( Task_t *pTask )
 //=========================================================
 Schedule_t *CHAssassin :: GetSchedule ( void )
 {
+	// SBO 2.1 (Half-Life Unified SDK): checked before everything else, so an Assassin always lands properly. Only the
+	// combat schedule checked it, so one that landed out of combat (its enemy dead or lost while it was in the air)
+	// kept MOVETYPE_TOSS until it was in combat again. It attacks at the end of the landing.
+	// flying?
+	if ( pev->movetype == MOVETYPE_TOSS )
+	{
+		if ( pev->flags & FL_ONGROUND )
+		{
+			// ALERT( at_console, "landed\n");
+			// just landed
+			pev->movetype = MOVETYPE_STEP;
+			return GetScheduleOfType ( SCHED_ASSASSIN_JUMP_LAND );
+		}
+	}
+
 	switch	( m_MonsterState )
 	{
 	case MONSTERSTATE_IDLE:
@@ -955,17 +987,9 @@ Schedule_t *CHAssassin :: GetSchedule ( void )
 				return CBaseMonster :: GetSchedule();
 			}
 
-			// flying?
+			// flying? (landing is handled above)
 			if ( pev->movetype == MOVETYPE_TOSS)
 			{
-				if (pev->flags & FL_ONGROUND)
-				{
-					// ALERT( at_console, "landed\n");
-					// just landed
-					pev->movetype = MOVETYPE_STEP;
-					return GetScheduleOfType ( SCHED_ASSASSIN_JUMP_LAND );
-				}
-				else
 				{
 					// ALERT( at_console, "jump\n");
 					// jump or jump/shoot

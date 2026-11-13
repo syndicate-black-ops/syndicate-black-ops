@@ -1,0 +1,28 @@
+# coop: the living players become observers at the mission end (3e42afef / 5c85075a): with mp_missionendtime 30 (held
+# longer than SBO's 5 s) the living player is moved to the observers 5 s after the result, not at once
+# covers: game_end
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+cvar mp_hardcore 100
+cvar mp_missionendtime 30
+spawn game_end targetname ge
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark result
+fire ge
+frames 20
+expect SUCCESSFULL MISSION
+expectn 1 Spec_Mode
+frames 60
+expectn 2 Spec_Mode

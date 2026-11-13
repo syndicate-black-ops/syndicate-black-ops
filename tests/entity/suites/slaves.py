@@ -48,7 +48,7 @@ def make_test(key, classname):
 
     keeps_flags.__name__ = 'keeps_flags_' + key
     S.test('%s with Prisoner + Fade corpse (528): the flags stay after its first schedules' % classname,
-           players=1, size=ROOM)(keeps_flags)
+           players=1, size=ROOM, covers=(classname, classname + ':16', classname + ':512'))(keeps_flags)
 
 
 for _key, _classname in SLAVES:

@@ -22,6 +22,7 @@ extern CVoiceGameMgr	g_VoiceGameMgr;
 
 extern int g_bChangeLevelTouched;
 extern int m_SpawnLocate;
+extern string_t g_iszSpawnSet;	// maprules.cpp: the named spawn set multispawn made active
 extern cvar_t timeleft, fragsleft;
 
 extern edict_t *EntSelectSpawnPoint( CBaseEntity *pPlayer );
@@ -41,7 +42,7 @@ static void DmRoundHookStart( void )
 	if ( s_bDmRoundHooked )
 		RoundHooks_End();	// never two starts without an end between them
 	s_bDmRoundHooked = TRUE;
-	RoundHooks_Start();
+	RoundHooks_Start( 0 );	// Bounty Killer counts no rounds: no game_round_<N>
 }
 
 static void DmRoundHookEnd( void )
@@ -62,6 +63,7 @@ CDm::CDm()
 	Bounty = 0;
 	EndRound = 1;
 	m_SpawnLocate = 1;
+	g_iszSpawnSet = iStringNull;	// SBO 2.1: no named spawn set, with the rotation
 	s_bDmRoundHooked = FALSE;	// SBO 2.0: a new map, no round yet
 }
 
@@ -329,7 +331,7 @@ void CDm::SetupRound( void )
 		{
 			if ( pPlayer->m_bLoadoutReady == 1 )
 			{
-				if ( pPlayer->pev->weapons )
+				if ( pPlayer->HasAnyWeaponBits() )
 					pPlayer->RemoveAllItems( TRUE );
 
 				if ( !Bounty )
@@ -585,10 +587,18 @@ void CDm::PlayerSpawn( CBasePlayer *pPlayer )
 
 	BOOL		addDefault = TRUE;
 
-	if ( pPlayer->pev->weapons )
+	if ( pPlayer->HasAnyWeaponBits() )
 		pPlayer->RemoveAllItems( TRUE );
 
 	pPlayer->pev->weapons |= (1<<WEAPON_SUIT);
+
+	// SBO 2.0: game_player_equip without Use Only equips at each spawn, as in the other modes (instead of the Wong)
+	CBaseEntity *pWeaponEntity = NULL;
+	while ( ( pWeaponEntity = UTIL_FindEntityByClassname( pWeaponEntity, "game_player_equip" ) ) != NULL )
+	{
+		pWeaponEntity->Touch( pPlayer );
+		addDefault = FALSE;
+	}
 
 	pPlayer->StopObserver();
 	ClientPrint( pPlayer->pev, HUD_PRINTCENTER, "Kill them all !!!" );
@@ -851,7 +861,7 @@ void CDm::PlayerKilled( CBasePlayer *pVictim, entvars_t *pKiller, entvars_t *pIn
 		peKiller = (CBasePlayer*)ktmp;
 
 	if ( pVictim->pev == pKiller )  
-	{  // killed self (`kill`, own grenade / rocket): no points lost (SBO 2.0, owner: a loss only held the match up;
+	{  // killed self (`kill`, own grenade / rocket): no points lost (SBO 2.0: a loss only held the match up;
 	   // 1.38: -10)
 	}
 	else if ( ktmp && ktmp->IsPlayer() )

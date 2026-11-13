@@ -1,0 +1,45 @@
+# trigger_counter (FGD "Fires its target after this many triggers"): each Use counts down from Count (default 2); it
+# fires its target on the last one and is removed. A player activator gets "Only N more to go..." / "Sequence
+# completed!" in the console unless flag 1 "No Message"
+# covers: trigger_counter trigger_counter.count trigger_counter.target trigger_counter:1
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn trigger_counter model *1 targetname tc count 3 target tc_out
+spawn trigger_counter model *2 targetname tc_quiet count 2 target quiet_out spawnflags 1
+spawn trigger_counter model *3 targetname tc_default target default_out
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useclient 0 1
+frames 1
+expect Only 2 more to go...
+useclient 0 1
+frames 1
+expectnot Firing: (tc_out)
+useclient 0 1
+frames 3
+expectn 1 Firing: (tc_out)
+expect Sequence completed!
+useclient 1 1
+useclient 1 1
+frames 3
+expectn 1 Firing: (quiet_out)
+expectn 1 Only 1 more to go...
+fire tc_default world
+frames 1
+expectnot Firing: (default_out)
+fire tc_default world
+frames 3
+expectn 1 Firing: (default_out)
+expectcount trigger_counter 0

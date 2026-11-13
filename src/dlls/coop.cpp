@@ -16,6 +16,7 @@
 #include	"semiclip.h"
 #include	"round_hooks.h"
 #include	"gmmode.h"
+#include	"inventory.h"
 
 extern DLL_GLOBAL CGameRules	*g_pGameRules;
 extern DLL_GLOBAL BOOL	g_fGameOver;
@@ -24,6 +25,7 @@ extern CVoiceGameMgr	g_VoiceGameMgr;
 
 extern int g_bChangeLevelTouched;
 extern int m_SpawnLocate;
+extern string_t g_iszSpawnSet;	// maprules.cpp: the named spawn set multispawn made active
 extern int g_bMissionOutcomePending;
 extern int g_bMissionFailed;
 extern int g_iMapRoundLimit;
@@ -112,6 +114,7 @@ CCoop::CCoop()
 	Limitat = 0;
 	GmEngage = 0;
 	m_SpawnLocate = 1;
+	g_iszSpawnSet = iStringNull;	// SBO 2.1: no named spawn set, with the rotation
 }
 
 //=========================================================
@@ -265,6 +268,10 @@ void CCoop::BeginMissionEnd( void )
 	s_bMissionEndObservers = FALSE;
 
 	GmMode_StopAll();	// SBO 2.0 GM mode ends with the mission (MrCalvin's plugin: mission success / failed)	// the players still alive play on for now (Think: STOCK_MISSION_END_TIME)
+
+	// SBO 2.0: game_mission_success / game_mission_failed, last: the outcome is kept (s_iMissionFailed) and the state is
+	// the mission end, so a hook that fires game_end or mission_failed changes nothing
+	RoundHooks_MissionEnd( s_iMissionFailed );
 }
 
 //=========================================================
@@ -716,11 +723,12 @@ static BOOL SpectateExitsDue( void )
 }
 
 //=========================================================
-// SBO 2.0 Game Master mode (gmmode.cpp, docs/GM_MODE.md): "gmon" and the gm_toggle server command, as the owner's GM
-// mode plugin (enter_gm_mode): mp_gmmode 1, a living player ("Unable to enter Game Master Mode while dead"), never a
-// spectator (client.cpp also blocks their "gmon") or an HLTV proxy, not in the mission end; one Game Master at a time
-// (GmEngage; the owner). The player leaves the round (the plugin lowered the round counters) and becomes an observer
-// where they are; the intro window comes up over a black screen. The loadout stays.
+// SBO 2.0 Game Master mode (gmmode.cpp, docs/GM_MODE.md): "gmon" and the gm_toggle server command, as the GM
+// mode plugin (enter_gm_mode): mp_gmmode 1, a living or dead player (as SBO's gmon; the plugin's "only while alive"
+// rule stays in the plugin), never a spectator (client.cpp also blocks their "gmon") or an HLTV proxy, not in the
+// mission end; one Game Master at a time (GmEngage; by design). The player leaves the round (CheckRoundOver counts
+// the players again, so a dead player leaving changes no count) and becomes an observer where they are (a dead
+// observer stays one and roams); the intro window comes up over a black screen. The loadout stays.
 //=========================================================
 BOOL CCoop::GameMasterOn( CBasePlayer *pPlayer, BOOL bAdmin )
 {
@@ -738,16 +746,11 @@ BOOL CCoop::GameMasterOn( CBasePlayer *pPlayer, BOOL bAdmin )
 	if ( !GmMode_Ready() )
 		return FALSE;
 
-	// sma enter_gm_mode: only a living player
-	if ( !pPlayer->IsAlive() || pPlayer->IsObserver() || ( pPlayer->m_afPhysicsFlags & PFLAG_OBSERVER ) )
-	{
-		GmMode_Notice( pPlayer, "Unable to enter Game Master Mode while dead" );
-		return FALSE;
-	}
-
 	PlayerLeavesRound( pPlayer );
+	Inventory_ReturnAll( pPlayer );	// SBO 2.0 inventory: a Game Master holds no items; his go back to their placed spots
 
 	GmEngage = 1;
+
 	pPlayer->m_bGameMaster = 1;
 	pPlayer->m_iSpawnMode = 1;	// a respawn (none is due) would make an observer
 	pPlayer->m_bOutOfPlay = 1;
@@ -760,7 +763,7 @@ BOOL CCoop::GameMasterOn( CBasePlayer *pPlayer, BOOL bAdmin )
 }
 
 //=========================================================
-// Leaving GM mode (Misc > Leave GM Mode, the gm_toggle server command, the mission end), as the owner's GM mode plugin
+// Leaving GM mode (Misc > Leave GM Mode, the gm_toggle server command, the mission end), as the GM mode plugin
 // (exit_gm_mode): the observer mode ends (StopObserver) and the player is dead where the Game Master was
 // (force_player_round_death: a Game Master is never alive, so no kill), then respawns as a dead player does (an
 // observer until the next round, which spawns them with their loadout). Everybody is told.
@@ -960,6 +963,7 @@ void CCoop::RoundWinner( void )
 		Semiclip_RoundFailed();	// SBO 2.0 semiclip: as the module did at this text
 		m_iNextRoundStep = gpGlobals->time + 5;
 		m_iRoundState = ROUND_PAUSE;
+		RoundHooks_RoundFailed();	// SBO 2.0: game_round_failed, after the round's game_round_end
 	}
 }
 
@@ -1114,7 +1118,7 @@ void CCoop::CheckWho( void )
 
 		if ( IsRoundCandidate( pPlayer ) && pPlayer->m_bLoadoutReady == 1 )
 		{
-			if ( pPlayer->pev->weapons )
+			if ( pPlayer->HasAnyWeaponBits() )
 				pPlayer->RemoveAllItems( TRUE );
 
 			iSpawned++;
@@ -1139,7 +1143,7 @@ void CCoop::CheckWho( void )
 	s_iRoundShown = m_iRoundsPlayed;
 	GmMode_RoundStart();	// SBO 2.0 GM mode: "Killed by your <monster>" is per round
 	CoopLogRoundStart();
-	RoundHooks_Start();	// SBO 2.0: game_round_start, the round's players spawned
+	RoundHooks_Start( s_iRoundShown );	// SBO 2.0: game_round_start and game_round_<N>, the round's players spawned
 
 	m_iNumAliveAtStart = iSpawned;
 	m_iNextRoundStep = gpGlobals->time + 0;
@@ -1718,6 +1722,10 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->m_iHideHUD &= ~HIDEHUD_HEALTH;
 		pPlayer->m_afPhysicsFlags &= ~PFLAG_OBSERVER;
 		pPlayer->m_bOutOfPlay = 0;
+		// SBO 2.0: walking only for a player who spawns alive (HL SDK / ReGameDLL): an observer keeps StartObserver's
+		// MOVETYPE_NONE and a waiting player the branch's, which the engine never pushes (SV_PushRotate turns a pushed
+		// client's view with a rotating brush)
+		pPlayer->pev->movetype = MOVETYPE_WALK;
 	}
 
 	if ( addDefault )
@@ -1725,7 +1733,6 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 
 	pPlayer->m_iSpawnProtectTime = gpGlobals->time + 2;
 	pPlayer->pev->fov = pPlayer->m_iFOV = 0;	// SBO 2.0: the player's own FOV (default_fov), not 90
-	pPlayer->pev->movetype = MOVETYPE_WALK;
 	pPlayer->m_iArmorType = 0;
 
 	if ( ban.value == 1 && pPlayer->m_iTeamKills >= 5 )

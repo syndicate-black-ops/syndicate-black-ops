@@ -294,6 +294,8 @@ public:
 		MarkForDeletion();
 	}
 
+	int m_iPressed = -1; // the item pressed, chosen on the release
+
 	int RowAtCursor()
 	{
 		int x, y;
@@ -308,6 +310,13 @@ public:
 	void OnMousePressed(vgui2::MouseCode code) override
 	{
 		const int row = code == vgui2::MOUSE_LEFT ? RowAtCursor() : -1;
+		if (row >= 0)
+		{
+			// an item: chosen on the release, while the list still has the mouse, so neither the press nor the
+			// release reaches the control under the list
+			m_iPressed = row;
+			return;
+		}
 		int x, y;
 		vgui2::input()->GetCursorPos(x, y);
 		ScreenToLocal(x, y);
@@ -324,6 +333,19 @@ public:
 		Close();
 		if (row >= 0)
 			pSelect->Choose(row);
+	}
+
+	void OnMouseReleased(vgui2::MouseCode code) override
+	{
+		if (code != vgui2::MOUSE_LEFT || m_iPressed < 0)
+			return;
+		const int row = RowAtCursor();
+		m_iPressed = -1;
+		if (row < 0)
+			return; // released off the items: the list stays open
+		CSboBrowserSelect *pSelect = m_pSelect;
+		Close();
+		pSelect->Choose(row);
 	}
 
 	void OnCursorMoved(int x, int y) override
@@ -1875,7 +1897,7 @@ static const char *const s_TabNames[CSboServerBrowser::TAB_COUNT] = { "Internet"
 static const int s_PingValues[] = { 0, 50, 100, 150 };
 static const char *const s_PingNames[] = { "Any", "< 50", "< 100", "< 150" };
 
-// The filter choices, kept for the game session (no cvar: a new one needs the owner's approval)
+// The filter choices, kept for the game session (no cvar: new cvars need approval)
 static struct
 {
 	int mode = 0;

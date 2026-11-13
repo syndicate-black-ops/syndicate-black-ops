@@ -2,7 +2,9 @@
 // SBO_UPDATER_TESTING: JSON (also random / truncated input), versions, the release list and the emergency marker,
 // paths, manifests (hostile input), the install plan, markdown, SHA-256, Ed25519, inflate, the installer (rollback,
 // crash recovery both ways, files in use, backups) and a whole update through a fake HTTP server.
-// argv[1]: scratch folder, argv[2]: raw deflate file, argv[3]: its plain text
+// argv[1]: scratch folder, argv[2]: raw deflate file, argv[3]: its plain text,
+// argv[4] (optional): release notes from CHANGELOG.md (scripts/updater_release.py notes <version>), rendered as the
+// update dialog renders a GitHub release body
 
 #include "updater_client.h"
 #include "updater_core.h"
@@ -420,6 +422,48 @@ static void TestMarkdown()
 	}
 	std::string big(MAX_NOTES_BYTES * 3, '*');
 	CHECK(RunsToPlain(MarkdownToRuns(big)).size() <= MAX_NOTES_BYTES + 16);
+}
+
+// the release text CHANGELOG.md gives (updater_release.py notes): every group heading, every entry as a bullet,
+// inline code as code, the full-changelog link as a link, nothing cut, and the margin to MAX_NOTES_BYTES
+static void TestChangelogNotes(const char *path)
+{
+	std::ifstream f(path, std::ios::binary);
+	std::stringstream ss;
+	ss << f.rdbuf();
+	const std::string md = ss.str();
+	CHECK(!md.empty());
+	CHECK(md.size() < MAX_NOTES_BYTES);
+	size_t headings = 0, bullets = 0, mdHeadings = 0, mdBullets = 0, codes = 0;
+	std::istringstream lines(md);
+	for (std::string line; std::getline(lines, line);)
+	{
+		mdHeadings += line.compare(0, 4, "### ") == 0 ? 1 : 0;
+		const size_t indent = line.find_first_not_of(' ');
+		mdBullets += indent != std::string::npos && line.compare(indent, 2, "- ") == 0 ? 1 : 0; // nested items too
+	}
+	const std::vector<TextRun> runs = MarkdownToRuns(md);
+	bool link = false, startOfLine = true;
+	for (const TextRun &r : runs)
+	{
+		if (startOfLine && r.style == RunStyle::Heading)
+			headings++;
+		if (startOfLine && r.text.compare(0, 4, "\xE2\x80\xA2 ") == 0) // "• ", merged with the text that follows
+			bullets++;
+		codes += r.style == RunStyle::Code ? 1 : 0;
+		link = link || (r.style == RunStyle::Link && r.text == "Full changelog" &&
+		                r.url.compare(0, 19, "https://github.com/") == 0 &&
+		                r.url.size() > 13 && r.url.compare(r.url.size() - 13, 13, "/CHANGELOG.md") == 0);
+		startOfLine = !r.text.empty() && r.text.back() == '\n';
+	}
+	const std::string plain = RunsToPlain(runs);
+	CHECK(headings == mdHeadings && headings > 0);
+	CHECK(bullets == mdBullets && bullets > 0);
+	CHECK(codes > 0);
+	CHECK(link);
+	CHECK(plain.find("###") == std::string::npos && plain.find("](") == std::string::npos && plain.find('`') == std::string::npos);
+	printf("changelog notes: %zu bytes (%zu groups, %zu entries), %zu bytes under MAX_NOTES_BYTES (%zu)\n", md.size(),
+	       headings, bullets, MAX_NOTES_BYTES - std::min(md.size(), MAX_NOTES_BYTES), MAX_NOTES_BYTES);
 }
 
 static void TestCrypto(const char *deflatePath, const char *plainPath)
@@ -885,6 +929,8 @@ int main(int argc, char **argv)
 	TestPlan();
 	TestCaseRename(root);
 	TestMarkdown();
+	if (argc > 4)
+		TestChangelogNotes(argv[4]);
 	TestCrypto(argv[2], argv[3]);
 	TestInstaller(root);
 	TestUpdaterFlow(root);

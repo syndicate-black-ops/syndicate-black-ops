@@ -1,0 +1,22 @@
+# game_counter_set (FGD "Sets a game_counter"): fires its target with USE_SET and New Value (frags): the counter takes
+# that value and fires if it is the limit; flag 1 "Remove On fire" removes the setter after one use
+# covers: game_counter_set game_counter_set.frags game_counter_set.target game_counter_set:1 game_counter
+map co_fuzz
+spawn game_counter targetname c health 5 target c_hit
+spawn game_counter_set targetname set4 target c frags 4
+spawn game_counter_set targetname set5 target c frags 5 spawnflags 1
+activate
+frames 3
+fire set4
+frames 1
+expectnot Firing: (c_hit)
+fire c
+frames 1
+expectn 1 Firing: (c_hit)
+fire set5
+frames 2
+expectn 2 Firing: (c_hit)
+expectcount game_counter_set 1
+fire set5
+frames 1
+expectn 2 Firing: (c_hit)

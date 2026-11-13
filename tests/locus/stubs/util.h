@@ -9,4 +9,4 @@ void ALERT( ALERT_TYPE, const char *fmt, ... );
 float RANDOM_FLOAT( float lo, float hi );
 void UTIL_StringToVector( float *pVector, const char *pString );
 class CBaseEntity;
-CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStart, const char *szName );
+CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStart, const char *szName, CBaseEntity *pActivator = NULL, CBaseEntity *pCaller = NULL );

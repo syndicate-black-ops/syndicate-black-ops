@@ -1,0 +1,21 @@
+# env_spark (FGD): without flags it sparks by itself, the next spark a random 0.1 s to 0.1 + Max Delay later: Max
+# Delay 0.2 (edict #20) sparks at least 15 times in 7 s, Max Delay 3 (#21) at most 7 times (one every 1.6 s on
+# average); flag 32 Toggle without 64 Start ON (#22): nothing until triggered, then it sparks; 32 + 64 (#23) sparks
+# from the start
+# covers: env_spark env_spark.maxdelay env_spark:32 env_spark:64
+map co_fuzz
+spawn env_spark targetname often MaxDelay 0.2 origin "0 0 0"
+spawn env_spark targetname slow MaxDelay 3 origin "0 500 0"
+spawn env_spark targetname tog MaxDelay 0.2 spawnflags 32 origin "0 1000 0"
+spawn env_spark targetname on MaxDelay 0.2 spawnflags 96 origin "0 1500 0"
+activate
+frames 70
+expectmin 15 SOUND #20 env_spark
+expectmax 7 SOUND #21 env_spark
+expectmin 1 SOUND #21 env_spark
+expectnot SOUND #22 env_spark
+expectmin 15 SOUND #23 env_spark
+mark on
+fire tog
+frames 40
+expectmin 10 SOUND #22 env_spark

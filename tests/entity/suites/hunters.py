@@ -1,6 +1,6 @@
 """The six SBO "hunter" monsters' sight: monster_grunt_hunter (grunt_hunter.cpp), monster_imp_hunter (imp_hunter.cpp),
 monster_cyberminotor (minotaure.cpp), monster_hunter (hunter2.cpp), monster_zombie_hunter (zombies_hunter.cpp) and
-monster_werewolf_hunter (werewolf_hunter.cpp). Each has its own Look, as the Big Cyborg (suite `cyborg`): every monster
+monster_werewolf_hunter (werewolf_hunter.cpp). Each has its own Look, as the Cyborg (suite `cyborg`): every monster
 and player within 12000 units, through walls and without a view cone (1.38), skipping an entity with FL_NOTARGET (the
 `notarget` cheat, observers), as CBaseMonster::Look does (1.38: they took a notarget player as their enemy).
 
@@ -82,8 +82,9 @@ def make_tests(key, classname):
     notarget.__name__ = key + '_notarget'
     control.__name__ = key + '_control'
     S.test('%s: a player with notarget in front of it is not its enemy and takes no damage; notarget off: he is'
-           % classname, players=1, size=ROOM)(notarget)
-    S.test('%s control: the same player without notarget is its enemy' % classname, players=1, size=ROOM)(control)
+           % classname, players=1, size=ROOM, covers=(classname,))(notarget)
+    S.test('%s control: the same player without notarget is its enemy' % classname, players=1, size=ROOM,
+           covers=(classname,))(control)
 
 
 for _key, _classname in HUNTERS:
@@ -95,7 +96,8 @@ for _key, _classname in HUNTERS:
 HUNTER_HEALTH = ((0, 150), (1, 400), (2, 900), (3, 1700))
 
 
-@S.test('monster_hunter health by mp_juniorpvmonst: 150, 400, 900 (HardCore; 1.38: 9000), 1700', players=1, size=ROOM)
+@S.test('monster_hunter health by mp_juniorpvmonst: 150, 400, 900 (HardCore; 1.38: 9000), 1700', players=1, size=ROOM,
+        covers=('monster_hunter',))
 def hunter_health(t):
     """One monstermaker per level; each monster is made after its mp_juniorpvmonst value is set and removed after
     its health is read."""

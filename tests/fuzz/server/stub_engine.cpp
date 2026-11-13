@@ -1,6 +1,7 @@
 // Stub GoldSrc engine for the server fuzz harness: see stub_engine.h.
 #include "stub_engine.h"
 
+#include <dirent.h>
 #include <dlfcn.h>
 #include <strings.h>
 
@@ -11,9 +12,31 @@ DLL_FUNCTIONS g_dll;
 NEW_DLL_FUNCTIONS g_newDll;
 bool g_stubHaveNewDll;
 bool g_stubLoading = true;
+float g_stubBrushSize[3];
 int g_stubReports;
 std::string g_stubAction;
 bool g_stubVerbose;
+
+// Options for the case runner (tests/maps, docs/dev/MAP_TESTS.md), read from the environment once; all off by default,
+// so the fuzz harness (run_test.sh) runs as before.
+//   STUB_SEARCH_PATH    colon-separated folders LoadFileForMe also searches after the game folder, case-insensitively
+//                       (a production server's valve/ and custom map content)
+//   STUB_ASSUME_MODELS  1: a .mdl / .spr no search folder has "exists" (a server with every map's content); the
+//                       game's model checks do not remove the entity
+//   STUB_STUDIO_MODELS  1: GET_MODEL_PTR returns the studio header of the entity's model, so sequences play and end
+//   STUB_PVS_CLIENT     1: client 1 is in every PVS (FIND_CLIENT_IN_PVS), so NPCs see and hear the player
+//   STUB_LOG_SOUND      1: every EMIT_SOUND goes to the console log as "[t=..] SOUND #<edict> <class> ch<n> <sample>
+//                       vol=<v> att=<a> pitch=<p> flags=<f>", every EMIT_AMBIENT_SOUND as "[t=..] AMBIENT #<edict>
+//                       <sample> vol=.. att=.. pitch=.. flags=.."
+//   STUB_LOG_MSG        1: every message (user and engine) goes to the console log with its values:
+//                       "[t=..] MSG <name|svc<n>> -><#client|all|area>: <values>" (a string as str(<length>))
+// Light styles always go to the console log: "[t=..] LIGHTSTYLE <n> "<pattern>"".
+// Static decals (infodecal) too: "[t=..] STATICDECAL <x> <y> <z> decal=<n> ent=<e> model=<m>".
+static bool EnvOn( const char *name )
+{
+	const char *v = getenv( name );
+	return v && *v && strcmp( v, "0" );
+}
 std::string g_stubGameDir;
 std::string g_stubConsole;	// everything the game printed (ALERT, SERVER_PRINT): the cases' "expect"
 
@@ -205,6 +228,16 @@ static void SetModel( edict_t *e, const char *m )
 		Stub_Report( "SET_MODEL: no precache: %s (Host_Error)", m );
 	e->v.model = Stub_AllocString( m );
 	e->v.modelindex = m[0] ? 1 : 0;
+	if ( m[0] == '*' && ( g_stubBrushSize[0] || g_stubBrushSize[1] || g_stubBrushSize[2] ) )
+	{
+		// a brush model's bounds (the engine takes them from the BSP): centered on the entity's origin
+		for ( int k = 0; k < 3; k++ )
+		{
+			e->v.mins[k] = -g_stubBrushSize[k] * 0.5f;
+			e->v.maxs[k] = g_stubBrushSize[k] * 0.5f;
+			e->v.size[k] = g_stubBrushSize[k];
+		}
+	}
 }
 
 static int ModelIndex( const char *m )
@@ -240,6 +273,9 @@ static void SetOrigin( edict_t *e, const float *org )
 
 static void ChangeLevel( char *s1, char *s2 )
 {
+	char tb[64];
+	snprintf( tb, sizeof( tb ), "[t=%.1f] ", g_stubGlobals.time );
+	g_stubConsole += std::string( tb ) + "CHANGELEVEL " + ( s1 ? s1 : "(null)" ) + "\n";
 	if ( g_stubVerbose )
 		fprintf( stderr, "changelevel %s %s\n", s1 ? s1 : "(null)", s2 ? s2 : "" );
 }
@@ -338,7 +374,13 @@ static edict_t *FindEntityInSphere( edict_t *start, const float *org, float rad 
 	return &g_stubEdicts[0];
 }
 
-static edict_t *FindClientInPVS( edict_t * ) { return &g_stubEdicts[0]; }
+static edict_t *FindClientInPVS( edict_t * )
+{
+	static const bool pvsClient = EnvOn( "STUB_PVS_CLIENT" );
+	if ( pvsClient && !g_stubEdicts[1].free && g_stubEdicts[1].pvPrivateData )
+		return &g_stubEdicts[1];
+	return &g_stubEdicts[0];
+}
 static edict_t *EntitiesInPVS( edict_t * ) { return &g_stubEdicts[0]; }
 
 static void AngleVectorsImpl( const float *angles, float *forward, float *right, float *up )
@@ -391,17 +433,33 @@ static void CheckSound( const char *who, int channel, const char *sample, float 
 		Stub_Report( "SV_StartSound: %s not precached", sample );
 }
 
-static void EmitSound( edict_t *e, int channel, const char *sample, float volume, float attenuation, int, int pitch )
+static void EmitSound( edict_t *e, int channel, const char *sample, float volume, float attenuation, int fFlags, int pitch )
 {
 	if ( !ValidEdict( e ) )
 		Stub_Report( "EMIT_SOUND of a bad edict" );
+	static const bool logSound = EnvOn( "STUB_LOG_SOUND" );
+	if ( logSound && sample && ValidEdict( e ) && g_stubConsole.size() < ( 1u << 22 ) )
+	{
+		char tb[300];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] SOUND #%d %s ch%d %s vol=%.2f att=%.2f pitch=%d flags=%d\n", g_stubGlobals.time,
+			(int)( e - g_stubEdicts ), s_stringBase + e->v.classname, channel, sample, volume, attenuation, pitch, fFlags );
+		g_stubConsole += tb;
+	}
 	CheckSound( "EMIT_SOUND", channel, sample, volume, attenuation, pitch );
 }
 
-static void EmitAmbientSound( edict_t *, float *pos, const char *samp, float vol, float attenuation, int, int pitch )
+static void EmitAmbientSound( edict_t *e, float *pos, const char *samp, float vol, float attenuation, int fFlags, int pitch )
 {
 	if ( !pos )
 		Stub_Report( "EMIT_AMBIENT_SOUND: NULL origin" );
+	static const bool logSound = EnvOn( "STUB_LOG_SOUND" );
+	if ( logSound && samp && g_stubConsole.size() < ( 1u << 22 ) )
+	{
+		char tb[300];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] AMBIENT #%d %s vol=%.2f att=%.2f pitch=%d flags=%d\n", g_stubGlobals.time,
+			ValidEdict( e ) ? (int)( e - g_stubEdicts ) : -1, samp, vol, attenuation, pitch, fFlags );
+		g_stubConsole += tb;
+	}
 	CheckSound( "EMIT_AMBIENT_SOUND", 0, samp, vol, attenuation, pitch );
 }
 
@@ -459,6 +517,12 @@ static void LightStyle( int style, char *val )
 		Stub_Report( "PF_lightstyle: NULL value" );
 	else if ( strlen( val ) >= 64 )
 		Stub_Report( "PF_lightstyle: value of %d characters", (int)strlen( val ) );
+	if ( val && g_stubConsole.size() < ( 1u << 22 ) )
+	{
+		char tb[128];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] LIGHTSTYLE %d \"%.64s\"\n", g_stubGlobals.time, style, val );
+		g_stubConsole += tb;
+	}
 }
 static int DecalIndex( const char * ) { return 1; }
 static int PointContents( const float * ) { return CONTENTS_EMPTY; }
@@ -474,7 +538,14 @@ static struct
 	bool active;
 	int dest, type, size;
 	edict_t *ed;
+	std::string args;	// STUB_LOG_MSG: the values written, as text
 } s_msg;
+
+static bool LogMsg( void )
+{
+	static const bool on = EnvOn( "STUB_LOG_MSG" );
+	return on;
+}
 
 static void MessageBegin( int dest, int type, const float *origin, edict_t *ed )
 {
@@ -489,11 +560,18 @@ static void MessageBegin( int dest, int type, const float *origin, edict_t *ed )
 		Stub_Report( "MESSAGE_BEGIN( PVS/PAS ) without an origin (Sys_Error), msg %d", type );
 	if ( type >= 64 && !s_userMsgs.count( type ) )
 		Stub_Report( "MESSAGE_BEGIN: user message %d not registered", type );
+	if ( type == 30 )	// svc_intermission
+	{
+		char tb[48];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] SVC_INTERMISSION\n", g_stubGlobals.time );
+		g_stubConsole += tb;
+	}
 	s_msg.active = true;
 	s_msg.dest = dest;
 	s_msg.type = type;
 	s_msg.size = 0;
 	s_msg.ed = ed;
+	s_msg.args.clear();
 }
 
 static void MessageEnd( void )
@@ -504,6 +582,20 @@ static void MessageEnd( void )
 		return;
 	}
 	s_msg.active = false;
+	// STUB_LOG_MSG: "[t=..] MSG <name|svc<n>> -><#client|all|area>:<values>" (bytes, shorts, longs as integers; coords
+	// and angles as numbers; strings quoted)
+	if ( LogMsg() && g_stubConsole.size() < ( 1u << 22 ) )
+	{
+		char tb[96];
+		std::string name = s_msg.type >= 64 && s_userMsgs.count( s_msg.type ) ? s_userMsgs[s_msg.type].name
+			: "svc" + std::to_string( s_msg.type );
+		if ( s_msg.dest == MSG_ONE || s_msg.dest == MSG_ONE_UNRELIABLE )
+			snprintf( tb, sizeof( tb ), "[t=%.1f] MSG %s ->#%d:", g_stubGlobals.time, name.c_str(), s_msg.ed ? EdictIndex( s_msg.ed ) : 0 );
+		else
+			snprintf( tb, sizeof( tb ), "[t=%.1f] MSG %s ->%s:", g_stubGlobals.time, name.c_str(),
+				( s_msg.dest == MSG_ALL || s_msg.dest == MSG_BROADCAST ) ? "all" : "area" );
+		g_stubConsole += std::string( tb ) + s_msg.args + "\n";
+	}
 	if ( s_msg.type < 64 )
 		return;
 	const usermsg_t &m = s_userMsgs[s_msg.type];
@@ -523,12 +615,22 @@ static void Write( int n )
 		Stub_Report( "WRITE_* outside a message (Sys_Error)" );
 	s_msg.size += n;
 }
-static void WriteByte( int ) { Write( 1 ); }
-static void WriteChar( int ) { Write( 1 ); }
-static void WriteShort( int ) { Write( 2 ); }
-static void WriteLong( int ) { Write( 4 ); }
-static void WriteAngle( float ) { Write( 1 ); }
-static void WriteCoord( float ) { Write( 2 ); }
+static void LogArg( const char *fmt, double v )
+{
+	if ( !LogMsg() )
+		return;
+	char b[48];
+	if ( v == 0 )
+		v = 0;	// no "-0"
+	snprintf( b, sizeof( b ), fmt, v );
+	s_msg.args += b;
+}
+static void WriteByte( int v ) { Write( 1 ); LogArg( " %.0f", (double)( v & 255 ) ); }
+static void WriteChar( int v ) { Write( 1 ); LogArg( " %.0f", (double)(signed char)v ); }
+static void WriteShort( int v ) { Write( 2 ); LogArg( " %.0f", (double)(short)v ); }
+static void WriteLong( int v ) { Write( 4 ); LogArg( " %.0f", (double)v ); }
+static void WriteAngle( float v ) { Write( 1 ); LogArg( " %g", v ); }
+static void WriteCoord( float v ) { Write( 2 ); LogArg( " %g", v ); }
 static void WriteString( const char *sz )
 {
 	if ( !sz )
@@ -536,9 +638,31 @@ static void WriteString( const char *sz )
 		Stub_Report( "WRITE_STRING( NULL )" );
 		sz = "";
 	}
+	// the strings of user messages (TextMsg, HudText, ...) go to the console log: "[t=..] WSTR <message>: <text>"
+	if ( s_msg.type >= 64 && s_userMsgs.count( s_msg.type ) && g_stubConsole.size() < ( 1u << 20 ) )
+	{
+		char tb[32];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] ", g_stubGlobals.time );
+		g_stubConsole += std::string( tb ) + "WSTR " + s_userMsgs[s_msg.type].name + ": " + sz + "\n";
+	}
+	// the text of an engine message (svc_temp_entity TE_TEXTMESSAGE: game_text, UTIL_HudMessage) with its receiver:
+	// "[t=..] MSTR <svc> -><#client|all|area>: <text>" (who a game_text reached: its activator or every player)
+	if ( s_msg.type < 64 && g_stubConsole.size() < ( 1u << 20 ) )
+	{
+		char tb[96];
+		const char *to = ( s_msg.dest == MSG_ONE || s_msg.dest == MSG_ONE_UNRELIABLE ) ? NULL
+			: ( s_msg.dest == MSG_ALL || s_msg.dest == MSG_BROADCAST ) ? "all" : "area";
+		if ( to )
+			snprintf( tb, sizeof( tb ), "[t=%.1f] MSTR %d ->%s: ", g_stubGlobals.time, s_msg.type, to );
+		else
+			snprintf( tb, sizeof( tb ), "[t=%.1f] MSTR %d ->#%d: ", g_stubGlobals.time, s_msg.type, s_msg.ed ? EdictIndex( s_msg.ed ) : 0 );
+		g_stubConsole += std::string( tb ) + sz + "\n";
+	}
+	if ( LogMsg() )	// the length only: the text is in the WSTR / MSTR lines already (expectn counts stay right)
+		s_msg.args += " str(" + std::to_string( strlen( sz ) ) + ")";
 	Write( (int)strlen( sz ) + 1 );
 }
-static void WriteEntity( int ) { Write( 2 ); }
+static void WriteEntity( int v ) { Write( 2 ); LogArg( " %.0f", (double)v ); }
 
 static int RegUserMsg( const char *name, int size )
 {
@@ -700,7 +824,31 @@ static edict_t *FindEntityByVars( entvars_t *pev )
 			return &g_stubEdicts[i];
 	return NULL;
 }
-static void *GetModelPtr( edict_t * ) { return NULL; }
+static byte *LoadFileForMe( char *name, int *len );
+static void *GetModelPtr( edict_t *e )
+{
+	// STUB_STUDIO_MODELS: the studio header of the entity's model (loaded once per name), so sequences play and end
+	static const bool studio = EnvOn( "STUB_STUDIO_MODELS" );
+	static std::map<std::string, void *> cache;
+	if ( !studio || !ValidEdict( e ) || !e->v.model )
+		return NULL;
+	std::string n = s_stringBase + e->v.model;
+	if ( n.size() < 4 || strcasecmp( n.c_str() + n.size() - 4, ".mdl" ) )
+		return NULL;
+	auto it = cache.find( n );
+	if ( it != cache.end() )
+		return it->second;
+	int len = 0;
+	byte *p = LoadFileForMe( (char *)n.c_str(), &len );
+	// a real studio model only (IDST, version 10, the header fits): not an assumed one (STUB_ASSUME_MODELS)
+	if ( p && ( len < 244 || memcmp( p, "IDST", 4 ) || *(int *)( p + 4 ) != 10 ) )
+	{
+		free( p );
+		p = NULL;
+	}
+	cache[n] = p;
+	return p;
+}
 static void AnimationAutomove( const edict_t *, float ) {}
 static void GetBonePosition( const edict_t *e, int, float *org, float *ang )
 {
@@ -789,6 +937,62 @@ static byte *LoadFileForMe( char *name, int *len )
 		return NULL;
 	std::string path = g_stubGameDir + "/" + name;
 	FILE *f = fopen( path.c_str(), "rb" );
+	static const char *searchPath = getenv( "STUB_SEARCH_PATH" );
+	static const bool assumeModels = EnvOn( "STUB_ASSUME_MODELS" );
+	if ( !f && ( ( searchPath && *searchPath ) || assumeModels ) )
+	{
+		// as a server's file system: the game folder, then the search folders, any case
+		std::vector<std::string> roots = { g_stubGameDir };
+		for ( std::string rest = searchPath ? searchPath : ""; !rest.empty(); )
+		{
+			size_t c = rest.find( ':' );
+			if ( c ) roots.push_back( rest.substr( 0, c ) );
+			rest = c == std::string::npos ? "" : rest.substr( c + 1 );
+		}
+		std::string rel = name;
+		for ( auto &ch : rel )
+			if ( ch == '\\' )
+				ch = '/';
+		for ( const std::string &root : roots )
+		{
+			std::string cur = root;
+			bool ok = true;
+			for ( size_t pos = 0; ok && pos <= rel.size(); )
+			{
+				size_t nx = rel.find( '/', pos );
+				if ( nx == std::string::npos )
+					nx = rel.size();
+				std::string comp = rel.substr( pos, nx - pos );
+				pos = nx + 1;
+				if ( comp.empty() )
+					continue;
+				ok = false;
+				if ( DIR *d = opendir( cur.c_str() ) )
+				{
+					while ( struct dirent *de = readdir( d ) )
+						if ( !strcasecmp( de->d_name, comp.c_str() ) )
+						{
+							cur += "/";
+							cur += de->d_name;
+							ok = true;
+							break;
+						}
+					closedir( d );
+				}
+			}
+			if ( ok && ( f = fopen( cur.c_str(), "rb" ) ) )
+				break;
+		}
+		size_t nl = strlen( name );
+		if ( !f && assumeModels && nl > 4 && ( !strcasecmp( name + nl - 4, ".mdl" ) || !strcasecmp( name + nl - 4, ".spr" ) ) )
+		{
+			// a placeholder: the file exists, its content is not read by anything that needs it
+			byte *b = (byte *)calloc( 1, 64 );
+			if ( len )
+				*len = 64;
+			return b;
+		}
+	}
 	if ( !f )
 		return NULL;
 	fseek( f, 0, SEEK_END );
@@ -915,7 +1119,16 @@ static void SetClientKeyValue( int i, char *buf, char *k, char *v )
 		Stub_SetInfo( buf, k, v );
 }
 static int IsMapValid( char * ) { return 1; }
-static void StaticDecal( const float *, int, int, int ) {}
+static void StaticDecal( const float *origin, int decal, int ent, int model )
+{
+	if ( origin && g_stubConsole.size() < ( 1u << 22 ) )
+	{
+		char tb[160];
+		snprintf( tb, sizeof( tb ), "[t=%.1f] STATICDECAL %.1f %.1f %.1f decal=%d ent=%d model=%d\n", g_stubGlobals.time,
+			origin[0], origin[1], origin[2], decal, ent, model );
+		g_stubConsole += tb;
+	}
+}
 static int GetPlayerUserId( edict_t *e )
 {
 	int i = EdictIndex( e );

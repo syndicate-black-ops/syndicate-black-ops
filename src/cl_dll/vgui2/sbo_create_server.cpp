@@ -10,6 +10,7 @@
 #include <time.h>
 #include <algorithm>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <FileSystem.h>
@@ -123,16 +124,16 @@ const char *ScrTooltip(const char *cvar)
 		{ "sv_lan", "Only players on your local network can join" },
 		{ "mp_fraglimit", "The map ends when a player reaches this many kills, 0 for no limit" },
 		{ "mp_timelimit", "Minutes until the map ends, 0 for no limit" },
-		{ "mp_hardcore", "A co-op round is lost when this percent of the team has died" },
+		{ "mp_hardcore", "Co-op only: a round is lost when this percent of the players who started it have died (0 to 100)" },
 		{ "mp_juniorpowmonst", "How much damage monsters do" },
 		{ "mp_junioracmar", "How much damage enemy marines do" },
 		{ "mp_juniorpvmonst", "How much health monsters have" },
 		{ "mp_makermon", "How many monsters the map's spawners make: half, normal, double or triple" },
-		{ "mp_speedmon", "How fast the map's spawners make monsters" },
+		{ "mp_speedmon", "How fast the map's spawners make monsters (Off: they make none)" },
 		{ "mp_friendlyfire", "Players can hurt each other" },
 		{ "mp_ban", "After 5 team kills a player respawns with no weapons and 3 health" },
 		{ "mp_junior", "Hits to a player's head, chest and stomach do less damage" },
-		{ "mp_easymode", "Co-op missions allow 1.5 times as many lost rounds (10 instead of 7 by default)" },
+		{ "mp_easymode", "Co-op only: a mission fails after 1.5 times as many rounds (10 instead of 7 on most maps)" },
 		{ "mp_gmmode", "A game master can spawn and remove monsters during the game" },
 		{ "mp_XP", "Players gain speed and health levels by damaging monsters" },
 		{ "mp_footsteps", "Players' footsteps make sounds" },
@@ -597,9 +598,29 @@ std::string CSboCreateServer::Value(const char *cvar, const char *fallback)
 	return fallback;
 }
 
+// The page's values for the game DLL's cvars that did not exist yet at Start (the DLL loads with the first map).
+// Host_Map_f loads the DLL, then paints the loading screen before it spawns the server, so set from the loading
+// screen's paint they are in place before the map's entities spawn and before listenserver.cfg runs (which still
+// overrides them, as for a server started later in the session).
+static std::vector<std::pair<std::string, std::string>> s_PendingCvars;
+
+void VGui2_CreateServer_ApplyPending()
+{
+	if (s_PendingCvars.empty() || !sbo::FindCvar(s_PendingCvars.front().first.c_str()))
+		return;
+	for (const auto &cv : s_PendingCvars)
+	{
+		if (sbo::FindCvar(cv.first.c_str()))
+			sbo::CvarSetString(cv.first.c_str(), cv.second.c_str());
+	}
+	s_PendingCvars.clear();
+}
+
 void CSboCreateServer::Start()
 {
-	// 1. the page's values (GameUI's GatherCurrentValues), to the engine and into settings.scr
+	// 1. the page's values (GameUI's GatherCurrentValues), to the engine and into settings.scr. A LIST's value is
+	// its row (the file's format: "LIST is index"; ConfigValue sends that row's item value), so an item whose value
+	// is not its row (mp_speedmon "Off" "-1") reaches the server as written; GameUI stores the item's value there
 	for (ScrRow &r : m_Rows)
 	{
 		sbo_script::Object &o = *r.obj;
@@ -608,12 +629,12 @@ void CSboCreateServer::Start()
 		else if (o.type == sbo_script::TYPE_LIST && r.yesItem >= 0)
 		{
 			const bool checked = static_cast<CSboBrowserCheck *>(r.control)->IsChecked();
-			o.SetCurValue(o.items[checked ? r.yesItem : 1 - r.yesItem].value);
+			o.SetCurValue(std::to_string(checked ? r.yesItem : 1 - r.yesItem));
 		}
 		else if (o.type == sbo_script::TYPE_LIST)
 		{
 			const int row = static_cast<CSboBrowserSelect *>(r.control)->GetSelected();
-			o.SetCurValue(row >= 0 && row < (int)o.items.size() ? o.items[row].value : o.defValue);
+			o.SetCurValue(row >= 0 && row < (int)o.items.size() ? std::to_string(row) : o.defValue);
 		}
 		else
 		{
@@ -622,10 +643,18 @@ void CSboCreateServer::Start()
 			o.SetCurValue(buf);
 		}
 	}
+	// The engine loads the game DLL with the first "map" of the session (Host_Map_f: Host_InitializeGameDLL), so
+	// until then the game's own cvars (mp_gmmode, mp_XP, ...) do not exist and a value sent now is lost. Those are
+	// kept and set by VGui2_CreateServer_ApplyPending as soon as the DLL has registered them, during the map load.
+	s_PendingCvars.clear();
 	if (m_bHaveScr)
 	{
 		for (const sbo_script::Object &o : m_Scr.objects)
+		{
 			sbo::ExecClientCmd(o.ConfigCommand().c_str());
+			if (!o.setInfo && !sbo::FindCvar(o.cvar.c_str()))
+				s_PendingCvars.emplace_back(o.cvar, o.ConfigValue());
+		}
 		const std::string out = m_Scr.Write(sbo_script::FileTime((long long)time(nullptr), sbo_script::Description::KIND_SERVER));
 		FileHandle_t fh = g_pFullFileSystem->Open("settings.scr", "wb"); // GameUI: path ID NULL (the write path)
 		if (fh)
@@ -663,7 +692,7 @@ void CSboCreateServer::Start()
 	bool lan = !steam;
 	for (const ScrRow &r : m_Rows)
 	{
-		if (!Q_stricmp(r.obj->cvar.c_str(), "sv_lan") && atof(r.obj->curValue.c_str()) != 0.0)
+		if (!Q_stricmp(r.obj->cvar.c_str(), "sv_lan") && atof(r.obj->ConfigValue().c_str()) != 0.0)
 			lan = true;
 	}
 	char cmd[512];

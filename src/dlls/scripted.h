@@ -75,6 +75,7 @@ public:
 	virtual int	 ObjectCaps( void ) { return (CBaseMonster :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION); }
 	virtual void Activate( void );
 	virtual void UpdateOnRemove( void );
+	virtual STATE GetState( CBaseEntity *pActivator );	// SBO 2.1 (Spirit of Half-Life)
 
 	virtual int		Save( CSave &save );
 	virtual int		Restore( CRestore &restore );

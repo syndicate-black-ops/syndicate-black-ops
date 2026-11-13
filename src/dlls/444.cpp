@@ -111,7 +111,7 @@ void CK444::Holster( void )
 	m_fInReload = FALSE;// cancel any reload in progress.
 
 	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 1.0;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + RANDOM_FLOAT( 0, 5 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0, 5 );
 	SendWeaponAnim( K444_HOLSTER );
 }
 
@@ -173,7 +173,7 @@ void CK444::PrimaryAttack( void )
 		m_pPlayer->SetSuitUpdate("!HEV_AMO0", FALSE, 0);
 
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.13;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 	m_fFired = 1;
 }
 
@@ -196,4 +196,5 @@ void CK444::WeaponIdle( void )
 		return;
 
 	SendWeaponAnim( K444_IDLE1 );
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 31.0 / 15.0;	// the idle sequence's length: sent once per loop
 }

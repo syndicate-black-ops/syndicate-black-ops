@@ -162,6 +162,7 @@ void CSqueakGrenade :: Spawn( void )
 	m_flDie = gpGlobals->time + SQUEEK_DETONATE_DELAY;
 
 	m_flFieldOfView = 0; // 180 degrees
+	ApplyCustomMonsterKeys();	// SBO 2.1 (Featureful SetMyFieldOfView): "field_of_view" of a placed Pitbull; it never runs MonsterInit
 
 	if ( pev->owner )
 		m_hOwner = Instance( pev->owner );

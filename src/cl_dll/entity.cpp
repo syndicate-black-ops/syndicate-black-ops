@@ -7,6 +7,7 @@
 
 // Client side entity management functions
 
+#include "flashlight_light.h"	// SBO 2.0
 #include <memory.h>
 
 #include "hud.h"
@@ -22,6 +23,7 @@
 #include "particleman.h"
 #include "parsemsg.h"	// SBO 2.0: PlayerAfk
 #include "mirror.h"	// SBO 2.0: env_mirror
+#include "movewith_client.h"	// SBO 2.0: entity parenting
 #include "render_fade.h"	// SBO 2.0: env_render fades
 #include "objecthint.h"	// SBO 2.0: object hints
 #include "dlights.h"	// SBO 2.0: env_dlight
@@ -29,6 +31,8 @@
 #include "studio_attachments.h"	// SBO 2.0: attachments of transparent models
 #define SBO_SERVER_MENU_PREVIEW_ENGINE
 #include "server_menu_preview.h"	// SBO 2.0: server menus' model preview
+#include "view.h"	// SoHL env_sky: the sky room's entities
+#include "mover_prediction.h"	// SBO 2.0: mover prediction
 
 #define DLLEXPORT __declspec( dllexport )
 
@@ -58,6 +62,9 @@ HUD_AddEntity
 */
 int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *modelname )
 {
+	// SoHL 1.9 env_sky: an entity of the 3D sky (its render FX back as the mapper set them, before anything reads them)
+	EnvSky_AddEntity( type, ent );
+
 	switch ( type )
 	{
 	case ET_NORMAL:
@@ -68,6 +75,15 @@ int DLLEXPORT HUD_AddEntity( int type, struct cl_entity_s *ent, const char *mode
 	default:
 		break;
 	}
+
+	// SBO 2.0 mover prediction: a mover the local player rides is drawn under his feet (before movewith places the
+	// children on it)
+	MoverPrediction_AddEntity( type, ent );
+
+	// SBO 2.0 movewith: a child placed on its parent (before anything below reads its origin)
+	if ( !MoveWith_AddEntity( type, ent ) )
+		return 0;
+
 	// each frame every entity passes this function, so the overview hooks it to filter the overview entities
 	// in spectator mode:
 	// each frame every entity passes this function, so the overview hooks 
@@ -164,6 +180,8 @@ void DLLEXPORT HUD_ProcessPlayerState( struct entity_state_s *dst, const struct 
 	dst->playerclass			= src->playerclass;
 	dst->team					= src->team;
 	dst->colormap				= src->colormap;
+
+	Flashlight_ProcessPlayerState( dst );	// SBO 2.0: the local player's flashlight light is client.dll's
 
 	// Save off some data so other areas of the Client DLL can get to it
 	cl_entity_t *player = gEngfuncs.GetLocalPlayer();	// Get the local player's index
@@ -654,8 +672,15 @@ void DLLEXPORT HUD_CreateEntities( void )
 	Beams();
 #endif
 
+	// SBO 2.0 movewith: every parent has its pose for this frame: place the children again
+	MoveWith_CreateEntities();
+	// SBO 2.0 mover prediction: other players standing on a mover drawn at its predicted pose move with it
+	MoverPrediction_CreateEntities();
+
 	// Add in any game specific objects
 	Game_AddObjects();
+
+	EnvSky_CreateEntities();	// SoHL 1.9 env_sky: this frame's sky entities are known
 
 	GetClientVoiceMgr()->CreateEntities();
 
@@ -670,6 +695,8 @@ void DLLEXPORT HUD_CreateEntities( void )
 	ObjectHint_CreateEntities();	// SBO 2.0: object hints follow their objects, old ones end
 
 	DLights_CreateEntities();	// SBO 2.0: env_dlight lights follow their entities
+
+	Flashlight_CreateEntities();	// SBO 2.0: the local player's flashlight light, traced against the drawn world
 }
 
 /*

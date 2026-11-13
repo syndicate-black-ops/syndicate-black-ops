@@ -1,0 +1,28 @@
+# killtarget through a delay: the DelayedUse carries the killtarget and removes its targets when the delay ends, not
+# before; every entity with that name goes; the target fires in the same moment. A relay removed during its own
+# delay (killed by another relay) still fires: the DelayedUse is a separate entity
+# covers: trigger_relay.killtarget trigger_relay.delay trigger_relay.target
+map co_fuzz
+spawn trigger_relay targetname r1 target out1 killtarget victim delay 1
+spawn info_target targetname victim
+spawn info_target targetname victim
+spawn trigger_relay targetname r2 target out2 delay 1
+spawn trigger_relay targetname kill_r2 killtarget r2
+activate
+frames 3
+mark fire_r1
+fire r1
+frames 5
+expectcount info_target 2
+expectnot Firing: (out1)
+frames 10
+expectcount info_target 0
+expectn 1 Firing: (out1)
+mark fire_r2_then_remove_it
+fire r2
+frames 2
+fire kill_r2
+frames 2
+count trigger_relay
+frames 12
+expectn 1 Firing: (out2)

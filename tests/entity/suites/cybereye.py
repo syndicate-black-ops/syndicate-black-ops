@@ -37,7 +37,8 @@ def cybereye_on(t):
 
 
 @S.test('cybereye on, env_fade Fade From to the activator (1 s + 0.5 s hold): the flash plays out, then the tint is '
-        'sent again once (a flash removed the tint)', players=1)
+        'sent again once (a flash removed the tint)', players=1,
+        covers=('env_fade', 'env_fade:1', 'env_fade:4', 'env_fade.rendercolor', 'env_fade.renderamt'))
 def tint_after_flash(t):
     t.point('env_fade', targetname='flash', spawnflags='5', rendercolor='255 255 255', renderamt='255',
             duration='1', holdtime='0.5')     # 1 Fade From + 4 activator only, as co_sbo_showcase's lightning

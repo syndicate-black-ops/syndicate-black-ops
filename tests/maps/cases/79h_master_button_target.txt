@@ -1,0 +1,18 @@
+# button_target with a master: while it is shut a Use does not turn the button on and nothing fires; open, the Use
+# turns it on and fires the target once (SBO 2.0, as func_button; HL SDK and 1.38 read no master). No map sets it
+# covers: button_target.master button_target:1 button_target.target
+map co_fuzz
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn button_target targetname bt model *1 target bt_out master lock spawnflags 1
+activate
+frames 3
+mark locked
+fire bt world
+frames 2
+expectnot Firing: (bt_out)
+mark open
+fire key
+fire bt world
+frames 2
+expectn 1 Firing: (bt_out)

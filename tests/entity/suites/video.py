@@ -13,7 +13,7 @@ ALL_PLAYERS = 1
 
 
 @S.test('game_playvideo: the activator gets PlayVideo with the names; the files are precached', players=2,
-        doc=DOC + '#game_playvideo')
+        doc=DOC + '#game_playvideo', covers=('game_playvideo', 'game_playvideo.video', 'game_playvideo.audio'))
 def video_activator(t):
     t.point('game_playvideo', targetname='vid', video='sbo_sample.ogv', audio='test/alt.ogg')
     t.wait(0.2)
@@ -28,7 +28,7 @@ def video_activator(t):
 
 
 @S.test('game_playvideo All Players: one message to everybody; without a player as activator too', players=2,
-        doc=DOC + '#game_playvideo')
+        doc=DOC + '#game_playvideo', covers=('game_playvideo', 'game_playvideo:1', 'game_playvideo.video'))
 def video_all(t):
     t.point('game_playvideo', targetname='vid', video='intro.ogv', spawnflags=str(ALL_PLAYERS))
     t.wait(0.2)
@@ -40,7 +40,7 @@ def video_all(t):
 
 
 @S.test('game_playvideo without All Players: nothing when the activator is not a player', players=1,
-        doc=DOC + '#game_playvideo')
+        doc=DOC + '#game_playvideo', covers=('game_playvideo',))
 def video_no_player(t):
     t.point('game_playvideo', targetname='vid', video='intro.ogv')
     t.wait(0.2)
@@ -51,7 +51,8 @@ def video_no_player(t):
 
 
 @S.test('game_playvideo: names outside video/ or of another type are refused (nothing sent or precached)',
-        players=1, doc=DOC + '#game_playvideo')
+        players=1, doc=DOC + '#game_playvideo',
+        covers=('game_playvideo', 'game_playvideo.video', 'game_playvideo.audio'))
 def video_bad_names(t):
     t.point('game_playvideo', targetname='v1', video='../liblist.gam', spawnflags=str(ALL_PLAYERS))
     t.point('game_playvideo', targetname='v2', video='intro.avi', spawnflags=str(ALL_PLAYERS))
@@ -76,7 +77,7 @@ def video_bad_names(t):
 
 
 @S.test('game_playvideo with a master: nothing while the master is off, sent once it is on', players=1,
-        doc=DOC + '#game_playvideo')
+        doc=DOC + '#game_playvideo', covers=('game_playvideo', 'game_playvideo.master'))
 def video_master(t):
     t.point('multisource', targetname='ms')
     t.point('trigger_relay', targetname='unlock', target='ms', triggerstate='1')
@@ -106,7 +107,9 @@ def movie_screen(t, name, **kv):
 
 
 @S.test('vgui_screen movie: a player who joins later gets the movie with the seconds it has played', players=1,
-        doc=WSDOC)
+        doc=WSDOC,
+        covers=('vgui_screen', 'vgui_screen.moviefilename', 'vgui_screen.looping=1', 'vgui_screen.health',
+                'vgui_screen.radius', 'vgui_screen:1'))
 def movie_late_join(t):
     movie_screen(t, 'scr', moviefilename='sbo_sample.ogv', looping='1', health='7', radius='800',
                  spawnflags=str(START_INACTIVE))
@@ -124,7 +127,7 @@ def movie_late_join(t):
 
 
 @S.test('vgui_screen movie: toggling sends the state (on: it starts over, off: stopped); no panel layout needed',
-        players=1, doc=WSDOC)
+        players=1, doc=WSDOC, covers=('vgui_screen', 'vgui_screen.moviefilename'))
 def movie_toggle(t):
     movie_screen(t, 'scr', moviefilename='sbo_sample.ogv')
     t.wait(0.2)
@@ -140,7 +143,8 @@ def movie_toggle(t):
     t.expect.not_precached('example_screen.res')
 
 
-@S.test('vgui_screen movie: sound everywhere / no sound flags, default volume and radius', players=1, doc=WSDOC)
+@S.test('vgui_screen movie: sound everywhere / no sound flags, default volume and radius', players=1, doc=WSDOC,
+        covers=('vgui_screen', 'vgui_screen.moviefilename', 'vgui_screen:4', 'vgui_screen:8'))
 def movie_sound_flags(t):
     movie_screen(t, 's2d', moviefilename='mv_2d.ogv', spawnflags=str(MOVIE_SOUND2D | START_INACTIVE))
     movie_screen(t, 'snone', moviefilename='mv_none.ogv', spawnflags=str(MOVIE_NOSOUND | START_INACTIVE))
@@ -156,7 +160,7 @@ def movie_sound_flags(t):
 
 
 @S.test('vgui_screen movie: a name outside video/ or not .ogv removes the screen (nothing sent or precached)',
-        players=1, doc=WSDOC)
+        players=1, doc=WSDOC, covers=('vgui_screen', 'vgui_screen.moviefilename'))
 def movie_bad_name(t):
     movie_screen(t, 'b1', moviefilename='../maps/x.ogv')
     movie_screen(t, 'b2', moviefilename='clip.webm')

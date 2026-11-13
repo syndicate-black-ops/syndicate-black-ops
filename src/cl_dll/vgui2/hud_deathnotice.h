@@ -30,6 +30,10 @@ public:
 	             const char *victimName, int victimColor, bool victimIsLocal,
 	             const char *weaponName, int flags);
 
+	//! SBO 2.0 objectives (hud_objectives.cpp): the screen y just below the rows painted now (the rows' top when there
+	//! are none or the kill feed is hidden), and the right edge of the rows
+	void GetRowsBottom(int &screenY, int &screenRight);
+
 	void OnThink() override;
 	void PaintBackground() override;
 	void Paint() override;

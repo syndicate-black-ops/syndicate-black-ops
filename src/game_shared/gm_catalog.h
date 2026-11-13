@@ -1,8 +1,9 @@
 // SBO 2.0 Game Master mode: the spawn catalog, shared by the server (dlls/gmmode.cpp, which checks every pick
 // against it) and the client's spawn window (cl_dll/vgui2/sbo_gm_spawn_menu.cpp, which lists it). docs/GM_MODE.md.
 //
-// The monsters, their order, tiers, loadouts and names are those of MrCalvin's Game Master Mode plugin
+// The monsters, their order, tiers and loadouts are those of MrCalvin's Game Master Mode plugin
 // (syndicate_gmmode.sma g_MonsterTemplates, assign_monster_budget, g_FedLoadoutVariants, g_ZombieLoadoutVariants);
+// the names are the kill feed's (multiplay_gamerules.cpp s_SboKfNpcNames), which the GM kill names also use;
 // its costs, unlock times and cooldowns are not part of SBO's GM mode. The tiers are only the window's groups.
 //
 // The client sends "gm_pick <entry> [<variant>]" (the indices below); the server takes it only from the active Game
@@ -60,7 +61,7 @@ static const GmVariant g_GmFedVariants[] =
 	{ "Minigun",			"dark_grunt",			3 },
 	{ "Sniper Rifle",		"dark_grunt",			10 },
 	{ "Federal Rifle",		"monster_grunt_hunter",	3 },
-	{ "Vindico Shotgun",	"monster_grunt_hunter",	10 },
+	{ "Saan Auto-Shotgun",	"monster_grunt_hunter",	10 },
 	{ "Grenade Launcher",	"monster_grunt_hunter",	5 },
 };
 
@@ -75,19 +76,19 @@ static const GmCatalogEntry g_GmCatalog[] =
 {
 	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Fed",				"monster_grunt_hunter",		GM_ORIENT_DEFAULT,	GM_VARIANTS_FED,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Zombie Grunt",		"monster_zombie_grunt",		GM_ORIENT_DEFAULT,	GM_VARIANTS_ZOMBIE,	0 },
-	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Sectum Streuoum",	"monster_dark",				GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
+	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Sectum",			"monster_dark",				GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Demon Slave",		"monster_hunter",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Imp",				"monster_imp_hunter",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Werewolf",			"monster_werewolf_hunter",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Zombie",			"monster_zombie_hunter",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
-	{ GM_KIND_MONSTER,	GM_CAT_TIER3,	"Big Streum",		"monster_cyberminotor",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
+	{ GM_KIND_MONSTER,	GM_CAT_TIER3,	"Cyber Minotaur",	"monster_cyberminotor",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Cyborg",			"monster_cyborg",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Assassin",			"monster_human_assassin",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
-	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Barney",			"monster_barney",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
+	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Cop",				"monster_barney",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER3,	"Apache",			"monster_apache",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER3,	"Gargantua",		"monster_gargantua",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Pitbull",			"monster_snark",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
-	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Sectum",			"monster_scientist",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
+	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Scientist",		"monster_scientist",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER1,	"Ichthyosaur",		"monster_ichthyosaur",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Mini Auto Turret",	"monster_miniturret",		GM_ORIENT_FLOOR,	GM_VARIANTS_NONE,	0 },
 	{ GM_KIND_MONSTER,	GM_CAT_TIER2,	"Auto Turret",		"monster_turret",			GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0 },
@@ -104,7 +105,7 @@ static const GmCatalogEntry g_GmCatalog[] =
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Canon of terror",		"weapon_canon",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	5 },
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Croon PM 66",			"weapon_pm66",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	6 },
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Croon FA18",			"weapon_fa18",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	7 },
-	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Vindicio Federal",		"weapon_federal",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	8 },
+	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Vindico Federal",		"weapon_federal",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	8 },
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Saan Auto-Shotgun",	"weapon_spa",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	11 },
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Vindico Plasma Sniper",	"weapon_sw",	GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	9 },
 	{ GM_KIND_WEAPON,	GM_CAT_SUPPORT,	"Croon NM 33 Sniper",	"weapon_nm33",		GM_ORIENT_DEFAULT,	GM_VARIANTS_NONE,	0,	10 },

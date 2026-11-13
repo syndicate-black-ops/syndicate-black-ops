@@ -1266,16 +1266,10 @@ if it's waiting to be called</p>
 <p>&nbsp;</p>
 <p>The entity : <span style="font-size:13pt;"><b>meteo_particules</b></span> </p>
 <p>&nbsp;</p>
-<p>By generating particles, this entity lets you create some realistic rain 
-or snow effects</p>
-<p>You just have to put it on the middle of your map and setup the following 
-elements : </p>
-<p><i><u>particle number</u></i> : Define the intensity of snow or rain . In order to prevent 
-crash and lag, you shouldn't go up to 100</p>
-<p><i><u>Taille de chaque particule</u></i> : size of each drop or flake</p>
-<p><u><i>hauteur a partir de laquelle les flocons tombent</i></u> : height from 
-which drops or flakes are starting to fall</p>
-<p><u><i>snow or rain</i></u> : switch to choose rain or snow.</p>
+<p>SBO 2.0 removed this entity, because its rain and snow could crash the game. Use env_rain 
+or env_snow instead. The stock maps that used it now use env_rain and env_snow, and a map that still 
+has meteo_particules gets an env_rain or env_snow in its place, with a developer console message 
+that says so.</p>
 <p style="font-family:'Times New Roman'; font-style:normal; font-size:12pt; margin-left:2;"><span style="font-size:12pt;">&nbsp;&nbsp;<br>
 	</span></p>
 <p style="font-family:'Times New Roman'; font-style:normal; font-size:12pt; margin-left:2;">	<span style="font-size:12pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="font-size:13pt;"><font color="silver">4/ The monsters entities&nbsp;&nbsp;<br>

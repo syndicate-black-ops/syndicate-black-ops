@@ -1,0 +1,12 @@
+# light_environment (FGD): Pitch -45 with Angles yaw 90 (Pitch after Angles, as the editor writes it): the model
+# lighting vector sv_skyvec is 0 0.707 -0.707 (north, 45 degrees down). Angles "90 0 0" without Pitch (what the
+# compiler left in 80 of the 84 light_environment entities of the 1.38 maps): sv_skyvec 0 0 1. A Pitch written
+# BEFORE Angles is overwritten by them (rc_rc1b1, the one 1.38 map that does it; 1.38 the same)
+# covers: light_environment light_environment.pitch
+map co_fuzz
+spawn light_environment angles "0 90 0" pitch -45 _light "255 255 255 200"
+activate
+frames 2
+expectcvar sv_skyvec_x 0
+expectcvar sv_skyvec_y 0.707
+expectcvar sv_skyvec_z -0.707

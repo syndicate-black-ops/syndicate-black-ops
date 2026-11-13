@@ -6,6 +6,7 @@
 // NOT with hl1_source_sdk's. It must not include any Source SDK header.
 //=================================================================//
 
+#include <vector>	// before cl_util.h (its min and max macros): ammohistory.h uses it
 #include <math.h>
 #include "hud.h"
 #include "cl_util.h"
@@ -64,7 +65,10 @@ void VGui2_SetEngineFuncs(const void *pEnginefuncs)
 //-----------------------------------------------------------------------------
 namespace
 {
-// "SpecHealth2" (byte player, short health, short armor, byte weapon id, byte flags, byte BR rounds won): the state of the player this
+// the server's sv_cheats value ("Cheats", MsgFunc_Cheats below), reset with the HUD (InitHUDData)
+int s_iServerCheats = 0;
+
+// "SpecHealth2" (byte player, short health, short armor, byte weapon id, byte flags, byte BR rounds won, short view model): the state of the player this
 // client watches as a spectator, for the spectator panel's target info (sbo_spectator_info.cpp). Sent by this branch's
 // server to an observer when its target or one of the values changed (Observer_SendTargetInfo, observer.cpp), so the
 // last one received is the current state. Old servers and HLTV proxies never send it: no target info then.
@@ -78,12 +82,14 @@ struct SpecTarget_t
 	int weapon;
 	int flags;
 	int brWins;
+	int viewModel; // model index of the player's view model, 0: none; -1: not in the message (a server before it)
 };
-SpecTarget_t s_SpecTarget = {0, 0, 0, 0, 0, 0};
+SpecTarget_t s_SpecTarget = {0, 0, 0, 0, 0, 0, -1};
 
 void ResetSpecTarget()
 {
 	s_SpecTarget = SpecTarget_t();
+	s_SpecTarget.viewModel = -1;
 }
 
 int MsgFunc_SpecHealth2(const char *pszName, int iSize, void *pbuf)
@@ -95,6 +101,7 @@ int MsgFunc_SpecHealth2(const char *pszName, int iSize, void *pbuf)
 	s_SpecTarget.weapon = READ_BYTE();
 	s_SpecTarget.flags = READ_BYTE();
 	s_SpecTarget.brWins = READ_BYTE();
+	s_SpecTarget.viewModel = (iSize >= 10) ? READ_SHORT() : -1;
 	return 1;
 }
 
@@ -116,10 +123,12 @@ public:
 		VGui2_Chat_InitHUDData();
 		VGui2_Tutor_Reset(); // CS:CZ tutor window: a new map / connection (the server forgets its queue too)
 		VGui2_GameTimer_Reset(); // game_timer: the new map's timers follow with the HUD initialisation
+		VGui2_Objectives_Reset(); // trigger_objective: the server sends the list again
 		VGui2_MessageBox_Reset(); // game_messagebox: the server sends the open boxes again after InitHUD
 		VGui2_GmSpawn_Reset();   // GM mode: the server sends the Game Master's state again
 		ResetSpecTarget();   // spectator target info: the player slots mean other players now
 		ServerMenu_InitHUD(); // server menus: the server defines them again after its hello
+		s_iServerCheats = 0; // the server sends its sv_cheats value again (Cheats)
 	}
 };
 
@@ -185,6 +194,17 @@ int MsgFunc_HeavyLimit(const char *pszName, int iSize, void *pbuf)
 	for (int &v : s_iHeavyLimit)
 		v = READ_BYTE();
 	s_bHeavyLimit = true;
+	return 1;
+}
+
+// "Cheats" (byte): the server's sv_cheats value (server CBasePlayer::UpdateClientData), sent when it changes and
+// again after each connection / map load. The engine's own sv_cheats on the client only says 0 or 1 (svc_sendextrainfo
+// sends sv_cheats != 0). 0 until the server sends it (s_iServerCheats): older servers never do.
+int MsgFunc_Cheats(const char *pszName, int iSize, void *pbuf)
+{
+	BEGIN_READ(pbuf, iSize);
+	const int cheats = READ_BYTE();
+	s_iServerCheats = READ_OK() && cheats > 0 ? cheats : 0;
 	return 1;
 }
 
@@ -261,8 +281,11 @@ int MsgFunc_SboDeathMsg(const char *pszName, int iSize, void *pbuf)
 		ConsolePrintName(victimName);
 		if (weaponName[0])
 		{
+			// the weapon code's player-facing name ("wong" -> "Fists")
+			char displayName[64];
+			VGui2_WeaponDisplayName(weaponName, displayName, sizeof(displayName));
 			sbo::ConsolePrint(" with ");
-			sbo::ConsolePrint(weaponName);
+			sbo::ConsolePrint(displayName);
 		}
 	}
 	else
@@ -274,6 +297,13 @@ int MsgFunc_SboDeathMsg(const char *pszName, int iSize, void *pbuf)
 	return 1;
 }
 } // namespace
+
+int VGui2_SpecTargetViewModel(int player)
+{
+	if (player < 1 || s_SpecTarget.player != player)
+		return -1;
+	return s_SpecTarget.viewModel;
+}
 
 void SboHud_InitChat()
 {
@@ -306,15 +336,28 @@ void SboHud_InitChat()
 	// game_timer HUD timer (the GameTimer message; docs/GAME_TIMER.md)
 	VGui2_GameTimer_Init();
 
+	// trigger_objective list (the Objective message; docs/OBJECTIVES.md)
+	VGui2_Objectives_Init();
+
 	// game_messagebox message boxes (MessageBox / MsgBoxPart; docs/MESSAGE_BOX.md)
 	VGui2_MessageBox_Init();
 
 	// Game Master mode spawn window (GmMode; docs/GM_MODE.md)
 	VGui2_GmSpawn_Init();
 
+	// Color correction editor (colorcorrectionui; docs/COLOR_CORRECTION.md "Editor")
+	VGui2_CcEditor_Init();
+
+	// Particle editor (particleeditorui; docs/AURORA.md "Editor")
+	VGui2_ParticleEditor_Init();
+
+	// World screen editor (worldscreeneditorui; docs/WORLD_SCREENS.md "Editor")
+	VGui2_WorldScreenEditor_Init();
+
 	gEngfuncs.pfnHookUserMsg((char *)"SboXP", MsgFunc_SboXP);
 	gEngfuncs.pfnHookUserMsg((char *)"SboModeInfo", MsgFunc_SboModeInfo); // scoreboard round / frags left line
 	gEngfuncs.pfnHookUserMsg((char *)"RoundStatus", MsgFunc_RoundStatus); // the loadout menu's NEXT ROUND IN
+	gEngfuncs.pfnHookUserMsg((char *)"Cheats", MsgFunc_Cheats); // the server's sv_cheats value (the in-game editors)
 	gEngfuncs.pfnHookUserMsg((char *)"HeavyLimit", MsgFunc_HeavyLimit); // the loadout menu's FULL heavy weapons
 	gEngfuncs.pfnHookUserMsg((char *)"SboDeathMsg", MsgFunc_SboDeathMsg); // NPC kill feed rows (server SboKillfeed_*)
 	gEngfuncs.pfnHookUserMsg((char *)"SpecHealth2", MsgFunc_SpecHealth2); // spectator target info (server Observer_SendTargetInfo)
@@ -419,6 +462,11 @@ const char *GetLaunchParm(const char *name)
 void ConsolePrint(const char *text)
 {
 	gEngfuncs.pfnConsolePrint(text);
+}
+
+void DevPrint(const char *text)
+{
+	gEngfuncs.Con_DPrintf("%s", text);
 }
 
 void HookUserMsg(const char *name, UserMsgHookFn fn)
@@ -667,6 +715,11 @@ void GetScorePlayer(int clientIndex, ScorePlayer &out, bool bReadEngineSteamID)
 		    info.name - offsetof(engine_player_info_t, name));
 		out.steamID64 = pEngine->m_nSteamID;
 	}
+}
+
+int GetServerCheats()
+{
+	return s_iServerCheats;
 }
 
 bool HasSboXP()

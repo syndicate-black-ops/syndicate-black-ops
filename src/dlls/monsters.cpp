@@ -54,6 +54,7 @@ extern CGraph WorldGraph;// the world node graph
 // to just pick a new one when we start up again.
 TYPEDESCRIPTION	CBaseMonster::m_SaveData[] = 
 {
+	DEFINE_FIELD( CBaseMonster, m_fUnkillable, FIELD_BOOLEAN ),	// SBO 2.1
 	DEFINE_FIELD( CBaseMonster, m_hEnemy, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBaseMonster, m_hTargetEnt, FIELD_EHANDLE ),
 	DEFINE_ARRAY( CBaseMonster, m_hOldEnemy, FIELD_EHANDLE, MAX_OLD_ENEMIES ),
@@ -306,6 +307,38 @@ BOOL CBaseMonster :: FValidateHintType ( short sHint )
 	return FALSE;
 }
 
+// SBO 2.0, from Featureful: "prisonerto" / "ignoredby" (classes as IRelationship sees them): TRUE when Look leaves
+// pSightEnt out: this monster is a prisoner to its class, or it is a prisoner to / ignored by this monster's class.
+// Every Look calls it (the hunters' own Looks too)
+BOOL CBaseMonster :: LookSkips( CBaseEntity *pSightEnt )
+{
+	CBaseMonster *pSightMonster = pSightEnt->MyMonsterPointer();
+	const int iSightClass = pSightMonster ? pSightMonster->KeyedClass( pSightEnt->Classify() ) : pSightEnt->Classify();
+	if ( m_iPrisonerTo && m_iPrisonerTo == iSightClass )
+		return TRUE;
+	if ( pSightMonster && pSightMonster != this )
+	{
+		const int iMyClass = KeyedClass( Classify() );
+		if ( pSightMonster->m_iPrisonerTo && pSightMonster->m_iPrisonerTo == iMyClass )
+			return TRUE;
+		if ( pSightMonster->m_iIgnoredBy && pSightMonster->m_iIgnoredBy == iMyClass )
+			return TRUE;
+	}
+	return FALSE;
+}
+
+// SBO 2.0 (Featureful TriggerOnDeath): once, activator = the killer. CBaseMonster::Killed; the Apache and the Osprey
+// (their own Killed) call it too
+void CBaseMonster :: FireTriggerOnDeath( entvars_t *pevAttacker )
+{
+	if ( FStringNull( m_iszTriggerOnDeath ) )
+		return;
+	CBaseEntity *pKiller = pevAttacker ? CBaseEntity::Instance( pevAttacker ) : NULL;
+	string_t iszTarget = m_iszTriggerOnDeath;
+	m_iszTriggerOnDeath = iStringNull;
+	FireTargets( STRING( iszTarget ), pKiller ? pKiller : this, this, USE_TOGGLE, 0 );
+}
+
 //=========================================================
 // Look - Base class monster function to find enemies or 
 // food by sight. iDistance is distance ( in units ) that the 
@@ -347,18 +380,8 @@ void CBaseMonster :: Look ( int iDistance )
 				 pSightEnt->pev->health > 0 )
 			{
 				// SBO 2.0, from Featureful: "prisonerto" / "ignoredby" (classes as IRelationship sees them)
-				CBaseMonster *pSightMonster = pSightEnt->MyMonsterPointer();
-				const int iSightClass = pSightMonster ? pSightMonster->KeyedClass( pSightEnt->Classify() ) : pSightEnt->Classify();
-				if ( m_iPrisonerTo && m_iPrisonerTo == iSightClass )
+				if ( LookSkips( pSightEnt ) )
 					continue;
-				if ( pSightMonster && pSightMonster != this )
-				{
-					const int iMyClass = KeyedClass( Classify() );
-					if ( pSightMonster->m_iPrisonerTo && pSightMonster->m_iPrisonerTo == iMyClass )
-						continue;
-					if ( pSightMonster->m_iIgnoredBy && pSightMonster->m_iIgnoredBy == iMyClass )
-						continue;
-				}
 
 				// the looker will want to consider this entity
 				// don't check anything else about an entity that can't be seen, or an entity that you don't care about.
@@ -3132,9 +3155,38 @@ void CBaseMonster::ReportAIState( void )
 //
 // !!! netname entvar field is used in squadmonster for groupname!!!
 //=========================================================
+// SBO 2.1: a living monster's "health" or "max_health" changed at run time (trigger_changevalue / trigger_copyvalue).
+// MonsterInit makes the spawn health the maximum (healing stops there, a turret's "half health" is half of it): a
+// health raised above it raises the maximum with it, and a maximum set below the health brings the health down to
+// it. A lower health keeps the maximum (the monster is hurt). Players (game_player_settings sets theirs), dead
+// monsters (max_health counts their blood decals) and other entities are left as they are.
+void CBaseMonster :: RuntimeKeyValueChanged( const char *keyName )
+{
+	if ( !FBitSet( pev->flags, FL_MONSTER ) || IsPlayer() || pev->deadflag != DEAD_NO )
+		return;
+
+	if ( !stricmp( keyName, "health" ) )
+	{
+		if ( pev->health > pev->max_health )
+			pev->max_health = pev->health;
+	}
+	else if ( !stricmp( keyName, "max_health" ) )
+	{
+		if ( pev->max_health > 0 && pev->health > pev->max_health )
+			pev->health = pev->max_health;
+	}
+}
+
 void CBaseMonster :: KeyValue( KeyValueData *pkvd )
 {
-	if (FStrEq(pkvd->szKeyName, "TriggerTarget"))
+	// SBO 2.1 (Half-Life Unified SDK): "unkillable" 1: damage never takes it below 1 health; also changed at run time
+	// (trigger_changevalue), in both directions
+	if (FStrEq(pkvd->szKeyName, "unkillable"))
+	{
+		m_fUnkillable = atoi( pkvd->szValue ) != 0;
+		pkvd->fHandled = TRUE;
+	}
+	else if (FStrEq(pkvd->szKeyName, "TriggerTarget"))
 	{
 		m_iszTriggerTarget = ALLOC_STRING( pkvd->szValue );
 		pkvd->fHandled = TRUE;

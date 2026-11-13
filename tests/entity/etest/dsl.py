@@ -67,28 +67,38 @@ class Expectations:
     def not_used(self, ent, after=None, within=None):
         self._add('used', ent=ent, caller=None, activator=None, use=None, count=0, min=0, after=after, within=within)
 
-    def order(self, first, then):
-        """The first firing of `first` comes before the first firing of `then`."""
-        self._add('order', first=self._t.ref(first), then=self._t.ref(then))
+    def order(self, first, then, gap=None):
+        """The first firing of `first` comes before the first firing of `then`; gap (lo, hi): that many seconds
+        later."""
+        self._add('order', first=self._t.ref(first), then=self._t.ref(then), gap=list(gap) if gap else None)
 
-    def value(self, label, ent, field, expected, tol=0.01, op='=='):
+    def value(self, label, ent, field, expected, tol=0.01, op='==', where=None):
         """A field of the snapshot `label` (t.snap) equals `expected` (numbers and vectors within tol).
         op '<', '<=', '>', '>=' compare numbers instead; '&' all the bits of `expected` are set, '!&' none is; '!=' any other value.
-        field 'velocity.y': one component of a vector."""
-        self._add('value', label=label, ent=ent, field=field, expected=expected, tol=tol, op=op)
+        field 'velocity.y': one component of a vector. where {field: value}: of the entities `ent` matches (e.g.
+        '@env_sprite', every one of them snapped), the one whose snapped fields have those values."""
+        self._add('value', label=label, ent=ent, field=field, expected=expected, tol=tol, op=op, where=where)
 
-    def value_any(self, labels, ent, field, expected):
-        """A field equals `expected` (or one of a list) in at least one of the snapshots `labels`."""
-        self._add('value_any', labels=list(labels), ent=ent, field=field, expected=expected)
+    def value_any(self, labels, ent, field, expected, op='=='):
+        """A field equals `expected` (or one of a list) in at least one of the snapshots `labels`; op '<', '<=', '>',
+        '>=': a number compares so with `expected` in at least one of them."""
+        self._add('value_any', labels=list(labels), ent=ent, field=field, expected=expected, op=op)
 
     def distance(self, label, a, b, lo, hi, flat=True):
         """In snapshot `label` (which must hold the origins of both), the distance between a and b is in [lo, hi];
         flat: horizontal distance only."""
         self._add('distance', label=label, a=a, b=b, lo=lo, hi=hi, flat=flat)
 
-    def damaged(self, ent, attacker=None, min=1, count=None, after=None, within=None, total=None):
-        """`ent` took damage (TakeDamage, any source) from `attacker`. total=(lo, hi): the summed amount."""
-        self._add('damaged', ent=ent, attacker=attacker, min=min, count=count, after=after, within=within, total=total)
+    def distance_any(self, labels, a, b, lo, hi, flat=True):
+        """The distance between a and b is in [lo, hi] in at least one of the snapshots `labels` (each holding the
+        origins of both); flat: horizontal distance only."""
+        self._add('distance_any', labels=list(labels), a=a, b=b, lo=lo, hi=hi, flat=flat)
+
+    def damaged(self, ent, attacker=None, min=1, count=None, after=None, within=None, total=None, type=None):
+        """`ent` took damage (TakeDamage, any source) from `attacker`. total=(lo, hi): the summed amount. type: DMG_*
+        bits every counted hit carries."""
+        self._add('damaged', ent=ent, attacker=attacker, min=min, count=count, after=after, within=within, total=total,
+                  type=type)
 
     def not_damaged(self, ent, attacker=None, after=None, within=None):
         self._add('damaged', ent=ent, attacker=attacker, min=0, count=0, after=after, within=within, total=None)
@@ -97,34 +107,70 @@ class Expectations:
         """field in snapshot 2 / field in snapshot 1 = ratio (within tol, relative); field may be 'v.y'."""
         self._add('ratio', label1=label1, ent1=ent1, label2=label2, ent2=ent2, field=field, ratio=ratio, tol=tol)
 
-    def moved(self, label1, label2, ent, delta=None, tol=1.0, flat=False, min_dist=None):
+    def moved(self, label1, label2, ent, delta=None, tol=1.0, flat=False, min_dist=None, field=None):
         """origin in snapshot 2 - origin in snapshot 1 = delta (a vector, within tol per component); with min_dist
-        instead of delta: it moved at least that far."""
+        instead of delta: it moved at least that far. field: another vector field instead of origin (e.g.
+        'fullpack_origin:player1', what a client is sent)."""
         assert (delta is None) != (min_dist is None), 'moved: delta or min_dist'
         self._add('moved', label1=label1, label2=label2, ent=ent, delta=list(delta) if delta else None, tol=tol,
-                  flat=flat, min_dist=min_dist)
+                  flat=flat, min_dist=min_dist, **({'field': field} if field else {}))
+
+    def max_rate(self, labels, ent, field, rate):
+        """Over the snapshots `labels` in order, a vector field never changes faster than `rate` units per second
+        of game time between two of them (e.g. a mover sent to a client steps no further than its speed)."""
+        self._add('max_rate', labels=list(labels), ent=ent, field=field, rate=rate)
+
+    def still_offset(self, labels, child, parent, offset, tol=0.05, min_still=3):
+        """In every snapshot of `labels` (each holding `origin` and `velocity` of `parent`, `origin` of `child`) where
+        the parent stands still (velocity 0), child origin - parent origin == offset within tol; at least `min_still`
+        such snapshots (e.g. a held chain: every child at its place on the held parent, with no gap)."""
+        self._add('still_offset', labels=list(labels), child=child, parent=parent, offset=list(offset), tol=tol,
+                  min_still=min_still)
 
     def same(self, label1, label2, ent, field):
         """A field has the same value in two snapshots."""
         self._add('same', label1=label1, label2=label2, ent=ent, field=field)
+
+    def aisound(self, label, ent, type, pos=None, tol=4.0, count=None, min=1):
+        """Snapshot field 'aisounds' of `ent` at `label` (any entity: the list is global) has AI sounds of `type`
+        (bits, CSoundEnt), at `pos` (room-relative) within tol when given."""
+        self._add('aisound', label=label, ent=ent, type=type,
+                  pos=[float(v) for v in self._t._abs(pos)] if pos is not None else None, tol=tol, count=count,
+                  min=min)
+
+    def save_same(self, label, ent1, ent2, noise=None, ignore=(), differ=False):
+        """Two entities' saved fields (snapshot field 'save') are equal at `label`. noise: two more entities of the
+        same setup as ent2, whose differing fields are left out (random values); ignore: field names left out.
+        differ: the opposite, at least one field differs (or ent2 is gone)."""
+        self._add('save_same', label=label, ent1=ent1, ent2=ent2, noise=list(noise) if noise else None,
+                  ignore=list(ignore), differ=differ)
 
     def msg(self, name, to=None, min=1, count=None, fields=None, after=None, within=None, max=None):
         """A user message `name` was sent (to: a player reference). fields: decoded values that must match.
         max: at most that many (with min: a range)."""
         self._add('msg', name=name, to=to, min=min, count=count, fields=fields, after=after, within=within, max=max)
 
+    def spread(self, name, center, lo, hi, fields=None, min=1, after=None, within=None):
+        """Messages `name` (with these decoded `fields`) that carry a position ('pos', e.g. the temp entities of
+        shots: TE_GUNSHOTDECAL, TE_SPARKS, TE_EXPLOSION): at least `min` of them, and the largest distance of a
+        position from `center` (absolute coordinates, t._abs) is in [lo, hi] (a firing cone)."""
+        self._add('spread', name=name, center=list(center), lo=lo, hi=hi, fields=fields, min=min, after=after,
+                  within=within)
+
     def no_msg(self, name, to=None, after=None, within=None):
         self._add('msg', name=name, to=to, min=0, count=0, fields=None, after=after, within=within)
 
     def sound(self, sample, ent=None, min=1, count=None, after=None, within=None, flags=None, attn=None, vol=None,
-              pitch=None, ambient=None):
+              pitch=None, ambient=None, chan=None, max=None):
         """A sound whose sample name (or, for a sentence sent by its number, the sentence name, e.g. "SC_POK") contains
         `sample` was emitted (by `ent`). flags: bits that must all be set
         (e.g. 32, SND_STOP: the sound was stopped). attn: its attenuation; vol: a (lo, hi) range of its volume.
         ambient: True = only ambient sounds (EMIT_AMBIENT_SOUND, sent to every client), False = only the entity's
-        own sounds (EMIT_SOUND, sent to the clients in its PAS); None = either."""
+        own sounds (EMIT_SOUND, sent to the clients in its PAS); None = either. chan: its channel (CHAN_WEAPON 1,
+        CHAN_VOICE 2, CHAN_ITEM 3, CHAN_BODY 4, CHAN_STATIC 6); sample '' matches every sample. max: at most that
+        many (with min: a range, for a rate)."""
         self._add('sound', sample=sample, ent=ent, min=min, count=count, after=after, within=within, flags=flags,
-                  attn=attn, vol=vol, pitch=pitch, ambient=ambient)
+                  attn=attn, vol=vol, pitch=pitch, ambient=ambient, chan=chan, max=max)
 
     def setview(self, ent, view, min=1, count=None, after=None, within=None):
         """The engine was told to show player `ent` the view of `view` (SET_VIEW; `ent` itself: his own view back)."""
@@ -134,17 +180,29 @@ class Expectations:
         """The game sent client `ent` (any player when None) a console command containing `text` (CLIENT_COMMAND)."""
         self._add('clcmd', text=text, ent=ent, min=min, count=count, after=after, within=within)
 
+    def lightstyle(self, pattern=None, style=None, min=1, count=None, after=None, within=None):
+        """The game set a light style (LIGHT_STYLE) to `pattern` (None: any). style: its number, a list / range of
+        numbers (named lights have 32-63), or None for any."""
+        if isinstance(style, range):
+            style = list(style)
+        self._add('lightstyle', pattern=pattern, style=style, min=min, count=count, after=after, within=within)
+
     def event(self, name, ent=None, fields=None, min=1, count=None, after=None, within=None):
         """An event (PLAYBACK_EVENT_FULL) whose precached name contains `name` was played (by `ent`). fields: values
         of fparam1, fparam2, iparam1, iparam2, bparam1, bparam2 that must match; a (lo, hi) pair is a range."""
         self._add('event', name=name, ent=ent, fields=fields, min=min, count=count, after=after, within=within)
 
-    def spawned(self, ent, min=1, count=None):
-        """Entities matching `ent` ('@classname' or a name) were created during the test."""
-        self._add('spawned', ent=ent, min=min, count=count)
+    def spawned(self, ent, min=1, count=None, after=None, within=None):
+        """Entities matching `ent` ('@classname' or a name) were created during the test (after / within: a mark and a
+        window, as for fired)."""
+        self._add('spawned', ent=ent, min=min, count=count, after=after, within=within)
 
-    def removed(self, ent, min=1):
-        self._add('removed', ent=ent, min=min)
+    def removed(self, ent, min=1, count=None, after=None, within=None):
+        """Entities matching `ent` were removed (after / within: a mark and a window, as for fired)."""
+        self._add('removed', ent=ent, min=min, count=count, after=after, within=within)
+
+    def not_removed(self, ent, after=None, within=None):
+        self._add('removed', ent=ent, min=0, count=0, after=after, within=within)
 
     def present(self, ent, at=None, tol=2.0):
         """An entity matching `ent` exists at the map start or is spawned during the run; at: within `tol` units of
@@ -168,15 +226,27 @@ class Expectations:
         developer messages sets Suite.server_args = ('+developer', '1'))."""
         self._add('console', text=text)
 
+    def no_console(self, text):
+        """The server console never printed `text` during the run, the map load included."""
+        self._add('console', text=text, absent=True)
+
+    def edicts(self, label1, label2, lo=0, hi=0):
+        """The number of entities in the game at mark `label2` minus the number at mark `label1` is in [lo, hi] (from
+        the trace's entity scan: a leaked or lost edict shows as a difference)."""
+        self._add('edicts', label1=label1, label2=label2, lo=lo, hi=hi)
+
     def kv_handled(self, ent, key):
         """test_kv on `ent` / `key` was taken by the entity (KeyValue set fHandled)."""
         self._add('kv_handled', ent=ent, key=key)
 
 
 class Test:
-    def __init__(self, suite, func, title, doc, players, size, tags, xfail=None):
+    def __init__(self, suite, func, title, doc, players, size, tags, xfail=None, covers=()):
         self.suite, self.func, self.title, self.doc = suite, func, title, doc
         self.xfail = xfail      # a known bug: failing is expected (XFAIL), passing is reported (XPASS)
+        # FGD items the test's expectations check ('class', 'class.key', 'class.key=value', 'class:bit'), counted
+        # as asserted by run.py --coverage (etest/coverage.py)
+        self.covers = tuple(covers)
         self.players, self.size, self.tags = players, size, tags
         self.key = func.__name__
         self.id = None
@@ -205,6 +275,10 @@ class Test:
             return r[1:]
         if r.startswith('~'):
             return '~' + self.ref(r[1:])     # an inverted master: "~name"
+        if r in ('*locus', '*player'):
+            return r
+        if r.startswith('*') and len(r) > 1:
+            return '*' + self.ref(r[1:])     # an alias reference: "*name" (branch feat/spirit-aliases)
         if r.startswith(('#', '@', '!')) or r in ('world', 'self', '-'):
             return r
         if r.startswith('player') and r[6:].isdigit():
@@ -229,6 +303,20 @@ class Test:
                 # multi_manager: the keys are the names it fires (a "#n" suffix makes duplicates)
                 out[self.ref(k)] = v
                 continue
+            if classname in ('info_alias', 'multi_alias') and k not in ('targetname', 'target', 'netname', 'mode',
+                                                                     'm_iMode', 'spawnflags', 'origin'):
+                # info_alias (list mode) / multi_alias: the other keys are names, as multi_manager's
+                out[self.ref(k)] = v
+                continue
+            if classname == 'info_group' and k not in ('targetname', 'target', 'spawnflags', 'origin'):
+                # info_group: the keys are member names, the values (and the default prefix) entity names
+                out[k] = self.ref(v)
+                continue
+            if classname == 'multi_watcher' and k not in ('targetname', 'target', 'spawnflags', 'origin', 'm_fLogic',
+                                                          'm_iszWatch'):
+                # multi_watcher: the other keys are the names it watches, as multi_manager's
+                out[self.ref(k)] = v
+                continue
             if (k in name_keys or NAME_KEY_PATTERN.match(k)) and v and not v.startswith('!') and not re.match(r'^-?[\d.]+( -?[\d.]+)*$', v):
                 v = self.ref(v)
             out[k] = v
@@ -245,10 +333,12 @@ class Test:
         self.ents.append(e)
         return e
 
-    def brush(self, classname, size=(32, 32, 32), at=(0, 0, 0), tex=mapkit.CRATE, origin=False, names=(), **kv):
+    def brush(self, classname, size=(32, 32, 32), at=(0, 0, 0), tex=mapkit.CRATE, origin=False, names=(), parts=(),
+              **kv):
         """A brush entity: one box of `size` whose bottom center is at `at`. origin=True adds an ORIGIN brush at its
-        center (rotating entities)."""
-        e = Ent(self, classname, self._kv(classname, kv, names), at, (size, tex, origin))
+        center (rotating entities); origin=(x, y, z) puts it there instead (room coordinates, like `at`). parts: more
+        boxes of the entity, each (size, at)."""
+        e = Ent(self, classname, self._kv(classname, kv, names), at, (size, tex, origin, tuple(parts)))
         self.ents.append(e)
         return e
 
@@ -294,6 +384,13 @@ class Test:
     def wait_for_fire(self, target, timeout):
         self.duration += timeout
         self._step('wait_for', 'fire', self.ref(target), timeout)
+
+    def wait_for_round(self, state, timeout):
+        """Waits until the co-op round state is `state` (3 in play, 5 mission end, ...); the test fails if it is not
+        reached within `timeout` game seconds."""
+        self.duration += timeout
+        self._step('wait_for', 'round', state, timeout)
+        self.expectations.append(dict(kind='waited', cond='round %d' % state))
 
     def kv(self, ent, key, value):
         self._step('test_kv', self.ref(ent), key, value)
@@ -351,6 +448,22 @@ class Test:
     def mark(self, label):
         self._step('test_mark', '%s:%s' % (self.id, label))
 
+    def fullpack(self, *players):
+        """From the next frame on, every frame: the update a real client would get (SetupVisibility, then
+        AddToFullPack for every entity, these players as the host), which the engine never builds for fake clients.
+        No players: off. Off at every test's start."""
+        self._step('test_fullpack', *([self.ref(p) for p in players] or ['off']))
+
+    def exact_damage(self):
+        """No random perfect / critical / failed hits (test_shotluck 0: SBO's 1-in-100 damage multipliers of
+        CBaseMonster::TakeDamage are off). Every test starts so (its begin mark); this says so where it matters."""
+        self._step('test_shotluck', '0')
+
+    def random_hits(self):
+        """From here to the end of the test, SBO's random perfect / critical / failed hits are on, as in the game
+        (test_shotluck 1)."""
+        self._step('test_shotluck', '1')
+
     def console(self, line):
         """An engine / game console command (a cvar for the rest of the suite, ...)."""
         self.steps.append(line)
@@ -366,14 +479,16 @@ class Suite:
         self.files = {}         # game-relative path -> bytes: test-only files in the server's game folder (add_file)
         self.server_args = ()   # extra command line for this suite's server, before +map (e.g. ('+developer', '1'))
         self.map_prefix = 'co_' # the generated map's prefix, which picks the game mode (gamerules.cpp): 'co_' co-op, 'dm_' deathmatch
+        self.world_keys = {}    # worldspawn keys of the generated map (e.g. {'chaptertitle': 'X'}): for the whole suite
         self.tests = []
         self._fgd = None
         self.players = players
 
-    def test(self, title, doc=None, players=0, size=(512, 512, 256), tags=(), xfail=None):
-        """xfail: the reason a test is expected to fail (a known bug, reported, not fixed yet)."""
+    def test(self, title, doc=None, players=0, size=(512, 512, 256), tags=(), xfail=None, covers=()):
+        """xfail: the reason a test is expected to fail (a known bug, reported, not fixed yet). covers: the FGD items
+        its expectations check, for --coverage ('class', 'class.key', 'class.key=value', 'class:bit')."""
         def deco(func):
-            self.tests.append(Test(self, func, title, doc, players, size, tags, xfail))
+            self.tests.append(Test(self, func, title, doc, players, size, tags, xfail, covers))
             return func
         return deco
 

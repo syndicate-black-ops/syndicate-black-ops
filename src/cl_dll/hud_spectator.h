@@ -91,6 +91,8 @@ public:
 	void CheckOverviewEntities();
 	void DrawOverview();
 	void DrawOverviewEntities();
+	float OverviewFovScale();	// SBO 2.0: how much wider the overview's own field of view is than the frame's
+	float m_flOverviewNdcScale;	// SBO 2.0: the overview pass's screen positions are scaled by it (OverviewGL_Begin)
 	void GetMapPosition( float * returnvec );
 	void DrawOverviewLayer();
 	void LoadMapSprites();

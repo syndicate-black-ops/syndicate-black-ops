@@ -1,0 +1,11 @@
+# a switchable light with "style" 70 (out of the engine's 0-63): no light style past the engine's table is set when
+# it is fired (light style range check, 2a54e427); a style in range still switches
+# covers: light.style
+map co_fuzz
+spawn light targetname lamp style 70
+spawn light targetname lamp2 style 33
+activate
+frames 3
+fire lamp
+fire lamp2
+frames 3

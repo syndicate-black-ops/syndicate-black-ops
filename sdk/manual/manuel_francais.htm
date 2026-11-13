@@ -1777,17 +1777,10 @@ ou si elle attend d'être appelée.</p>
 <p>&nbsp;</p>
 <p>l'entité <span style="font-size:13pt;"><b>meteo_particules</b></span> </p>
 <p>&nbsp;</p>
-<p>Cette entité permet de réaliser des effets réalistes de neige ou de pluie.</p>
-<p>il suffit de la placer au milieu de votre map et de regler les éléments suivants 
-: </p>
-<p><i><u>particle number</u></i> : définit l'intensité de neige ou de pluie 
-sur la map. Il est recommandé de ne pas dépasser le chiffre 100</p>
-<p><i><u>Taille de chaque particule</u></i> : la taille d'un flocon ou d'une 
-goutte</p>
-<p><u><i>hauteur a partir de laquelle les flocons tombent</i></u> : définit 
-la hauteur à laquelle les particules naissent</p>
-<p><u><i>snow or rain</i></u> : switch permettant de définir si l'entité génère 
-de la pluie ou de la neige.</p>
+<p>SBO 2.0 a retiré cette entité, car sa pluie et sa neige pouvaient faire planter le jeu. 
+Utilisez env_rain ou env_snow à la place. Les maps livrées avec le jeu qui l'utilisaient utilisent maintenant env_rain 
+et env_snow, et une map qui contient encore meteo_particules reçoit un env_rain ou un env_snow à sa place, 
+et un message de la console développeur le signale.</p>
 <p style="font-family:'Times New Roman'; font-style:normal; font-size:12pt; margin-left:2;">&nbsp;</p>
 <p style="font-family:'Times New Roman'; font-style:normal; font-size:12pt; margin-left:2;">	<span style="font-size:13pt;"><span style="font-size:12pt;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span style="font-size:13pt;"><font color="silver">4/ Les 
 entités de monstres&nbsp;<br>

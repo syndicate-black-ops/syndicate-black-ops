@@ -951,7 +951,7 @@ static void TestLongLabels()
 //! past its range is no average, its text is cut, and a short or late one is handled as the other live records
 static void TestStars()
 {
-	CHECK(PROTOCOL_VERSION == 4 && LAYOUT_STARS == 2 && OP_STARS == 37 && OP_LAST == OP_STARS);
+	CHECK(PROTOCOL_VERSION >= 4 && LAYOUT_STARS == 2 && OP_STARS == 37);
 	static const char *names[] = { "Terrible", "Bad", "Okay", "Good", "Great" };
 	Store s;
 	std::vector<Event> ev;
@@ -1008,6 +1008,53 @@ static void TestStars()
 //! The Pawn include's constants (server_menu.inc: "const SMENU_X = n" / "#define SMENU_X n") equal this header's
 //! Menu ids: every id below MAX_SERVER_MENUS (32) is a menu, 16..31 too; MAX_SERVER_MENUS and past it are refused
 //! or dropped, never stored
+//! Protocol version 5: WINNER marks one item; NO_ITEM or an item that is not defined clears it; a short record is
+//! dropped; a new definition starts without one; a WINNER inside a definition (after its items) is kept
+static void TestWinner()
+{
+	CHECK(PROTOCOL_VERSION == 5 && OP_WINNER == 38 && OP_LAST == OP_WINNER);
+	Store s;
+	std::vector<Event> ev;
+	auto define = [](int serial, int winner) {
+		W w = Define(4, serial, LAYOUT_GRID, MENU_POPUP | MENU_LARGE, 3, 0, 0, 0, 0, "Vote for the next map");
+		for (int i = 0; i < 3; i++)
+			w.Op(OP_ITEM).Byte(4).Short(i).Byte(0).Byte(PICTURE_NONE).Byte(0).Byte(0).Str("co_map").Str("").Str("")
+			    .Str("Vote");
+		if (winner >= 0)
+			w.Op(OP_WINNER).Byte(4).Short(winner);
+		w.Op(OP_END).Byte(4).Short(serial);
+		return w;
+	};
+	CHECK(Feed(s, define(1, -1)));
+	CHECK(s.Get(4) && s.Get(4)->winner == NO_ITEM);
+	W live;
+	live.Op(OP_WINNER).Byte(4).Short(2);
+	live.Op(OP_WINNER).Byte(MAX_SERVER_MENUS).Short(1); // past the menus: ignored
+	CHECK(Feed(s, live, &ev));
+	CHECK(s.Get(4)->winner == 2);
+	int changed = 0;
+	for (const Event &e : ev)
+		changed += e.kind == Event::CHANGED && e.a == 4;
+	CHECK(changed == 1);
+	W past;
+	past.Op(OP_WINNER).Byte(4).Short(3); // not an item: none
+	CHECK(Feed(s, past));
+	CHECK(s.Get(4)->winner == NO_ITEM);
+	W again;
+	again.Op(OP_WINNER).Byte(4).Short(1);
+	again.Op(OP_WINNER).Byte(4); // short: dropped, the message ends there
+	CHECK(!Feed(s, again));
+	CHECK(s.Get(4)->winner == 1);
+	W clear;
+	clear.Op(OP_WINNER).Byte(4).Short(NO_ITEM);
+	CHECK(Feed(s, clear));
+	CHECK(s.Get(4)->winner == NO_ITEM);
+	CHECK(Feed(s, define(2, 0)));
+	CHECK(s.Get(4)->winner == 0 && s.Get(4)->serial == 2);
+	CHECK(Feed(s, define(3, -1)));
+	CHECK(s.Get(4)->winner == NO_ITEM);
+}
+
 static void TestMenuIds()
 {
 	static_assert(MAX_SERVER_MENUS == 32, "the protocol's menu ids are 0..31");
@@ -1103,6 +1150,7 @@ int main(int argc, char **argv)
 	TestRoundTrip();
 	TestLongLabels();
 	TestStars();
+	TestWinner();
 	TestMenuIds();
 	TestHostile();
 	TestPaths();

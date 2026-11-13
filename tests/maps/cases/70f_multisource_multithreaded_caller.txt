@@ -1,0 +1,17 @@
+# multisource fed by a multithreaded multi_manager (flag 1): each Use runs in a clone, and the clone (not registered)
+# is the caller, so its input toggles the last member's slot; the manager is registered last (after the entities
+# that target the multisource), so the clone's input still lands on the manager's own slot
+# covers: multisource multi_manager:1
+map co_fuzz
+spawn multisource targetname ms target ms_out
+spawn multi_manager targetname mm spawnflags 1 ms 0.5
+spawn trigger_relay targetname r1 target ms triggerstate 2
+activate
+frames 3
+fire r1
+frames 2
+expectnot Firing: (ms_out)
+fire mm
+frames 10
+expectn 1 Firing: (ms_out)
+count multi_manager

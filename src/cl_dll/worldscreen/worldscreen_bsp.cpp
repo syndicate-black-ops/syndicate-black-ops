@@ -116,7 +116,7 @@ bool Parse(const Reader &r, int size, const char *path)
 {
 	if (size < 4 + NUM_LUMPS * 8 || r.Int(0) != BSP_VERSION)
 	{
-		worldscreen::Printf("worldscreen: %s is not a BSP version %d file, bound screens are not shown\n", path,
+		worldscreen::DebugPrintf("worldscreen: %s is not a BSP version %d file, bound screens are not shown\n", path,
 		    BSP_VERSION);
 		return false;
 	}
@@ -127,7 +127,7 @@ bool Parse(const Reader &r, int size, const char *path)
 		l[i].len = r.Int(8 + i * 8);
 		if (!r.Ok(l[i].ofs, l[i].len))
 		{
-			worldscreen::Printf("worldscreen: %s: lump %d outside the file, bound screens are not shown\n", path, i);
+			worldscreen::DebugPrintf("worldscreen: %s: lump %d outside the file, bound screens are not shown\n", path, i);
 			return false;
 		}
 	}
@@ -241,7 +241,7 @@ bool Parse(const Reader &r, int size, const char *path)
 		}
 	}
 	if (skipped)
-		worldscreen::Printf("worldscreen: %s: %d %s faces skipped (bad data or more than %d corners)\n", path,
+		worldscreen::DebugPrintf("worldscreen: %s: %d %s faces skipped (bad data or more than %d corners)\n", path,
 		    skipped, WSCREEN_TOOL_TEXTURE, MAX_FACE_VERTS);
 	return true;
 }
@@ -275,7 +275,7 @@ bool GetFaces(int submodel, std::vector<Face> &out)
 		unsigned char *data = gEngfuncs.COM_LoadFile((char *)level, 5, &size);
 		if (!data)
 		{
-			worldscreen::Printf("worldscreen: can't read %s, bound screens are not shown\n", level);
+			worldscreen::DebugPrintf("worldscreen: can't read %s, bound screens are not shown\n", level);
 			s_bFailed = true;
 		}
 		else

@@ -1,0 +1,15 @@
+# trigger_multiple with a delay touched by a player: its target (a game_text for the activator) fires after the delay
+# and reaches that player; its message (centre print) goes to him at once
+# covers: trigger_multiple trigger_multiple.delay trigger_multiple.message trigger_multiple.target game_text
+map co_fuzz
+spawn trigger_multiple model *1 target gt delay 1.5 message touch_msg
+spawn game_text targetname gt message act_text_tm
+activate
+connect 1 P1
+frames 3
+touchclient 0 1
+frames 1
+expect touch_msg
+expectnot MSTR 23 ->#1: act_text_tm
+frames 20
+expectn 1 MSTR 23 ->#1: act_text_tm

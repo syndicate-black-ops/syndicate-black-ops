@@ -1,0 +1,28 @@
+# monster TriggerCondition 0 "No Trigger" never fires; 5 / 6 (squad member / leader dies: not offered by the FGD,
+# "UNDONE" in the HL SDK) never fire either, not even when a squad mate dies; the dead monster's own TriggerTarget is
+# not fired by its death unless the condition is 4
+# covers: monster_human_grunt.triggercondition=0 monster_human_grunt.triggertarget
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_human_grunt TriggerCondition 0 TriggerTarget cond_0 origin "0 300 0" netname sq
+spawn monster_human_grunt TriggerCondition 5 TriggerTarget cond_5 origin "0 400 0" netname sq
+spawn monster_human_grunt TriggerCondition 6 TriggerTarget cond_6 origin "0 500 0" netname sq
+spawn trigger_hurt model *1 dmg 1000 damagetype 0
+activate
+frames 30
+touchent 3 0
+frames 30
+touchent 3 1
+frames 30
+expectnot Firing: (cond_0)
+expectnot Firing: (cond_5)
+expectnot Firing: (cond_6)

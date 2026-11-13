@@ -4,7 +4,9 @@
 // sender). Users: env_particle (Aurora systems), env_static (props), point_worldtext (texts), ambient_music /
 // ambient_generic (sound.cpp: the map's music and play mode sounds for a client that joined), vgui_screen (world
 // screens and their kept control state), env_dlight (the dynamic lights that are on), head_scale.cpp (players' head scales),
-// killfeed_icons.cpp (the killfeed icons plugins set).
+// killfeed_icons.cpp (the killfeed icons plugins set), inventory.cpp (the player's items and the shared pool),
+// trigger_objective.cpp (the map's objective list).
+
 //
 // A sender registers once (a static SendQueue_Sender object in its .cpp) under its id. CBasePlayer starts all
 // senders at InitHUD / a HUD resend (SendQueue_StartAll) and runs them from UpdateClientData (SendQueue_Run).
@@ -26,7 +28,10 @@ enum
 	SENDQUEUE_DLIGHT,		// env_dlight.cpp
 	SENDQUEUE_HEADSCALE,	// head_scale.cpp (players' head scales)
 	SENDQUEUE_KFICON,		// killfeed_icons.cpp (plugins' killfeed icons)
-	SENDQUEUE_MAX = 8		// full: a new sender needs a larger SENDQUEUE_MAX
+	SENDQUEUE_INVENTORY,	// inventory.cpp (the player's items and the shared pool)
+	SENDQUEUE_OBJECTIVE,	// trigger_objective.cpp (the map's objective list)
+	SENDQUEUE_MAX = 10		// full: a new sender needs a larger SENDQUEUE_MAX
+
 };
 
 // Sends the next messages to pPlayer from iCursor on while they fit in iBudget (bytes; take off what is sent). TRUE:

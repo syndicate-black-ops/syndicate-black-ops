@@ -1,0 +1,19 @@
+# multisource with a multi_manager member (registered because the manager lists the multisource as a target) and a
+# trigger_relay member: the manager's call counts as its own slot, so both together open it
+# covers: multisource multi_manager
+map co_fuzz
+spawn multisource targetname ms target ms_out
+spawn multi_manager targetname mm ms 0.5
+spawn trigger_relay targetname r1 target ms triggerstate 2
+activate
+frames 3
+fire mm
+frames 10
+expectnot Firing: (ms_out)
+fire r1
+frames 2
+expectn 1 Firing: (ms_out)
+mark mm_again
+fire mm
+frames 10
+expectn 1 Firing: (ms_out)

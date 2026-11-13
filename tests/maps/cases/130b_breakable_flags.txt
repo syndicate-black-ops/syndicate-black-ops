@@ -1,0 +1,36 @@
+# Breakable flags on func_pushable (Breakable 128) and func_breakable, broken by trigger_hurt touches 0.6 s apart:
+# 1 Only Trigger: damage does not break it (a control without the flag breaks); 512 Explosives Only: only blast damage
+# (damagetype 64) hurts it, other damage does nothing
+# covers: func_pushable:1 func_pushable:512 func_breakable:512
+map co_fuzz
+brushsize 64 64 64
+spawn func_pushable targetname p_trig model *1 health 10 material 1 spawnflags 129 origin "0 0 0"
+spawn func_pushable targetname p_ctl model *2 health 10 material 1 spawnflags 128 origin "200 0 0"
+spawn func_pushable targetname p_exp model *3 health 10 material 1 spawnflags 640 origin "800 0 0"
+spawn func_breakable targetname b_exp model *4 health 10 material 1 spawnflags 512 origin "1000 0 0"
+spawn trigger_hurt targetname hurt model *5 dmg 100 damagetype 0 origin "0 3000 0"
+spawn trigger_hurt targetname blast model *6 dmg 100 damagetype 64 origin "400 3000 0"
+activate
+connect 1 P1
+frames 3
+mark trigger_only
+touchent 4 0
+frames 6
+touchent 4 1
+frames 2
+expectdump p_trig health=10.0
+expectcount func_pushable 2
+mark explosives
+frames 6
+touchent 4 2
+frames 6
+touchent 4 3
+frames 6
+expectdump p_exp health=10.0
+expectdump b_exp health=10.0
+touchent 5 2
+frames 6
+touchent 5 3
+frames 2
+expectcount func_pushable 1
+expectcount func_breakable 0

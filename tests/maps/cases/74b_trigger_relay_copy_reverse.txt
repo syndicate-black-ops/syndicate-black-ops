@@ -1,0 +1,28 @@
+# trigger_relay Trigger State -1 "Copy Input" (the use type it got) and -2 "Reverse Input" (On and Off swapped)
+# (Featureful, docs/FEATUREFUL_OPTIONS.md); fed On by trigger_relay triggerstate 1 and Off by triggerstate 0.
+# 1.38 maps -1 / -2 to On
+# covers: trigger_relay.triggerstate=-1 trigger_relay.triggerstate=-2
+map co_fuzz
+spawn trigger_relay targetname feed_on target copy_a triggerstate 1
+spawn trigger_relay targetname feed_off target copy_b triggerstate 0
+spawn trigger_relay targetname copy_a target c_copy_on triggerstate -1
+spawn trigger_relay targetname copy_b target c_copy_off triggerstate -1
+spawn trigger_relay targetname feed_on2 target rev_a triggerstate 1
+spawn trigger_relay targetname feed_off2 target rev_b triggerstate 0
+spawn trigger_relay targetname rev_a target c_rev_on triggerstate -2
+spawn trigger_relay targetname rev_b target c_rev_off triggerstate -2
+spawn game_counter targetname c_copy_on health 1 target copy_on_up
+spawn game_counter targetname c_copy_off health -1 target copy_off_down
+spawn game_counter targetname c_rev_on health -1 target rev_on_down
+spawn game_counter targetname c_rev_off health 1 target rev_off_up
+activate
+frames 3
+fire feed_on
+fire feed_off
+fire feed_on2
+fire feed_off2
+frames 3
+expectn 1 Firing: (copy_on_up)
+expectn 1 Firing: (copy_off_down)
+expectn 1 Firing: (rev_on_down)
+expectn 1 Firing: (rev_off_up)

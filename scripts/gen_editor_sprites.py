@@ -785,9 +785,51 @@ def _env_tutor():
     return c
 
 
+@icon("env_overlay", "rules", "Screen overlay (picture or color on the screen, under the HUD)")
+def _env_overlay():
+    c = Canvas((60, 150, 200))
+    # a screen showing the game, a framed picture on it, the HUD's bars over the bottom
+    c.draw(rrect(11, 16, 53, 46, 3), (40, 46, 58), shade=True, hi=(70, 78, 94))
+    c.draw(rect(14, 19, 50, 40), (90, 140, 190), outline=None)
+    c.draw(rrect(21, 22, 43, 37, 2), (250, 250, 250), shade=True)
+    c.draw(rect(23, 24, 41, 35), (120, 200, 255), outline=None)
+    c.draw(poly((23, 35), (29, 28), (33, 31), (37, 27), (41, 33), (41, 35)), (60, 170, 80), outline=None)
+    c.draw(circle(28, 27, 2.5), (255, 210, 60), outline=None)
+    c.draw(rect(16, 41, 29, 43), (255, 200, 40), outline=None)
+    c.draw(rect(37, 41, 48, 43), (255, 200, 40), outline=None)
+    return c
+
+
+@icon("trigger_objective", "rules", "Mission objective (HUD list, scoreboard, map briefing)")
+def _trigger_objective():
+    c = Canvas((220, 30, 220))
+    # a clipboard: a ticked line struck through (completed), a line marked with a triangle (active)
+    c.draw(rrect(16, 11, 48, 52, 3), (190, 150, 100), shade=True, hi=(220, 185, 135))
+    c.draw(rect(19, 16, 45, 49), (245, 245, 240), outline=None)
+    c.draw(rrect(25, 8, 39, 15, 2), (90, 96, 110), shade=True)
+    c.draw(poly((21, 26), (23, 24), (25, 27), (30, 21), (32, 23), (25, 30)), (60, 170, 80), outline=None)
+    c.draw(rect(34, 25, 43, 27), (139, 148, 156), outline=None)
+    c.draw(poly((22, 35), (29, 39), (22, 43)), (30, 170, 155), outline=None)
+    c.draw(rect(32, 38, 43, 40), (60, 60, 70), outline=None)
+    return c
+
+
 # --- develop: redrawn, replacing the interim copies from Descen's pack ------------------------------------------
 
 REPLACED = "develop (replaces the interim pack copy)"
+
+
+@icon("color_correction", "weather", "Color correction (color grade of the view)")
+def _color_correction():
+    c = Canvas((96, 104, 128))
+    # a picture: its left half in color, its right half graded to gray
+    c.draw(rrect(11, 17, 53, 47, 3), (40, 44, 56), shade=True, hi=(70, 76, 92))
+    for i, col in enumerate(((235, 60, 50), (250, 200, 40), (60, 190, 80), (60, 120, 235))):
+        c.draw(rect(14 + i * 4.5, 20, 17.5 + i * 4.5, 44), col, outline=None)
+    for i, g in enumerate((215, 160, 120, 80)):
+        c.draw(rect(32 + i * 4.5, 20, 35.5 + i * 4.5, 44), (g, g, g), outline=None)
+    c.draw(rect(31, 18, 32, 46), WHITE, outline=None)
+    return c
 
 
 @icon("game_timer", "rules", "Game timer (HUD countdown)", where=REPLACED)
@@ -978,6 +1020,31 @@ def _env_dlight():
     return c
 
 
+@icon("env_elight", "lights", "Entity light (lights models only)", where="feat/env-elight")
+def _env_elight():
+    c = Canvas(LIGHTS)
+    ray = (250, 150, 30)
+    for a in (-60, -30, 0):
+        r = math.radians(a)
+        c.draw(seg(23 + 11 * math.cos(r), 24 - 11 * math.sin(r), 23 + 15 * math.cos(r), 24 - 15 * math.sin(r), 2.5),
+               ray, outline=None)
+    bulb(c, 22, 22, 0.75)
+    person(c, 41, 18, 0.85, fill=(255, 235, 150), body=(250, 190, 60))
+    return c
+
+
+@icon("info_light_origin", "lights", "Light origin (models lit from here)", where="feat/env-elight")
+def _info_light_origin():
+    c = Canvas(LIGHTS)
+    bulb(c, 32, 19, 0.75)
+    pin = (230, 60, 40)
+    c.draw(circle(32, 42, 7), pin, shade=True)
+    c.draw(circle(32, 42, 2.5), WHITE, outline=None)
+    for x0, x1 in ((18, 24), (40, 46)):
+        c.draw(seg(x0, 42, x1, 42, 2.5), pin, outline=None)
+    return c
+
+
 @icon("locus_beam", "vectors", "Locus beam", where="feat/featureful-entities")
 def _locus_beam():
     c = Canvas(VECTORS)
@@ -1139,6 +1206,36 @@ def _calc_state():
     c.draw(union(rect(28, 18, 37, 47), minus(circle(37, 32.5, 14.5), rect(0, 0, 37, 64))), TILE, shade=True)
     c.text_c(37, 26, "&", wire, scale=2)
     c.draw(arrow(53, 32, 60, 32, w=4, head=9, headlen=5), ARROW, shade=True)
+    return c
+
+
+# --- branch feat/entity-states: entity state watchers ----------------------------------------------
+
+def watch_eye(c, cx, cy, rx=13, ry=8):
+    """An open eye (the watchers): white lens, blue iris, dark pupil."""
+    c.draw(lambda x, y: circle(cx, cy + ry * 1.1, ry * 2.1)(x, y) and circle(cx, cy - ry * 1.1, ry * 2.1)(x, y)
+           and abs(x - cx) <= rx, WHITE)
+    c.draw(circle(cx, cy, ry * 0.62), (60, 120, 210), outline=None)
+    c.draw(circle(cx, cy, ry * 0.27), (20, 20, 30), outline=None)
+
+
+@icon("multi_watcher", "state", "State watcher: combines the states of other entities (a master)",
+      where="feat/entity-states")
+def _multi_watcher():
+    c = Canvas(STATE)
+    watch_eye(c, 32, 21)
+    toggle(c, 8, 37, on=True, w=14, h=9)
+    toggle(c, 25, 37, on=False, w=14, h=9)
+    toggle(c, 42, 37, on=True, w=14, h=9)
+    return c
+
+
+@icon("watcher_count", "state", "Watcher, entity count: compares how many entities are not off (a master)",
+      where="feat/entity-states")
+def _watcher_count():
+    c = Canvas(STATE)
+    watch_eye(c, 32, 21)
+    lcd(c, 20, 34, 44, 50, "3", scale=2)
     return c
 
 
@@ -1424,6 +1521,24 @@ def _player_hasweapon():
     return c
 
 
+@icon("player_hasinventory", "logic", "Player has inventory item (pass / fail)", where="feat/inventory")
+def _player_hasinventory():
+    c = logic(LOGIC, outputs=("up", "down"))
+    c.draw(rrect(20, 22, 41, 34, 2), (235, 70, 55), shade=True)
+    c.draw(rect(20, 25, 41, 27), (90, 30, 25), outline=None)
+    c.text_c(31, 36, "?", (40, 30, 0))
+    return c
+
+
+@icon("player_inventory", "logic", "Player inventory (give / take / set an item)", where="feat/inventory")
+def _player_inventory():
+    c = logic(LOGIC)
+    c.draw(rrect(20, 23, 41, 36, 2), (60, 120, 240), shade=True)
+    c.draw(rect(20, 26, 41, 28), (25, 45, 100), outline=None)
+    c.text_c(32, 36, "+-", (40, 30, 0))
+    return c
+
+
 @icon("player_flicker", "rules", "Player flashlight flicker", where=GUIDE)
 def _player_flicker():
     c = Canvas((40, 40, 60))
@@ -1453,6 +1568,55 @@ def _trigger_vehiclecontrols():
     c.draw(circle(32, 32, 5.5), TILE, outline=None)
     c.draw(rect(31, 23, 33, 41), (60, 64, 72), outline=None)
     c.draw(rect(23, 31, 41, 33), (60, 64, 72), outline=None)
+    return c
+
+
+# --- branch feat/spirit-aliases: aliases and groups ---------------------------------------------------------
+
+def asterisk(c, cx, cy, r, w=3, fill=(40, 40, 40)):
+    """the alias sign: a six-armed asterisk"""
+    c.draw(union(seg(cx, cy - r, cx, cy + r, w), seg(cx - r * 0.87, cy - r / 2, cx + r * 0.87, cy + r / 2, w),
+                 seg(cx - r * 0.87, cy + r / 2, cx + r * 0.87, cy - r / 2, w)), fill, outline=None)
+
+
+@icon("info_alias", "logic", "Alias: another name for an entity (*name)", where="feat/spirit-aliases")
+def _info_alias():
+    c = logic(LOGIC)
+    asterisk(c, 32, 32, 9)
+    return c
+
+
+@icon("multi_alias", "logic", "Multi-target alias: one name for several entities", where="feat/spirit-aliases")
+def _multi_alias():
+    c = logic(LOGIC, outputs=("rightn", "upw", "downw"))
+    asterisk(c, 30, 32, 8)
+    return c
+
+
+@icon("trigger_changealias", "logic", "Trigger change alias: points an alias elsewhere", where="feat/spirit-aliases")
+def _trigger_changealias():
+    c = logic(LOGIC)
+    asterisk(c, 32, 27, 6, w=2.5)
+    c.draw(arrow(23, 39, 41, 39, w=3, head=8, headlen=5), (220, 40, 40), outline=None)
+    return c
+
+
+@icon("info_group", "logic", "Entity group: group.member names", where="feat/spirit-aliases")
+def _info_group():
+    c = logic(LOGIC)
+    # a bracket holding three members
+    c.draw(union(seg(24, 22, 24, 42, 2), seg(24, 22, 28, 22, 2), seg(24, 42, 28, 42, 2)), (40, 40, 40), outline=None)
+    for y in (23, 30, 37):
+        c.draw(rect(30, y, 40, y + 4), (60, 120, 210), outline=None)
+    return c
+
+
+@icon("train_setspeed", "logic", "Set a moving track train's speed (at once or ramped)", where="feat/entity-states")
+def _train_setspeed():
+    c = logic(LOGIC)
+    c.draw(arc(32, 38, 10, 13, 0, 180), (60, 64, 72), outline=None)         # the speedometer's scale
+    c.draw(seg(32, 38, 40, 29, 2), (220, 40, 40), outline=None)               # its needle
+    c.draw(circle(32, 38, 2.5), (60, 64, 72), outline=None)
     return c
 
 

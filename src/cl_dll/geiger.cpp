@@ -44,6 +44,11 @@ int CHudGeiger::Init(void)
 
 int CHudGeiger::VidInit(void)
 {
+	// SBO 2.0: a new map (or server) starts silent. The range was kept from the last map, so the counter went on
+	// ticking until the server sent a new one, which it does only for a player in play (1.38 the same).
+	m_iGeigerRange = 0;
+	m_iFlags = 0;
+
 	return 1;
 };
 

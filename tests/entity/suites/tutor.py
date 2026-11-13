@@ -9,7 +9,7 @@ S = SUITE
 
 
 @S.test('"Show on player spawn", repeatable, holdtime 10: each respawn within it sends the TutorText again',
-        players=1, doc='TUTOR_PORT.md')
+        players=1, doc='TUTOR_PORT.md', covers=('env_tutor', 'env_tutor:4', 'env_tutor:8', 'env_tutor.holdtime'))
 def respawn_again(t):
     t.point('env_tutor', targetname='tut', spawnflags='12', message='Entity test spawn tutor', type='8', holdtime='10')
     t.mark('go')

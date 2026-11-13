@@ -428,37 +428,47 @@ void CHudMessage::MessageAdd( const char *pName, float time )
 	int i,j;
 	client_textmessage_t *tempMessage;
 
+	// Trim off a leading # if it's there
+	if ( pName[0] == '#' ) 
+		tempMessage = TextMessageGet( pName+1 );
+	else
+		tempMessage = TextMessageGet( pName );
+	// If we couldnt find it in the titles.txt, just create it
+	if ( !tempMessage )
+	{
+		g_pCustomMessage.effect = 2;
+		g_pCustomMessage.r1 = g_pCustomMessage.g1 = g_pCustomMessage.b1 = g_pCustomMessage.a1 = 100;
+		g_pCustomMessage.r2 = 240;
+		g_pCustomMessage.g2 = 110;
+		g_pCustomMessage.b2 = 0;
+		g_pCustomMessage.a2 = 0;
+		g_pCustomMessage.x = -1;		// Centered
+		g_pCustomMessage.y = 0.7;
+		g_pCustomMessage.fadein = 0.01;
+		g_pCustomMessage.fadeout = 1.5;
+		g_pCustomMessage.fxtime = 0.25;
+		g_pCustomMessage.holdtime = 5;
+		g_pCustomMessage.pName = g_pCustomName;
+		strcpy( g_pCustomText, pName );
+		g_pCustomMessage.pMessage = g_pCustomText;
+
+		tempMessage = &g_pCustomMessage;
+	}
+
 	for ( i = 0; i < maxHUDMessages; i++ )
 	{
+		// SBO 2.1 (Half-Life Unified SDK): a net message (game_text, or a plugin's HUD message) on a channel that is
+		// still showing overwrites the same object, so the old slot is cleared and the message starts again with its
+		// fade-in, effect and full hold time; the slot kept the first message's start time, so a game_text fired again
+		// on its channel came up without its fade-in and went away early.
+		if ( tempMessage == m_pMessages[i] && tempMessage->pName &&
+			!strncmp( tempMessage->pName, "__NETMESSAGE__", sizeof( "__NETMESSAGE__" ) - 1 ) )
+		{
+			m_pMessages[i] = NULL;
+		}
+
 		if ( !m_pMessages[i] )
 		{
-			// Trim off a leading # if it's there
-			if ( pName[0] == '#' ) 
-				tempMessage = TextMessageGet( pName+1 );
-			else
-				tempMessage = TextMessageGet( pName );
-			// If we couldnt find it in the titles.txt, just create it
-			if ( !tempMessage )
-			{
-				g_pCustomMessage.effect = 2;
-				g_pCustomMessage.r1 = g_pCustomMessage.g1 = g_pCustomMessage.b1 = g_pCustomMessage.a1 = 100;
-				g_pCustomMessage.r2 = 240;
-				g_pCustomMessage.g2 = 110;
-				g_pCustomMessage.b2 = 0;
-				g_pCustomMessage.a2 = 0;
-				g_pCustomMessage.x = -1;		// Centered
-				g_pCustomMessage.y = 0.7;
-				g_pCustomMessage.fadein = 0.01;
-				g_pCustomMessage.fadeout = 1.5;
-				g_pCustomMessage.fxtime = 0.25;
-				g_pCustomMessage.holdtime = 5;
-				g_pCustomMessage.pName = g_pCustomName;
-				strcpy( g_pCustomText, pName );
-				g_pCustomMessage.pMessage = g_pCustomText;
-
-				tempMessage = &g_pCustomMessage;
-			}
-
 			for ( j = 0; j < maxHUDMessages; j++ )
 			{
 				if ( m_pMessages[j] )

@@ -23,7 +23,9 @@ def sensor(t, name, target, **kv):
     return t.point('trigger_sensor', at=at, targetname=name, target=target, names=('position',), **keys)
 
 
-@S.test('every entity in the radius: the target fires once for each, that entity as activator', doc=DOC)
+@S.test('every entity in the radius: the target fires once for each, that entity as activator', doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.radius', 'trigger_sensor.target', 'trigger_sensor.sensed_classname',
+                'trigger_sensor.fire_trigger_policy=0'))
 def every(t):
     for at in ((-60, 0, 32), (0, 60, 32), (60, 0, 32)):
         info(t, 'item', at)
@@ -36,7 +38,9 @@ def every(t):
     t.expect.fired('hit', activator='far', count=0)
 
 
-@S.test('closest / farthest entity: the target fires once, for the nearest / the farthest', doc=DOC)
+@S.test('closest / farthest entity: the target fires once, for the nearest / the farthest', doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.radius', 'trigger_sensor.fire_trigger_policy=1',
+                'trigger_sensor.fire_trigger_policy=2'))
 def closest_farthest(t):
     for n, at in (('near', (40, 0, 32)), ('mid', (0, 80, 32)), ('away', (-120, 0, 32))):
         t.point('path_corner', at=at, targetname=n)
@@ -53,7 +57,8 @@ def closest_farthest(t):
     t.expect.fired('hitf', count=1)
 
 
-@S.test('line blocked by walls: an entity behind a func_wall is not sensed; with "Nothing" it is', doc=DOC)
+@S.test('line blocked by walls: an entity behind a func_wall is not sensed; with "Nothing" it is', doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.line_blocked=0', 'trigger_sensor.line_blocked=1'))
 def line_blocked(t):
     info(t, 'seen', (60, 0, 32))
     info(t, 'hidden', (0, 80, 32))
@@ -70,7 +75,9 @@ def line_blocked(t):
     t.expect.fired('hitn', activator='hidden', count=1)
 
 
-@S.test('damageable and alive filters: a func_breakable passes "Yes" and "Alive only", an info_target "No"', doc=DOC)
+@S.test('damageable and alive filters: a func_breakable passes "Yes" and "Alive only", an info_target "No"', doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.takedamage_filter=1', 'trigger_sensor.takedamage_filter=-1',
+                'trigger_sensor.alive_filter=1'))
 def damage_alive(t):
     t.brush('func_breakable', targetname='crate', health='50', at=(40, 0, 16))
     info(t, 'plain', (-40, 0, 32))
@@ -91,7 +98,8 @@ def damage_alive(t):
     t.expect.fired('ha', activator='plain', count=0)
 
 
-@S.test('Source Position [LP]: an entity name moves the search center there', doc=DOC)
+@S.test('Source Position [LP]: an entity name moves the search center there', doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.position'))
 def position(t):
     info(t, 'center', (150, 150, 32))
     info(t, 'item', (180, 150, 32))
@@ -105,7 +113,8 @@ def position(t):
     t.expect.fired('hit', count=2)
 
 
-@S.test('a target that triggers the sensor again while it fires: ignored, no recursion', doc=DOC)
+@S.test('a target that triggers the sensor again while it fires: ignored, no recursion', doc=DOC,
+        covers=('trigger_sensor',))
 def recursion(t):
     info(t, 'item', (40, 0, 32))
     t.point('trigger_relay', at=(-200, -200, 32), targetname='back', target='s', triggerstate='2')
@@ -119,7 +128,10 @@ def recursion(t):
 
 
 @S.test('relationship: as human military players are enemies, as player ally allies, as human passive neither; '
-        'a spectator is never sensed', players=2, doc=DOC)
+        'a spectator is never sensed', players=2, doc=DOC,
+        covers=('trigger_sensor', 'trigger_sensor.classify=3', 'trigger_sensor.classify=4',
+                'trigger_sensor.classify=11', 'trigger_sensor.relationship_filter=2',
+                'trigger_sensor.relationship_filter=4'))
 def players(t):
     for n, x in (('he', -200), ('ha', 0), ('hp', 200)):
         info(t, n, (x, 200, 32))

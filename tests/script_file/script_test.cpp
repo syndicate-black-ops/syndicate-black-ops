@@ -101,6 +101,14 @@ int main(int argc, char **argv)
 		hard->SetCurValue("250");
 		Check(hard->ConfigCommand() == "mp_hardcore \"100.000000\"\n", "number clamped to max");
 	}
+	// a LIST's value is the row; the command carries that row's item value (mp_speedmon "Off" "-1" is the fifth row)
+	Object *speed = s.Find("mp_speedmon");
+	Check(speed && speed->type == TYPE_LIST && speed->items.size() == 5 && speed->ListRow() == 1, "mp_speedmon list");
+	if (speed)
+	{
+		speed->SetCurValue("4");
+		Check(speed->ConfigCommand() == "mp_speedmon \"-1\"\n", "list row 4 sends -1");
+	}
 	Object *ff = s.Find("mp_friendlyfire");
 	Check(ff && ff->type == TYPE_BOOL, "friendly fire bool");
 	if (host)
@@ -118,10 +126,21 @@ int main(int argc, char **argv)
 		Check(f2->defValue == "25.000000", "new default written");
 	if (Object *l2 = s2.Find("sv_lan"))
 		Check(l2->ListRow() == 1, "list default written");
+	if (Object *sp2 = s2.Find("mp_speedmon"))
+		Check(sp2->ListRow() == 4, "list row written");
 
 	Description u;
 	Check(u.Parse(user.data(), user.size(), Description::KIND_INFO), "user.scr parses");
 	Check(u.Find("mp_decals") && u.Find("cl_effectsdetail"), "user.scr objects");
+	// Multiplayer Advanced: view options (halflife-updated's user.scr ranges)
+	Check(u.Find("cl_rollangle") && u.Find("cl_rollangle")->type == TYPE_NUMBER && u.Find("cl_rollangle")->fMax == 360.0f,
+	      "user.scr cl_rollangle 0-360");
+	Check(u.Find("cl_rollspeed") && u.Find("cl_rollspeed")->fMin == 0.0f && u.Find("cl_rollspeed")->fMax == -1.0f,
+	      "user.scr cl_rollspeed 0-no limit");
+	Check(u.Find("cl_bobtilt") && u.Find("cl_bobtilt")->type == TYPE_BOOL, "user.scr cl_bobtilt toggle");
+	Check(u.Find("default_fov") && u.Find("default_fov")->fMin == 1.0f && u.Find("default_fov")->fMax == 179.0f &&
+	          u.Find("default_fov")->defValue == "90.000000",
+	      "user.scr default_fov 1-179, 90");
 	Description wrong;
 	Check(!wrong.Parse(user.data(), user.size(), Description::KIND_SERVER), "kind checked");
 	const std::string uout = u.Write(FileTime(1793566000, Description::KIND_INFO));

@@ -90,7 +90,7 @@ model_t *LoadByName(const char *path)
 		if (!s_bFullReported)
 		{
 			s_bFullReported = true;
-			gEngfuncs.Con_Printf("Server menu preview: more than %d models on this map; %s is not shown\n",
+			gEngfuncs.Con_DPrintf("Server menu preview: more than %d models on this map; %s is not shown\n",
 				servermenu::MAX_PREVIEW_MODELS, path);
 		}
 		return NULL;

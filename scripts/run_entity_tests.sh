@@ -3,7 +3,11 @@
 # headless stock HLDS with an hl.so built with the test layer (off by default):
 #   scripts/build.sh linux RelWithDebInfo -DSBO_TEST_COMMANDS=ON
 #
-#   scripts/run_entity_tests.sh [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--timescale X] [--list] [--coverage]
+#   scripts/run_entity_tests.sh [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--timescale X] [--list]
+#                               [--coverage [--coverage-out DIR]] [--coverage-gate]
+#     --coverage FGD classes, keys, spawnflag bits and choice values set / asserted by the entity suites and the
+#                map-test cases (tests/maps/cases "# covers:"); no server
+#     --coverage-gate  fails unless every FGD item is asserted or exempted in tests/fgd_exemptions.json; no server
 #     --ci       every suite twice; a test that passes once and fails once is FLAKY (a failure)
 #     --asan     an ASan+UBSan hl.so (scripts/check_sanitizers.sh asan), run in the sniper image with libasan
 # Env: HLDS_DIR (stock HLDS install, default ~/hlds), SDHLT_DIR (ReSDHLT tools), ET_HL, ET_TIMESCALE (default 5).

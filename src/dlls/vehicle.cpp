@@ -116,6 +116,7 @@ TYPEDESCRIPTION CFuncVehicle::m_SaveData[] =
 	DEFINE_FIELD( CFuncVehicle, m_acceleration, FIELD_INTEGER ),	// SBO: not saved by HL25
 	DEFINE_FIELD( CFuncVehicle, m_flVolume, FIELD_FLOAT ),
 	DEFINE_FIELD( CFuncVehicle, m_flBank, FIELD_FLOAT ),
+	DEFINE_FIELD( CFuncVehicle, m_iCollisionCount, FIELD_INTEGER ),	// SBO 2.0 (ReGameDLL)
 	DEFINE_FIELD( CFuncVehicle, m_oldSpeed, FIELD_FLOAT ),
 	DEFINE_FIELD( CFuncVehicle, m_reverseSpeed, FIELD_FLOAT ),			// SBO 2.0 (Featureful)
 	DEFINE_FIELD( CFuncVehicle, m_deceleration, FIELD_INTEGER ),
@@ -568,7 +569,18 @@ static void VehicleProbeHit( CFuncVehicle *pVehicle, const TraceResult &tr, bool
 		pev->speed = pev->speed * 0.99;
 	}
 	else if ( ( tr.vecPlaneNormal.z < 0.65 ) || ( tr.fStartSolid ) )
-		pev->speed = pev->speed * -1;
+	{
+		// SBO 2.0 (ReGameDLL REGAMEDLL_FIXES): the third bounce in a row stops the vehicle instead of reversing it
+		// again (a vehicle pressed into a wall, or stuck in something, no longer shakes back and forth)
+		if ( ++pVehicle->m_iCollisionCount >= 3 )
+		{
+			pev->speed = 0;
+			pev->velocity = g_vecZero;
+			pev->avelocity = g_vecZero;
+		}
+		else
+			pev->speed = pev->speed * -1;
+	}
 	else
 		pVehicle->m_vSurfaceNormal = tr.vecPlaneNormal;
 }
@@ -602,6 +614,8 @@ void CFuncVehicle::CollisionDetection( void )
 		UTIL_TraceLine( m_vBack, m_vBack + ( gpGlobals->v_forward * 16 ), ignore_monsters, dont_ignore_glass, ENT( pev ), &tr );
 		if ( tr.flFraction != 1.0 )
 			VehicleProbeHit( this, tr, false );
+		else
+			m_iCollisionCount = 0;	// SBO 2.0 (ReGameDLL): nothing behind
 	}
 	else if ( pev->speed > 0 )
 	{
@@ -623,6 +637,8 @@ void CFuncVehicle::CollisionDetection( void )
 		UTIL_TraceLine( m_vFront, m_vFront - ( gpGlobals->v_forward * 16 ), ignore_monsters, dont_ignore_glass, ENT( pev ), &tr );
 		if ( tr.flFraction != 1.0 )
 			VehicleProbeHit( this, tr, true );
+		else
+			m_iCollisionCount = 0;	// SBO 2.0 (ReGameDLL): nothing in front
 	}
 }
 
@@ -1018,6 +1034,7 @@ void CFuncVehicle::Spawn( void )
 
 	m_dir = 1;
 	m_flTurnStartTime = -1;
+	m_iCollisionCount = 0;
 
 	if ( FStringNull( pev->target ) )
 		ALERT( at_console, "func_vehicle with no target\n" );

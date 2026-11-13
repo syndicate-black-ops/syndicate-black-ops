@@ -1,0 +1,15 @@
+# game_counter has no delay or killtarget (FGD since 52e75649, 2026-11-07: dropped because the game never read
+# them; CGameCounter is a rule entity, not a CBaseDelay): a map that still sets them (26 maps / 81 game_counters set a
+# delay) gets its target fired at once and nothing removed, as on 1.38
+# covers: game_counter game_counter.target
+map co_fuzz
+spawn game_counter targetname c health 1 target hit delay 2 killtarget victim
+spawn info_target targetname victim
+activate
+frames 3
+fire c
+frames 1
+expectn 1 Firing: (hit)
+frames 25
+expectn 1 Firing: (hit)
+expectcount info_target 1

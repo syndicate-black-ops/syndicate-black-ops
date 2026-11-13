@@ -1,0 +1,29 @@
+# monstermaker without a name, monstercount -1, max live 2, delay 1: kill all children every 10 s, four times; count children spawned (mk_fired)
+# covers: monstermaker.monstercount monstermaker.m_imaxlivechildren
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker monstertype monster_imp monstercount -1 m_imaxlivechildren 2 delay 1 target mk_fired origin "0 500 0"
+spawn trigger_hurt dmg 1000000 damagetype 8192
+spawn trigger_relay targetname mk_fired target mk_sink triggerstate 2
+spawn monstermaker monstertype monster_imp monstercount -1 m_imaxlivechildren 2 delay 1 origin "0 900 0"
+activate
+frames 100
+count monster_imp
+touchclass 1 monster_imp
+frames 100
+count monster_imp
+touchclass 1 monster_imp
+frames 100
+count monster_imp
+touchclass 1 monster_imp
+frames 100
+count monster_imp

@@ -2,8 +2,10 @@
 // SBO 2.0: motion_manager and trigger_motion from the Featureful entity guide (see
 // docs/FEATUREFUL_GUIDE_ENTITIES.md). Ported from Featureful (https://github.com/FreeSlave/halflife-featureful,
 // Half-Life 1 SDK license) dlls/triggers.cpp, from Spirit of Half-Life (Laurie Cheers). Multiplayer: no save/restore;
-// a player target counts only while he is in play (never a spectator). Without movewith (tabled), positions, angles
-// and velocities are set on the entity alone.
+// a player target counts only while they are in play (never a spectator). On a movewith child (movewith.cpp) they act
+// on its own pose, as Spirit's do: a position or angles are where it goes now, kept on its parent from then on, and a
+// velocity or angular velocity is its own movement on top of its parent's (MoveWith_AssignOrigin and the rest; for
+// any other entity those are the plain entvars writes).
 //=========================================================
 
 #include "extdll.h"
@@ -12,6 +14,7 @@
 #include "player.h"
 #include "round_hooks.h"
 #include "locus.h"
+#include "movewith.h"
 
 #define SF_MOTION_DEBUG					1
 #define SF_MOTION_REQUIRES_ACTIVATOR	( 1 << 24 )
@@ -120,7 +123,7 @@ void CTriggerMotion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 			if ( TryCalcLocus_Velocity( this, pActivator, STRING( m_iszPosition ), vecTemp ) )
 			{
 				vecOld = pTarget->pev->origin;
-				UTIL_SetOrigin( pTarget->pev, vecOld + vecTemp );
+				MoveWith_AssignOrigin( pTarget, vecOld + vecTemp );
 				if ( debug )
 					Motion_PrintVectors( "DEBUG: Set origin", vecOld, pTarget->pev->origin );
 			}
@@ -129,7 +132,7 @@ void CTriggerMotion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		{
 			if ( debug )
 				Motion_PrintVectors( "DEBUG: Set origin", pTarget->pev->origin, vecTemp );
-			UTIL_SetOrigin( pTarget->pev, vecTemp );
+			MoveWith_AssignOrigin( pTarget, vecTemp );
 		}
 		pTarget->pev->flags &= ~FL_ONGROUND;
 	}
@@ -142,16 +145,16 @@ void CTriggerMotion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		{
 		case ANGMOD_SET:
 			if ( TryCalcLocus_Velocity( this, pActivator, STRING( m_iszAngles ), vecTemp ) )
-				pTarget->pev->angles = UTIL_VecToAngles( vecTemp );
+				MoveWith_AssignAngles( pTarget, UTIL_VecToAngles( vecTemp ) );
 			break;
 		case ANGMOD_ROTATE:
 			// Featureful read the velocity key here; the angles key is the one this mode names
 			if ( TryCalcLocus_Velocity( this, pActivator, STRING( m_iszAngles ), vecTemp ) )
-				pTarget->pev->angles = pTarget->pev->angles + UTIL_VecToAngles( vecTemp );
+				MoveWith_AssignAngles( pTarget, pTarget->pev->angles + UTIL_VecToAngles( vecTemp ) );
 			break;
 		case ANGMOD_ROTATE_BY_VALUES:
 			Locus_StringToRandomVector( (float *)vecTemp, STRING( m_iszAngles ) );
-			pTarget->pev->angles = pTarget->pev->angles + vecTemp;
+			MoveWith_AssignAngles( pTarget, pTarget->pev->angles + vecTemp );
 			break;
 		}
 		if ( debug )
@@ -161,16 +164,16 @@ void CTriggerMotion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 	vecTemp = g_vecZero;
 	if ( !FStringNull( m_iszVelocity ) )
 	{
-		vecOld = pTarget->pev->velocity;
+		vecOld = MoveWith_GetVelocity( pTarget );
 		switch ( m_iVelMode )
 		{
 		case VELMODE_SET:
 			if ( TryCalcLocus_Velocity( this, pActivator, STRING( m_iszVelocity ), vecTemp ) )
-				pTarget->pev->velocity = vecTemp;
+				MoveWith_SetVelocity( pTarget, vecTemp );
 			break;
 		case VELMODE_ADD:
 			if ( TryCalcLocus_Velocity( this, pActivator, STRING( m_iszVelocity ), vecTemp ) )
-				pTarget->pev->velocity = vecOld + vecTemp;
+				MoveWith_SetVelocity( pTarget, vecOld + vecTemp );
 			break;
 		case VELMODE_ROTATE:
 		case VELMODE_ROTATE_BY_VALUES:
@@ -188,23 +191,24 @@ void CTriggerMotion::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 				vecVelAngles = vecTemp + UTIL_VecToAngles( vecOld );
 			}
 			UTIL_MakeVectors( vecVelAngles );
-			pTarget->pev->velocity = vecOld.Length() * gpGlobals->v_forward;
-			pTarget->pev->velocity.z = -pTarget->pev->velocity.z;	// VecToAngles reverses the pitch
+			Vector vecNew = vecOld.Length() * gpGlobals->v_forward;
+			vecNew.z = -vecNew.z;	// VecToAngles reverses the pitch
+			MoveWith_SetVelocity( pTarget, vecNew );
 			break;
 		}
 		}
 		if ( debug )
-			Motion_PrintVectors( "DEBUG: Set velocity", vecOld, pTarget->pev->velocity );
+			Motion_PrintVectors( "DEBUG: Set velocity", vecOld, MoveWith_GetVelocity( pTarget ) );
 	}
 
 	if ( !FStringNull( m_iszAVelocity ) )
 	{
 		vecTemp = g_vecZero;
 		Locus_StringToRandomVector( (float *)vecTemp, STRING( m_iszAVelocity ) );
-		vecOld = pTarget->pev->avelocity;
-		pTarget->pev->avelocity = ( m_iAVelMode == AVELMODE_ADD ) ? vecOld + vecTemp : vecTemp;
+		vecOld = MoveWith_GetAvelocity( pTarget );
+		MoveWith_SetAvelocity( pTarget, ( m_iAVelMode == AVELMODE_ADD ) ? vecOld + vecTemp : vecTemp );
 		if ( debug )
-			Motion_PrintVectors( "DEBUG: Set avelocity", vecOld, pTarget->pev->avelocity );
+			Motion_PrintVectors( "DEBUG: Set avelocity", vecOld, MoveWith_GetAvelocity( pTarget ) );
 	}
 }
 
@@ -273,7 +277,7 @@ void CMotionThread::MotionThink( void )
 			{
 				if ( debug && vecTemp != pTarget->pev->origin )
 					Motion_PrintVectors( "DEBUG: Set origin", pTarget->pev->origin, vecTemp );
-				UTIL_SetOrigin( pTarget->pev, vecTemp );
+				MoveWith_AssignOrigin( pTarget, vecTemp );
 			}
 			else
 				m_reportedPosError = TRUE;
@@ -283,7 +287,7 @@ void CMotionThread::MotionThink( void )
 			if ( TryCalcLocus_Velocity( this, m_hLocus, STRING( m_iszPosition ), vecTemp, !m_reportedPosError ) )
 			{
 				vecOld = pTarget->pev->origin;
-				UTIL_SetOrigin( pTarget->pev, vecOld + gpGlobals->frametime * vecTemp );
+				MoveWith_AssignOrigin( pTarget, vecOld + gpGlobals->frametime * vecTemp );
 				if ( debug && vecOld != pTarget->pev->origin )
 					Motion_PrintVectors( "DEBUG: Set origin", vecOld, pTarget->pev->origin );
 			}
@@ -293,19 +297,19 @@ void CMotionThread::MotionThink( void )
 			break;
 		case POSMODE_SETVEL:
 			if ( TryCalcLocus_Velocity( this, m_hLocus, STRING( m_iszPosition ), vecTemp, !m_reportedPosError ) )
-				pTarget->pev->velocity = vecTemp;
+				MoveWith_SetVelocity( pTarget, vecTemp );
 			else
 				m_reportedPosError = TRUE;
 			break;
 		case POSMODE_ACCELERATE:
 			if ( TryCalcLocus_Velocity( this, m_hLocus, STRING( m_iszPosition ), vecTemp, !m_reportedPosError ) )
-				pTarget->pev->velocity = pTarget->pev->velocity + gpGlobals->frametime * vecTemp;
+				MoveWith_SetVelocity( pTarget, MoveWith_GetVelocity( pTarget ) + gpGlobals->frametime * vecTemp );
 			else
 				m_reportedPosError = TRUE;
 			break;
 		case POSMODE_FOLLOW:
 			if ( TryCalcLocus_Position( this, m_hLocus, STRING( m_iszPosition ), vecTemp, !m_reportedPosError ) )
-				pTarget->pev->velocity = vecTemp - pTarget->pev->origin;
+				MoveWith_SetVelocity( pTarget, vecTemp - pTarget->pev->origin );
 			else
 				m_reportedPosError = TRUE;
 			break;
@@ -322,7 +326,7 @@ void CMotionThread::MotionThink( void )
 			if ( TryCalcLocus_Velocity( this, m_hLocus, STRING( m_iszFacing ), vecTemp, !m_reportedDirError ) )
 			{
 				if ( vecTemp != g_vecZero )	// a zero vector leaves the angles
-					pTarget->pev->angles = UTIL_VecToAngles( vecTemp );
+					MoveWith_AssignAngles( pTarget, UTIL_VecToAngles( vecTemp ) );
 			}
 			else
 				m_reportedDirError = TRUE;
@@ -331,24 +335,24 @@ void CMotionThread::MotionThink( void )
 			if ( TryCalcLocus_Velocity( this, m_hLocus, STRING( m_iszFacing ), vecTemp, !m_reportedDirError ) )
 			{
 				if ( vecTemp != g_vecZero )
-					pTarget->pev->angles = pTarget->pev->angles + gpGlobals->frametime * UTIL_VecToAngles( vecTemp );
+					MoveWith_AssignAngles( pTarget, pTarget->pev->angles + gpGlobals->frametime * UTIL_VecToAngles( vecTemp ) );
 			}
 			else
 				m_reportedDirError = TRUE;
 			break;
 		case FACEMODE_ROTATE_BY_VALUES:
 			Locus_StringToRandomVector( (float *)vecTemp, STRING( m_iszFacing ) );
-			pTarget->pev->angles = pTarget->pev->angles + gpGlobals->frametime * vecTemp;
+			MoveWith_AssignAngles( pTarget, pTarget->pev->angles + gpGlobals->frametime * vecTemp );
 			break;
 		case FACEMODE_SET_ANGULAR_VELOCITY:
 			Locus_StringToRandomVector( (float *)vecTemp, STRING( m_iszFacing ) );
-			pTarget->pev->avelocity = vecTemp;
+			MoveWith_SetAvelocity( pTarget, vecTemp );
 			break;
 		case FACEMODE_SET_ANGLES:
 		{
 			CBaseEntity *pCalc = Locus_FindEntity( NULL, STRING( m_iszFacing ), m_hLocus );
 			if ( pCalc )
-				pTarget->pev->angles = pCalc->pev->angles;
+				MoveWith_AssignAngles( pTarget, pCalc->pev->angles );
 			else if ( !m_reportedDirError )
 			{
 				ALERT( at_console, "motion_manager: could not find \"%s\" to set angles for \"%s\"\n", STRING( m_iszFacing ), STRING( pTarget->pev->targetname ) );

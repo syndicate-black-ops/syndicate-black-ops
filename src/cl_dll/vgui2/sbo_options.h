@@ -123,6 +123,8 @@ private:
 	vgui2::Label *m_pDiscordHelp = nullptr;
 	vgui2::Label *m_pWeaponsTitle = nullptr;
 	CSboCvarCheckButton *m_pLeftHanded = nullptr;
+	vgui2::Label *m_pHudTitle = nullptr;
+	CSboCvarCheckButton *m_pObjectives = nullptr;
 	vgui2::Label *m_pMenusTitle = nullptr;
 	CSboCvarCheckButton *m_pMenus = nullptr;
 	vgui2::Label *m_pMenusHelp = nullptr;

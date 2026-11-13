@@ -68,7 +68,7 @@ other effects and entities in the map, the software renderer (draws nothing in t
 - **Sprites**: a browser of the particle sprites (SBO, Half-Life when the image has it, uploads; HUD / UI sprites behind "Show HUD / UI sprites") with thumbnails, an
   animated preview (frame rate, background), size, frames, texture format; "Use for the selected type".
 - **Files**: New from templates (pfxEd's new file, smoke, sparks, trail, blank); Open any shipped script, an
-  upload or a browser draft; upload `.aur` and `.spr` (button or drag and drop, several at once); download the
+  upload or a browser draft; upload `.aur` and `.spr` (button or drag and drop, several at once; kept in this browser); download the
   `.aur` (Ctrl+S) or a zip with `aurora/` and `sprites/` as in the game folder; drafts autosaved in the browser.
 - **Share link**: the script and scene in the URL (deflate, base64url); uploaded sprites are not in it.
 - **Map entity**: the `env_particle` block for a `.map` (message, angles, spawnflags, target, attachment) and the
@@ -107,18 +107,19 @@ Only Half-Life sprites that can be particles are copied: the Dockerfile keeps th
 | explosions (`aexplo` to `hexplo`, `explode1/2`, `fexplo1`, `wxplo1`, `zerogxplode`, `mushroom`, `blast`, `shockwave`, `gwave1`), fire and jets (`fire`, `xfire`, `xfire2`, `xfireball3`, `rjet1`, `bluejet1`), smoke and steam (`ballsmoke`, `smoke`, `steam1`, `stmbal1`, `wallpuff`, `xsmoke1/3/4`, `xssmke1`), sparks (`spark1`, `richo1/2`, `streak`, `xspark1-4`), glows and flares (`glow01-05`, `animglow01`, `hotglow`, `flare1-6`, blue / red / yellow / x flares, `gargeye1`, `nhth1`, `laserdot`, `dot`, `white`, `spotlight01-04`, `moths`), muzzle flashes (`muz1-8`, `muzzleflash`, `muzzleflash1-3`), water (`bubble`, `sdrip1`, `wdrip2`, `wsplash3`), blood and goo (`blood`, `blooddrop`, `bloodspray`, `bigspit`, `tinyspit`, `mommablob`, `mommaspit`, `mommaspout`, `poison`, `bhit`), teleport and energy (`b- c- d- e-tele1`, `tele1`, `enter1`, `exit1`, `portal1`, `plasma`), beams and lightning (`bolt1`, `laserbeam`, `lgtning`, `rope`, `xbeam1-5`, `xenobeam`, `zbeam1-6`) | HUD and weapon-menu sprites (`1280/`, `2560/`, `320*`, `640*`, `1280*`, `2560*`: every sprite a `hud.txt` / `weapon_*.txt` names), crosshairs, logos, scoreboard and spectator icons (`iflag*`, `iplayer*`, `iunknown`), `voiceicon`, `camera`, `arrow1`, `cnt1`, `tile`, `shellchrome`, `xffloor`, `bm1`, `agrunt1` (a picture of an alien grunt), the orientation test sprites (`oriented`, `vp_parallel*`) |
 
 The sprite browser applies the same idea to every source (SBO's own sprites, and a Half-Life folder given some
-other way): **HUD / UI sprites are hidden** unless "Show HUD / UI sprites" is ticked. The server marks a sprite as
+other way): **HUD / UI sprites are hidden** unless "Show HUD / UI sprites" is ticked. `server.py` marks a sprite as
 UI when a `hud.txt` or `weapon_*.txt` next to it names it, or its name is a HUD sheet or resolution folder
 (`320hud*`, `640hud*`, `1280/`, `hud_*`, `weapon_*`...), a crosshair, scope (`scope_*`, `snipe*`), night vision
 (`nvg*`), screen border (`1024top`, `640left`...), logo, icon, or one of the names above (`server.py`,
 `UI_SPRITE_RE`). For SBO that hides 60 of its 79 sprites and shows 19 (`blacksmoke`, `fasmoke2`, `fire`,
 `gas_puff_01`, `glow01-05`, `hotglow`, `laserbeam`, `luejet1`, `p_beam`, `smoke3`, `sbo_rain`, `sbo_snow`,
-`effects/rain`, `effects/ripple`, `effects/snowflake`). Hidden sprites still work in scripts; uploads always show.
+`effects/rain`, `effects/ripple`, `effects/snowflake`). Hidden sprites still work in scripts; uploads always show. The map editor's entity icons (`sprites/editor/`) are
+not in the editor at all: not listed, not served, not in the static site (`server.py`, `EXCLUDED_DIRS`).
 
-**`valve_sprites` is Valve content: only for a local test image. Never build an image that is pushed, published
-or shared with it.** Without it the Half-Life sprites the scripts name (`steam1`, `xfireball3`, `yelflare1`...) are
+Without `valve_sprites` the Half-Life sprites the scripts name (`steam1`, `xfireball3`, `yelflare1`...) are
 "sprite not found", as in a game without Half-Life content; mappers can upload them from their own install. A
-Half-Life dedicated server (`steamcmd +login anonymous +app_update 90`) has them in `valve/sprites`.
+Half-Life dedicated server (`steamcmd +login anonymous +app_update 90`) has them in `valve/sprites`. The published
+site carries the allow-listed ones (Static site, below).
 
 The test image on the workstation was built with `aurora_src` = the `feat/aurora-xashxt-keys` worktree (so
 `lightmodel` / `killcondition` preview), `extra_assets` = its `wrecksmoke*.aur`, and `valve_sprites` from an
@@ -145,14 +146,36 @@ docker run --rm --memory=2g --cpus=1 --network host -v $PWD/tools/aurora-editor/
   -w /pw mcr.microsoft.com/playwright:v1.48.2-jammy sh -c 'npm i playwright@1.48.2 && node smoke.mjs http://localhost:8095/ /screens'
 ```
 
-## Server
+## Server and static site
 
-`server/server.py`, Python standard library only (no packages to install or audit): static files, the asset
-index (`/api/assets`), the assets (`/assets/sprites/x.spr`: the mod's file before Half-Life's, case-insensitive, as
-the game searches), and upload sessions (`/api/session`). Uploads: `.aur` (256 KB, text) and `.spr` (4 MB, an
-`IDSP` version 2 header), plain lower-case names (letters, digits, `_ - .`, 60 characters; no folders, no `..`),
-32 MB and 64 files per session, 200 sessions; kept in the container's `/tmp`, removed after 12 hours idle or when
-the container goes. Runs as an unprivileged user.
+The page needs no backend: uploads are read in the browser (File API, drag and drop), checked there (`.aur` 256 KB,
+`.spr` 4 MB with an `IDSP` version 2 header, plain lower-case names; 32 MB and 64 files in all) and kept in the
+browser's IndexedDB, so they survive a reload and never leave the machine; the zip is written in the page
+(`web/js/util.js`). The page reads the asset list from `assets/index.json` and each asset from
+`assets/<aurora|sprites>/<name>` (lower-case names).
+
+`server/server.py`, Python standard library only (no packages to install or audit), serves that for the
+container: the page, `assets/index.json` built from the files it carries, and the assets (the mod's file before
+Half-Life's, case-insensitive, as the game searches). Runs as an unprivileged user. `server.py --export <dir>` writes
+the same as static files: `web/`, `assets/index.json`, and every listed asset at its lower-case index name (the
+mod's file where both have one).
+
+### Static site (GitHub Pages)
+
+Published at https://syndicate-black-ops.github.io/aurora-editor/ from the `gh-pages` branch of
+https://github.com/syndicate-black-ops/aurora-editor (its `main` holds only a README). To publish the current
+checkout:
+
+```sh
+tools/aurora-editor/publish.sh <Half-Life valve/sprites dir>             # build, commit, push to gh-pages
+tools/aurora-editor/publish.sh <Half-Life valve/sprites dir> --no-push   # build and commit only
+```
+
+It builds the Dockerfile's `static` target (the same emscripten build and parity test as the image, then
+`server.py --export`) with the limited `aurora-editor-builder`, adds `.nojekyll` and `version.txt` (the game commit,
+`+local` when the editor's files have uncommitted changes), and pushes one signed commit to `gh-pages` (work folder
+`build/aurora-editor-publish/`, environment `AURORA_PAGES_REPO`, `AURORA_PUBLISH_DIR`). The site carries SBO's
+scripts and sprites and the Half-Life sprites in `valve-sprites.allow`.
 
 ## Limits
 
@@ -162,7 +185,7 @@ the container goes. Runs as an unprivileged user.
   power-of-two resampling and `gl_texturemode`, `texgamma` and `brightness` are not reproduced.
 - Depth mask of `texture` / `color` modes: the engine leaves it as the previous mode left it; the editor starts
   each frame with it on (the manager ends each frame with `kRenderNormal`).
-- The share link holds the script and scene, not uploaded sprites; uploads are per browser tab session.
+- The share link holds the script and scene, not uploaded sprites; uploads stay in the browser that added them.
 - An in-game VGUI2 editor can reuse `core/aurora-keys.json` (the key list, groups, help) and the editing rule
   (patch one value's token, keep the rest of the text); `web/js/aur.js` shows it.
 
@@ -170,13 +193,14 @@ the container goes. Runs as an unprivileged user.
 
 | Path | What |
 |---|---|
-| `Dockerfile`, `Dockerfile.dockerignore` | stages: the game sources (overridable), emscripten build + parity test, the allow-listed Half-Life sprites, Python runtime |
-| `valve-sprites.allow` | the Half-Life sprites the image may carry (particle sprites only) |
+| `Dockerfile`, `Dockerfile.dockerignore` | stages: the game sources (overridable), emscripten build + parity test, the allow-listed Half-Life sprites, the static site (`--target static`), Python runtime |
+| `valve-sprites.allow` | the Half-Life sprites the image and the site may carry (particle sprites only) |
+| `publish.sh` | builds the static site and pushes it to the Pages repository |
 | `core/shim.cpp`, `core/include/*.h` | the engine shim and the stubs of the SDK headers the particle code includes |
 | `core/native_main.cpp`, `tests/parity.mjs` | parity test |
 | `core/aurora-keys.json` | every key: kind, default, range, unit, group, help; limits; other editors' keys |
 | `core/build.sh` | stage / wasm / native builds |
-| `server/server.py` | the server |
+| `server/server.py` | the server; `--export` writes the static site |
 | `web/index.html`, `web/css/app.css` | the page |
 | `web/js/app.js` | the editor (state, panels, scene, uploads, loop) |
 | `web/js/aur.js` | the script's token structure (the engine's tokenizer and the parser's walk), value edits, lint |

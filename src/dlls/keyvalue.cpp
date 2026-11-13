@@ -10,6 +10,7 @@
 #include	"extdll.h"
 #include	"util.h"
 #include	"cbase.h"
+#include	"movewith.h"
 
 const CKeyValue g_emptyKeyValue = { KEY_TYPE_NONE, 0, NULL, { 0 } };
 
@@ -152,6 +153,20 @@ CKeyValue CBaseEntity::GetKeyValue( const char *keyName )
 	if ( customKey.keyType )
 		return customKey;
 
+	// SBO 2.1: a movewith child's velocity and angular velocity are its own, on top of its parent's (movewith.cpp)
+	Vector vecOwn;
+	if ( MoveWith_GetKeyValue( this, keyName, vecOwn ) )
+	{
+		CKeyValue key = GetEntvarsKeyvalue( pev, keyName );
+		if ( key.keyType == KEY_TYPE_VECTOR )
+		{
+			key.vVal[0] = vecOwn.x;
+			key.vVal[1] = vecOwn.y;
+			key.vVal[2] = vecOwn.z;
+		}
+		return key;
+	}
+
 	return GetEntvarsKeyvalue( pev, keyName );
 }
 
@@ -161,17 +176,24 @@ BOOL KeyValue_IsPluginOnly( const char *keyName )
 	return keyName && !stricmp( keyName, "headscale" );
 }
 
+void KeyValue_RefuseNeedsPrecache( entvars_t *pev, const char *keyName )
+{
+	ALERT( at_console, "Key \"%s\" of %s \"%s\" can't be changed at run time (it would need a precache)\n",
+		keyName, STRING( pev->classname ), STRING( pev->targetname ) );
+}
+
 BOOL KeyValue_DispatchRuntime( edict_t *pent, const char *keyName, const char *value )
 {
 	if ( !pent || !keyName || !keyName[0] )
 		return FALSE;
 
 	// SBO: SevenKewp writes the string and leaves the entity with a model or sound the engine doesn't know.
-	// Nothing can be precached once the map runs, so these keys are refused.
-	if ( EntvarsKeyNeedsPrecache( keyName ) )
+	// Nothing can be precached once the map runs, so these keys are refused (SBO 2.1: the entity decides, for the
+	// classes that keep numbers or names in the entvars sound fields).
+	CBaseEntity *pTarget = CBaseEntity::Instance( pent );
+	if ( pTarget ? pTarget->RuntimeKeyNeedsPrecache( keyName ) : EntvarsKeyNeedsPrecache( keyName ) )
 	{
-		ALERT( at_console, "Key \"%s\" of %s \"%s\" can't be changed at run time (it would need a precache)\n",
-			keyName, STRING( pent->v.classname ), STRING( pent->v.targetname ) );
+		KeyValue_RefuseNeedsPrecache( &pent->v, keyName );
 		return FALSE;
 	}
 
@@ -187,6 +209,15 @@ BOOL KeyValue_DispatchRuntime( edict_t *pent, const char *keyName, const char *v
 	char szValue[ KEYVALUE_MAX_VALUE_LEN ];
 	strncpy( szValue, value ? value : "", sizeof( szValue ) - 1 );
 	szValue[ sizeof( szValue ) - 1 ] = '\0';
+
+	// SBO 2.1: "origin", "angles", "velocity", "avelocity" of a movewith child set its own pose and motion on its
+	// parent (movewith.cpp)
+	if ( MoveWith_RuntimeKeyValue( pent, keyName, szValue ) )
+	{
+		if ( pTarget )
+			pTarget->RuntimeKeyValueChanged( keyName );	// point_worldtext, vgui_screen: resent with the new pose
+		return TRUE;
+	}
 
 	KeyValueData kvd;
 	kvd.szClassName = (char *)STRING( pent->v.classname );
@@ -207,6 +238,10 @@ BOOL KeyValue_DispatchRuntime( edict_t *pent, const char *keyName, const char *v
 		if ( pEntity )
 			pEntity->RuntimeKeyValueChanged( keyName );
 	}
+
+	// SBO 2.1: a new "movewith" / "parent" / "parentflags" re-links the entity, as trigger_changeparent does
+	if ( kvd.fHandled )
+		MoveWith_RuntimeKeyChanged( pent, keyName );
 
 	return kvd.fHandled;
 }

@@ -1,0 +1,6378 @@
+# Map test baseline: every known difference between the 1.38 server .so and develop in the map tests
+# (scripts/run_map_tests.sh, docs/dev/MAP_TESTS.md). The run fails on a difference not listed here, on a listed one that
+# no longer shows, or on one whose counts changed, so this list is always what develop does differently from 1.38.
+#
+# [[decision]]: why a group of differences is accepted.
+#   status  approved           an approved change (the decision named in reason)
+#           same-total         the same lines at another moment; the run also checks that each line's total over the
+#                              test is equal on both binaries
+#           pending-fix        a regression being fixed on the branch named in reason; the merge removes its entries
+#           awaiting-decision  a difference not decided yet; listed so the run stays useful until it is
+# [[known_bug]]: a bug a spec case (a "# covers:" case in tests/maps/cases) shows on develop; the case names it with
+#   "# known-bug: <id>" and must keep failing on develop until the bug is fixed (then the tag and the entry go).
+#   id / reason (what the FGD or docs say, what the code does, the maps that use it).
+# [[difference]]: one compared line, written by --update-baseline (new ones get decision "unreviewed", which fails).
+#   suite / test  replay + map name, or cases + case file name (tests/maps/cases/)
+#   segment       replay: the action the line followed (@@FIRE <targetname>, @@TOUCH ..., @@MARK ..., @start at load);
+#                 cases: @start; @result: a crash, hang or a run that did not finish
+#   line          the compared line; legacy / develop: how often each binary printed it
+
+[[decision]]
+id = "multisource-delayed-own-slot"
+status = "approved"
+reason = "Approved 2026-11-11 (fix/logic-bugs-fgd-text): a multisource input with a Delay before trigger fires through a temporary DelayedUse entity, which is not a member; CMultiSource::Use now toggles the slot of the member whose delay made it (CBaseDelay::m_hDelayedCaller). 1.38 (Half-Life SDK) toggled the last member's slot, so a delayed input that is not the last member turned the last input off instead of its own on. Any other non-member still toggles the last slot. Maps: delayed members only on co_spells (teleporter_lock, teleport_helicopter_lock) and co_station / co_station_v1 (lock_ending_shuttle, lock_fed_makers_kill), each the multisource's only member, so own slot = last slot and no map plays differently (scan 2026-11-11, spawners counted). Case 70c_multisource_delayed_member (ms2)."
+
+[[decision]]
+id = "round-mission-hooks"
+status = "approved"
+reason = "Requested 2026-11-08 (feat/round-hooks): the game fires game_mission_success when a co-op mission is accomplished (game_end, change_touch) and game_mission_failed when it fails (mission_failed, the round limit), once per map, with the world as activator, as game_round_start. 1.38 had no such hooks. No stock or custom map names an entity game_mission_success / game_mission_failed / game_round_failed / game_round_<N> (scan 2026-11-08), so the only difference is the fire line itself; nothing receives it. docs/ROUNDS.md 'Map hooks'."
+
+[[decision]]
+id = "new-classes-stock-maps"
+status = "approved"
+reason = "Stock maps edited for 2.0 carry classes 1.38 does not have: env_rain / env_snow (bk_mongolito, br_mongolito, co_carnage, co_kill-the-doc), game_timer (co_siege, co_forgottenworld, fix/sky-timer-tutor 2598c76e). Stock maps may change (custom-maps rule); SBO-2.0-CHANGES 'Maps and assets'."
+
+[[decision]]
+id = "path-corner-yaw-speed"
+status = "approved"
+reason = "Approved 2026-11-08 (fix/turret-fade-train-yaw): path_corner New Train rot. Speed (yaw_speed) works, as Spirit of Half-Life's path_corner turnspeed: a func_train leaving a corner with a non-zero value turns around its vertical axis at that many degrees a second while it moves, and not while stopped; 0 changes nothing. 1.38 never read the key. Only map affected: co_mictlanparty, whose path_corner B_16 sets 30: the boulder trains BOLDA / BOLDB on the B_15 path (entities 96 and 119) start turning at 30 degrees a second from B_16 and keep turning (no later corner sets a rate). Every other path_corner on the latest maps sets 0. The author is told in docs/MAP_COMPAT.md. Case 97c_path_corner_yaw_speed."
+
+[[decision]]
+id = "turret-fade-corpse"
+status = "approved"
+reason = "Approved 2026-11-08 (fix/turret-fade-train-yaw): monster_turret, monster_miniturret and monster_sentry with monster flag 512 Fade Corpse fade their wreck out about 5 s after they are destroyed (when the death smoke ends) and are removed, as other monsters' corpses fade (Featureful turret.cpp); a monstermaker's turret child fades too when the maker fades its children. 1.38 kept every turret wreck (TurretDeath / SentryDeath never read the flag). Maps: 46 turrets set 512 on 4 stock maps: co_aemos (29 monster_sentry, 4 monster_turret), co_forgottenworld (5 monster_sentry), co_siege (2 monster_sentry), co_fondery (9 monster_miniturret); none has a targetname, so nothing on those maps refers to them after they die. The removed monster_turret and monster_miniturret wrecks were solid (64 and 32 unit wide boxes), the sentry wreck was not solid. No custom map sets the flag on a turret; monstermakers of turrets only on co_amxx. Case 103_turret_fade_corpse."
+
+[[decision]]
+id = "monstermaker-start-on-named"
+status = "approved"
+reason = "Decided 2026-11-08 (fix/monstermaker-start-on): monstermaker flag 1 Start ON works on a maker with a targetname: its first monster comes Frequency seconds after the start (Featureful's fix: Spawn sets nextthink = time + delay) and its first trigger turns it off. 1.38 (Half-Life SDK bug) never started it and its first trigger turned it off. The 49 named Start ON makers on the 5 latest custom maps that have them keep their 1.38 play through maps/map_compat.txt (bk_pipes 8, co_god_damn_the_sun 35, co_prototype 2: cyclic, flag 1 cleared, one monster per trigger as before; co_saibercity_v3 1, co_unxmas 3: Frequency 1000000000). The stock co_escape (2) makers: decision stock-monster-waves; co_hellraiser's 3 (mons) are deleted from its BSP with their beams, as they never made a monster in 1.38. Case 99b_monstermaker_start_on."
+
+[[decision]]
+id = "stock-monster-waves"
+status = "approved"
+reason = "Decided 2026-11-08 (fix/stock-monster-waves): stock map co_escape: the monster waves the authors placed now come; 1.38 never made them. (co_hellraiser, decided 2026-11-09: its three mons makers, their beams gho1-3 and the beam end points ghot1-3 are deleted from the shipped BSP, 330 -> 321 entities, CRC32 e8a14d48 -> 6262b719, so it plays as in 1.38; the text below is the history.) Both maps ship their 1.38 BSPs unchanged (co_escape c52634ac, co_hellraiser e8a14d48): their named makers have flag 1 Start ON, which works on develop (decision monstermaker-start-on-named), so they make monsters from the map start and the map's one trigger turns them off. 1.38 never started them (Start ON bug) and that trigger turned them off. co_escape: makers 309 and 310 prison_marines (monster_grunt_hunter, Frequency 10 s, max live 2, count 300), turned off by trigger_once 311. co_hellraiser: makers 261-263 mons (monster_hunter x2, monster_werewolf_hunter; Frequency 5 / 4 / 5 s, max live 1, no count limit; each spawn fires its env_beam gho3 / gho2 / gho1, lightning at the spawn spot), turned off by trigger_once 292 -> multi_manager 329 sucemonrat (mons at 0.2 s), which turns on the karma trigger_hurts 327 / 328 at 0.5 s (start off, no clients, 1000 blast over the makers' area) that kill the monsters waiting there. Replay co_hellraiser: develop fires the beams when the makers make their first monsters (segments @@FIRE bz1 / bz3), 1.38 only after the replay's sucemonrat turned the makers on (the replay fires every name once). Case 99d_stock_monster_waves."
+
+[[decision]]
+id = "stand-timers-2min"
+status = "approved"
+reason = "db740251 (fix/stand-timers-2min, approved 2026-11-07): the co_siege and co_forgottenworld survival stand timers are 2 minutes (the 2026-10-11 version). co_siege's game_timer starts after the messages (@@FIRE shake, was go), co_forgottenworld's from the final arena's trigger_once (murdeouf, was carmen)."
+
+[[decision]]
+id = "rc-kart-env-fog"
+status = "approved"
+reason = "Approved: decided 2026-11-07 (the rc_ kart maps are the project's own; no change wanted). rc_kart_circuit_day / rc_kart_circuit_night (the project's own maps) have an env_fog (density 0.000075), a class 1.38 does not have: develop draws a very faint fog. Open decision since the 2026-11-05 map check (map regression audit C, D3)."
+
+[[decision]]
+id = "rot-button-no-spark"
+status = "approved"
+reason = "SDK update server-core #24 (halflife-updated): a func_rot_button's X-axis spawnflag no longer turns sparks on. On 1.38, bk_technocave / br_technocave's rotating buttons sparked with spark sounds they never precached (engine-error lines). Merged with feat/sdk-update, approved."
+
+[[decision]]
+id = "mission-end-between-rounds"
+status = "approved"
+reason = "co_convoy_b4: the replay fires 'victory' (game_end) at 25.8 s with no round running. Develop ends the mission at once and goes to the intermission (b0c166ea, round rework, decided 2026-10-11); 1.38 waits for a round. The replay then runs on in another game state: from ~116 s the second apache maker spawns on develop only (the same maker alone behaves the same on both binaries)."
+
+[[decision]]
+id = "breakable-explode-once"
+status = "awaiting-decision"
+reason = "74c5ad52 (halflife-updated: CBreakable::Die returns when the breakable is already SOLID_NOT): a func_breakable with explodemagnitude that a trigger breaks dies once; on 1.38 its own blast hit it again (two explosions, target fired twice). co_omega17_v3, replay only: the stub engine gives brush entities no BSP bounds, so every func_breakable without an origin key sits at 0 0 0 and its blast reaches all the others (traces are always clear). Firing Bunker_GrenadeTrap (*109, magnitude 69) takes #129 (*77, health 128, target HydraAC) and #524 (*295, health 128, target SnakeAlert) to 59; on 1.38 the trap's second blast breaks #129, and #129's own blast plus the trap's blasts break #524, so HydraAC / SnakeAlert fire in that window. On develop the trap blasts once and both break when MetalDeer (*292, magnitude 69, also at 0 0 0 in the stub) is fired. In the map the trap (1637 884 265) is 751 units from #129 (972 928 612) and 1106 from #524 (2624 532 -88), MetalDeer (3286 930 -362) 820 from #524; the blasts reach 172 units (the trap's env_explosion 360). Neither blast reaches them in play: players break them, the same on both builds; in play the bunker trap makes one 69 blast instead of two. The same hunk: a func_breakable Used twice in one frame dies once (one spawnobject, one target fire; 1.38 two each), case 100c. Case 102b: a trigger breaks one with explodemagnitude, its target fires once (1.38 twice). Map regression audit A: DIFFERENT, needs a decision."
+
+[[decision]]
+id = "breakable-directed-gibs"
+status = "approved"
+reason = "74c5ad52 (halflife-updated #24): func_breakable Gibs Direction \"1\" (the FGD value, 17 latest maps) sends the gibs away from the attack at 200 units/s; 1.38 read only the words directed / random, so \"1\" gave random gibs (base velocity 0). Approved 2026-11-07 (visual only). Case 94b_func_breakable_directed_gibs."
+
+[[decision]]
+id = "func-rotating-volume"
+status = "approved"
+reason = "Merge 70147bc2 (fix/func-rotating-volume, approved 2026-11-07): func_rotating reads \"volume\" (what the FGD and map tools write) as well as \"Volume\"; 1.38 read only \"Volume\", so every func_rotating played at full volume. Case 95b_func_rotating_volume."
+
+[[decision]]
+id = "turret-sight-timing"
+status = "same-total"
+reason = "co_fondery: the miniturrets (spawnflags 544) fire s_2 / s_3 when they see a target; in the stub that happens at another moment on develop (monster AI timing). The same lines, the same number of times (map regression audit A: SAME)."
+
+[[decision]]
+id = "showcase-2-0-map"
+status = "approved"
+reason = "co_sbo_showcase is SBO 2.0's own showcase map (in the game since 2c0290b): it uses classes and keys 1.38 does not have. Compared so that a crash or hang on develop shows."
+
+[[decision]]
+id = "failed-mission-no-vote"
+status = "approved"
+reason = "0e6ebd1e: after a failed mission the game goes to the intermission and the next map; 1.38 opened the 'Reload map?' vote and stayed (decided: remove the failed-mission restart vote; map regression audit B row 4)."
+
+[[decision]]
+id = "apache-ai-trigger"
+status = "approved"
+reason = "halflife-updated VS#3262: monster_apache's AI trigger (TriggerCondition / TriggerTarget) now runs; on 1.38 it never fired and the apache never set deadflag (fix/hlu-missed #9, tested in game 2026-10-16). No map sets a trigger on an apache (map regression audit B row 22)."
+
+[[decision]]
+id = "gag-spawnflag"
+status = "approved"
+reason = "halflife-updated VS#3076: the Gag spawnflag (2) is read from spawnflags, so gagged NPCs make no idle sounds (server-ai.md #9, feat/sdk-update merged as a package; approved 2026-11-07: a mapper who set Gag meant it (audit C D1, 71 NPCs on 7 custom maps); map regression audit B row 30). The ungagged NPC's counts and, in 51_dark_sf595 (595 includes Gag), the player's spawn spot change too: the stub's shared random sequence is used differently. Checked: the ungagged NPC alone, and monster_dark 593 (595 without Gag), give the same results on both binaries."
+
+[[decision]]
+id = "sbo2-mapper-options"
+status = "approved"
+reason = "Opt-in mapper keys and flags that 1.38 does not have, merged into develop as approved features (no 1.38 map sets them; 1.38 ignores the key or flag, so the spec cases show them working on develop only): multi_manager 8 Once only / 1024 Instant and trigger_multiple 8 Everything else (feat/featureful-options 18c634fb); trigger_relay Trigger State -1 / -2 and flags 64 / 128, env_global flag 4 Act as Master, inverted '~' masters (feat/mapper-entities 3fc2d68b, docs/STATE_LOGIC.md); env_global Trigger Mode 5, monster TriggerAltCondition and trigger_on_death (feat/featureful-guide-entities add84b3b); monstermaker childtriggertarget / childtriggercondition (cadc2047, feat/sdk-update-ai af077b5b)."
+
+[[decision]]
+id = "master-button-target-trigger-hurt"
+status = "approved"
+reason = "Approved 2026-11-07 (feat/button-target-master): button_target and trigger_hurt honor their master (the FGD offered it; the HL SDK and 1.38 ignored it). Locked: a button_target is not turned on (func_button parity) and a trigger_hurt neither hurts nor fires. No 1.38 map sets a master on either class (map scan 2026-11-08)."
+
+[[decision]]
+id = "null-activator-no-crash"
+status = "approved"
+reason = "1.38's game_text (without All Players), game_player_hurt, game_score, game_player_team and game_player_equip called a method on a NULL activator, so a stock trigger_relay with a delay, a func_breakable or any delayed target that reaches them without a player crashed the 1.38 server (SIGSEGV in the stub). develop checks for NULL (halflife-updated #246, 74c5ad52, merged with feat/sdk-update-server 771be256, approved) and keeps delayed activators (3a88d857): nobody gets the text, the target fires, the map goes on. The replay of every map shows no such crash, so no 1.38 map took this path."
+
+[[decision]]
+id = "tier2-changelevel-current-map"
+status = "approved"
+reason = "Approved: SDK map entity fixes (74c5ad52), approved with the SDK update. 74c5ad52 (halflife-updated, feat/sdk-update): a trigger_changelevel whose map is the running map prints an error for the mapper at spawn; 1.38 said nothing. Message only, no behavior change. No 1.38 map has a trigger_changelevel (map scan 2026-11-08). Case 100b; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-unusable-model-removed"
+status = "approved"
+reason = "Approved: crash fix (no map change ends on a missing model), approved with the SDK update. e195864b (fix/sanitizer-audit dcb5306b): cycler, cycler_sprite, env_sprite, monster_furniture, env_shooter and cycler_weapon whose model the server does not have (or none, or models/editor/) are removed with a developer message; 1.38 kept them and a stock engine ended the map at the precache (Host_Error; the stub records no precache error for a missing file, so it shows only as the entity counts). Maps using these classes load the same when their files exist. Case 100e; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-nan-volume"
+status = "approved"
+reason = "Approved: sanitizer fix, approved. c12216b9 (fix/sanitizer-audit): a func_rotating / func_plat-type / scripted_sentence volume of nan or inf reads as unset (default volume) with a developer message; 1.38 sent the sound with a NaN volume. No 1.38 map sets such a volume (map scan 2026-11-08). Case 100f; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-equip-count-cap"
+status = "approved"
+reason = "Approved: sanitizer fix, approved. 2a1d0ba1 (fix/sanitizer-audit): game_player_equip gives at most 100 items per key (message for the mapper); 1.38 gave the full count (a huge one hung the server or ran out of edicts). Maps use at most 20. Case 100g; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-grunt-hunter-repel"
+status = "approved"
+reason = "Approved: 1.38 crashed; fix approved. 4fed0952 (fix/sanitizer-audit): monster_grunt_hunter_repel precaches and makes a monster_grunt_hunter; the 1.38 server crashed (SIGSEGV in the stub) when it was fired. No 1.38 map has the class (map scan 2026-11-08). Case 100i; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-light-style-range"
+status = "approved"
+reason = "Approved: sanitizer fix, approved. 2a54e427 (light style range check, feat/mapper-entities): a light whose style is outside the engine's 0-63 is not set when fired; 1.38 wrote past the engine's light style table. No 1.38 map has such a style (map scan 2026-11-08). Case 100k; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-sentry-keyvalues"
+status = "approved"
+reason = "Approved: HL SDK behavior restored (aec5d324), approved. aec5d324: monster_sentry uses CBaseTurret::KeyValue as the HL SDK, so orientation (1 = ceiling: upside down, EF_INVLIGHT), turnrate and maxsleep work; 1.38's own KeyValue ignored them. 22 maps place monster_sentry, none sets orientation, turnrate, maxsleep or searchspeed (map scan 2026-11-08). Case 100l; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-sentence-on-toggles"
+status = "approved"
+reason = "Approved: halflife-updated fix, approved with the SDK update. 69e09dc3 (HL25): scripted_sentence can make a func_button (any toggle that may speak) say its sentence; 1.38 looked for monsters only. The maps' scripted_sentences all speak through a monster_barney (BarneyAlly: co_god_damn_the_sun, co_omega17_v3). Case 100m; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-maker-slot-freed"
+status = "approved"
+reason = "Approved: SDK_UPDATE Monstermaker + killtarget slots, approved. 944bf586 (Valve #1746/#1747): a monster removed while alive (killtarget, trigger_killmonster) frees its monstermaker's live-child slot, so a maker at its max live count makes its next child; 1.38 kept counting the removed child and never made another. Maps that killtarget a maker's living children with a max live count see more monsters. Case 100n; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-hardcore-default"
+status = "approved"
+reason = "Approved: mp_hardcore 100 decided 2026-10-14. 4755c07b: mp_hardcore defaults to 100 (the whole team must die for a co-op round to fail; server.cfg / listenserver.cfg set 100 too). With the cvar left at its default, 1.38 failed the round when one of two players died. Servers that set mp_hardcore in their cfg see no change. Case 101; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-spectators-not-counted"
+status = "approved"
+reason = "Approved: spectators are not players (decided 2026-10). feat/spectate d2547071 (719d7d4e, spectators never count toward game metrics): a player in spectator mode is not waited for and does not keep a round going; the round starts with the others and fails when they die. 1.38 has no spectator mode (the 'spectate' command did nothing), so its round waited for the second player's loadout. Case 101b; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-loadouttime"
+status = "approved"
+reason = "Approved: round rework, decided 2026-10-11. 10b402b5 (mp_loadouttime, approved cvar): a round starts without a player who has not touched the loadout menus for mp_loadouttime seconds (default 45; 0 waits for everybody as SBO did). 1.38 waited for every player. Case 101c (mp_loadouttime 10); reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-missionendtime"
+status = "approved"
+reason = "Approved: round rework, decided 2026-10-11. 802ed4bf (mp_missionendtime, approved cvar): the intermission comes mp_missionendtime seconds after the mission result. 1.38 had no such cvar; in the stub its intermission had not come 4 s after the result. Case 101d (mp_missionendtime 3); reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-mission-end-observers"
+status = "approved"
+reason = "Approved: round rework, decided 2026-10-11. 3e42afef / 5c85075a: at a mission end held longer than 5 s (mp_missionendtime 30) the living players become observers 5 s after the result (spectator messages); 1.38 left them as they were. Case 101f; reported by the tier 2 tests."
+
+[[decision]]
+id = "tier2-dying-monster-triggered"
+status = "approved"
+reason = "Approved: halflife-updated fix, approved with the SDK update. 03c2ff48 (halflife-updated VS#3061, feat/sdk-update): a monster fired by its name while it dies stays dying and ends dead (DEAD_DEAD); on 1.38 MonsterUse set it back to ALERT and it stayed in DEAD_DYING. Maps that fire a monster's name (scripts, relays) right as it dies see a normal corpse. Case 102; reported by the tier 2 tests."
+
+[[decision]]
+id = "maker-child-keys-native"
+status = "approved"
+reason = "Monstermaker child keys natively (production audit #20, SBO-2.0-CHANGES 'Monstermaker child keyvalues natively'): Children's weapons reach each child; the 1.38 binary ignored them (the monstermaker_weapons plugin did it on the servers). Case 112b_maker_child_weapons."
+
+[[decision]]
+id = "nuke-afterglow"
+status = "approved"
+reason = "SBO-2.0-CHANGES 'nuclear_explosion: the afterglow shows' (ordered 2026-11-02): CNuke::Use set the AfterGlow think without a nextthink in 1.38, so the afterglow (v14-v16) never showed; develop sends it when the glow (v8) ends. Case 120_nuclear_explosion."
+
+[[decision]]
+id = "slave-spawnflags-kept"
+status = "approved"
+reason = "fix/slave-spawnflags (merge 77f6d28, c05d50a; SBO-2.0-CHANGES 'Alien slaves, demon slaves and werewolves keep their map flags'): 1.38 cleared the spawnflags of monster_alien_slave, monster_werewolf and monster_werewolf_hunter at their first schedule, so WaitTillSeen (1) was gone before a player looked at them; develop keeps the flag until he does. Cases 116e / 116f / 116m."
+
+[[decision]]
+id = "tier5-sbo2-classes"
+status = "approved"
+reason = "Tier 5 spec cases (200 and up) of SBO 2.0 classes that 1.38 does not have (ambient_random: feat/featureful-guide-entities, docs/FEATUREFUL_GUIDE_ENTITIES.md; env_elight: docs/ENV_DLIGHT.md): 1.38 cannot spawn the class, so the case fails there and its expectations show on develop only. No 1.38 map uses these classes."
+
+[[decision]]
+id = "rot-button-lock-sounds"
+status = "approved"
+reason = "func_rot_button plays its Locked / Unlocked Sound and Sentence (1.38 bug: CRotButton::Spawn never ran CBaseButton::Precache, so it played none). Merged with fix/fgd-mismatches 6b896ee0 (Featureful 814a09dd); no stock or custom map sets these keys on a func_rot_button. Tier 5 case 201 shows them on develop only."
+
+[[decision]]
+id = "changetarget-delay"
+status = "approved"
+reason = "Approved 2026-11-08 (fix/fgd-findings-tier45): trigger_changetarget honors 'Delay before trigger' (FGD base Targetx, Half-Life FGD); 1.38 (and the Half-Life SDK) set the new target at once and never read the delay. Stock maps only: co_iss-555-cargo (changetarget m_reactor, 2 s: trigger aaa switches bozo -> counter 2 s after the end button) and co_necropolis (off, 5 s: trigger ref switches po_bidon -> po; po, 2 s: gogolito switches bozo -> end). Case 123b."
+
+[[decision]]
+id = "chaptertitle-all-players"
+status = "approved"
+reason = "Approved 2026-11-08 (fix/elight-defaults-chaptertitle): worldspawn Chapter Title Message goes to every player once per map, when the player first enters the game (spawned in play, spectating or Game Master), players who join later too; not again on a respawn or a new round. 1.38 (as Half-Life) made an env_message 0.3 s into the map with no activator, which showed it to player 1 only. Maps: co_light_up_the_night, co_saibercity_v3. Case 127b_chapter_title."
+
+[[decision]]
+id = "tier5-flag-cases-138"
+status = "approved"
+reason = "Approved 2026-11-08. Cases 128b / 128c (generated monster flag cases): monster_hunter keeps WaitTillSeen (1) while it stands behind a player (1.38 cleared it without being seen), the same family as the approved slave-spawnflags-kept fix; no latest map sets WaitTillSeen on monster_hunter. TriggerCondition 10 (See Player, unconditional) now fires on monster_generic and monster_human_assassin (1.38 never fired it); the only latest map using it is co_bankjob_v4 (one assassin with TriggerCondition 10 and no TriggerTarget), so nothing fires and no map changes."
+
+[[decision]]
+id = "multi-manager-64-targets"
+status = "approved"
+reason = "multi_manager takes up to 64 targets (Half-Life Unified SDK; 16 before, fix/hlu-batch-1). co_boarding's managers have editor keys past 16 (state, delay, triggerstate, nbmaxround, FireColor) that name no entity: only the Firing lines are new, nothing is triggered. co_escape: multi_plafond2's 17th target plafond_mortar (an ambient_generic sound) now plays; esc_prison's 7 extra prison-light toggles were removed from the shipped BSP's entity lump, so the lights are as in 1.38."
+
+[[decision]]
+id = "multi-manager-mortar-strikes"
+status = "approved"
+reason = "co_dfs and co_rain_of_fire: multi_1's targets after the first 16 (m_1, s_1, rs_1, m_2, s_2, rs_2: mortar strikes 1 and 2, their sounds, sprites and shakes, and the relays that loop them) now fire with the 64-target limit (fix/hlu-batch-1); strikes 1 and 2 now fire, decided 2026-11-09. The BSPs ship unchanged."
+
+[[decision]]
+id = "turret-death-trigger"
+status = "approved"
+reason = "monster_turret, monster_miniturret and monster_sentry fire their AI Trigger Condition Death (TriggerCondition / TriggerAltCondition 4) when their death ends (Half-Life Unified SDK, fix/hlu-batch-1); 1.38 never did (turrets die in TakeDamage, not Killed). No map sets Death or a TriggerTarget on a turret."
+
+[[difference]]
+suite = "cases"
+test = "100_null_activator_game_score"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "100_null_activator_game_score"
+segment = "@start"
+line = "OBS expect Firing: (after_sink): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "100_null_activator_game_score"
+segment = "@start"
+line = "OBS expectn 1 Firing: (gpe): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "100_null_activator_game_score"
+segment = "@start"
+line = "OBS expectn 1 Firing: (gpt): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "100_null_activator_game_score"
+segment = "@start"
+line = "OBS expectn 1 Firing: (gs): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "100b_changelevel_current_map"
+segment = "@start"
+line = "OBS expectn 1 trigger_changelevel points to the current map (co_fuzz): \"trigger_changelevel points to the current map (co_fuzz)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-changelevel-current-map"
+
+[[difference]]
+suite = "cases"
+test = "100b_changelevel_current_map"
+segment = "@start"
+line = "OBS expectn 1 trigger_changelevel points to the current map (co_fuzz): ok"
+legacy = 0
+develop = 1
+decision = "tier2-changelevel-current-map"
+
+[[difference]]
+suite = "cases"
+test = "100c_breakable_used_twice"
+segment = "@start"
+line = "OBS expectcount item_battery 1: count item_battery = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "100c_breakable_used_twice"
+segment = "@start"
+line = "OBS expectcount item_battery 1: ok"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "100c_breakable_used_twice"
+segment = "@start"
+line = "OBS expectn 1 Firing: (br_out): \"Firing: (br_out)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "100c_breakable_used_twice"
+segment = "@start"
+line = "OBS expectn 1 Firing: (br_out): ok"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler 0"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler_sprite 0"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler_sprite 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler_weapon 0"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT cycler_weapon 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT env_shooter 0"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT env_shooter 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT env_sprite 1"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT env_sprite 2"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT monster_furniture 0"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS COUNT monster_furniture 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler 0: count cycler = 1, expected 0"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler 0: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler_sprite 0: count cycler_sprite = 1, expected 0"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler_sprite 0: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler_weapon 0: count cycler_weapon = 1, expected 0"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount cycler_weapon 0: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount env_shooter 0: count env_shooter = 1, expected 0"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount env_shooter 0: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount env_sprite 1: count env_sprite = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount env_sprite 1: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount monster_furniture 0: count monster_furniture = 1, expected 0"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectcount monster_furniture 0: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectn 6 : removed: \": removed\" printed 0 times, expected 6"
+legacy = 1
+develop = 0
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100e_unusable_model_removed"
+segment = "@start"
+line = "OBS expectn 6 : removed: ok"
+legacy = 0
+develop = 1
+decision = "tier2-unusable-model-removed"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "ENGINE: SV_StartSound: volume = -2147483648 (NaN or negative) !447"
+legacy = 1
+develop = 0
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 func_rotating \"rot2\": volume \"nan\" is not a number, using the default: \"func_rotating \"rot2\": volume \"nan\" is not a number, using the default\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 func_rotating \"rot2\": volume \"nan\" is not a number, using the default: ok"
+legacy = 0
+develop = 1
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 func_rotating \"rot3\": volume \"inf\" is not a number, using the default: \"func_rotating \"rot3\": volume \"inf\" is not a number, using the default\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 func_rotating \"rot3\": volume \"inf\" is not a number, using the default: ok"
+legacy = 0
+develop = 1
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 scripted_sentence \"say\": volume \"nan\" is not a number, using the default: \"scripted_sentence \"say\": volume \"nan\" is not a number, using the default\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100f_nan_volume"
+segment = "@start"
+line = "OBS expectn 1 scripted_sentence \"say\": volume \"nan\" is not a number, using the default: ok"
+legacy = 0
+develop = 1
+decision = "tier2-nan-volume"
+
+[[difference]]
+suite = "cases"
+test = "100g_equip_count_cap"
+segment = "@start"
+line = "OBS expect ammo_rc28 count 100000, using 100: expected console text not printed: ammo_rc28 count 100000, using 100"
+legacy = 1
+develop = 0
+decision = "tier2-equip-count-cap"
+
+[[difference]]
+suite = "cases"
+test = "100g_equip_count_cap"
+segment = "@start"
+line = "OBS expect ammo_rc28 count 100000, using 100: ok"
+legacy = 0
+develop = 1
+decision = "tier2-equip-count-cap"
+
+[[difference]]
+suite = "cases"
+test = "100i_grunt_hunter_repel"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "tier2-grunt-hunter-repel"
+
+[[difference]]
+suite = "cases"
+test = "100i_grunt_hunter_repel"
+segment = "@start"
+line = "OBS COUNT monster_grunt_hunter 1"
+legacy = 0
+develop = 1
+decision = "tier2-grunt-hunter-repel"
+
+[[difference]]
+suite = "cases"
+test = "100i_grunt_hunter_repel"
+segment = "@start"
+line = "OBS COUNT monster_human_grunt 0"
+legacy = 0
+develop = 1
+decision = "tier2-grunt-hunter-repel"
+
+[[difference]]
+suite = "cases"
+test = "100i_grunt_hunter_repel"
+segment = "@start"
+line = "OBS expectcount monster_grunt_hunter 1: ok"
+legacy = 0
+develop = 1
+decision = "tier2-grunt-hunter-repel"
+
+[[difference]]
+suite = "cases"
+test = "100k_light_style_range"
+segment = "@start"
+line = "ENGINE: PF_lightstyle: style 70 (MAX_LIGHTSTYLES 64: memory overwrite in the engine)"
+legacy = 2
+develop = 0
+decision = "tier2-light-style-range"
+
+[[difference]]
+suite = "cases"
+test = "100l_sentry_orientation"
+segment = "@start"
+line = "OBS DUMP #20 monster_sentry tn=ceil health=100.0 deadflag=0 solid=3 effects=0 flags=32 killme=0 origin=0.0 0.0 200.0"
+legacy = 1
+develop = 0
+decision = "tier2-sentry-keyvalues"
+
+[[difference]]
+suite = "cases"
+test = "100l_sentry_orientation"
+segment = "@start"
+line = "OBS DUMP #20 monster_sentry tn=ceil health=100.0 deadflag=0 solid=3 effects=16 flags=32 killme=0 origin=0.0 0.0 200.0"
+legacy = 0
+develop = 1
+decision = "tier2-sentry-keyvalues"
+
+[[difference]]
+suite = "cases"
+test = "100l_sentry_orientation"
+segment = "@start"
+line = "OBS expectdump ceil effects=16: no ceil with \"effects=16\" (last: DUMP #20 monster_sentry tn=ceil health=100.0 deadflag=0 solid=3 effects=0 flags=32 killme=0 origin=0.0 0.0 200.0)"
+legacy = 1
+develop = 0
+decision = "tier2-sentry-keyvalues"
+
+[[difference]]
+suite = "cases"
+test = "100l_sentry_orientation"
+segment = "@start"
+line = "OBS expectdump ceil effects=16: ok"
+legacy = 0
+develop = 1
+decision = "tier2-sentry-keyvalues"
+
+[[difference]]
+suite = "cases"
+test = "100m_sentence_on_button"
+segment = "@start"
+line = "OBS SOUNDS btn func_button ch2 0"
+legacy = 1
+develop = 0
+decision = "tier2-sentence-on-toggles"
+
+[[difference]]
+suite = "cases"
+test = "100m_sentence_on_button"
+segment = "@start"
+line = "OBS SOUNDS btn func_button ch2 1"
+legacy = 0
+develop = 1
+decision = "tier2-sentence-on-toggles"
+
+[[difference]]
+suite = "cases"
+test = "100m_sentence_on_button"
+segment = "@start"
+line = "OBS expect func_button ch2 !447: expected console text not printed: func_button ch2 !447"
+legacy = 1
+develop = 0
+decision = "tier2-sentence-on-toggles"
+
+[[difference]]
+suite = "cases"
+test = "100m_sentence_on_button"
+segment = "@start"
+line = "OBS expect func_button ch2 !447: ok"
+legacy = 0
+develop = 1
+decision = "tier2-sentence-on-toggles"
+
+[[difference]]
+suite = "cases"
+test = "100n_maker_slot_freed"
+segment = "@start"
+line = "OBS COUNT monster_zombie 0"
+legacy = 2
+develop = 0
+decision = "tier2-maker-slot-freed"
+
+[[difference]]
+suite = "cases"
+test = "100n_maker_slot_freed"
+segment = "@start"
+line = "OBS COUNT monster_zombie 1"
+legacy = 1
+develop = 3
+decision = "tier2-maker-slot-freed"
+
+[[difference]]
+suite = "cases"
+test = "100n_maker_slot_freed"
+segment = "@start"
+line = "OBS expectn 3 Firing: (mk_fired): \"Firing: (mk_fired)\" printed 1 times, expected 3"
+legacy = 1
+develop = 0
+decision = "tier2-maker-slot-freed"
+
+[[difference]]
+suite = "cases"
+test = "100n_maker_slot_freed"
+segment = "@start"
+line = "OBS expectn 3 Firing: (mk_fired): ok"
+legacy = 0
+develop = 1
+decision = "tier2-maker-slot-freed"
+
+[[difference]]
+suite = "cases"
+test = "101_coop_hardcore_default"
+segment = "@start"
+line = "OBS expectnot FAILED ROUND: console text printed but must not be: FAILED ROUND"
+legacy = 1
+develop = 0
+decision = "tier2-hardcore-default"
+
+[[difference]]
+suite = "cases"
+test = "101_coop_hardcore_default"
+segment = "@start"
+line = "OBS expectnot FAILED ROUND: ok"
+legacy = 0
+develop = 1
+decision = "tier2-hardcore-default"
+
+[[difference]]
+suite = "cases"
+test = "101b_coop_spectator_not_counted"
+segment = "@start"
+line = "OBS expectn 1 FAILED ROUND: \"FAILED ROUND\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-spectators-not-counted"
+
+[[difference]]
+suite = "cases"
+test = "101b_coop_spectator_not_counted"
+segment = "@start"
+line = "OBS expectn 1 FAILED ROUND: ok"
+legacy = 0
+develop = 1
+decision = "tier2-spectators-not-counted"
+
+[[difference]]
+suite = "cases"
+test = "101b_coop_spectator_not_counted"
+segment = "@start"
+line = "OBS expectn 1 ROUND START: \"ROUND START\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-spectators-not-counted"
+
+[[difference]]
+suite = "cases"
+test = "101b_coop_spectator_not_counted"
+segment = "@start"
+line = "OBS expectn 1 ROUND START: ok"
+legacy = 0
+develop = 1
+decision = "tier2-spectators-not-counted"
+
+[[difference]]
+suite = "cases"
+test = "101c_coop_loadouttime"
+segment = "@start"
+line = "OBS expectn 1 ROUND START: \"ROUND START\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-loadouttime"
+
+[[difference]]
+suite = "cases"
+test = "101c_coop_loadouttime"
+segment = "@start"
+line = "OBS expectn 1 ROUND START: ok"
+legacy = 0
+develop = 1
+decision = "tier2-loadouttime"
+
+[[difference]]
+suite = "cases"
+test = "101d_coop_missionendtime"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: expected console text not printed: SVC_INTERMISSION"
+legacy = 1
+develop = 0
+decision = "tier2-missionendtime"
+
+[[difference]]
+suite = "cases"
+test = "101d_coop_missionendtime"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: ok"
+legacy = 0
+develop = 1
+decision = "tier2-missionendtime"
+
+[[difference]]
+suite = "cases"
+test = "101f_coop_mission_end_observers"
+segment = "@start"
+line = "OBS expectn 1 Spec_Mode: \"Spec_Mode\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier2-mission-end-observers"
+
+[[difference]]
+suite = "cases"
+test = "101f_coop_mission_end_observers"
+segment = "@start"
+line = "OBS expectn 1 Spec_Mode: ok"
+legacy = 0
+develop = 1
+decision = "tier2-mission-end-observers"
+
+[[difference]]
+suite = "cases"
+test = "101f_coop_mission_end_observers"
+segment = "@start"
+line = "OBS expectn 2 Spec_Mode: \"Spec_Mode\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "tier2-mission-end-observers"
+
+[[difference]]
+suite = "cases"
+test = "101f_coop_mission_end_observers"
+segment = "@start"
+line = "OBS expectn 2 Spec_Mode: ok"
+legacy = 0
+develop = 1
+decision = "tier2-mission-end-observers"
+
+[[difference]]
+suite = "cases"
+test = "102_dying_monster_triggered"
+segment = "@start"
+line = "OBS DUMP #20 monster_zombie tn=z health=25.0 deadflag=1 solid=3 effects=0 flags=32 killme=0 origin=0.0 300.0 1.0"
+legacy = 1
+develop = 0
+decision = "tier2-dying-monster-triggered"
+
+[[difference]]
+suite = "cases"
+test = "102_dying_monster_triggered"
+segment = "@start"
+line = "OBS DUMP #20 monster_zombie tn=z health=25.0 deadflag=2 solid=3 effects=0 flags=32 killme=0 origin=0.0 300.0 1.0"
+legacy = 0
+develop = 1
+decision = "tier2-dying-monster-triggered"
+
+[[difference]]
+suite = "cases"
+test = "102_dying_monster_triggered"
+segment = "@start"
+line = "OBS expectdump z deadflag=2: no z with \"deadflag=2\" (last: DUMP #20 monster_zombie tn=z health=25.0 deadflag=1 solid=3 effects=0 flags=32 killme=0 origin=0.0 300.0 1.0)"
+legacy = 1
+develop = 0
+decision = "tier2-dying-monster-triggered"
+
+[[difference]]
+suite = "cases"
+test = "102_dying_monster_triggered"
+segment = "@start"
+line = "OBS expectdump z deadflag=2: ok"
+legacy = 0
+develop = 1
+decision = "tier2-dying-monster-triggered"
+
+[[difference]]
+suite = "cases"
+test = "102b_breakable_explode_once"
+segment = "@start"
+line = "OBS expectn 1 Firing: (br_out): \"Firing: (br_out)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "102b_breakable_explode_once"
+segment = "@start"
+line = "OBS expectn 1 Firing: (br_out): ok"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS DUMP #20 monster_turret tn=turret_fade health=0.0 deadflag=2 solid=3 effects=0 flags=0 killme=0 origin=0.0 400.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS DUMP #24 monster_miniturret tn=mini_fade health=0.0 deadflag=2 solid=3 effects=0 flags=0 killme=0 origin=0.0 800.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS DUMP #26 monster_sentry tn=sentry_fade health=0.0 deadflag=2 solid=0 effects=0 flags=0 killme=0 origin=0.0 1200.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_miniturret 1: count monster_miniturret = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_miniturret 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_sentry 1: count monster_sentry = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_sentry 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_turret 1: count monster_turret = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "103_turret_fade_corpse"
+segment = "@start"
+line = "OBS expectcount monster_turret 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111o_fade_corpse_sentry"
+segment = "@start"
+line = "OBS DUMP #20 monster_sentry tn=fade health=0.0 deadflag=2 solid=0 effects=0 flags=0 killme=0 origin=0.0 400.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111o_fade_corpse_sentry"
+segment = "@start"
+line = "OBS expectcount monster_sentry 1: count monster_sentry = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111o_fade_corpse_sentry"
+segment = "@start"
+line = "OBS expectcount monster_sentry 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111p_fade_corpse_turret"
+segment = "@start"
+line = "OBS DUMP #20 monster_turret tn=fade health=0.0 deadflag=2 solid=3 effects=0 flags=0 killme=0 origin=0.0 400.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111p_fade_corpse_turret"
+segment = "@start"
+line = "OBS expectcount monster_turret 1: count monster_turret = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111p_fade_corpse_turret"
+segment = "@start"
+line = "OBS expectcount monster_turret 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111q_fade_corpse_miniturret"
+segment = "@start"
+line = "OBS DUMP #20 monster_miniturret tn=fade health=0.0 deadflag=2 solid=3 effects=0 flags=0 killme=0 origin=0.0 400.0 0.0"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111q_fade_corpse_miniturret"
+segment = "@start"
+line = "OBS expectcount monster_miniturret 1: count monster_miniturret = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "111q_fade_corpse_miniturret"
+segment = "@start"
+line = "OBS expectcount monster_miniturret 1: ok"
+legacy = 0
+develop = 1
+decision = "turret-fade-corpse"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield dk1 weapons 1: dk1.weapons = 3, expected 1"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield dk1 weapons 1: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield dk8 weapons 8: dk8.weapons = 3, expected 8"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield dk8 weapons 8: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk1 weapons 1: gk1.weapons = 3, expected 1"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk1 weapons 1: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk10 weapons 10: gk10.weapons = 3, expected 10"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk10 weapons 10: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk5 weapons 5: gk5.weapons = 3, expected 5"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk5 weapons 5: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk8 weapons 8: gk8.weapons = 3, expected 8"
+legacy = 1
+develop = 0
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "112b_maker_child_weapons"
+segment = "@start"
+line = "OBS expectfield gk8 weapons 8: ok"
+legacy = 0
+develop = 1
+decision = "maker-child-keys-native"
+
+[[difference]]
+suite = "cases"
+test = "115_pushable_breakable"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->area: 108 .* 0 199\\.\\d+ [\\d.]+ 10 \\d+ \\d+ 25 8$: no console line matches MSG svc23 ->area: 108 .* 0 199\\.\\d+ [\\d.]+ 10 \\d+ \\d+ 25 8$"
+legacy = 1
+develop = 0
+decision = "breakable-directed-gibs"
+
+[[difference]]
+suite = "cases"
+test = "115_pushable_breakable"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->area: 108 .* 0 199\\.\\d+ [\\d.]+ 10 \\d+ \\d+ 25 8$: ok"
+legacy = 0
+develop = 1
+decision = "breakable-directed-gibs"
+
+[[difference]]
+suite = "cases"
+test = "116e_wait_till_seen_werewolf"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: back.spawnflags = 0, expected 1"
+legacy = 1
+develop = 0
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "116e_wait_till_seen_werewolf"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: ok"
+legacy = 0
+develop = 1
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "116f_wait_till_seen_alien_slave"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: back.spawnflags = 0, expected 1"
+legacy = 1
+develop = 0
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "116f_wait_till_seen_alien_slave"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: ok"
+legacy = 0
+develop = 1
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "116m_wait_till_seen_werewolf_hunter"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: back.spawnflags = 0, expected 1"
+legacy = 1
+develop = 0
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "116m_wait_till_seen_werewolf_hunter"
+segment = "@start"
+line = "OBS expectfield back spawnflags 1: ok"
+legacy = 0
+develop = 1
+decision = "slave-spawnflags-kept"
+
+[[difference]]
+suite = "cases"
+test = "120_nuclear_explosion"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->\\w+: 23 0 500 0 \\d+ 34 65 216$: no console line matches MSG svc23 ->\\w+: 23 0 500 0 \\d+ 34 65 216$"
+legacy = 1
+develop = 0
+decision = "nuke-afterglow"
+
+[[difference]]
+suite = "cases"
+test = "120_nuclear_explosion"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->\\w+: 23 0 500 0 \\d+ 34 65 216$: ok"
+legacy = 0
+develop = 1
+decision = "nuke-afterglow"
+
+[[difference]]
+suite = "cases"
+test = "120b_nuclear_explosion_large_values"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->\\w+: 23 0 500 0 \\d+ 30 64 144$: no console line matches MSG svc23 ->\\w+: 23 0 500 0 \\d+ 30 64 144$"
+legacy = 1
+develop = 0
+decision = "nuke-afterglow"
+
+[[difference]]
+suite = "cases"
+test = "120b_nuclear_explosion_large_values"
+segment = "@start"
+line = "OBS expectre MSG svc23 ->\\w+: 23 0 500 0 \\d+ 30 64 144$: ok"
+legacy = 0
+develop = 1
+decision = "nuke-afterglow"
+
+[[difference]]
+suite = "cases"
+test = "122c_gag_imp"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_imp ch2 : console text printed but must not be: SOUND #20 monster_imp ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122c_gag_imp"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_imp ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122d_gag_zombie"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_zombie ch2 : console text printed but must not be: SOUND #20 monster_zombie ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122d_gag_zombie"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_zombie ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122e_gag_werewolf"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_werewolf ch2 : console text printed but must not be: SOUND #20 monster_werewolf ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122e_gag_werewolf"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_werewolf ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122f_gag_alien_slave"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_alien_slave ch2 : console text printed but must not be: SOUND #20 monster_alien_slave ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "122f_gag_alien_slave"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_alien_slave ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "99b_monstermaker_start_on"
+segment = "@start"
+line = "OBS expectcount monster_scientist 1: count monster_scientist = 0, expected 1"
+legacy = 3
+develop = 0
+decision = "monstermaker-start-on-named"
+
+[[difference]]
+suite = "cases"
+test = "99b_monstermaker_start_on"
+segment = "@start"
+line = "OBS expectcount monster_scientist 1: ok"
+legacy = 0
+develop = 3
+decision = "monstermaker-start-on-named"
+
+[[difference]]
+suite = "cases"
+test = "14_coop_max_round_3"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: expected console text not printed: SVC_INTERMISSION"
+legacy = 1
+develop = 0
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "14_coop_max_round_3"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: ok"
+legacy = 0
+develop = 1
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "14b_coop_max_round_3_easy0"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: expected console text not printed: SVC_INTERMISSION"
+legacy = 1
+develop = 0
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "14b_coop_max_round_3_easy0"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: ok"
+legacy = 0
+develop = 1
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "14c_coop_no_max_round"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: expected console text not printed: SVC_INTERMISSION"
+legacy = 1
+develop = 0
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "14c_coop_no_max_round"
+segment = "@start"
+line = "OBS expect SVC_INTERMISSION: ok"
+legacy = 0
+develop = 1
+decision = "failed-mission-no-vote"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS DUMP #20 monster_apache tn=victim health=0.0 deadflag=0 solid=2 effects=0 flags=32 killme=0 origin=0.0 300.0 0.0"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS DUMP #20 monster_apache tn=victim health=0.0 deadflag=1 solid=2 effects=0 flags=32 killme=0 origin=0.0 300.0 0.0"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): \"Firing: (counted)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): ok"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): \"Firing: (died_relay)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): ok"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS DUMP #20 monster_apache tn=victim health=0.0 deadflag=0 solid=2 effects=0 flags=32 killme=0 origin=0.0 300.0 0.0"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS DUMP #20 monster_apache tn=victim health=0.0 deadflag=1 solid=2 effects=0 flags=32 killme=0 origin=0.0 300.0 0.0"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): \"Firing: (counted)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): ok"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): \"Firing: (died_relay)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_apache"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): ok"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_dark_grunt"
+segment = "@start"
+line = "OBS SOUNDS talker dark_grunt ch2 10"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_dark_grunt"
+segment = "@start"
+line = "OBS SOUNDS talker dark_grunt ch2 13"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_human_grunt"
+segment = "@start"
+line = "OBS SOUNDS talker monster_human_grunt ch2 10"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_human_grunt"
+segment = "@start"
+line = "OBS SOUNDS talker monster_human_grunt ch2 13"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_hunter"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_hunter ch2 0"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_hunter"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_hunter ch2 4"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_imp"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_imp ch2 0"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_imp"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_imp ch2 12"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_imp"
+segment = "@start"
+line = "OBS SOUNDS talker monster_imp ch2 11"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_imp"
+segment = "@start"
+line = "OBS SOUNDS talker monster_imp ch2 17"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_werewolf"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_werewolf ch2 0"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_werewolf"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_werewolf ch2 8"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_werewolf"
+segment = "@start"
+line = "OBS SOUNDS talker monster_werewolf ch2 1"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_werewolf"
+segment = "@start"
+line = "OBS SOUNDS talker monster_werewolf ch2 3"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_zombie"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_zombie ch2 0"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_zombie"
+segment = "@start"
+line = "OBS SOUNDS gagged monster_zombie ch2 18"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_zombie"
+segment = "@start"
+line = "OBS SOUNDS talker monster_zombie ch2 14"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "50_gag_monster_zombie"
+segment = "@start"
+line = "OBS SOUNDS talker monster_zombie ch2 17"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "51_dark_sf595"
+segment = "@start"
+line = "OBS DUMP #1 player tn= health=100.0 deadflag=0 solid=3 effects=0 flags=8 killme=0 origin=128.0 0.0 1.0"
+legacy = 0
+develop = 2
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "51_dark_sf595"
+segment = "@start"
+line = "OBS DUMP #1 player tn= health=100.0 deadflag=0 solid=3 effects=0 flags=8 killme=0 origin=64.0 0.0 1.0"
+legacy = 2
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "71b_delay_world_activator"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "71b_delay_world_activator"
+segment = "@start"
+line = "OBS expectn 1 Firing: (hurt_out): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "71f_delay_null_activator_game_text"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "71f_delay_null_activator_game_text"
+segment = "@start"
+line = "OBS expectnot MSTR 23 ->#1: text_one: ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "73c_multi_manager_once_instant"
+segment = "@start"
+line = "OBS expect Firing: (inst_a): expected console text not printed: Firing: (inst_a)"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "73c_multi_manager_once_instant"
+segment = "@start"
+line = "OBS expect Firing: (inst_a): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "73c_multi_manager_once_instant"
+segment = "@start"
+line = "OBS expectcount multi_manager 1: count multi_manager = 2, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "73c_multi_manager_once_instant"
+segment = "@start"
+line = "OBS expectcount multi_manager 1: ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74b_trigger_relay_copy_reverse"
+segment = "@start"
+line = "OBS expectn 1 Firing: (copy_off_down): \"Firing: (copy_off_down)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74b_trigger_relay_copy_reverse"
+segment = "@start"
+line = "OBS expectn 1 Firing: (copy_off_down): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74b_trigger_relay_copy_reverse"
+segment = "@start"
+line = "OBS expectn 1 Firing: (rev_on_down): \"Firing: (rev_on_down)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74b_trigger_relay_copy_reverse"
+segment = "@start"
+line = "OBS expectn 1 Firing: (rev_on_down): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74d_trigger_relay_activator_flags"
+segment = "@start"
+line = "OBS expectn 1 MSTR 23 ->#1: relay_caller: \"MSTR 23 ->#1: relay_caller\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74d_trigger_relay_activator_flags"
+segment = "@start"
+line = "OBS expectn 1 MSTR 23 ->#1: relay_caller: ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74d_trigger_relay_activator_flags"
+segment = "@start"
+line = "OBS expectn 1 MSTR 23 ->#1: relay_forward: \"MSTR 23 ->#1: relay_forward\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74d_trigger_relay_activator_flags"
+segment = "@start"
+line = "OBS expectn 1 MSTR 23 ->#1: relay_forward: ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "74e_trigger_relay_forward_delay"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "74e_trigger_relay_forward_delay"
+segment = "@start"
+line = "OBS expectn 1 MSTR 23 ->#1: relay_forward_delayed: ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "77b_env_global_value_master"
+segment = "@start"
+line = "OBS expectn 1 Firing: (c_hit): \"Firing: (c_hit)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "77b_env_global_value_master"
+segment = "@start"
+line = "OBS expectn 1 Firing: (c_hit): \"Firing: (c_hit)\" printed 3 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "77b_env_global_value_master"
+segment = "@start"
+line = "OBS expectn 1 Firing: (c_hit): ok"
+legacy = 0
+develop = 2
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "77b_env_global_value_master"
+segment = "@start"
+line = "OBS expectnot Firing: (c_hit): console text printed but must not be: Firing: (c_hit)"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "77b_env_global_value_master"
+segment = "@start"
+line = "OBS expectnot Firing: (c_hit): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "79d_master_inverted"
+segment = "@start"
+line = "OBS expectn 1 Firing: (c_hit): \"Firing: (c_hit)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "79d_master_inverted"
+segment = "@start"
+line = "OBS expectn 1 Firing: (c_hit): ok"
+legacy = 1
+develop = 2
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS DUMP #1 player tn= health=70.0 deadflag=0 solid=3 effects=0 flags=8 killme=0 origin=64.0 0.0 1.0"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS DUMP #1 player tn= health=85.0 deadflag=0 solid=3 effects=0 flags=8 killme=0 origin=64.0 0.0 1.0"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectdump player health=100.0: no player with \"health=100.0\" (last: DUMP #1 player tn= health=85.0 deadflag=0 solid=3 effects=0 flags=8 killme=0 origin=64.0 0.0 1.0)"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectdump player health=100.0: ok"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectn 1 Firing: (hurt_out): \"Firing: (hurt_out)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectn 1 Firing: (hurt_out): ok"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectnot Firing: (hurt_out): console text printed but must not be: Firing: (hurt_out)"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79g_master_trigger_hurt"
+segment = "@start"
+line = "OBS expectnot Firing: (hurt_out): ok"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79h_master_button_target"
+segment = "@start"
+line = "OBS expectn 1 Firing: (bt_out): \"Firing: (bt_out)\" printed 2 times, expected 1"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79h_master_button_target"
+segment = "@start"
+line = "OBS expectn 1 Firing: (bt_out): ok"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79h_master_button_target"
+segment = "@start"
+line = "OBS expectnot Firing: (bt_out): console text printed but must not be: Firing: (bt_out)"
+legacy = 1
+develop = 0
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "79h_master_button_target"
+segment = "@start"
+line = "OBS expectnot Firing: (bt_out): ok"
+legacy = 0
+develop = 1
+decision = "master-button-target-trigger-hurt"
+
+[[difference]]
+suite = "cases"
+test = "80f_trigger_multiple_flag_everything"
+segment = "@start"
+line = "OBS expectn 1 Firing: (t_other): \"Firing: (t_other)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "80f_trigger_multiple_flag_everything"
+segment = "@start"
+line = "OBS expectn 1 Firing: (t_other): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "81g_monster_alt_condition_on_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (cond_alt): \"Firing: (cond_alt)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "81g_monster_alt_condition_on_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (cond_alt): ok"
+legacy = 1
+develop = 2
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "81g_monster_alt_condition_on_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (on_death): \"Firing: (on_death)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "81g_monster_alt_condition_on_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (on_death): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82_maker_child_trigger_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_died): \"Firing: (child_died)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82_maker_child_trigger_death"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_died): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82_maker_child_trigger_death"
+segment = "@start"
+line = "OBS expectn 2 Firing: (child_died): \"Firing: (child_died)\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82_maker_child_trigger_death"
+segment = "@start"
+line = "OBS expectn 2 Firing: (child_died): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82b_maker_child_trigger_half_health"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_half): \"Firing: (child_half)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82b_maker_child_trigger_half_health"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_half): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82c_maker_child_trigger_see_player"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_1): \"Firing: (see_1)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82c_maker_child_trigger_see_player"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_1): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82c_maker_child_trigger_see_player"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_10): \"Firing: (see_10)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82c_maker_child_trigger_see_player"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_10): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82d_maker_child_trigger_none_damage"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_damage): \"Firing: (child_damage)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82d_maker_child_trigger_none_damage"
+segment = "@start"
+line = "OBS expectn 1 Firing: (child_damage): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82e_maker_child_trigger_not_in_combat"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_11): \"Firing: (see_11)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "82e_maker_child_trigger_not_in_combat"
+segment = "@start"
+line = "OBS expectn 1 Firing: (see_11): ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "83c_func_breakable_delay_killtarget"
+segment = "@result"
+line = "result: FAILED (signal 11)"
+legacy = 1
+develop = 0
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "83c_func_breakable_delay_killtarget"
+segment = "@start"
+line = "OBS expectcount info_target 0: ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "83c_func_breakable_delay_killtarget"
+segment = "@start"
+line = "OBS expectn 1 Firing: (br_gt): ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "83c_func_breakable_delay_killtarget"
+segment = "@start"
+line = "OBS expectnot MSTR 23 ->#1: breakable_text: ok"
+legacy = 0
+develop = 1
+decision = "null-activator-no-crash"
+
+[[difference]]
+suite = "cases"
+test = "94b_func_breakable_directed_gibs"
+segment = "@start"
+line = "OBS expectn 1 MSG svc23 ->area: 108 0 0 0 64 64 64 0 200 0 10: \"MSG svc23 ->area: 108 0 0 0 64 64 64 0 200 0 10\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "breakable-directed-gibs"
+
+[[difference]]
+suite = "cases"
+test = "94b_func_breakable_directed_gibs"
+segment = "@start"
+line = "OBS expectn 1 MSG svc23 ->area: 108 0 0 0 64 64 64 0 200 0 10: ok"
+legacy = 0
+develop = 1
+decision = "breakable-directed-gibs"
+
+[[difference]]
+suite = "cases"
+test = "95b_func_rotating_volume"
+segment = "@start"
+line = "OBS expect ch6 fans/fan1.wav vol=0.50 att=0.80 pitch=100: expected console text not printed: ch6 fans/fan1.wav vol=0.50 att=0.80 pitch=100"
+legacy = 1
+develop = 0
+decision = "func-rotating-volume"
+
+[[difference]]
+suite = "cases"
+test = "95b_func_rotating_volume"
+segment = "@start"
+line = "OBS expect ch6 fans/fan1.wav vol=0.50 att=0.80 pitch=100: ok"
+legacy = 0
+develop = 1
+decision = "func-rotating-volume"
+
+[[difference]]
+suite = "cases"
+test = "97c_path_corner_yaw_speed"
+segment = "@start"
+line = "OBS expectfield tr avelocity 0 30 0: ok"
+legacy = 0
+develop = 3
+decision = "path-corner-yaw-speed"
+
+[[difference]]
+suite = "cases"
+test = "97c_path_corner_yaw_speed"
+segment = "@start"
+line = "OBS expectfield tr avelocity 0 30 0: tr.avelocity = 0 0 0, expected 0 30 0"
+legacy = 3
+develop = 0
+decision = "path-corner-yaw-speed"
+
+[[difference]]
+suite = "replay"
+test = "bk_mongolito"
+segment = "@start"
+line = "@@NOCLASS env_rain"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "bk_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark1.wav not precached"
+legacy = 2
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "bk_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark2.wav not precached"
+legacy = 2
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "bk_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark4.wav not precached"
+legacy = 3
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "br_mongolito"
+segment = "@start"
+line = "@@NOCLASS env_rain"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "br_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark1.wav not precached"
+legacy = 2
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "br_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark2.wav not precached"
+legacy = 3
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "br_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark3.wav not precached"
+legacy = 1
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "br_technocave"
+segment = "@@MARK end"
+line = "ENGINE: SV_StartSound: buttons/spark4.wav not precached"
+legacy = 3
+develop = 0
+decision = "rot-button-no-spark"
+
+[[difference]]
+suite = "replay"
+test = "co_carnage"
+segment = "@start"
+line = "@@NOCLASS env_rain"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE rv_upper_apache_2_monstermaker"
+line = "Firing: (rv_upper_apache_2_ct)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE rv_upper_apache_2_monstermaker"
+line = "Firing: (rv_upper_apache_2_relay)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE rv_upper_apache_2_monstermaker"
+line = "Found: trigger_changetarget, firing (rv_upper_apache_2_ct)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE rv_upper_apache_2_monstermaker"
+line = "Found: trigger_relay, firing (rv_upper_apache_2_relay)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE rv_upper_apache_2_relay_1"
+line = "Found: monster_apache, firing (rv_upper_apache_2)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE xena_portrait"
+line = "Found: monster_apache, firing (rv_upper_apache_2)"
+legacy = 0
+develop = 1
+decision = "mission-end-between-rounds"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE break_shak_1"
+line = "Firing: (s_3)"
+legacy = 1
+develop = 0
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE break_shak_1"
+line = "Found: ambient_generic, firing (s_3)"
+legacy = 1
+develop = 0
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE brouilleur"
+line = "Firing: (s_3)"
+legacy = 0
+develop = 1
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE brouilleur"
+line = "Found: ambient_generic, firing (s_3)"
+legacy = 0
+develop = 1
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE h1"
+line = "Firing: (s_2)"
+legacy = 1
+develop = 0
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE h1"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 1
+develop = 0
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE pc_4"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 1
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@FIRE pc_4"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 1
+decision = "turret-sight-timing"
+
+[[difference]]
+suite = "replay"
+test = "co_forgottenworld"
+segment = "@@FIRE carmen"
+line = "Found: game_timer, firing (survive_timer)"
+legacy = 0
+develop = 1
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "co_forgottenworld"
+segment = "@start"
+line = "@@NOCLASS game_timer"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "co_forgottenworld"
+segment = "@@TOUCH trigger_once #4  -> murdeouf"
+line = "Found: game_timer, firing (survive_timer)"
+legacy = 0
+develop = 1
+decision = "stand-timers-2min"
+
+[[difference]]
+suite = "replay"
+test = "co_kill-the-doc"
+segment = "@start"
+line = "@@NOCLASS env_snow"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Firing: (HydraAC)"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Firing: (SnakeAlert)"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Found: ambient_generic, firing (SnakeAlert)"
+legacy = 4
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Found: func_tankmortar, firing (HydraAC)"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Found: game_text, firing (HydraAC)"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE Bunker_GrenadeTrap"
+line = "Found: multispawn, firing (HydraAC)"
+legacy = 1
+develop = 0
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Firing: (HydraAC)"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Firing: (SnakeAlert)"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Found: ambient_generic, firing (SnakeAlert)"
+legacy = 0
+develop = 4
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Found: func_tankmortar, firing (HydraAC)"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Found: game_text, firing (HydraAC)"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE MetalDeer"
+line = "Found: multispawn, firing (HydraAC)"
+legacy = 0
+develop = 1
+decision = "breakable-explode-once"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_cp_off"
+line = "Found: trigger_playerfreeze, firing (ff_frz_cp)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_cp_on"
+line = "Found: trigger_playerfreeze, firing (ff_frz_cp)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_dl_blue_off"
+line = "Found: env_dlight, firing (ff_dl_blue)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_dl_blue_on"
+line = "Found: env_dlight, firing (ff_dl_blue)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_look_mm"
+line = "Found: env_dlight, firing (ff_look_dl)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_mm_all"
+line = "Found: trigger_playerfreeze, firing (ff_frz_all_on)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_mm_cp"
+line = "Found: trigger_playerfreeze, firing (ff_frz_cp)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_mm_me"
+line = "Found: trigger_playerfreeze, firing (ff_frz_on)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_mm_tg"
+line = "Found: trigger_playerfreeze, firing (ff_frz_tg)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_plate"
+line = "Found: trigger_playerfreeze, firing (ff_frz_all_off)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_pyl_a"
+line = "Found: trigger_playerfreeze, firing (ff_frz_cp)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_pyl_b"
+line = "Found: trigger_playerfreeze, firing (ff_frz_off)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ff_pyl_b_top"
+line = "Found: trigger_playerfreeze, firing (ff_frz_tg)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE fin_mm"
+line = "Found: env_particle, firing (fin_fx)"
+legacy = 0
+develop = 2
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE fin_mm"
+line = "Found: point_worldtext, firing (fin_txt)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE fog_off"
+line = "Found: env_fog, firing (fog_all)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE fog_on"
+line = "Found: env_fog, firing (fog_all)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (fin_fx)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (fin_mm)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (fin_txt)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (lt_beam)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (lt_flash_ls)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (lt_seq)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Firing: (lt_zone1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: env_laser, firing (lt_beam)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: env_particle, firing (fin_fx)"
+legacy = 0
+develop = 2
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: game_zone_player, firing (lt_zone1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: multi_manager, firing (fin_mm)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: point_worldtext, firing (fin_txt)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: trigger_lightstyle, firing (ls_fail_room)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: trigger_lightstyle, firing (lt_flash_ls)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail"
+line = "Found: trigger_sequence, firing (lt_seq)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Firing: (fin_end)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Firing: (lt_beam)"
+legacy = 0
+develop = 3
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Firing: (lt_boom)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Firing: (lt_zone2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Found: env_explosion, firing (lt_boom)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Found: env_laser, firing (lt_beam)"
+legacy = 0
+develop = 3
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Found: game_end, firing (fin_end)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_alarm"
+line = "Found: game_zone_player, firing (lt_zone2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_room"
+line = "Firing: (lt_thunder)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_room"
+line = "Firing: (lt_thunder2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_room"
+line = "Found: ambient_generic, firing (lt_thunder2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_fail_room"
+line = "Found: trigger_random, firing (lt_thunder)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE ls_flicker"
+line = "Found: trigger_lightstyle, firing (ls_fail_alarm)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Firing: (lt_beam)"
+legacy = 0
+develop = 4
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Firing: (lt_boom)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Firing: (lt_flash_ls)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Firing: (lt_zone1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Firing: (lt_zone2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Found: env_explosion, firing (lt_boom)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Found: env_laser, firing (lt_beam)"
+legacy = 0
+develop = 4
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Found: game_zone_player, firing (lt_zone1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Found: game_zone_player, firing (lt_zone2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_seq"
+line = "Found: trigger_lightstyle, firing (lt_flash_ls)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Firing: (lt_thunder)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Firing: (lt_thunder1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Firing: (lt_thunder2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Found: ambient_generic, firing (lt_thunder1)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Found: ambient_generic, firing (lt_thunder2)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE lt_thunder"
+line = "Found: trigger_random, firing (lt_thunder)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE sc_rand"
+line = "Firing: (sc_mk_zombie)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE sc_rand"
+line = "Found: monstermaker, firing (sc_mk_zombie)"
+legacy = 0
+develop = 1
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS calc_position"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_dlight"
+legacy = 6
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_fog"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_fogzone"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_mirror"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_model"
+legacy = 4
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_particle"
+legacy = 15
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_rain"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_sky"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_snow"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS env_tutor"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS game_messagebox"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS game_timer"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS global_light_control"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS locus_beam"
+legacy = 5
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS player_calc_ratio"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS point_worldtext"
+legacy = 126
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_changevalue"
+legacy = 4
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_compare"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_hurt_remote"
+legacy = 6
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_jump"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_killmonster"
+legacy = 3
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_lightstyle"
+legacy = 6
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_look"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_playerfreeze"
+legacy = 6
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_random"
+legacy = 3
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_safe_fall"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS trigger_sequence"
+legacy = 1
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS vgui_control_proxy"
+legacy = 4
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "@@NOCLASS vgui_screen"
+legacy = 2
+develop = 0
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@start"
+line = "Found: vgui_control_proxy, firing (lo_proxy)"
+legacy = 0
+develop = 4
+decision = "showcase-2-0-map"
+
+[[difference]]
+suite = "replay"
+test = "co_siege"
+segment = "@start"
+line = "@@NOCLASS game_timer"
+legacy = 1
+develop = 0
+decision = "new-classes-stock-maps"
+
+[[difference]]
+suite = "replay"
+test = "co_siege"
+segment = "@@FIRE shake"
+line = "Found: game_timer, firing (radiation_timer)"
+legacy = 0
+develop = 1
+decision = "stand-timers-2min"
+
+[[difference]]
+suite = "replay"
+test = "rc_kart_circuit_day"
+segment = "@start"
+line = "@@NOCLASS env_fog"
+legacy = 1
+develop = 0
+decision = "rc-kart-env-fog"
+
+[[difference]]
+suite = "replay"
+test = "rc_kart_circuit_night"
+segment = "@start"
+line = "@@NOCLASS env_fog"
+legacy = 1
+develop = 0
+decision = "rc-kart-env-fog"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@result"
+line = "result: FAILED (exit 2)"
+legacy = 1
+develop = 0
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expect ambience/dog1.wav vol=1.00 att=0.00 pitch=100 flags=256: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expect ambience/dog2.wav vol=0.50 att=2.00 pitch=150 flags=256: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expect ambience/dog3.wav vol=0.30 att=1.25 pitch=60 flags=256: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expect ambience/dog4.wav vol=0.80 att=0.80 pitch=100 flags=256: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectn 1 ambience/car2.wav vol=0.70 att=1.25 pitch=100 flags=0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectn 1 ambience/cat1.wav vol=0.00 att=0.00 pitch=0 flags=32: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectn 1 ambience/cat1.wav vol=1.00 att=1.25 pitch=100 flags=0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectn 2 ambience/car2.wav vol=0.70 att=1.25 pitch=100 flags=0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectnot ambience/car2.wav: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200_ambient_random_radius"
+segment = "@start"
+line = "OBS expectnot ambience/cat1.wav: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@result"
+line = "result: FAILED (exit 2)"
+legacy = 1
+develop = 0
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/distantmortar2.wav vol=0.36 att=1.25 pitch=37 flags=192: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/distantmortar2.wav vol=1.00 att=1.25 pitch=164 flags=192: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/dog1.wav vol=1.00 att=1.25 pitch=118: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/dog1.wav vol=1.00 att=1.25 pitch=186: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/dog1.wav vol=1.00 att=1.25 pitch=254: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/rain.wav vol=0.00 att=0.00 pitch=0 flags=32: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/rain.wav vol=0.20 att=1.25 pitch=50 flags=0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/rain.wav vol=0.42 att=1.25 pitch=141 flags=192: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/rain.wav vol=0.65 att=1.25 pitch=95 flags=192: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/rain.wav vol=1.00 att=1.25 pitch=200 flags=128: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/siren.wav vol=0.10 att=1.25 pitch=100 flags=0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/siren.wav vol=0.51 att=1.25: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expect ambience/siren.wav vol=1.00 att=1.25: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expectnot ambience/dog1.wav vol=0.00 att=0.00 pitch=0 flags=32: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "200b_ambient_random_dynamics"
+segment = "@start"
+line = "OBS expectnot ambience/dog1.wav vol=1.00 att=1.25 pitch=186: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !268 vol=: \"ch2 !268 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !268 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !283 vol=: \"ch2 !283 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !283 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !289 vol=: \"ch2 !289 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !289 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !291 vol=: \"ch2 !291 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !291 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !292 vol=: \"ch2 !292 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !292 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !293 vol=: \"ch2 !293 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !293 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !294 vol=: \"ch2 !294 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !294 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !295 vol=: \"ch2 !295 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !295 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !296 vol=: \"ch2 !296 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !296 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !297 vol=: \"ch2 !297 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !297 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !300 vol=: \"ch2 !300 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !300 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !302 vol=: \"ch2 !302 vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch2 !302 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button1.wav vol=: \"ch3 buttons/button1.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button1.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button4.wav vol=: \"ch3 buttons/button4.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button4.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button5.wav vol=: \"ch3 buttons/button5.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button5.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button6.wav vol=: \"ch3 buttons/button6.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button6.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button7.wav vol=: \"ch3 buttons/button7.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button7.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button9.wav vol=: \"ch3 buttons/button9.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/button9.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/latchunlocked1.wav vol=: \"ch3 buttons/latchunlocked1.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/latchunlocked1.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/lightswitch2.wav vol=: \"ch3 buttons/lightswitch2.wav vol=\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 1 ch3 buttons/lightswitch2.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !276 vol=: \"ch2 !276 vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !276 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !286 vol=: \"ch2 !286 vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !286 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !290 vol=: \"ch2 !290 vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch2 !290 vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button10.wav vol=: \"ch3 buttons/button10.wav vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button10.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button11.wav vol=: \"ch3 buttons/button11.wav vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button11.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button8.wav vol=: \"ch3 buttons/button8.wav vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/button8.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/latchlocked1.wav vol=: \"ch3 buttons/latchlocked1.wav vol=\" printed 0 times, expected 2"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 2 ch3 buttons/latchlocked1.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 3 ch3 buttons/button10.wav vol=: \"ch3 buttons/button10.wav vol=\" printed 0 times, expected 3"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 3 ch3 buttons/button10.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 3 ch3 buttons/button8.wav vol=: \"ch3 buttons/button8.wav vol=\" printed 0 times, expected 3"
+legacy = 1
+develop = 0
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "201_rot_button_lock_sounds"
+segment = "@start"
+line = "OBS expectn 3 ch3 buttons/button8.wav vol=: ok"
+legacy = 0
+develop = 1
+decision = "rot-button-lock-sounds"
+
+[[difference]]
+suite = "cases"
+test = "123b_changetarget_delay"
+segment = "@start"
+line = "OBS expectfield relay target old_t: ok"
+legacy = 0
+develop = 1
+decision = "changetarget-delay"
+
+[[difference]]
+suite = "cases"
+test = "123b_changetarget_delay"
+segment = "@start"
+line = "OBS expectfield relay target old_t: relay.target = new_t, expected old_t"
+legacy = 1
+develop = 0
+decision = "changetarget-delay"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho1): expected console text not printed: Firing: (gho1)"
+legacy = 1
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho1): ok"
+legacy = 0
+develop = 1
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho2): expected console text not printed: Firing: (gho2)"
+legacy = 1
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho2): ok"
+legacy = 0
+develop = 1
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho3): expected console text not printed: Firing: (gho3)"
+legacy = 1
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expect Firing: (gho3): ok"
+legacy = 0
+develop = 1
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_grunt_hunter 2: count monster_grunt_hunter = 0, expected 2"
+legacy = 2
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_grunt_hunter 2: ok"
+legacy = 0
+develop = 2
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_hunter 2: count monster_hunter = 0, expected 2"
+legacy = 1
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_hunter 2: ok"
+legacy = 0
+develop = 1
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_werewolf_hunter 1: count monster_werewolf_hunter = 0, expected 1"
+legacy = 1
+develop = 0
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "99d_stock_monster_waves"
+segment = "@start"
+line = "OBS expectcount monster_werewolf_hunter 1: ok"
+legacy = 0
+develop = 1
+decision = "stock-monster-waves"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#2: str(10): \"MSG HudText ->#2: str(10)\" printed 0 times, expected 1"
+legacy = 2
+develop = 0
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#2: str(10): ok"
+legacy = 0
+develop = 2
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#3: str(10): \"MSG HudText ->#3: str(10)\" printed 0 times, expected 1"
+legacy = 2
+develop = 0
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#3: str(10): ok"
+legacy = 0
+develop = 2
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#4: str(10): \"MSG HudText ->#4: str(10)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "127b_chapter_title"
+segment = "@start"
+line = "OBS expectn 1 MSG HudText ->#4: str(10): ok"
+legacy = 0
+develop = 1
+decision = "chaptertitle-all-players"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@result"
+line = "result: FAILED (exit 2)"
+legacy = 1
+develop = 0
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_blank renderamt 64: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_blank rendercolor 255 255 255: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_out renderamt 64: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_out rendercolor 255 255 255: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_set renderamt 200: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_set rendercolor 10 20 30: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_zero renderamt 0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "202_env_elight_defaults"
+segment = "@start"
+line = "OBS expectfield e_zero rendercolor 0 0 0: ok"
+legacy = 0
+develop = 1
+decision = "tier5-sbo2-classes"
+
+[[difference]]
+suite = "cases"
+test = "128b_wait_till_seen_more"
+segment = "@start"
+line = "OBS expectfield b4 spawnflags 1: b4.spawnflags = 0, expected 1"
+legacy = 1
+develop = 0
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "cases"
+test = "128b_wait_till_seen_more"
+segment = "@start"
+line = "OBS expectfield b4 spawnflags 1: ok"
+legacy = 0
+develop = 1
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_1): \"Firing: (ctl_1)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_1): ok"
+legacy = 0
+develop = 1
+decision = "apache-ai-trigger"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_6): \"Firing: (ctl_6)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_6): ok"
+legacy = 0
+develop = 1
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_7): \"Firing: (ctl_7)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "cases"
+test = "128c_prisoner_flag"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ctl_7): ok"
+legacy = 0
+develop = 1
+decision = "tier5-flag-cases-138"
+
+[[difference]]
+suite = "replay"
+test = "co_aemos"
+segment = "@@FIRE flamouille2"
+line = "Firing: (game_mission_failed)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_aneki"
+segment = "@@FIRE beam_6"
+line = "Firing: (game_mission_failed)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_bankjob_v4"
+segment = "@@TOUCH trigger_once #11  -> the_end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_bleakcityblues_v1_2"
+segment = "@@FIRE level_end_relay"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_bloc_b"
+segment = "@@FIRE tele_break_2"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE life_repair_prog_8"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_cathedral"
+segment = "@@FIRE artefact_2_collect_text"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_coinflip_rc1"
+segment = "@@FIRE respawn3"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_comb"
+segment = "@@TOUCH trigger_once #1  -> finish"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_convoy_b4"
+segment = "@@FIRE canopy_2_leaf"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_crackdown_v1"
+segment = "@@TOUCH trigger_once #1  -> Victory"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_demon_invasion"
+segment = "@@TOUCH trigger_once #1  -> the_end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE rs_4"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_escape"
+segment = "@@FIRE multi_plafond3"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_fondery"
+segment = "@@MARK end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_god_damn_the_sun"
+segment = "@@TOUCH trigger_once #13 Helipad_EndTrigger -> Helipad_EndGame"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_hubris_v2"
+segment = "@@TOUCH trigger_multiple #1  -> croondoorn"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_iss-555-cargo"
+segment = "@@FIRE lost"
+line = "Firing: (game_mission_failed)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_jollycompound"
+segment = "@@FIRE light_alley_5"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_lostmines_v3"
+segment = "@@FIRE pathC"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_necropolis"
+segment = "@@TOUCH trigger_multiple #2 gogolito -> end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_neogagny"
+segment = "@@MARK end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_omega17_v3"
+segment = "@@FIRE OmegaFoundation"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_prototype"
+segment = "@@TOUCH trigger_once #20  -> finish"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_saibercity_v3"
+segment = "@@FIRE TextGirl"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_sbo_showcase"
+segment = "@@FIRE fin_timer"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_siege"
+segment = "@@TOUCH trigger_once #3  -> glop"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_soulforest"
+segment = "@@FIRE lost"
+line = "Firing: (game_mission_failed)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_spacemonastery"
+segment = "@@TOUCH trigger_once #1  -> the_end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_spells"
+segment = "@@FIRE relay_spell_1_text"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_spookster"
+segment = "@@FIRE forcefied"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_station_v1"
+segment = "@@FIRE s_expl_11"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_unidentified_rc2"
+segment = "@@TOUCH trigger_multiple #2  -> rdoor1_1"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_unxmas"
+segment = "@@TOUCH trigger_once #23  -> objectif_complete"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_virus"
+segment = "@@TOUCH trigger_multiple #1 final_line -> end"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "replay"
+test = "co_zylom"
+segment = "@@FIRE vindico_countdown"
+line = "Firing: (game_mission_success)"
+legacy = 0
+develop = 1
+decision = "round-mission-hooks"
+
+[[difference]]
+suite = "cases"
+test = "129e_gag_dark"
+segment = "@start"
+line = "OBS expectnotre SOUND #20 monster_dark ch\\d monster/dark_idle: a console line matches SOUND #20 monster_dark ch\\d monster/dark_idle"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129e_gag_dark"
+segment = "@start"
+line = "OBS expectnotre SOUND #20 monster_dark ch\\d monster/dark_idle: ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129g_gag_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_hunter ch2 : console text printed but must not be: SOUND #20 monster_hunter ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129g_gag_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_hunter ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129h_gag_ichthyosaur"
+segment = "@start"
+line = "OBS expectmin 1 SOUND #21 monster_ichthyosaur ch2 : \"SOUND #21 monster_ichthyosaur ch2 \" printed 0 times, expected at least 1"
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129h_gag_ichthyosaur"
+segment = "@start"
+line = "OBS expectmin 1 SOUND #21 monster_ichthyosaur ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129i_gag_imp_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_imp_hunter ch2 : console text printed but must not be: SOUND #20 monster_imp_hunter ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129i_gag_imp_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_imp_hunter ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129k_gag_werewolf_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_werewolf_hunter ch2 : console text printed but must not be: SOUND #20 monster_werewolf_hunter ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129k_gag_werewolf_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_werewolf_hunter ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129m_gag_zombie_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_zombie_hunter ch2 : console text printed but must not be: SOUND #20 monster_zombie_hunter ch2 "
+legacy = 1
+develop = 0
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "129m_gag_zombie_hunter"
+segment = "@start"
+line = "OBS expectnot SOUND #20 monster_zombie_hunter ch2 : ok"
+legacy = 0
+develop = 1
+decision = "gag-spawnflag"
+
+[[difference]]
+suite = "cases"
+test = "130b_breakable_flags"
+segment = "@start"
+line = "OBS expectdump b_exp health=10.0: no b_exp with \"health=10.0\" (last: none)"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "130b_breakable_flags"
+segment = "@start"
+line = "OBS expectdump b_exp health=10.0: ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "130b_breakable_flags"
+segment = "@start"
+line = "OBS expectdump p_exp health=10.0: no p_exp with \"health=10.0\" (last: none)"
+legacy = 1
+develop = 0
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "130b_breakable_flags"
+segment = "@start"
+line = "OBS expectdump p_exp health=10.0: ok"
+legacy = 0
+develop = 1
+decision = "sbo2-mapper-options"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): \"Firing: (counted)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): ok"
+legacy = 0
+develop = 1
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): \"Firing: (died_relay)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_gib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): ok"
+legacy = 0
+develop = 1
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): \"Firing: (counted)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (counted): ok"
+legacy = 0
+develop = 1
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): \"Firing: (died_relay)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "cases"
+test = "20_death_nogib_monster_sentry"
+segment = "@start"
+line = "OBS expectn 1 Firing: (died_relay): ok"
+legacy = 0
+develop = 1
+decision = "turret-death-trigger"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE button_weapons"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE demon_spawner_rotate"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE door_10"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_engines"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_fuel"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_life"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_life"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_shields"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_shields"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_targeting"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_targeting"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE manager_targeting"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_door"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_door"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_key"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_key"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_lock"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_manager_target_2"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_rotating"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE meat_shooter"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE multi_vox_0"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE multi_vox_1"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE pittie_shower"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_engines"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_fuel"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_life"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_life"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_shields"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_shields"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_targeting"
+line = "Firing: (delay)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_targeting"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE trigger_targeting"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_1"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_1"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_2"
+line = "Firing: (state)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_2"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_3"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_danger_4"
+line = "Firing: (triggerstate)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_guns_0"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_guns_1"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_guns_2"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_guns_2_1"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_boarding"
+segment = "@@FIRE vox_guns_2_2"
+line = "Firing: (nbmaxround)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE exbang1"
+line = "Firing: (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE exbang1"
+line = "Found: ambient_generic, firing (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE exbang1"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE exbang4"
+line = "Firing: (m_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE exbang4"
+line = "Found: func_mortar_field, firing (m_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Firing: (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Firing: (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Found: ambient_generic, firing (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE explo"
+line = "Found: trigger_relay, firing (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE m_7"
+line = "Firing: (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE m_7"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE m_7"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE m_7"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@FIRE m_7"
+line = "Found: trigger_relay, firing (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (m_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (m_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (s_1)"
+legacy = 0
+develop = 3
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: ambient_generic, firing (s_1)"
+legacy = 0
+develop = 3
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 0
+develop = 6
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: func_mortar_field, firing (m_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: func_mortar_field, firing (m_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: trigger_relay, firing (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@@MARK end"
+line = "Found: trigger_relay, firing (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@start"
+line = "Firing: (m_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_dfs"
+segment = "@start"
+line = "Found: func_mortar_field, firing (m_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_escape"
+segment = "@@FIRE multi_plafond3"
+line = "Firing: (plafond_mortar)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_escape"
+segment = "@@FIRE multi_plafond3"
+line = "Found: ambient_generic, firing (plafond_mortar)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_escape"
+segment = "@@TOUCH func_button #2 hall_surfaceT -> hall_surface"
+line = "Firing: (plafond_mortar)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_escape"
+segment = "@@TOUCH func_button #2 hall_surfaceT -> hall_surface"
+line = "Found: ambient_generic, firing (plafond_mortar)"
+legacy = 0
+develop = 1
+decision = "multi-manager-64-targets"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE a_02"
+line = "Firing: (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE a_02"
+line = "Found: env_shake, firing (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE a_02"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE brouilleur_casse"
+line = "Firing: (m_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE brouilleur_casse"
+line = "Found: func_mortar_field, firing (m_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Firing: (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Firing: (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: env_shake, firing (s_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: env_shake, firing (s_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE m_4"
+line = "Found: trigger_relay, firing (rs_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Firing: (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Found: env_shake, firing (s_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 8
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@FIRE pc_2"
+line = "Found: trigger_relay, firing (rs_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (m_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (m_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (rs_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (rs_2)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (s_1)"
+legacy = 2
+develop = 6
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Firing: (s_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: ambient_generic, firing (s_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: env_shake, firing (s_1)"
+legacy = 2
+develop = 6
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: env_shake, firing (s_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: env_sprite, firing (s_1)"
+legacy = 4
+develop = 12
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: env_sprite, firing (s_2)"
+legacy = 0
+develop = 16
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: func_mortar_field, firing (m_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: func_mortar_field, firing (m_2)"
+legacy = 0
+develop = 4
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: trigger_relay, firing (rs_1)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@@MARK end"
+line = "Found: trigger_relay, firing (rs_2)"
+legacy = 0
+develop = 2
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@start"
+line = "Firing: (m_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "replay"
+test = "co_rain_of_fire"
+segment = "@start"
+line = "Found: func_mortar_field, firing (m_1)"
+legacy = 0
+develop = 1
+decision = "multi-manager-mortar-strikes"
+
+[[difference]]
+suite = "cases"
+test = "70c_multisource_delayed_member"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ms2_out): \"Firing: (ms2_out)\" printed 0 times, expected 1"
+legacy = 1
+develop = 0
+decision = "multisource-delayed-own-slot"
+
+[[difference]]
+suite = "cases"
+test = "70c_multisource_delayed_member"
+segment = "@start"
+line = "OBS expectn 1 Firing: (ms2_out): ok"
+legacy = 0
+develop = 1
+decision = "multisource-delayed-own-slot"

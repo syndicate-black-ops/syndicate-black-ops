@@ -156,6 +156,10 @@ void Czombie_hunter :: SetYawSpeed ( void )
 
 int Czombie_hunter :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, float flDamage, int bitsDamageType )
 {
+	// SBO 2.0: invulnerable in its script ("m_takeDamagePolicy" 1): no damage and no XP for the hit
+	if ( ScriptInvulnerable() )
+		return 0;
+
 	if ( IsAlive() )
 	{
 		CBaseEntity *pAttacker = CBaseEntity::Instance( pevAttacker );
@@ -484,6 +488,9 @@ void Czombie_hunter :: Look ( int iDistance )
 				 pSightEnt->pev->health > 0 &&
 				 pSightEnt->IsAlive() )
 			{
+				// SBO 2.1: "prisonerto" / "ignoredby", as in CBaseMonster::Look (this Look left them out)
+				if ( LookSkips( pSightEnt ) )
+					continue;
 				// SBO 2.0: FL_NOTARGET entities are not seen, as in CBaseMonster::Look
 				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) )
 				{

@@ -31,6 +31,7 @@
 #include "weapons.h"
 #include "gamerules.h"
 #include "render_fade.h"	// SBO 2.0: RenderFade_ScaleNow (UTIL_ModelScale)
+#include "alias.h"	// SBO 2.1: Alias_FindEdict (UTIL_FindEdictByString)
 
 float UTIL_WeaponTimeBase( void )
 {
@@ -533,11 +534,75 @@ CBaseEntity *UTIL_FindEntityByString( CBaseEntity *pStartEntity, const char *szK
 	else
 		pentEntity = NULL;
 
-	pentEntity = FIND_ENTITY_BY_STRING( pentEntity, szKeyword, szValue );
+	pentEntity = UTIL_FindEdictByString( pentEntity, szKeyword, szValue );
 
 	if (!FNullEnt(pentEntity))
 		return CBaseEntity::Instance(pentEntity);
 	return NULL;
+}
+
+// SBO 2.0, from the Half-Life Unified SDK (UTIL_FindEntityByAccessor): a name ending in '*' is a prefix; the next
+// entity after entStart, in index order as the engine's search, whose classname / targetname / target starts with it
+edict_t *UTIL_FindEdictByString( edict_t *entStart, const char *pszKeyword, const char *pszValue )
+{
+	if ( !pszValue )
+		return NULL;
+
+	// SBO 2.1 (Spirit of Half-Life, alias.cpp): "*alias" and "group.member" references in targetname searches; they
+	// come before the wildcard; "*name*" is refused there (docs/ALIASES.md)
+	if ( !strcmp( pszKeyword, "targetname" ) )
+	{
+		edict_t *pAliased;
+		if ( Alias_FindEdict( entStart, pszValue, &pAliased ) )
+			return pAliased;
+	}
+
+	size_t len = strlen( pszValue );
+	if ( len == 0 || pszValue[len - 1] != '*' )
+		return FIND_ENTITY_BY_STRING( entStart, pszKeyword, pszValue );
+
+	int offset;
+	if ( !strcmp( pszKeyword, "classname" ) )
+		offset = offsetof( entvars_t, classname );
+	else if ( !strcmp( pszKeyword, "targetname" ) )
+		offset = offsetof( entvars_t, targetname );
+	else if ( !strcmp( pszKeyword, "target" ) )
+		offset = offsetof( entvars_t, target );
+	else
+		return FIND_ENTITY_BY_STRING( entStart, pszKeyword, pszValue );
+
+	len--;	// the prefix: everything before the '*'
+	for ( int i = FNullEnt( entStart ) ? 1 : ENTINDEX( entStart ) + 1; i < gpGlobals->maxEntities; i++ )
+	{
+		edict_t *pEdict = INDEXENT( i );
+		if ( !pEdict || pEdict->free )
+			continue;
+
+		string_t iszValue = *(string_t *)( (char *)&pEdict->v + offset );
+		if ( FStringNull( iszValue ) )
+			continue;
+
+		if ( !strncmp( STRING( iszValue ), pszValue, len ) )
+			return pEdict;
+	}
+
+	return NULL;
+}
+
+BOOL UTIL_TargetSelector( const char *szName, CBaseEntity *pActivator, CBaseEntity *pCaller, CBaseEntity **ppEntity )
+{
+	*ppEntity = NULL;
+	if ( !szName || szName[0] != '!' )
+		return FALSE;
+
+	if ( !strcmp( szName, "!activator" ) )
+		*ppEntity = pActivator;
+	else if ( !strcmp( szName, "!caller" ) )
+		*ppEntity = pCaller;
+	else
+		ALERT( at_aiconsole, "Invalid target selector \"%s\"\n", szName );
+
+	return TRUE;
 }
 
 CBaseEntity *UTIL_FindEntityByClassname( CBaseEntity *pStartEntity, const char *szName )
@@ -545,8 +610,13 @@ CBaseEntity *UTIL_FindEntityByClassname( CBaseEntity *pStartEntity, const char *
 	return UTIL_FindEntityByString( pStartEntity, "classname", szName );
 }
 
-CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStartEntity, const char *szName )
+// SBO 2.0 (Half-Life Unified SDK): target selectors, and wildcards through UTIL_FindEntityByString
+CBaseEntity *UTIL_FindEntityByTargetname( CBaseEntity *pStartEntity, const char *szName, CBaseEntity *pActivator, CBaseEntity *pCaller )
 {
+	CBaseEntity *pSelected;
+	if ( UTIL_TargetSelector( szName, pActivator, pCaller, &pSelected ) )
+		return pStartEntity ? NULL : pSelected;	// a selector names one entity: stop after it
+
 	return UTIL_FindEntityByString( pStartEntity, "targetname", szName );
 }
 
@@ -2218,8 +2288,46 @@ void UTIL_PrecacheOther( const char *szClassname )
 
 	CBaseEntity *pEntity = CBaseEntity::Instance (VARS( pent ));
 	if (pEntity)
+	{
 		pEntity->Precache( );
+		UTIL_PrecachedClasses_Add( szClassname );	// SBO 2.1
+	}
 	REMOVE_ENTITY(pent);
+}
+
+// SBO 2.1: see util.h. Names are compared without case, as the engine finds a class
+#define MAX_PRECACHED_CLASSES	1024
+#define PRECACHED_CLASS_LEN		64
+static char s_szPrecachedClasses[ MAX_PRECACHED_CLASSES ][ PRECACHED_CLASS_LEN ];
+static int s_iPrecachedClasses;
+
+void UTIL_PrecachedClasses_Reset( void )
+{
+	s_iPrecachedClasses = 0;
+}
+
+void UTIL_PrecachedClasses_Add( const char *szClassname )
+{
+	// a name too long to keep, or a full list: the class is not listed, so run-time keys naming it are refused
+	if ( !szClassname || !szClassname[0] || strlen( szClassname ) >= PRECACHED_CLASS_LEN
+		|| UTIL_PrecachedClasses_Has( szClassname ) || s_iPrecachedClasses >= MAX_PRECACHED_CLASSES )
+		return;
+
+	strcpy( s_szPrecachedClasses[ s_iPrecachedClasses ], szClassname );
+	s_iPrecachedClasses++;
+}
+
+BOOL UTIL_PrecachedClasses_Has( const char *szClassname )
+{
+	if ( !szClassname || !szClassname[0] )
+		return FALSE;
+
+	for ( int i = 0; i < s_iPrecachedClasses; i++ )
+	{
+		if ( !stricmp( s_szPrecachedClasses[ i ], szClassname ) )
+			return TRUE;
+	}
+	return FALSE;
 }
 
 BOOL UTIL_MapperModelUnusable( entvars_t *pev, const char *szModel )

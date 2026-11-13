@@ -1,12 +1,12 @@
 # Kill feed icons (`d_<weapon>`)
 
 Sources of the kill feed (death notice) icons: one PNG per icon, a white picture on transparency. The weapon
-icons are 192 pixels high, face right (toward the victim) and are made from the owner's weapon artwork (PSD files,
+icons are 192 pixels high, face right (toward the victim) and are made from SBO's weapon artwork (PSD files,
 not in the repository); `tank.png` is the minigun on a tripod (`func_tank`). `headshot.png` is Counter-Strike
 1.6's `d_headshot` (`cstrike/sprites/640hud1.spr`, 36x16), kept pixel for pixel. `gm.png` (`d_gm`, a Game
 Master's monster's kill: the artifact pyramid with an eye) is drawn by hand: it is its own source, and
 `killfeed-sources` keeps it. Every icon points at the victim, to the right (`flop` in the table mirrors artwork that
-faces left). Weapons without the owner's artwork keep their old icon: the crossbow
+faces left). Weapons without that artwork keep their old icon: the crossbow
 (`d_crossbow`, `d_bolt`) uses Half-Life's, from `320hud1` / `640hud1`.
 
 The game uses `sprites/killfeed.spr` (one 256x128 sheet, used by the 320 and 640 sets) and the `d_<name>` lines
@@ -34,7 +34,7 @@ scripts/gen_hud_weapon_sprites.py killfeed --scale 2 --set 1280 --out <dir>
 The `KILLFEED` table in the script lists every icon, its source and options (mirror, crop, cut-outs), and which
 entries share a picture (`grenade` = hand grenade, `rpg_rocket` = RPG, `tanklaser` = tank). Add a new icon at the
 end of the table, run `killfeed`, and check the contact sheet from `--review` (every `d_` icon at 1x and 4x, white
-and HUD orange). Running it again gives the same files. Only weapons with the owner's artwork get an icon.
+and HUD orange). Running it again gives the same files. Only weapons with SBO weapon artwork get an icon.
 
 ## Plugin icons (`sbo_kf_custom_v<N>.spr`)
 

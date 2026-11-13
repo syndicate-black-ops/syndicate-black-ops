@@ -274,10 +274,12 @@ void CCineMonster :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 		if ( pTarget->m_scriptState == SCRIPT_PLAYING )
 			return;
 
+		m_hActivator = pActivator;	// SBO 2.0 (Featureful): scripted_action's "!activator" attack target
 		m_startTime = gpGlobals->time + 0.05;
 	}
 	else
 	{
+		m_hActivator = pActivator;
 		// if not, try finding them
 		SetThink( &CCineMonster::CineThink );
 		pev->nextthink = gpGlobals->time;
@@ -855,8 +857,10 @@ int	CCineMonster::IgnoreConditions( void )
 
 void ScriptEntityCancel( edict_t *pentCine )
 {
-	// make sure they are a scripted_sequence (SBO 2.0: or a scripted_action)
-	if (FClassnameIs( pentCine, CLASSNAME ) || FClassnameIs( pentCine, "scripted_action" ))
+	// make sure they are a scripted_sequence (SBO 2.0: or an aiscripted_sequence or a scripted_action, so each
+	// follows its own Interruption policy)
+	if (FClassnameIs( pentCine, CLASSNAME ) || FClassnameIs( pentCine, "aiscripted_sequence" )
+		|| FClassnameIs( pentCine, "scripted_action" ))
 	{
 		CCineMonster *pCineTarget = GetClassPtr((CCineMonster *)VARS(pentCine));
 		// make sure they have a monster in mind for the script
@@ -904,8 +908,10 @@ void CCineMonster :: CancelScript( void )
 // find all the cinematic entities with my targetname and tell them to wait before starting
 void CCineMonster :: DelayStart( int state )
 {
-	// SBO 2.0 (Featureful m_iszFireOnBegin, "Fire after moving"): when the script may start after the walk/run
-	if ( FStringNull( pev->targetname ) )
+	// SBO 2.0 (Featureful m_iszFireOnBegin, "Fire after moving"): when the script may start after the walk/run. An
+	// aiscripted_sequence is in no start group (below: scripted_sequence / scripted_action only), so a named one fires
+	// it here too (Featureful left it out: it never fired)
+	if ( FStringNull( pev->targetname ) || FClassnameIs( pev, "aiscripted_sequence" ) )
 	{
 		if ( state == 0 && !FStringNull( m_iszFireOnBegin ) )
 			FireTargets( STRING( m_iszFireOnBegin ), this, this, USE_TOGGLE, 0 );
@@ -985,6 +991,22 @@ void CCineMonster :: Activate( void )
 }
 
 		
+// SBO 2.1 (Spirit of Half-Life CCineMonster m_iState): Turn On from the moment it takes its monster while the
+// monster goes to it and waits, On while the monster plays the action, Turn Off while it lets go, Off otherwise
+STATE CCineMonster :: GetState( CBaseEntity *pActivator )
+{
+	CBaseEntity *pEntity = m_hTargetEnt;
+	CBaseMonster *pTarget = pEntity ? pEntity->MyMonsterPointer() : NULL;
+	if ( !pTarget || pTarget->m_pCine != this )
+		return STATE_OFF;
+	switch ( pTarget->m_scriptState )
+	{
+	case SCRIPT_PLAYING:	return STATE_ON;
+	case SCRIPT_CLEANUP:	return STATE_TURN_OFF;
+	default:				return STATE_TURN_ON;	// walking / running to its mark, waiting
+	}
+}
+
 // SBO 2.0 (Featureful c55b806d): a scripted_sequence removed (killtarget) while its monster waits for it or plays
 // it: the monster lets go of it now; its m_pCine would point at a freed entity
 void CCineMonster :: UpdateOnRemove( void )
@@ -1058,7 +1080,9 @@ BOOL CBaseMonster :: CineCleanup( )
 		if ( !(pOldCine->pev->spawnflags & SF_SCRIPT_NOSCRIPTMOVEMENT) )
 		{
 			// reset position
-			Vector new_origin, new_angle;
+			// SBO 2.0: Valve's engines fill no angles in pfnGetBonePosition (Xash does): new_angle starts as the
+			// monster's own angles, so "Apply new angles from bones" (512) keeps them there instead of taking stack garbage
+			Vector new_origin, new_angle = pev->angles;
 			GetBonePosition( 0, new_origin, new_angle );
 
 			// Figure out how far they have moved
@@ -1169,6 +1193,13 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 	void EXPORT FindThink( void );
 	void EXPORT DelayThink( void );
+
+	// SBO 2.1 (Spirit of Half-Life): On while its speaker says the sentence ("Sentence Time"), Off otherwise
+	STATE GetState( CBaseEntity *pActivator )
+	{
+		return m_pfnThink == static_cast<BASEPTR>( &CScriptedSentence::DelayThink ) && gpGlobals->time < pev->nextthink - m_flRepeat
+			? STATE_ON : STATE_OFF;
+	}
 	int	 ObjectCaps( void ) { return (CBaseToggle :: ObjectCaps() & ~FCAP_ACROSS_TRANSITION); }
 
 	virtual int		Save( CSave &save );
@@ -1725,6 +1756,11 @@ void CScriptedAction::PossessEntity( void )
 
 BOOL CScriptedAction::StartSequence( CBaseMonster *pTarget, int iszSeq, BOOL completeOnEmpty )
 {
+	// SBO 2.0: the Idle Animation is a named sequence, played as scripted_sequence plays it (Featureful starts the
+	// action in the schedule, so its StartSequence plays the idle); only the action is this class's own
+	if ( iszSeq && iszSeq == m_iszIdle )
+		return CCineMonster::StartSequence( pTarget, iszSeq, completeOnEmpty );
+
 	Activity act = ACT_RESET;
 	switch ( m_fAction )
 	{

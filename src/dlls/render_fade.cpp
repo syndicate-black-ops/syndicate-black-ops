@@ -114,12 +114,12 @@ void RenderFade_Frame( void )
 	}
 }
 
-static void RenderFade_Send( CBaseEntity *pTarget, const render_fade_t *f )
+static void RenderFade_Send( CBaseEntity *pTarget, const render_fade_t *f, int msg_dest = MSG_ALL )
 {
 	if ( !gmsgRenderFade )
 		return;
 
-	MESSAGE_BEGIN( MSG_ALL, gmsgRenderFade );
+	MESSAGE_BEGIN( msg_dest, gmsgRenderFade );
 		WRITE_SHORT( pTarget->entindex() );
 		WRITE_SHORT( pTarget->pev->modelindex );
 		WRITE_BYTE( f ? f->flags : 0 );
@@ -206,6 +206,10 @@ int RenderFade_Start( CBaseEntity *pTarget, int flags, float endAmt, const Vecto
 	f->endScale = pTarget->pev->scale;
 	RenderFade_CountScaleFades( );
 
+	// A reliable message waits while an earlier one is not yet acknowledged (up to a round trip), but the entity's
+	// end values go out in the next entity update: the client would draw the end state until the message arrives.
+	// An unreliable copy travels in the same packet as that update; the reliable one covers a lost packet.
+	RenderFade_Send( pTarget, f, MSG_BROADCAST );
 	RenderFade_Send( pTarget, f );
 
 	// the box and the hitboxes follow the drawn scale from now on (RenderFade_Frame); a fade that replaced an

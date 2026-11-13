@@ -38,6 +38,23 @@ class Reader:
         return v
 
 
+def objective(r):
+    # trigger_objective.cpp CTriggerObjective::Send / Objective_SendQueued (game_shared/objective_shared.h)
+    slot = r.byte()
+    out = {'slot': slot, 'clear': slot == 255}
+    if slot == 255:
+        return out
+    f = r.byte()
+    out.update(flags=f, state=f & 3, new=bool(f & 0x10), done=bool(f & 0x20), counted=bool(f & 0x40),
+               silent=bool(f & 0x80))
+    if f & 3 == 0:
+        return out
+    out.update(order=r.short(), seq=r.short(), count=r.byte(), target=r.byte())
+    p = r.byte()
+    out.update(parent=-1 if p == 255 else p, text=r.string())
+    return out
+
+
 def game_timer(r):
     # game_timer.cpp SendState (docs/GAME_TIMER.md "Message GameTimer")
     out = {'id': r.short()}
@@ -62,12 +79,14 @@ def fog(r):
 
 def weather_vol(r):
     # triggers.cpp CWeatherVolume::Send: short entity, byte type (0 removed, 1 rain, 2 snow), short flags, short
-    # intensity, short period x 100, coord x 6 (absmin, absmax), short size1, size2, speed1, speed2, life x 100
+    # intensity, short period x 100, coord x 6 (absmin, absmax), short size1, size2, speed1, speed2, life x 100, signed
+    # short wind x, wind y (flag 8192: the fixed wind), short spread x, spread y
     out = {'ent': r.short(), 'type': r.byte(), 'flags': r.short() & 0xffff, 'intensity': r.short(),
            'period': r.short() / 100.0}
     c = [r.short() / 8.0 for _ in range(6)]
     out.update(mins=c[:3], maxs=c[3:])
     out.update(size1=r.short(), size2=r.short(), speed1=r.short(), speed2=r.short(), life=r.short() / 100.0)
+    out.update(wind_x=r.short(), wind_y=r.short(), rand_x=r.short(), rand_y=r.short())
     return out
 
 
@@ -91,10 +110,67 @@ def message_box(r):
     return out
 
 
+def overlay(r):
+    # env_overlay.cpp CEnvOverlay::Send / SendOff (game_shared/overlay_shared.h, docs/ENV_OVERLAY.md)
+    out = {'channel': r.byte()}
+    flags = r.byte()
+    out.update(flags=flags, on=int(bool(flags & 1)), fullscreen=int(bool(flags & 2)), loop=int(bool(flags & 4)),
+               additive=int(bool(flags & 8)), stay=int(bool(flags & 16)), now=int(bool(flags & 32)))
+    if not flags & 1:
+        return out
+    out['image'] = r.string()
+    x, y = r.short(), r.short()
+    out.update(x=-1.0 if x <= -10000 else round(x / 10000.0, 4), y=-1.0 if y <= -10000 else round(y / 10000.0, 4),
+               scale=round(r.short() / 100.0, 2), r=r.byte(), g=r.byte(), b=r.byte(), a=r.byte(),
+               framerate=round((r.short() & 0xffff) / 100.0, 2), fadein=round((r.short() & 0xffff) / 100.0, 2),
+               hold=round((r.short() & 0xffff) / 100.0, 2), fadeout=round((r.short() & 0xffff) / 100.0, 2),
+               elapsed=round((r.short() & 0xffff) / 10.0, 1))
+    return out
+
+
+def color_corr(r):
+    # colorcorrection.cpp CColorCorrectionBase::SendTo (game_shared/colorcorrection_shared.h, docs/COLOR_CORRECTION.md)
+    out = {'ent': r.short()}
+    flags = r.byte()
+    out.update(flags=flags, enabled=int(bool(flags & 1)), volume=int(bool(flags & 2)), exclusive=int(bool(flags & 4)),
+               first=int(bool(flags & 8)), removed=int(bool(flags & 16)))
+    if flags & 16:
+        return out
+    out.update(maxweight=round(r.short() / 10000.0, 4), weight=round(r.short() / 10000.0, 4),
+               fadein=round((r.short() & 0xffff) / 100.0, 2), fadeout=round((r.short() & 0xffff) / 100.0, 2))
+    if flags & 2:
+        out.update(model=r.short(), x=r.short(), y=r.short(), z=r.short())
+    else:
+        out.update(x=r.short(), y=r.short(), z=r.short(), minfalloff=r.short(), maxfalloff=r.short())
+    out.update(saturation=round(r.short() / 1000.0, 3), contrast=round(r.short() / 1000.0, 3),
+               brightness=round(r.short() / 1000.0, 3), gamma=round(r.short() / 1000.0, 3),
+               tint_r=r.byte(), tint_g=r.byte(), tint_b=r.byte(), tintamount=round(r.byte() / 255.0, 2),
+               file=r.string())
+    return out
+
+
 def tutor_text(r):
-    # tutor.cpp: short entity, short type, byte flags, byte align, short x, short y, byte icon, ...
-    return {'ent': r.short(), 'type': r.short(), 'flags': r.byte(), 'align': r.byte(), 'x': r.short(), 'y': r.short(),
-            'icon': r.byte()}
+    # tutor.cpp SendTutorText: short entity, short type, byte flags (1 dead, 2 text color, 4 icon color, 8 background,
+    # 16 border), byte align, short x, short y (-1 or 0..10000), byte icon [string icon path if 255], string sound,
+    # the colors the flags name (text rgb, icon rgb, background rgba, border rgba), string text (its end)
+    out = {'ent': r.short(), 'type': r.short(), 'flags': r.byte(), 'align': r.byte(), 'x': r.short(), 'y': r.short(),
+           'icon': r.byte()}
+    if r.left() == 0:
+        return out
+    if out['icon'] == 255:
+        out['iconfile'] = r.string()
+    out['sound'] = r.string()
+    f = out['flags']
+    if f & 2:
+        out['color'] = [r.byte(), r.byte(), r.byte()]
+    if f & 4:
+        out['iconcolor'] = [r.byte(), r.byte(), r.byte()]
+    if f & 8:
+        out['bgcolor'] = [r.byte(), r.byte(), r.byte(), r.byte()]
+    if f & 16:
+        out['bordercolor'] = [r.byte(), r.byte(), r.byte(), r.byte()]
+    out['text'] = r.string()
+    return out
 
 
 def text_msg(r):
@@ -122,6 +198,14 @@ def wscreen(r):
     d = {'op': op, 'ent': r.short()}
     if op == 1:
         d['flags'] = r.byte()
+        return d
+    if op == 2:     # CONTROL: byte control op (0 text, 1 enabled, 2 visible, 3 animation), string name, string value
+        d.update(cop=r.byte(), control=r.string(), value=r.string())
+        return d
+    if op == 3:     # PARENT (movewith): short parent (index, attachment << 11), local origin (3 floats), local angles
+        d['parent_attachment'] = (r.short() & 0xffff) >> 11
+        d['local_origin'] = [round(r.float(), 3) for _ in range(3)]
+        d['local_angles'] = [round((r.short() & 0xffff) * 360.0 / 65536.0, 2) for _ in range(3)]
         return d
     if op != 0:
         return d
@@ -191,6 +275,12 @@ def _te_pos(r, out, coord):
     out['pos'] = [coord() for _ in range(3)]
 
 
+def _te_gunshotdecal(r, out, coord):    # TE_GUNSHOTDECAL: pos, short entity, byte decal
+    out['pos'] = [coord() for _ in range(3)]
+    out['ent'] = r.short()
+    out['decal'] = r.byte()
+
+
 def _te_beampoints(r, out, coord):     # TE_BEAMPOINTS: start, end, sprite, frame, rate, life, width, noise, rgb, a, speed
     out.update(pos=[coord() for _ in range(3)], end=[coord() for _ in range(3)], model=r.short(), frame=r.byte(),
                rate=r.byte(), life=r.byte(), width=r.byte(), noise=r.byte(), color=[r.byte() for _ in range(3)],
@@ -247,6 +337,10 @@ def _te_blood(r, out, coord):           # TE_BLOODSTREAM / TE_BLOOD: pos, direct
     out.update(pos=[coord() for _ in range(3)], dir=[coord() for _ in range(3)], color=r.byte(), speed=r.byte())
 
 
+def _te_worlddecal(r, out, coord):      # TE_WORLDDECAL: pos, byte decal index (decals.wad order: {blood1 27)
+    out.update(pos=[coord() for _ in range(3)], index=r.byte())
+
+
 def _te_fizz(r, out, coord):            # TE_FIZZ: short entity, short sprite, byte density
     out.update(ent=r.short(), model=r.short(), density=r.byte())
 
@@ -255,10 +349,89 @@ def _te_bloodsprite(r, out, coord):     # TE_BLOODSPRITE: pos, short spray sprit
     out.update(pos=[coord() for _ in range(3)], model=r.short(), model2=r.short(), color=r.byte(), scale=r.byte())
 
 
-GUIDE_TE = {0: _te_beampoints, 19: _te_ring, 20: _te_ring, 21: _te_ring, 22: _te_beamfollow, 99: _te_killbeam,
+def _te_textmessage(r, out, coord):    # TE_TEXTMESSAGE (util.cpp UTIL_HudMessage, game_text)
+    # byte channel, short x and y (1/8192, -1 centers), byte effect, rgba color1, rgba color2, short fade-in, fade-out,
+    # hold (1/256 s), short fx time only for effect 2, string text
+    out.update(channel=r.byte(), x=round(r.short() / 8192.0, 4), y=round(r.short() / 8192.0, 4), effect=r.byte(),
+               color=[r.byte() for _ in range(3)], a1=r.byte(), color2=[r.byte() for _ in range(3)], a2=r.byte(),
+               fadein=round((r.short() & 0xffff) / 256.0, 3), fadeout=round((r.short() & 0xffff) / 256.0, 3),
+               hold=round((r.short() & 0xffff) / 256.0, 3))
+    if out['effect'] == 2:
+        out['fxtime'] = round((r.short() & 0xffff) / 256.0, 3)
+    out['text'] = r.string()
+
+
+GUIDE_TE = {29: _te_textmessage, 0: _te_beampoints, 19: _te_ring, 20: _te_ring, 21: _te_ring, 22: _te_beamfollow, 99: _te_killbeam,
             13: _te_bspdecal, 108: _te_breakmodel, 4: _te_pos, 10: _te_pos, 11: _te_pos, 12: _te_pos,
             14: _te_implosion, 122: _te_burst, 27: _te_dlight, 5: _te_smoke, 100: _te_funnel, 101: _te_blood,
-            103: _te_blood, 105: _te_fizz, 115: _te_bloodsprite, 9: _te_pos}
+            103: _te_blood, 105: _te_fizz, 115: _te_bloodsprite, 9: _te_pos,
+            109: _te_gunshotdecal, 116: _te_worlddecal}
+
+
+def aurora(r):
+    # env_particle.cpp WriteState / SpawnCopy / UpdateOnRemove (game_shared/aurora_shared.h): byte flags (1 on,
+    # 2 one-shot copy, 4 removed, 8 follows an entity), short entity; not removed: origin (3 floats as long bits),
+    # angles (3 coords), with 8: short target entity, char attachment; string script
+    flags = r.byte()
+    out = {'flags': flags, 'on': int(bool(flags & 1)), 'oneshot': int(bool(flags & 2)), 'removed': int(bool(flags & 4)),
+           'follow': int(bool(flags & 8)), 'ent': r.short()}
+    if flags & 4:
+        return out
+    out['origin'] = [round(r.float(), 3) for _ in range(3)]
+    out['angles'] = [r.short() / 8.0 for _ in range(3)]
+    if flags & 8:
+        out['target'] = r.short()
+        a = r.byte()
+        out['attachment'] = a - 256 if a > 127 else a
+    out['script'] = r.string()
+    return out
+
+
+def mirror(r):
+    # env_mirror.cpp SendState: short entity, byte flags (1 on, 2 players drawn); on: byte axis, char side, coord
+    # mins x3, coord maxs x3, coord plane, short radius
+    out = {'ent': r.short()}
+    flags = r.byte()
+    out.update(flags=flags, on=int(bool(flags & 1)), players=int(bool(flags & 2)))
+    if not flags & 1:
+        return out
+    out['axis'] = r.byte()
+    s = r.byte()
+    out['side'] = s - 256 if s > 127 else s
+    c = [r.short() / 8.0 for _ in range(7)]
+    out.update(mins=c[:3], maxs=c[3:6], plane=c[6], radius=r.short())
+    return out
+
+
+def set_sky(r):
+    # effects.cpp CEnvSky::SendState (SoHL "SetSky"): byte mode (1 on), coord x y z, byte scale
+    return {'mode': r.byte(), 'origin': [r.short() / 8.0 for _ in range(3)], 'scale': r.byte()}
+
+
+def world_text(r):
+    # point_worldtext.cpp SendTo (game_shared/worldtext_shared.h): byte flags (1 on, 2 rainbow, 4 centered, 8 parent),
+    # short id;
+    # on: origin (3 floats), angles (3 shorts, 65536 = 360), size, spacing x, spacing y (floats), r g b a,
+    # orientation, font, string (the text or its end)
+    flags = r.byte()
+    out = {'flags': flags, 'on': int(bool(flags & 1)), 'rainbow': int(bool(flags & 2)), 'center': int(bool(flags & 4)),
+           'id': r.short()}
+    if not flags & 1:
+        return out
+    out['origin'] = [round(r.float(), 3) for _ in range(3)]
+    out['angles'] = [round((r.short() & 0xffff) * 360.0 / 65536.0, 2) for _ in range(3)]
+    out.update(size=round(r.float(), 3), spacing_x=round(r.float(), 3), spacing_y=round(r.float(), 3))
+    out['color'] = [r.byte(), r.byte(), r.byte(), r.byte()]
+    out.update(orientation=r.byte(), font=r.byte())
+    # 8: a parent (movewith): short parent (index, attachment << 11), local origin (3 floats), local angles (3 shorts)
+    out['parented'] = int(bool(flags & 8))
+    if flags & 8:
+        p = r.short() & 0xffff
+        out.update(parent_attachment=p >> 11)
+        out['local_origin'] = [round(r.float(), 3) for _ in range(3)]
+        out['local_angles'] = [round((r.short() & 0xffff) * 360.0 / 65536.0, 2) for _ in range(3)]
+    out['text'] = r.string()
+    return out
 
 
 def object_hint(r):
@@ -275,12 +448,49 @@ def object_hint(r):
 
 def keyed_dlight(r):
     # env_dlight.cpp (game_shared/dlight_shared.h): key (the env_dlight's index), state 0 off / 1 on / 2 position;
-    # on: origin (coords), radius, r g b, the entity to follow (0: none); position: origin
+    # on: origin (coords), radius, r g b, the entity to follow (0: none); position: origin.
+    # env_elight: state 0x81 (on + the elight flag 0x80), then the on fields and the attachment byte
     out = {'key': r.short(), 'state': r.byte()}
-    if out['state'] in (1, 2):
+    base = out['state'] & 0x7f
+    out['elight'] = 1 if out['state'] & 0x80 else 0
+    if base in (1, 2):
         out['pos'] = [r.short() / 8.0 for _ in range(3)]
-    if out['state'] == 1:
+    if base == 1:
         out.update(radius=r.short(), r=r.byte(), g=r.byte(), b=r.byte(), follow=r.short())
+        if out['elight']:
+            out['attachment'] = r.byte()
+    return out
+
+
+def light_origin(r):
+    # light_origin.cpp (game_shared/light_origin_shared.h): entity index, its model index, the marker's origin
+    return {'ent': r.short(), 'modelindex': r.short(), 'pos': [r.short() / 8.0 for _ in range(3)]}
+
+
+def static_prop(r):
+    # env_static.cpp (game_shared/static_props_shared.h): byte type; MODEL (1): byte id, string file; PROP (2): short
+    # prop id, byte model id, 3 long origin (1/8), 3 angle bytes, byte rendermode, byte renderfx, 3 byte color, byte
+    # renderamt, byte body, byte skin, short sequence, short scale (1/256), short framerate (1/256), byte visible;
+    # VISIBLE (3): short prop id, byte visible; LIGHTORIGIN (4): short prop id, 3 long origin (1/8)
+    out = {'type': r.byte()}
+    if out['type'] == 1:
+        out.update(model_id=r.byte(), file=r.string())
+    elif out['type'] == 2:
+        out['prop'] = r.short()
+        try:
+            out.update(model_id=r.byte(), origin=[r.long() / 8.0 for _ in range(3)],
+                       angles=[r.byte() * 360.0 / 256 for _ in range(3)], rendermode=r.byte(), renderfx=r.byte(),
+                       color=[r.byte() for _ in range(3)], renderamt=r.byte(), body=r.byte(), skin=r.byte(),
+                       sequence=r.short(), scale=round(r.short() / 256.0, 3), framerate=round(r.short() / 256.0, 3),
+                       visible=r.byte())
+        except Exception:
+            pass
+    elif out['type'] == 3:
+        out['prop'] = r.short()
+        out['visible'] = r.byte()
+    elif out['type'] == 4:
+        out['prop'] = r.short()
+        out['pos'] = [r.long() / 8.0 for _ in range(3)]
     return out
 
 
@@ -292,18 +502,55 @@ def break_model(r):
             'life': r.byte(), 'flags': r.byte(), 'scale': r.short()}
 
 
-DECODERS = {'BreakModel': break_model, 'KeyedDLight': keyed_dlight, 'ObjectHint': object_hint, 'PlayVideo': play_video, 'WScreen': wscreen, 'svc:23': temp_entity, 'MapMusic': map_music, 'DeathMsg': death_msg, 'SboDeathMsg': sbo_death_msg, 'GameTimer': game_timer, 'Fog': fog, 'FogZone': fog_zone, 'WeatherVol': weather_vol, 'MessageBox': message_box, 'TutorText': tutor_text,
+def show_menu(r):
+    out = {'keys': r.short(), 'time': r.byte(), 'more': r.byte(), 'text': r.string()}
+    title = out['text'].split('\n')[0]
+    if title.startswith('\\y'):
+        title = title[2:]
+    out['title'] = title.split('\xb7 ')[-1]
+    return out
+
+
+DECODERS = {'Aurora': aurora, 'Mirror': mirror, 'SetSky': set_sky, 'WorldText': world_text,
+            'WorldTextP': lambda r: {'id': r.short(), 'text': r.string()},
+            'BreakModel': break_model, 'KeyedDLight': keyed_dlight, 'LightOrigin': light_origin, 'StaticProp': static_prop, 'ObjectHint': object_hint, 'PlayVideo': play_video, 'WScreen': wscreen, 'svc:23': temp_entity, 'MapMusic': map_music, 'DeathMsg': death_msg, 'SboDeathMsg': sbo_death_msg, 'GameTimer': game_timer, 'Fog': fog, 'FogZone': fog_zone, 'WeatherVol': weather_vol, 'MessageBox': message_box, 'Overlay': overlay, 'ColorCorr': color_corr, 'TutorText': tutor_text,
+            'Objective': objective,
+            # sound.cpp TEXTURETYPE_SendGrassInfo (CS:CZ DS GrassInfo): string sprite, coord fade, min, max, long density
+            'GrassInfo': lambda r: {'sprite': r.string(), 'fade': r.short() / 8.0, 'min': r.short() / 8.0,
+                                    'max': r.short() / 8.0, 'density': r.long()},
+            'MatFile': lambda r: {'file': r.string()},     # player.cpp: the map's materials file ("" none)
+            # player.cpp UpdateClientData: the HIDEHUD_* bits (4 HIDEHUD_ALL: the whole HUD)
+            'HideWeapon': lambda r: (lambda f: {'flags': f, 'all': bool(f & 4)})(r.byte()),
             'TextMsg': text_msg, 'TutorPart': lambda r: {'text': r.string()},
+            # inventory.cpp Inv_Write (game_shared/inventory_shared.h): short count, string item, string icon, byte flags
+            'Inventory': lambda r: {'count': r.short(), 'item': r.string(), 'icon': r.string(), 'shared': r.byte() & 1},
             # coop.cpp HeavyLimit_Update: grenade launchers the other players hold, their limit, nuclear launchers, limit
             'HeavyLimit': lambda r: {'gl': r.byte(), 'gl_max': r.byte(), 'nuke': r.byte(), 'nuke_max': r.byte()},
             'Capability': lambda r: {'bits': r.long()},
+            # player.cpp UpdateClientData: the server's sv_cheats value (the client's in-game editors need 2)
+            'Cheats': lambda r: {'value': r.byte()},
             'MsgBoxPart': lambda r: {'which': r.byte(), 'text': r.string()},
             # weapons.cpp UpdateClientData / player.cpp: state (1 = active), weapon id, clip
             'CurWeapon': lambda r: {'state': r.byte(), 'id': r.byte(), 'clip': r.byte()},
+            # weapons.cpp AddToPlayer: the weapon id picked up; player.cpp UpdateClientData: weapon ids 32..63 he holds
+            'WeapPickup': lambda r: {'id': r.byte()},
+            'WeaponsHigh': lambda r: {'bits': r.long() & 0xffffffff},
             'SetFOV': lambda r: {'fov': r.byte()},
+            # SVC_WEAPONANIM (35, weapons.cpp SendWeaponAnim): the view model's sequence, its body
+            'svc:35': lambda r: {'anim': r.byte(), 'body': r.byte()},
+            # SVC_ROOMTYPE (37, player.cpp UpdateClientData: the env_sound room type the client has): short
+            'svc:37': lambda r: {'room': r.short()},
+            # SVC_SPAWNSTATICSOUND (29, sound.cpp AmbientSoundMsg: one client's own volume of an ambient_generic linear
+            # play mode): coord origin x 3 (a short of 1/8 units), short sound, byte volume x 255, byte attenuation x 64,
+            # short entity, byte pitch, byte flags
+            'svc:29': lambda r: {'origin': [r.short() / 8.0 for _ in range(3)], 'sound': r.short(), 'vol': r.byte(),
+                                 'attn': r.byte(), 'ent': r.short(), 'pitch': r.byte(), 'flags': r.byte()},
             # util.cpp UTIL_ScreenFadeWrite: duration, hold (4.12 fixed, unsigned), flags (FFADE_*), r, g, b, alpha
             'ScreenFade': lambda r: {'duration': (r.short() & 0xffff) / 4096.0, 'hold': (r.short() & 0xffff) / 4096.0,
                                      'flags': r.short(), 'r': r.byte(), 'g': r.byte(), 'b': r.byte(), 'a': r.byte()},
+            # util.cpp UTIL_ScreenShake: amplitude, duration (4.12 fixed), frequency (8.8 fixed), all unsigned
+            'ScreenShake': lambda r: {'amplitude': (r.short() & 0xffff) / 4096.0, 'duration': (r.short() & 0xffff) / 4096.0,
+                                      'frequency': (r.short() & 0xffff) / 256.0},
             # multiplay_gamerules.cpp SboScoreboard_WriteScoreInfo: client, score (co-op: the level), deaths, class, team
             'ScoreInfo': lambda r: {'client': r.byte(), 'score': r.short(), 'deaths': r.short(), 'class': r.short(),
                                     'team': r.short()},
@@ -313,7 +560,12 @@ DECODERS = {'BreakModel': break_model, 'KeyedDLight': keyed_dlight, 'ObjectHint'
             'ReceiveW': lambda r: {'weather': r.byte()},
             # items.cpp: the HUD pickup icon's hud.txt name; util.cpp UTIL_ShowMessage: the text (titles.txt name)
             'ItemPickup': lambda r: {'name': r.string()},
-            'HudText': lambda r: {'text': r.string()}}
+            'HudText': lambda r: {'text': r.string()},
+            # gmmode.cpp GmMode_Notice: the line under the Game Master's crosshair
+            'GmNotice': lambda r: {'text': r.string()},
+            # player.cpp / gmmode.cpp text menus: keys, time, more, text; 'title' the first line after its color code
+            # and up to a " \xb7 " (the GM menus' "ORDERS \xb7 2 SELECTED": '2 SELECTED')
+            'ShowMenu': show_menu}
 
 
 def decode(name, data, type_=None):

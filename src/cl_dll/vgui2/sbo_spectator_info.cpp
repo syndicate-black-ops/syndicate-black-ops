@@ -23,6 +23,7 @@
 #include "sbo_bridge.h"
 #include "sbo_menus.h"
 #include "sbo_spectator_info.h"
+#include "vgui2_api.h"
 
 #define SPECTATORINFO_RES VGUI2_ROOT_DIR "resource/spectatorinfo.res"
 
@@ -34,6 +35,24 @@ const char *WeaponShortName(const char *classname)
 	return !strncmp(classname, "weapon_", 7) ? classname + 7 : classname;
 }
 } // namespace
+
+void VGui2_WeaponDisplayName(const char *code, char *out, int outSize)
+{
+	if (!out || outSize <= 0)
+		return;
+	out[0] = 0;
+	if (!code)
+		return;
+
+	const char *shortName = WeaponShortName(code);
+	char token[64];
+	Q_snprintf(token, sizeof(token), "#SBO_Weapon_%s", shortName);
+	const wchar_t *name = g_pVGuiLocalize ? g_pVGuiLocalize->Find(token) : nullptr;
+	if (name)
+		g_pVGuiLocalize->ConvertUnicodeToANSI(name, out, outSize);
+	else
+		Q_strncpy(out, shortName, outSize);
+}
 
 CSboSpectatorInfoPanel::CSboSpectatorInfoPanel(vgui2::Panel *pParent)
     : BaseClass(pParent, "SpectatorInfoPanel")
@@ -62,7 +81,7 @@ CSboSpectatorInfoPanel::CSboSpectatorInfoPanel(vgui2::Panel *pParent)
 		pFile->deleteThis();
 	}
 	else
-		sbo::ConsolePrint("Spectator info: " SPECTATORINFO_RES " not found, using defaults\n");
+		sbo::DevPrint("Spectator info: " SPECTATORINFO_RES " not found, using defaults\n");
 
 	SetVisible(false);
 }

@@ -15,7 +15,9 @@ def info(t, name, **kv):
 
 
 @S.test('trigger_inout: entering fires target and both ON, leaving fires the leave target and both OFF', players=3,
-        doc='STATE_LOGIC.md')
+        doc='STATE_LOGIC.md',
+        covers=('trigger_inout', 'trigger_inout.target', 'trigger_inout.m_iszAltTarget',
+                'trigger_inout.m_iszBothTarget'))
 def inout(t):
     t.trigger('trigger_inout', size=(128, 128, 96), at=(0, 120, 0), target='enter', m_iszAltTarget='leave',
               m_iszBothTarget='both')
@@ -47,7 +49,8 @@ def frozen_camera(t, player, wait='3'):
     t.expect.value('run', player, 'flags', FROZEN, op='&')
 
 
-@S.test('trigger_camera Freeze Player: FL_FROZEN while it runs, cleared at its end', players=3, doc='LOGIC_ENTITIES.md')
+@S.test('trigger_camera Freeze Player: FL_FROZEN while it runs, cleared at its end', players=3, doc='LOGIC_ENTITIES.md',
+        covers=('trigger_camera', 'trigger_camera:4', 'trigger_camera.wait'))
 def cam_end(t):
     frozen_camera(t, 'player1', wait='0.6')
     t.wait(0.8)
@@ -55,7 +58,8 @@ def cam_end(t):
     t.expect.value('after', 'player1', 'flags', FROZEN, op='!&')
 
 
-@S.test('trigger_camera Freeze Player: death clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md')
+@S.test('trigger_camera Freeze Player: death clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md',
+        covers=('trigger_camera', 'trigger_camera:4'))
 def cam_death(t):
     frozen_camera(t, 'player2')
     t.damage('player2', 5000)
@@ -64,7 +68,8 @@ def cam_death(t):
     t.expect.value('after', 'player2', 'flags', FROZEN, op='!&')
 
 
-@S.test('trigger_inout: a player who dies inside counts as leaving', players=3, doc='STATE_LOGIC.md')
+@S.test('trigger_inout: a player who dies inside counts as leaving', players=3, doc='STATE_LOGIC.md',
+        covers=('trigger_inout', 'trigger_inout.target', 'trigger_inout.m_iszAltTarget'))
 def inout_death(t):
     t.trigger('trigger_inout', size=(128, 128, 96), at=(0, 120, 0), target='enter', m_iszAltTarget='leave')
     info(t, 'enter')
@@ -80,7 +85,8 @@ def inout_death(t):
 
 
 @S.test('round restart: game_round_end then game_round_start (world as activator), round_reset entities reset',
-        players=3, doc='LOGIC_ENTITIES.md')
+        players=3, doc='LOGIC_ENTITIES.md',
+        covers=('game_number', 'game_number.round_reset=1', 'game_number.round_reset=0', 'trigger_camera:4'))
 def round_hooks(t):
     t.point('trigger_relay', targetname='=game_round_end', target='ended', triggerstate='2')
     t.point('trigger_relay', targetname='=game_round_start', target='started', triggerstate='2')
@@ -125,7 +131,8 @@ def round_hooks(t):
     t.expect.used('@info_target', caller='rnd', count=1, after='again')     # a full pool again after it
 
 
-@S.test('trigger_camera Freeze Player: a respawn clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md')
+@S.test('trigger_camera Freeze Player: a respawn clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md',
+        covers=('trigger_camera', 'trigger_camera:4'))
 def cam_respawn(t):
     frozen_camera(t, 'player1')
     t.console('test_spawn player1')
@@ -134,7 +141,8 @@ def cam_respawn(t):
     t.expect.value('after', 'player1', 'flags', FROZEN, op='!&')
 
 
-@S.test('trigger_camera Freeze Player: going to spectator mode clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md')
+@S.test('trigger_camera Freeze Player: going to spectator mode clears FL_FROZEN', players=3, doc='LOGIC_ENTITIES.md',
+        covers=('trigger_camera', 'trigger_camera:4'))
 def cam_spectate(t):
     frozen_camera(t, 'player2')
     t.cmd('player2', 'spectate')

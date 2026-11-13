@@ -1,0 +1,22 @@
+# a stock trigger_relay with a delay into a game_text without "All Players": the relay passes itself, so after the
+# delay the activator is NULL on 1.38 (only a player was kept), and 1.38's game_text called IsNetClient() on it (a
+# server crash). develop keeps the relay as the activator and checks for NULL: nobody gets the text, the map goes on.
+# The same game_text with "All Players" (flag 1) reaches every player on both
+# covers: game_text:1 trigger_relay.delay
+map co_fuzz
+spawn trigger_relay targetname r_all target gt_all delay 1
+spawn game_text targetname gt_all message text_all spawnflags 1
+spawn trigger_relay targetname r_one target gt_one delay 1
+spawn game_text targetname gt_one message text_one
+activate
+connect 1 P1
+frames 3
+fire r_all
+frames 15
+expectn 1 MSTR 23 ->#1: text_all
+mark relay_delay_into_activator_text
+fire r_one
+frames 15
+expectnot MSTR 23 ->#1: text_one
+mark after
+frames 5

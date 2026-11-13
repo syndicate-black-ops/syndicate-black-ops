@@ -157,18 +157,13 @@ void CBen::PrimaryAttack()
 	if (m_iClip != 0)
 		m_flPumpTime = gpGlobals->time + 0.5;	// halflife-updated: a time, not a weapon time (never reached on the server)
 
-#ifdef CLIENT_DLL
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.75;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.75;
-#else
-	// SBO: the 2005 server fires faster than the 2003 client
+	// one rate on the server and in the client's prediction, so the client predicts the shots the server fires
 	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.4;
 	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.4;
-#endif
 	if (m_iClip != 0)
 		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
 	else
-		m_flTimeWeaponIdle = 0.75;
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 0.75;
 	m_fInSpecialReload = 0;
 }
 
@@ -267,9 +262,9 @@ void CBen::WeaponIdle( void )
 		}
 		else
 		{
-			int iAnim;
-			iAnim = BEN_IDLE;
-			SendWeaponAnim( iAnim );
+			// sent once: sending it every frame would restart the idle animation on the client each frame
+			if ( m_pPlayer->pev->weaponanim != BEN_IDLE )
+				SendWeaponAnim( BEN_IDLE );
 		}
 	}
 }

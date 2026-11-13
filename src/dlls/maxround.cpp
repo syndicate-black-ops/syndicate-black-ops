@@ -33,6 +33,7 @@ void CMaxround::KeyValue( KeyValueData *pkvd )
 		pkvd->fHandled = TRUE;
 	}
 
-	if ( g_iMapRoundLimit <= 2 )
+	// SBO 2.0: 1 and 2 are used as written (1.38: <= 2 gave 5)
+	if ( g_iMapRoundLimit <= 0 )
 		g_iMapRoundLimit = 5;
 }

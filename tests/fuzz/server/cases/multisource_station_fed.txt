@@ -1,0 +1,22 @@
+# co_station_v1 second lock (entities 796, 826, 825, 824): trigger_relay shuttle_destr_relay_1 (delay 3, triggerstate 2)
+# -> trigger_relay shuttle_destr_relay (delay 2, triggerstate 1) -> multisource lock_fed_makers_kill
+# = master of trigger_once (target fed_approach_relay, killtarget maker_feds).
+# Case-only addition: the multisource gets target ms_fed_fired.
+map co_fuzz
+connect 1
+spawn multisource targetname lock_fed_makers_kill target ms_fed_fired
+spawn trigger_relay targetname shuttle_destr_relay_1 target shuttle_destr_relay delay 3 triggerstate 2 health -1
+spawn trigger_relay targetname shuttle_destr_relay target lock_fed_makers_kill delay 2 triggerstate 1 spawnflags 0 health -1
+spawn trigger_once model *113 master lock_fed_makers_kill target fed_approach_relay killtarget maker_feds delay 0
+spawn trigger_relay targetname fed_approach_relay target fed_sink triggerstate 0 delay 0 health -1
+spawn trigger_relay targetname ms_fed_fired target ms_sink
+activate
+frames 3
+use 1 world
+frames 80
+touch 3 1
+frames 3
+expect Firing: (lock_fed_makers_kill)
+expect Firing: (ms_fed_fired)
+expect Firing: (fed_approach_relay)
+expectn 0 MultiSrc:Used by non member

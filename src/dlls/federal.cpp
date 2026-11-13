@@ -191,7 +191,8 @@ void CFederal::PrimaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usFederal, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.05;
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.05 );
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10;
 }
 
@@ -240,5 +241,8 @@ void CFederal::WeaponIdle( void )
 	ResetEmptySound( );
 
 	if ( m_flTimeWeaponIdle < UTIL_WeaponTimeBase() )
+	{
 		SendWeaponAnim( FEDERAL_IDLE );
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 101.0 / 16.0;	// the idle sequence's length: sent once per loop
+	}
 }

@@ -1,0 +1,25 @@
+# coop: game_end fired before the first round (player connected, no loadout yet): 1.38 waits for a round, 2.0 ends at once (b0c166ea)
+# covers: game_end
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn game_end targetname ge
+spawn trigger_relay targetname go target ge triggerstate 2
+activate
+connect 1 P1
+frames 5
+mark fire_game_end
+useent 1 world
+frames 50
+cmd 1 item 1
+frames 300
+expect SUCCESSFULL MISSION
+expect SVC_INTERMISSION

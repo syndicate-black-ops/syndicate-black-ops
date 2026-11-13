@@ -1,0 +1,33 @@
+# monster TriggerAltCondition (a second condition firing the same TriggerTarget, whichever comes first, once) and
+# trigger_on_death (fired once when it is killed), both Featureful (FGD Monster base): condition 4 Death with
+# alternative 3 "50% Health Remaining" fires at half health, not again at death; trigger_on_death fires at death.
+# 1.38 reads neither key: there the target fires only at death
+# covers: monster_scientist.triggeraltcondition=3 monster_scientist.trigger_on_death monster_scientist.triggercondition=4
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_scientist TriggerCondition 4 TriggerAltCondition 3 TriggerTarget cond_alt trigger_on_death on_death origin "0 300 0"
+spawn trigger_hurt model *1 dmg 120 damagetype 0
+spawn trigger_hurt model *2 dmg 1000 damagetype 0
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+touchent 1 0
+frames 20
+dump 0
+expectn 1 Firing: (cond_alt)
+expectnot Firing: (on_death)
+touchent 2 0
+frames 30
+expectn 1 Firing: (cond_alt)
+expectn 1 Firing: (on_death)

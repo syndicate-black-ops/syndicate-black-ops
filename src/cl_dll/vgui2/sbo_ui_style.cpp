@@ -214,6 +214,33 @@ int FontTall(vgui2::HFont font)
 	return vgui2::surface()->GetFontTall(font);
 }
 
+//! Word-wrapped lines of text at most maxW wide (a word longer than the line is cut where it must)
+std::vector<std::wstring> WrapLines(vgui2::HFont font, const std::string &utf8, int maxW)
+{
+	std::vector<std::wstring> lines;
+	const std::wstring text = Widen(utf8.c_str());
+	size_t pos = 0;
+	while (pos < text.size() && lines.size() < 16)
+	{
+		size_t end = pos, lastSpace = std::wstring::npos;
+		while (end < text.size() && TextWide(font, text.substr(pos, end - pos + 1)) <= maxW)
+		{
+			if (text[end] == L' ')
+				lastSpace = end;
+			end++;
+		}
+		if (end < text.size() && lastSpace != std::wstring::npos && lastSpace > pos)
+			end = lastSpace;
+		if (end == pos)
+			end = pos + 1;
+		lines.push_back(text.substr(pos, end - pos));
+		pos = end;
+		while (pos < text.size() && text[pos] == L' ')
+			pos++;
+	}
+	return lines;
+}
+
 //! Text vertically centered in [y, y + h)
 int DrawTextMid(vgui2::HFont font, Color color, int x, int y, int h, const std::wstring &text, int maxWide)
 {

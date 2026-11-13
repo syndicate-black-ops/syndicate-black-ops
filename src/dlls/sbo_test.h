@@ -20,6 +20,7 @@ void Test_ServerDeactivate( void );
 BOOL Test_ClientCommand( edict_t *pEntity, const char *pcmd );	// a player's test_* command (sv_cheats 1)
 void Test_TraceFire( const char *pszTarget, CBaseEntity *pActivator, CBaseEntity *pCaller, int useType, float value );
 void Test_TraceUse( CBaseEntity *pTarget, CBaseEntity *pActivator, CBaseEntity *pCaller, int useType, float value );
+BOOL Test_ShotLuckOff( void );						// test_shotluck 0: no random perfect / failed hits (combat.cpp)
 
 #define SBO_TEST_CALL( x )	x
 

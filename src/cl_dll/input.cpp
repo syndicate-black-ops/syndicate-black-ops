@@ -418,6 +418,16 @@ static int HUD_Key_EventInternal( int down, int keynum, const char *pszCurrentBi
 		return 1;
 	}
 
+	// SBO 2.0 in-game tool windows (the color correction editor): the mouse buttons and wheel are VGUI2's, the
+	// keyboard stays the game's (walking while editing)
+	if ( VGui2_ToolWindows_HaveMouse() &&
+		 ( ( keynum >= K_MOUSE1 && keynum <= K_MOUSE5 ) || keynum == K_MWHEELUP || keynum == K_MWHEELDOWN ) )
+		return 0;
+	// ... and while one of their text fields is typed in, the keys are the field's: a press runs no binding (a
+	// release does, so a key held before typing started is let go); the console key still works
+	if ( down && keynum != '`' && keynum != '~' && VGui2_ToolWindows_TextInput() )
+		return 0;
+
 	// VGUI2 scoreboard (BHL CClientViewport::KeyInput): hud_scoreboard_mousebtn activates its cursor; while the
 	// cursor is on, mouse buttons/wheel belong to VGUI2 (no +attack)
 	{
@@ -540,7 +550,7 @@ void IN_Attack2Down(void)
 {
 	// game_messagebox: while a message box is shown the secondary attack does nothing (no secondary fire, no
 	// spectator target change); the release is ignored (KeyUp)
-	if ( VGui2_MessageBox_IsActive() || VGui2_GmSpawn_IsOpen() )
+	if ( VGui2_MessageBox_IsActive() || VGui2_GmSpawn_IsOpen() || VGui2_ToolWindows_HaveMouse() )
 		return;
 
 	// SBO 2.0 world screens (vgui_screen): aimed at one, the secondary attack is its right click (no secondary fire);
@@ -594,8 +604,8 @@ void IN_AttackDown(void)
 	if ( VGui2_MessageBox_Attack() )
 		return;
 
-	// SBO 2.0 GM mode: a click in the spawn window is the window's
-	if ( VGui2_GmSpawn_IsOpen() )
+	// SBO 2.0 GM mode: a click in the spawn window is the window's; the same for the tool windows
+	if ( VGui2_GmSpawn_IsOpen() || VGui2_ToolWindows_HaveMouse() )
 		return;
 
 	// SBO 2.0 GM mode: a flying Game Master's Fire held and dragged draws the selection box on the screen

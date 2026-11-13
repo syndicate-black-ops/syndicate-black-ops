@@ -1,0 +1,43 @@
+# Monster keys (FGD): monster_human_grunt Weapons 1 / 3 / 5 / 8 / 10 and dark_grunt Weapons 1 / 3 / 8 / 10 are the
+# weapon bits the AI reads (pev->weapons: 1 9mmAR / chaingun, 2 hand grenades, 4 grenade launcher, 8 shotgun /
+# sniper); monster_scientist Body 0-3 and monster_dark Body 0-3 pick that head (pev->body). Random (-1) is not
+# compared: the stub's random numbers differ between the binaries
+# covers: monster_human_grunt.weapons monster_human_grunt.weapons=1 monster_human_grunt.weapons=3 monster_human_grunt.weapons=5 monster_human_grunt.weapons=8 monster_human_grunt.weapons=10 dark_grunt.weapons dark_grunt.weapons=1 dark_grunt.weapons=3 dark_grunt.weapons=8 dark_grunt.weapons=10 monster_scientist.body monster_scientist.body=0 monster_scientist.body=1 monster_scientist.body=2 monster_scientist.body=3 monster_dark.body monster_dark.body=0 monster_dark.body=1 monster_dark.body=2 monster_dark.body=3
+map co_fuzz
+cvar mp_makermon 1
+spawn monster_human_grunt targetname g1 weapons 1 origin "0 1000 0"
+spawn monster_human_grunt targetname g3 weapons 3 origin "100 1000 0"
+spawn monster_human_grunt targetname g5 weapons 5 origin "200 1000 0"
+spawn monster_human_grunt targetname g8 weapons 8 origin "300 1000 0"
+spawn monster_human_grunt targetname g10 weapons 10 origin "400 1000 0"
+spawn dark_grunt targetname d1 weapons 1 origin "0 1200 0"
+spawn dark_grunt targetname d3 weapons 3 origin "100 1200 0"
+spawn dark_grunt targetname d8 weapons 8 origin "200 1200 0"
+spawn dark_grunt targetname d10 weapons 10 origin "300 1200 0"
+spawn monster_scientist targetname s0 body 0 origin "0 1400 0"
+spawn monster_scientist targetname s1 body 1 origin "100 1400 0"
+spawn monster_scientist targetname s2 body 2 origin "200 1400 0"
+spawn monster_scientist targetname s3 body 3 origin "300 1400 0"
+spawn monster_dark targetname k0 body 0 origin "0 1600 0"
+spawn monster_dark targetname k1 body 1 origin "100 1600 0"
+spawn monster_dark targetname k2 body 2 origin "200 1600 0"
+spawn monster_dark targetname k3 body 3 origin "300 1600 0"
+activate
+frames 5
+expectfield g1 weapons 1
+expectfield g3 weapons 3
+expectfield g5 weapons 5
+expectfield g8 weapons 8
+expectfield g10 weapons 10
+expectfield d1 weapons 1
+expectfield d3 weapons 3
+expectfield d8 weapons 8
+expectfield d10 weapons 10
+expectfield s0 body 0
+expectfield s1 body 1
+expectfield s2 body 2
+expectfield s3 body 3
+expectfield k0 body 0
+expectfield k1 body 1
+expectfield k2 body 2
+expectfield k3 body 3

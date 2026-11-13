@@ -66,7 +66,7 @@ void CMiniMem::Deallocate(void* memory)
 	if (it != _particles.end())
 		_particles.erase(it);
 	else
-		gEngfuncs.Con_Printf("Couldn't find a particle in the particles array to erase!\n");
+		gEngfuncs.Con_DPrintf("Couldn't find a particle in the particles array to erase!\n");
 
 	free(memory);
 	//_pool.deallocate(memory, sizeInBytes, alignment);
@@ -247,7 +247,7 @@ void CMiniMem::Reset()
 
 	if (_particles.size() != 0)
 	{
-		gEngfuncs.Con_Printf("Didn't delete all particles?!");
+		gEngfuncs.Con_DPrintf("Didn't delete all particles?!\n");
 		_particles.clear();
 	}
 

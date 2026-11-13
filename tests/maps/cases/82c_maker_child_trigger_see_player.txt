@@ -1,0 +1,27 @@
+# monstermaker childtriggercondition 1 "See Player, Mad at Player" and 10 "See Player Unconditional": human grunt children made next to a player fire their maker's childtriggertarget (the stub puts every
+# client in every PVS). 1.38 ignores the keys
+# covers: monstermaker.childtriggercondition=1 monstermaker.childtriggercondition=10
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monstermaker targetname mk1 monstertype monster_human_grunt monstercount 1 childtriggertarget see_1 childtriggercondition 1 origin "0 300 0"
+spawn monstermaker targetname mk10 monstertype monster_human_grunt monstercount 1 childtriggertarget see_10 childtriggercondition 10 origin "300 300 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+useent 0 world
+useent 1 world
+frames 100
+count monster_human_grunt
+expectn 1 Firing: (see_1)
+expectn 1 Firing: (see_10)

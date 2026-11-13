@@ -54,10 +54,11 @@ def kv_text(kv):
 
 
 class MapWriter:
-    def __init__(self, wad):
+    def __init__(self, wad, world_keys=None):
         self.world = []
         self.ents = []
         self.wad = wad
+        self.world_keys = dict(world_keys or {})
 
     def add_world(self, brushes):
         self.world += brushes
@@ -67,6 +68,8 @@ class MapWriter:
 
     def text(self):
         out = ['{\n"classname" "worldspawn"\n"mapversion" "220"\n"wad" "%s"\n"MaxRange" "8192"\n' % self.wad]
+        if self.world_keys:
+            out.append(kv_text(self.world_keys))
         out += [b + '\n' for b in self.world]
         out.append('}\n')
         for kv, brushes in self.ents:

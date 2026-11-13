@@ -148,8 +148,9 @@ void CCanon::PrimaryAttack()
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usCanon1, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.75;
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.5 );
+	m_flNextSecondaryAttack = GetNextAttackDelay( 0.75 );
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
 }
 
@@ -193,8 +194,9 @@ void CCanon::SecondaryAttack( void )
 
 	PLAYBACK_EVENT_FULL( flags, m_pPlayer->edict(), m_usCanon2, 0.0, (float *)&g_vecZero, (float *)&g_vecZero, vecDir.x, vecDir.y, 0, 0, 0, 0 );
 
-	m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.5;
-	m_flNextSecondaryAttack = UTIL_WeaponTimeBase() + 0.75;
+	// halflife #3252: counted from the time the shot was due, so the gun fires at this rate at any frame rate
+	m_flNextPrimaryAttack = GetNextAttackDelay( 0.5 );
+	m_flNextSecondaryAttack = GetNextAttackDelay( 0.75 );
 	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 5.0;
 }
 
@@ -210,7 +212,7 @@ void CCanon::Reload( void )
 
 	if (iResult)
 	{
-		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 );
+		m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 );
 	}
 }
 
@@ -225,7 +227,7 @@ void CCanon::WeaponIdle( void )
 		return;
 
 	int iAnim;
-	switch ( RANDOM_LONG( 0, 1 ) )
+	switch ( UTIL_SharedRandomLong( m_pPlayer->random_seed, 0, 1 ) )
 	{
 	case 0:	
 		iAnim = CANON_IDLE2;	
@@ -239,5 +241,5 @@ void CCanon::WeaponIdle( void )
 
 	SendWeaponAnim( iAnim );
 
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + RANDOM_FLOAT( 10, 15 ); // how long till we do this again.
+	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 10, 15 ); // how long till we do this again.
 }

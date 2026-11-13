@@ -1,0 +1,26 @@
+# coop: a player in an active round, then a game_end fired through a trigger_relay: SUCCESSFULL MISSION and the intermission
+# covers: game_end trigger_relay.target
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn game_end targetname ge
+spawn trigger_relay targetname go target ge
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark round_running
+useent 1 world
+frames 100
+expect ROUND START
+expect SUCCESSFULL MISSION
+expect SVC_INTERMISSION

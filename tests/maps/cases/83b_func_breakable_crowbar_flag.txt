@@ -1,0 +1,39 @@
+# func_breakable flag 256 "Instant Crowbar": a player's crowbar (club damage, the player both attacker and inflictor)
+# breaks it at once; the stub cannot aim a crowbar (no trace hits), so this case checks the other side of the rule:
+# club damage from something else (a trigger_hurt with damage type 128 Club) is not instant, it only counts double
+# (HL SDK: breakables take double club damage), with or without the flag. Health 100, 2 x 20 club per touch = 40:
+# both still stand after one touch and break at the third
+# covers: func_breakable:256 trigger_hurt.damagetype=128
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn func_breakable model *1 health 100 target crowbar_flag_broke spawnflags 256 material 1
+spawn func_breakable model *2 health 100 target no_flag_broke material 1
+spawn trigger_hurt model *3 dmg 40 damagetype 128
+activate
+connect 1 P1
+frames 3
+touchent 2 0
+touchent 2 1
+frames 2
+dump 0
+dump 1
+expectnot Firing: (crowbar_flag_broke)
+expectnot Firing: (no_flag_broke)
+frames 6
+touchent 2 0
+touchent 2 1
+frames 6
+touchent 2 0
+touchent 2 1
+frames 6
+expectn 1 Firing: (crowbar_flag_broke)
+expectn 1 Firing: (no_flag_broke)

@@ -1,0 +1,23 @@
+# Point entities the 1.38 maps place most (FGD): info_target stays where it is put (a target for beams, cameras,
+# teleports), not solid; info_null removes itself at spawn (a compiler-only spot target); env_glow shows its Sprite
+# Name at its Scale, not solid; light_environment sets the model lighting direction (sv_skyvec, the forward vector
+# of its angles with the pitch negated): Pitch -90 (after Angles, as the editor writes it) points straight down
+# covers: info_target info_null light_environment light_environment.pitch env_glow env_glow.model env_glow.scale
+map co_fuzz
+spawn info_target targetname tgt origin "100 200 300"
+spawn info_null targetname nul origin "0 0 0"
+spawn env_glow targetname glow model sprites/glow01.spr scale 3 rendermode 3 renderamt 200 origin "0 100 0"
+spawn light_environment angles "0 0 0" pitch -90 _light "255 255 128 200"
+activate
+frames 5
+expectcount info_target 1
+expectfield tgt origin "100 200 300"
+expectfield tgt solid 0
+expectcount info_null 0
+expectcount env_glow 1
+expectfield glow scale 3
+expectfield glow solid 0
+expectfield glow model sprites/glow01.spr
+expectcvar sv_skyvec_x 0
+expectcvar sv_skyvec_y 0
+expectcvar sv_skyvec_z -1

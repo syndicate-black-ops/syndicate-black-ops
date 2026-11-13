@@ -1,0 +1,10 @@
+# co_spells: garg_relay (trigger_relay, delay 4, triggerstate 1, fire once) -> multisource teleporter_lock (master of trigger_teleport teleport_area)
+map co_fuzz
+spawn multisource targetname teleporter_lock target ms_fired
+spawn trigger_relay targetname garg_relay target teleporter_lock delay 4 triggerstate 1 spawnflags 1
+spawn trigger_relay targetname ms_fired target ms_fired_sink
+activate
+frames 3
+use 1 world
+frames 60
+expect Firing: (ms_fired)

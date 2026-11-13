@@ -3,7 +3,7 @@
 // and no edict for a prop without a name. Not solid (a clip brush gives collision where needed).
 //
 // The idea and the keys are XDM's env_static (Xawari, XDM source dlls/environment.cpp CEnvStatic and
-// cl_dll/cl_msg_fx.cpp __MsgFunc_StaticEnt; Half-Life 1 SDK license per the owner): the server sends each prop in a
+// cl_dll/cl_msg_fx.cpp __MsgFunc_StaticEnt; Half-Life 1 SDK license): the server sends each prop in a
 // message, the client loads the model by name. The code is written for SBO (XDM keeps an edict per prop and draws
 // with its own render system). docs/ENV_STATIC.md.
 //
@@ -22,6 +22,7 @@
 #include	"studio.h"
 #include	"static_props_shared.h"
 #include	"client_sendqueue.h"
+#include	"light_origin.h"	// SBO 2.0: "lightorigin"
 
 extern int gmsgStaticProp;
 
@@ -48,6 +49,9 @@ struct static_prop_t
 	int		body, skin, sequence;
 	float	scale, framerate;
 	BOOL	visible;
+	string_t	lightorigin;	// SBO 2.0: the info_light_origin it is lit from (light_origin.h)
+	int		lightState;			// 0: not looked up yet, 1: found (lightPos), 2: none
+	Vector	lightPos;
 };
 
 static static_model_t s_Models[ STATICPROP_MAX_MODELS ];
@@ -187,6 +191,24 @@ static void EnvStatic_WriteProp( int iProp )
 	WRITE_BYTE( p->visible ? 1 : 0 );
 }
 
+// SBO 2.0: the prop's info_light_origin (looked up once, after every entity spawned); FALSE: none
+static BOOL EnvStatic_LightOrigin( int iProp )
+{
+	static_prop_t *p = &s_Props[ iProp ];
+	if ( p->lightState == 0 )
+		p->lightState = LightOrigin_Find( STRING( p->lightorigin ), p->lightPos ) ? 1 : 2;
+	return p->lightState == 1;
+}
+
+static void EnvStatic_WriteLightOrigin( int iProp )
+{
+	const static_prop_t *p = &s_Props[ iProp ];
+	WRITE_BYTE( STATICPROP_LIGHTORIGIN );
+	WRITE_SHORT( iProp );
+	for ( int i = 0; i < 3; i++ )
+		WRITE_LONG( (int)( p->lightPos[i] * 8.0f ) );
+}
+
 //=========================================================
 
 class CEnvStatic : public CPointEntity
@@ -197,6 +219,7 @@ public:
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
 
 	int m_iProp;	// index in s_Props, -1 none
+	string_t m_iszLightOrigin;	// SBO 2.0: "lightorigin"
 };
 
 LINK_ENTITY_TO_CLASS( env_static, CEnvStatic );
@@ -205,6 +228,11 @@ void CEnvStatic::KeyValue( KeyValueData *pkvd )
 {
 	if ( FStrEq( pkvd->szKeyName, "type" ) )	// XDM's detail type: read, not used
 		pkvd->fHandled = TRUE;
+	else if ( FStrEq( pkvd->szKeyName, "lightorigin" ) )	// SBO 2.0 (Trinity renderer): lit from this marker
+	{
+		m_iszLightOrigin = ALLOC_STRING( pkvd->szValue );
+		pkvd->fHandled = TRUE;
+	}
 	else
 		CPointEntity::KeyValue( pkvd );
 }
@@ -249,6 +277,8 @@ void CEnvStatic::Spawn( void )
 		p->scale = pev->scale;
 		p->framerate = pev->framerate;
 		p->visible = !( pev->spawnflags & SF_ENVSTATIC_START_INVISIBLE );
+		p->lightorigin = m_iszLightOrigin;
+		p->lightState = FStringNull( m_iszLightOrigin ) ? 2 : 0;
 		if ( s_Models[ iModel ].firstProp < 0 )
 			s_Models[ iModel ].firstProp = s_iProps;
 		m_iProp = s_iProps++;
@@ -319,7 +349,9 @@ static int EnvStatic_SendQueued( CBasePlayer *pPlayer, int &iCursor, int &iBudge
 		// the model's name goes before the first prop that uses it (the client forgot all with the CLEAR)
 		const BOOL bFirstOfModel = s_Models[ model ].firstProp == i;
 
-		const int iSize = STATICPROP_PROP_BYTES + ( bFirstOfModel ? 8 + (int)strlen( STRING( s_Models[ model ].name ) ) : 0 );
+		const BOOL bLightOrigin = EnvStatic_LightOrigin( i );	// SBO 2.0
+		const int iSize = STATICPROP_PROP_BYTES + ( bFirstOfModel ? 8 + (int)strlen( STRING( s_Models[ model ].name ) ) : 0 )
+			+ ( bLightOrigin ? STATICPROP_LIGHTORIGIN_BYTES : 0 );
 		if ( iSize > iBudget && iBudget < ENVSTATIC_QUEUE_BYTES )
 		{
 			iCursor = i;
@@ -336,6 +368,13 @@ static int EnvStatic_SendQueued( CBasePlayer *pPlayer, int &iCursor, int &iBudge
 		MESSAGE_BEGIN( MSG_ONE, gmsgStaticProp, NULL, pPlayer->edict() );
 			EnvStatic_WriteProp( i );
 		MESSAGE_END();
+
+		if ( bLightOrigin )
+		{
+			MESSAGE_BEGIN( MSG_ONE, gmsgStaticProp, NULL, pPlayer->edict() );
+				EnvStatic_WriteLightOrigin( i );
+			MESSAGE_END();
+		}
 
 		iBudget -= iSize;
 	}

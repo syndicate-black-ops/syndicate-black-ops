@@ -452,7 +452,6 @@ CSboSettingsPage::CSboSettingsPage(vgui2::Panel *pParent, const char *pName)
 //-----------------------------------------------------------------------------
 namespace
 {
-std::vector<std::wstring> WrapLines(vgui2::HFont font, const std::string &utf8, int maxW);
 constexpr double TOOLTIP_DELAY = 0.5;
 
 class CSboTooltipPopup : public vgui2::Panel
@@ -711,36 +710,6 @@ void CSboSettingsPage::NotifyChanged()
 	if (GetParent())
 		vgui2::ivgui()->PostMessage(GetParent()->GetVPanel(), new KeyValues("SettingsChanged"), GetVPanel());
 }
-
-namespace
-{
-//! Word-wrapped lines of text at most maxW wide (a word longer than the line is cut where it must)
-std::vector<std::wstring> WrapLines(vgui2::HFont font, const std::string &utf8, int maxW)
-{
-	std::vector<std::wstring> lines;
-	const std::wstring text = Widen(utf8.c_str());
-	size_t pos = 0;
-	while (pos < text.size() && lines.size() < 16)
-	{
-		size_t end = pos, lastSpace = std::wstring::npos;
-		while (end < text.size() && TextWide(font, text.substr(pos, end - pos + 1)) <= maxW)
-		{
-			if (text[end] == L' ')
-				lastSpace = end;
-			end++;
-		}
-		if (end < text.size() && lastSpace != std::wstring::npos && lastSpace > pos)
-			end = lastSpace;
-		if (end == pos)
-			end = pos + 1;
-		lines.push_back(text.substr(pos, end - pos));
-		pos = end;
-		while (pos < text.size() && text[pos] == L' ')
-			pos++;
-	}
-	return lines;
-}
-} // namespace
 
 void CSboSettingsPage::PerformLayout()
 {

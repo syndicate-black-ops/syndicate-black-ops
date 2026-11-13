@@ -14,4 +14,8 @@ struct cl_entity_s;
 // there with the server's update (transparent studio models only)
 void StudioAttachments_AddEntity( struct cl_entity_s *ent );
 
+// attachment n (0 .. 3) of the entity's studio model in its model space (origin 0, angles 0, its scale) for its pose
+// of animation this frame; false when the model has no such attachment (or follows another model's bones)
+bool StudioAttachments_ModelSpace( struct cl_entity_s *ent, int n, float *out );
+
 #endif // STUDIO_ATTACHMENTS_H

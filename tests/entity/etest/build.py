@@ -26,7 +26,7 @@ def run_tests(suite):
 
 
 def write_map(suite, wad):
-    m = mapkit.MapWriter(wad)
+    m = mapkit.MapWriter(wad, suite.world_keys)
     m.add_world(mapkit.shell(*LOBBY))
     for k in range(max(1, suite.players) + 3):
         m.add_ent({'classname': 'info_player_deathmatch', 'origin': '%d %d 36' % (-160 + 80 * (k % 5), -160 + 80 * (k // 5)),
@@ -44,10 +44,16 @@ def write_map(suite, wad):
                 kv['origin'] = mapkit.fmt_vec(pos)
                 m.add_ent(kv)
                 continue
-            (sx, sy, sz), tex, origin = e.brush
-            bx = (pos[0] - sx / 2, pos[1] - sy / 2, pos[2], pos[0] + sx / 2, pos[1] + sy / 2, pos[2] + sz)
-            brushes = [mapkit.box(*bx, tex)]
-            if origin:
+            (sx, sy, sz), tex, origin, parts = e.brush
+            brushes = []
+            for (px, py, pz), at in (((sx, sy, sz), e.at),) + parts:
+                p = t._abs(at)
+                brushes.append(mapkit.box(p[0] - px / 2, p[1] - py / 2, p[2], p[0] + px / 2, p[1] + py / 2, p[2] + pz,
+                                          tex))
+            if isinstance(origin, (tuple, list)):
+                cx, cy, cz = t._abs(origin)
+                brushes.append(mapkit.box(cx - 4, cy - 4, cz - 4, cx + 4, cy + 4, cz + 4, mapkit.ORIGIN))
+            elif origin:
                 cx, cy, cz = pos[0], pos[1], pos[2] + sz / 2
                 brushes.append(mapkit.box(cx - 4, cy - 4, cz - 4, cx + 4, cy + 4, cz + 4, mapkit.ORIGIN))
             m.add_ent(kv, brushes)

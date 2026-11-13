@@ -715,6 +715,12 @@ enum
 	kRenderFxLightMultiplier,   //CTM !!!CZERO added to tell the studiorender that the value in iuser2 is a lightmultiplier
 };
 
+// SBO 2.0, env_sky (docs/ENV_SKY.md): set by the server on entity_state_t::renderfx (8 bits on the network; the
+// values above stay under it) of an entity in the 3D sky's sky room that a player gets only because it is in the
+// sky (dlls/client.cpp AddToFullPack). The client takes it off again before anything reads renderfx and draws that
+// entity from the sky camera only (cl_dll/view.cpp EnvSky_AddEntity). Never set on an entity (pev->renderfx).
+#define kRenderFxSkyEntityBit		0x80
+
 
 typedef int	func_t;
 typedef int	string_t;

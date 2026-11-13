@@ -59,4 +59,32 @@ DESCRIPTION INFO_OPTIONS
 		{ "1" }
 	}
 
+	"cl_rollangle"
+	{
+		"View roll angle when strafing"
+		{ NUMBER 0.000000 360.000000 }
+		{ "0.000000" }
+	}
+
+	"cl_rollspeed"
+	{
+		"View roll speed"
+		{ NUMBER 0.000000 -1.000000 }
+		{ "200.000000" }
+	}
+
+	"cl_bobtilt"
+	{
+		"Weapon tilt while moving"
+		{ BOOL }
+		{ "0" }
+	}
+
+	"default_fov"
+	{
+		"Field of view"
+		{ NUMBER 1.000000 179.000000 }
+		{ "90.000000" }
+	}
+
 }

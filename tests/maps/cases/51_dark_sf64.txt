@@ -1,0 +1,22 @@
+# monster_dark spawnflags 64 (co_escape 80, co_lostmines_v3 595) 200 units from a player alive in a round, 40 s: does it attack (player health, dark enemy)?
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_dark spawnflags 64 origin "200 0 0"
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 230
+dumpclass player
+frames 400
+dumpclass player
+dumpclass monster_dark

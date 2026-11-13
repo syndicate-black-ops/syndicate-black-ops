@@ -489,7 +489,7 @@ def write_review(review, sprites_dir, old_dir, names):
 #   flop: mirror (the profile artwork faces left; kill feed icons face the victim, to the right, as Half-Life's)
 #   crop: (x, y, w, h) of the artwork to use (in artwork pixels)
 #   spr, rect: "cut": the sheet (relative to killfeed-sources --cstrike) and the rectangle (x, y, w, h)
-# Only weapons with the owner's artwork get an icon; the others keep their old d_ entry (crossbow / bolt: HL's own
+# Only weapons with SBO weapon artwork get an icon; the others keep their old d_ entry (crossbow / bolt: HL's own
 # icons in 320hud1 / 640hud1). The sheet is packed in this order: add new icons at the end.
 KILLFEED = [
     ("ben", "benelli", {"flop": True}),

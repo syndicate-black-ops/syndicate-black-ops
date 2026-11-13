@@ -1,0 +1,19 @@
+# inverted master "~name" (docs/STATE_LOGIC.md, Featureful / Spirit): passes while the master "name" does NOT pass.
+# Shut multisource: a game_counter with master ~lock counts; open: it ignores calls. 1.38 has no "~": it finds no
+# entity "~lock" and passes ("Master was null or not a master!"), so there the counter always counts
+# covers: game_counter.master multisource
+map co_fuzz
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn game_counter targetname c health 1 target c_hit master ~lock spawnflags 2
+activate
+frames 3
+mark locked
+fire c world
+frames 1
+expectn 1 Firing: (c_hit)
+mark open
+fire key
+fire c world
+frames 1
+expectn 1 Firing: (c_hit)

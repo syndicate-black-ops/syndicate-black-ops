@@ -1,0 +1,36 @@
+# trigger_hurt with a master (FGD Master base, m_sMaster): HurtTouch asks the master with the toucher, so while it
+# is shut the trigger neither hurts nor fires its target (SBO 2.0; HL SDK and 1.38 ignore it). No map sets a master
+# on a trigger_hurt (map scan 2026-11-08)
+# covers: trigger_hurt.master trigger_hurt.dmg trigger_hurt.target
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn multisource targetname lock
+spawn trigger_relay targetname key target lock
+spawn trigger_hurt model *1 dmg 30 target hurt_out master lock
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+dumpclass player
+mark locked
+touchclient 2 1
+frames 3
+expectnot Firing: (hurt_out)
+expectdump player health=100.0
+mark open
+fire key
+frames 10
+touchclient 2 1
+frames 3
+expectn 1 Firing: (hurt_out)
+dumpclass player

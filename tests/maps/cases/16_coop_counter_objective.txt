@@ -1,0 +1,36 @@
+# coop objective chain: 3 grunts (TriggerCondition 4) -> game_counter limit 3 -> game_end, in a round
+# covers: game_counter game_counter.health game_counter.target game_end monster_human_grunt.triggercondition=4 monster_zombie.triggercondition=4 monster_imp.triggercondition=4
+map co_fuzz
+cvar mp_juniorpvmonst 1
+cvar mp_juniorpowmonst 1
+cvar mp_junioracmar 1
+cvar mp_makermon 1
+cvar mp_speedmon 1
+cvar mp_easymode 1
+cvar mp_hardcore 100
+cvar mp_friendlyfire 1
+cvar mp_flashlight 1
+cvar mp_XP 1
+spawn monster_human_grunt TriggerCondition 4 TriggerTarget cnt origin "0 300 0"
+spawn monster_zombie TriggerCondition 4 TriggerTarget cnt origin "0 400 0"
+spawn monster_imp TriggerCondition 4 TriggerTarget cnt origin "0 500 0"
+spawn game_counter targetname cnt health 3 target ge
+spawn game_end targetname ge
+spawn trigger_hurt dmg 1000 damagetype 4096
+activate
+connect 1 P1
+frames 3
+cmd 1 item 1
+frames 260
+mark kill1
+touchent 5 0
+frames 30
+mark kill2
+touchent 5 1
+frames 30
+expectnot SUCCESSFULL MISSION
+mark kill3
+touchent 5 2
+frames 100
+expect SUCCESSFULL MISSION
+expect SVC_INTERMISSION

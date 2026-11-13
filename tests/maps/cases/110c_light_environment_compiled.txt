@@ -1,0 +1,12 @@
+# light_environment as the 1.38 maps have it: Angles "90 0 0", no Pitch: sv_skyvec 0 0 1; a Pitch BEFORE the Angles
+# (rc_rc1b1: pitch -40, angles "0 323 0") is overwritten by them: the vector is level (z 0), 1.38 the same
+# covers: light_environment
+map co_fuzz
+spawn light_environment angles "90 0 0" _light "255 255 255 200"
+activate
+frames 2
+expectcvar sv_skyvec_z 1
+spawn light_environment pitch -40 angles "0 0 0" _light "255 255 255 200"
+frames 2
+expectcvar sv_skyvec_x 1
+expectcvar sv_skyvec_z 0
