@@ -442,13 +442,14 @@ void CSqueak::Spawn( )
 {
 	Precache( );
 	m_iId = WEAPON_SNARK;
-	SET_MODEL(ENT(pev), "models/w_sqknest.mdl");
+	// SBO: the pickup is the Pitbull model (Half-Life used the snark nest w_sqknest.mdl)
+	SET_MODEL(ENT(pev), "models/w_squeak.mdl");
 
 	FallInit();//get ready to fall down.
 
 	m_iDefaultAmmo = SNARK_DEFAULT_GIVE;
 		
-	pev->sequence = 1;
+	pev->sequence = WSQUEAK_IDLE1;	// SBO: w_squeak idle loop
 	pev->animtime = gpGlobals->time;
 	pev->framerate = 1.0;
 }
@@ -456,7 +457,6 @@ void CSqueak::Spawn( )
 
 void CSqueak::Precache( void )
 {
-	PRECACHE_MODEL("models/w_sqknest.mdl");
 	PRECACHE_MODEL("models/v_squeak.mdl");
 	PRECACHE_MODEL("models/p_squeak.mdl");
 	UTIL_PrecacheOther("monster_snark");

@@ -9,6 +9,7 @@ clang	-Wconditional-uninitialized	src/cl_dll/geiger.cpp	variable 'i' may be unin
 clang	-Wconditional-uninitialized	src/cl_dll/hl/hl_weapons.cpp	variable 'x' may be uninitialized when used here	1	
 clang	-Wconditional-uninitialized	src/cl_dll/hl/hl_weapons.cpp	variable 'y' may be uninitialized when used here	1	
 clang	-Wconditional-uninitialized	src/cl_dll/particleman/CBaseParticle.cpp	variable 'bounce' may be uninitialized when used here	1	
+clang	-Wconditional-uninitialized	src/cl_dll/vgui2/sbo_particle_editor.cpp	variable 'a' may be uninitialized when used here	1	ParseRange always writes min (a) before returning
 clang	-Wconditional-uninitialized	src/cl_dll/vgui2/sbo_text_scheme.cpp	variable 'hasArmedBgColor' may be uninitialized when used here	1	
 clang	-Wconditional-uninitialized	src/cl_dll/vgui2/sbo_text_scheme.cpp	variable 'hasArmedFgColor' may be uninitialized when used here	1	
 clang	-Wconditional-uninitialized	src/cl_dll/vgui2/sbo_text_scheme.cpp	variable 'hasBgColor' may be uninitialized when used here	1	
@@ -33,15 +34,25 @@ clang	-Wformat	src/game_shared/voice_status.cpp	format specifies type 'int' but 
 clang	-Wformat	src/game_shared/voice_status.cpp	format specifies type 'unsigned int' but the argument has type 'unsigned long'	1	
 clang	-Wformat-extra-args	src/dlls/nodes.cpp	data argument not used by format string	1	
 clang	-Wincompatible-pointer-types	src/pm_shared/pm_shared.c	incompatible pointer types passing 'hull_t *' (aka 'struct hull_s *') to parameter of type 'struct hull_s *'	1	
+clang	-Wint-to-pointer-cast	src/dlls/alias.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
+clang	-Wint-to-pointer-cast	src/dlls/buttons.cpp	cast to 'const char *' from smaller integer type 'char'	5	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
+clang	-Wint-to-pointer-cast	src/dlls/cbase.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
 clang	-Wint-to-pointer-cast	src/dlls/client.cpp	cast to 'const char *' from smaller integer type 'char'	2	
+clang	-Wint-to-pointer-cast	src/dlls/doors.cpp	cast to 'const char *' from smaller integer type 'char'	6	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
 clang	-Wint-to-pointer-cast	src/dlls/env_tutor.cpp	cast to 'const char *' from smaller integer type 'char'	2	
 clang	-Wint-to-pointer-cast	src/dlls/game_timer.cpp	cast to 'const char *' from smaller integer type 'char'	2	
+clang	-Wint-to-pointer-cast	src/dlls/info_waypoint.cpp	cast to 'const char *' from smaller integer type 'char'	3	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
+clang	-Wint-to-pointer-cast	src/dlls/inventory.cpp	cast to 'const char *' from smaller integer type 'char'	3	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
+clang	-Wint-to-pointer-cast	src/dlls/locus.cpp	cast to 'const char *' from smaller integer type 'char'	2	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
 clang	-Wint-to-pointer-cast	src/dlls/locus_beam.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro, false alarm
 clang	-Wint-to-pointer-cast	src/dlls/maprules.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro, false alarm
+clang	-Wint-to-pointer-cast	src/dlls/monstermaker.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
 clang	-Wint-to-pointer-cast	src/dlls/multiplay_gamerules.cpp	cast to 'const char *' from smaller integer type 'char'	1	
-clang	-Wint-to-pointer-cast	src/dlls/player_calc_ratio.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro, false alarm
+clang	-Wint-to-pointer-cast	src/dlls/player.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
+clang	-Wint-to-pointer-cast	src/dlls/player_calc_ratio.cpp	cast to 'const char *' from smaller integer type 'char'	2	STRING(x)[0] through the SDK STRING macro, false alarm
 clang	-Wint-to-pointer-cast	src/dlls/point_worldtext.cpp	cast to 'const char *' from smaller integer type 'char'	1	
 clang	-Wint-to-pointer-cast	src/dlls/trigger_changevalue.cpp	cast to 'const char *' from smaller integer type 'char'	1	
+clang	-Wint-to-pointer-cast	src/dlls/triggers.cpp	cast to 'const char *' from smaller integer type 'char'	1	STRING(x)[0] through the SDK STRING macro: only an empty / non-empty test, correct
 clang	-Wint-to-pointer-cast	src/dlls/vgui_screen.cpp	cast to 'const char *' from smaller integer type 'char'	3	STRING(x)[0] through the SDK STRING macro, false alarm
 clang	-Wpointer-bool-conversion	src/cl_dll/death.cpp	address of array 'killedwith' will always evaluate to 'true'	1	
 clang	-Wpointer-bool-conversion	src/cl_dll/viewport.cpp	address of array 'this->m_sMapName' will always evaluate to 'true'	1	
@@ -50,24 +61,32 @@ clang	-Wpointer-bool-conversion	src/dlls/sound.cpp	address of array 'name' will 
 clang	-Wsometimes-uninitialized	src/cl_dll/inputw32.cpp	variable 'mx' is used uninitialized whenever 'if' condition is false	1	
 clang	-Wsometimes-uninitialized	src/cl_dll/inputw32.cpp	variable 'my' is used uninitialized whenever 'if' condition is false	1	
 clang	-Wsometimes-uninitialized	src/dlls/soundent.cpp	variable 'iThisSound' is used uninitialized whenever 'if' condition is false	1	
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/colorcorrection_core.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/colorcorrection_ops.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/death.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/environment.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/hud_spectator.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	4	
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/overlay.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	3	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/render_fade.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/server_menu_preview_gl.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	4	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/sniper.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/statusbar.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
-clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/hud_chat_color_picker.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	3	
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/controls/sbo_graph_controls.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	(int)(x + 0.5) on positive values, quiet check
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/controls/sbo_value_controls.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/hud_chat_color_picker.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	4	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/hud_game_timer.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	3	(int)(x + 0.5) on non-negative values, style
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_cc_editor.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_command_menu.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	5	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_gm_hud.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_hud_menu.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	3	(int)(x + 0.5) on non-negative values, style
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_image_decode.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_loading_screen.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_loadout_menu.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	5	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_menu_bridge.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_menus.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_message_box.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_options.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	(int)(x + 0.5) on non-negative values, style
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_particle_editor.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_server_browser.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/sbo_ui_style.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/stb_image.h	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	5	(int)(x + 0.5) on non-negative values, style
@@ -75,10 +94,12 @@ clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/tutor_text_window.cpp	c
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/vgui2/world_screen_panel.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/view.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	4	
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/viewport.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	3	
+clang-tidy	bugprone-incorrect-roundings	src/cl_dll/waypoint.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	4	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/cl_dll/worldscreen/worldscreen_video.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on non-negative values, style
-clang-tidy	bugprone-incorrect-roundings	src/dlls/baselogic.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	
+clang-tidy	bugprone-incorrect-roundings	src/dlls/colorcorrection.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/dlls/head_scale.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	(int)(x + 0.5) on non-negative values, style
 clang-tidy	bugprone-incorrect-roundings	src/dlls/items.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
+clang-tidy	bugprone-incorrect-roundings	src/dlls/monstermaker.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	(int)(x + 0.5) on positive values, quiet check
 clang-tidy	bugprone-incorrect-roundings	src/dlls/multiplay_gamerules.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/dlls/point_worldtext.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	1	
 clang-tidy	bugprone-incorrect-roundings	src/dlls/tutor.cpp	casting (double + N.N) to integer leads to incorrect rounding; consider using lround (#include <cmath>) instead	2	
@@ -87,6 +108,7 @@ clang-tidy	bugprone-integer-division	src/cl_dll/in_camera.cpp	result of integer 
 clang-tidy	bugprone-integer-division	src/cl_dll/particules.cpp	result of integer division used in a floating point context; possible loss of precision	7	
 clang-tidy	bugprone-integer-division	src/cl_dll/sniper.cpp	result of integer division used in a floating point context; possible loss of precision	1	
 clang-tidy	bugprone-integer-division	src/cl_dll/statusbar.cpp	result of integer division used in a floating point context; possible loss of precision	1	
+clang-tidy	bugprone-integer-division	src/cl_dll/vgui2/controls/sbo_value_controls.cpp	result of integer division used in a floating point context; possible loss of precision	1	intended integer pixels (knob / 2)
 clang-tidy	bugprone-integer-division	src/cl_dll/vgui2/hud_voice_status.cpp	result of integer division used in a floating point context; possible loss of precision	1	
 clang-tidy	bugprone-integer-division	src/cl_dll/vgui2/sbo_menu_bridge.cpp	result of integer division used in a floating point context; possible loss of precision	1	integer division intended (pixels, sheet frames, WAV sample count)
 clang-tidy	bugprone-integer-division	src/cl_dll/vgui2/sbo_settings_window.cpp	result of integer division used in a floating point context; possible loss of precision	1	integer division intended (pixels, sheet frames, WAV sample count)
@@ -113,7 +135,9 @@ clang-tidy	bugprone-parent-virtual-call	src/dlls/minotaure.cpp	qualified name 'C
 clang-tidy	bugprone-parent-virtual-call	src/dlls/plats.cpp	qualified name 'CFuncPlat::GoDown' refers to a member overridden in subclass; did you mean 'CFuncPlatRot'?	1	
 clang-tidy	bugprone-parent-virtual-call	src/dlls/plats.cpp	qualified name 'CFuncPlat::GoUp' refers to a member overridden in subclass; did you mean 'CFuncPlatRot'?	1	
 clang-tidy	bugprone-parent-virtual-call	src/dlls/satchel.cpp	qualified name 'CBasePlayerItem::AddToPlayer' refers to a member overridden in subclass; did you mean 'CBasePlayerWeapon'?	1	
+clang-tidy	bugprone-parent-virtual-call	src/dlls/scientist.cpp	qualified name 'CTalkMonster::Precache' refers to a member overridden in subclass; did you mean 'CScientist'?	1	deliberate: sitting scientist calls CTalkMonster::Precache (sentence groups)
 clang-tidy	bugprone-parent-virtual-call	src/dlls/squeakgrenade.cpp	qualified name 'CBaseMonster::Killed' refers to a member overridden in subclass; did you mean 'CGrenade'?	1	
+clang-tidy	bugprone-parent-virtual-call	src/dlls/triggers.cpp	qualified name 'CBaseEntity::ObjectCaps' refers to a member overridden in subclass; did you mean 'CBaseTrigger'?	1	same result as CBaseTrigger::ObjectCaps, deliberate
 clang-tidy	bugprone-parent-virtual-call	src/dlls/werewolf_hunter.cpp	qualified name 'CBaseMonster::CheckEnemy' refers to a member overridden in subclass; did you mean 'CSquadMonster'?	1	
 clang-tidy	bugprone-signed-char-misuse	src/cl_dll/parsemsg.cpp	'signed char' to 'int' conversion; consider casting to 'unsigned char' first.	1	
 clang-tidy	bugprone-signed-char-misuse	src/dlls/lights.cpp	'signed char' to 'int' conversion; consider casting to 'unsigned char' first.	2	
@@ -124,33 +148,49 @@ clang-tidy	bugprone-suspicious-include	src/cl_dll/video/video_decoder.cpp	suspic
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/aurora/particlemgr.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/death.cpp	function 'strcmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/discord/discord_rpc.cpp	function 'strcmp' is called without explicitly comparing result	1	
+clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/entity_glow.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/hud_redraw.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/hud_spectator.cpp	function 'strcasecmp' is called without explicitly comparing result	4	
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/hud_spectator.cpp	function 'strcmp' is called without explicitly comparing result	1	
+clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/inventory_core.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/materials.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/objecthint.cpp	function 'strncmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/overlay.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/hud_deathnotice.cpp	function 'strncmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/hud_game_timer.cpp	function 'strcmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/sbo_loadout_menu.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/sbo_options_window.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/sbo_spectator_info.cpp	function 'memcmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/cl_dll/vgui2/sbo_text_scheme.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/client.cpp	function 'strcmp' is called without explicitly comparing result	2	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/client_info.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/env_dlight.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/env_model.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/env_particle.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/env_static.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/func_break.cpp	function 'strncasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/func_tank.cpp	function 'strncmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/game_messagebox.cpp	function 'strncmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/gmmode.cpp	function 'strncmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/guide_monsters.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/info_waypoint.cpp	function 'strcasecmp' is called without explicitly comparing result	2	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/light_origin.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/locus.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/map_compat.cpp	function 'strcmp' is called without explicitly comparing result	2	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/maprules.cpp	function 'strcmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/maprules.cpp	function 'strncasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/maprules.cpp	function 'strncmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/monstermaker.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/movewith.cpp	function 'strcasecmp' is called without explicitly comparing result	2	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/multiplay_gamerules.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/objecthint.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/player.cpp	function 'strcmp' is called without explicitly comparing result	2	
-clang-tidy	bugprone-suspicious-string-compare	src/dlls/sbo_test.cpp	function 'strncmp' is called without explicitly comparing result	3	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/sbo_test.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/sbo_test.cpp	function 'strncmp' is called without explicitly comparing result	9	strcmp result used as "differs": checked, conditions correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/sequence.cpp	function 'strcasecmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/sound.cpp	function 'strcmp' is called without explicitly comparing result	1	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/sound.cpp	function 'strncmp' is called without explicitly comparing result	1	strcmp result used as "differs": checked, conditions correct
+clang-tidy	bugprone-suspicious-string-compare	src/dlls/state_logic.cpp	function 'strcasecmp' is called without explicitly comparing result	1	strcmp used as "differs"; condition read and correct
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/trigger_entity_iterator.cpp	function 'strcmp' is called without explicitly comparing result	2	
 clang-tidy	bugprone-suspicious-string-compare	src/dlls/trigger_sequence.cpp	function 'strcmp' is called without explicitly comparing result	3	
 clang-tidy	bugprone-too-small-loop-variable	src/dlls/util.cpp	loop variable has narrower type 'unsigned short' than iteration's upper bound 'int'	2	
@@ -159,11 +199,15 @@ clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/StudioModelRenderer
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/StudioModelRenderer.cpp	undefined behavior, source object type 'Vector[N]' is not TriviallyCopyable	2	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/aurora/particlesys.cpp	undefined behavior, destination object type 'AuroraPlacement' is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/aurora/particlesys.cpp	undefined behavior, destination object type 'particle' is not TriviallyCopyable	1	
+clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/dlights.cpp	undefined behavior, destination object type 'client_dlight_t[N]' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/entity.cpp	undefined behavior, destination object type 'cl_entity_t' (aka 'cl_entity_s') is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/hl/hl_weapons.cpp	undefined behavior, destination object type 'TraceResult' is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/hl/hl_weapons.cpp	undefined behavior, destination object type 'entvars_t' (aka 'entvars_s') is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/hud_spectator.cpp	undefined behavior, destination object type 'overviewInfo_t' (aka 'overviewInfo_s') is not TriviallyCopyable	3	
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/input.cpp	undefined behavior, destination object type 'struct usercmd_s' is not TriviallyCopyable	1	
+clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/light_origin.cpp	undefined behavior, destination object type 'client_light_origin_t[N]' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/mover_prediction.cpp	undefined behavior, destination object type 'mover_t' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/mover_prediction.cpp	undefined behavior, destination object type 'mover_t[N]' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/objecthint.cpp	undefined behavior, destination object type 'client_objecthint_t' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/objecthint.cpp	undefined behavior, destination object type 'client_objecthint_t[N]' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
 clang-tidy	bugprone-undefined-memory-manipulation	src/cl_dll/server_menu_preview.cpp	undefined behavior, destination object type 'cl_entity_t' (aka 'cl_entity_s') is not TriviallyCopyable	2	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
@@ -178,11 +222,18 @@ clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/gmmode.cpp	undefined 
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/gmmode.cpp	undefined behavior, destination object type 'GmPlayerState' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/gmmode.cpp	undefined behavior, destination object type 'GmPlayerState[N]' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/gmmode.cpp	undefined behavior, destination object type 'GmRider[N]' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/movewith.cpp	undefined behavior, destination object type 'MoveWithEntry' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/movewith.cpp	undefined behavior, destination object type 'MoveWithEntry[N]' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/movewith.cpp	undefined behavior, destination object type 'MoveWithNode' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/movewith.cpp	undefined behavior, destination object type 'MoveWithRoot' is not TriviallyCopyable	2	memset / memcpy of plain structs, no std:: members, quiet check
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/movewith.cpp	undefined behavior, destination object type 'MoveWithRoot[N]' is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/nodes.cpp	undefined behavior, destination object type 'CACHE_ENTRY[N]' is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/nodes.cpp	undefined behavior, destination object type 'CGraph' is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/nodes.cpp	undefined behavior, destination object type 'CNode' is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/point_worldtext.cpp	undefined behavior, destination object type 'worldtext_t[N]' is not TriviallyCopyable	1	
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/sbo_test.cpp	undefined behavior, destination object type 'SAVERESTOREDATA' (aka 'saverestore_s') is not TriviallyCopyable	1	memset / memcpy of plain structs, no std:: members, quiet check
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/sbo_test.cpp	undefined behavior, destination object type 'TraceResult' is not TriviallyCopyable	1	zeroing plain structs (Vector, EHANDLE, cl_entity_t) with memset: SDK idiom
+clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/sbo_test.cpp	undefined behavior, destination object type 'entity_state_t' (aka 'entity_state_s') is not TriviallyCopyable	3	memset / memcpy of plain structs, no std:: members, quiet check
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/triggers.cpp	undefined behavior, destination object type 'entvars_t' (aka 'entvars_s') is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/dlls/triggers.cpp	undefined behavior, source object type 'entvars_t' (aka 'entvars_s') is not TriviallyCopyable	1	
 clang-tidy	bugprone-undefined-memory-manipulation	src/game_shared/voice_status.cpp	undefined behavior, destination object type 'cl_entity_s' is not TriviallyCopyable	1	
@@ -190,20 +241,26 @@ clang-tidy	bugprone-virtual-near-miss	src/dlls/coop.cpp	method 'CCoop::IsCoop' h
 clang-tidy	bugprone-virtual-near-miss	src/dlls/coop.h	method 'CCoop::IsCoop' has a similar name and the same signature as virtual method 'CHalfLifeMultiplay::IsCoOp'; did you mean to override it?	1	
 clang-tidy	cert-env33-c	src/cl_dll/discord/discord_rpc.cpp	calling 'system' uses a command processor	1	
 clang-tidy	cert-err34-c	src/cl_dll/aurora/particlesys.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
-clang-tidy	cert-err34-c	src/cl_dll/aurora/particlesys.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
+clang-tidy	cert-err34-c	src/cl_dll/aurora/particlesys.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/entity.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	
+clang-tidy	cert-err34-c	src/cl_dll/entity_glow.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/cl_dll/flashlight.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/hl/hl_weapons.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/cl_dll/hud_spectator.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	11	
 clang-tidy	cert-err34-c	src/cl_dll/hud_spectator.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	4	
 clang-tidy	cert-err34-c	src/cl_dll/input.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	
+clang-tidy	cert-err34-c	src/cl_dll/mover_prediction.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/cl_dll/movewith_client.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/saytext.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/cl_dll/statusbar.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
 clang-tidy	cert-err34-c	src/cl_dll/updater/updater_core.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/updater/updater_install.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/updater/updater_install.cpp	'sscanf' used to convert a string to an unsigned integer value, but function will not report conversion errors; consider using 'strtoull' instead	1	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/cl_dll/vgui2/controls/sbo_tool_window.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/hud_chat.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/hud_chat.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_brief_menu.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
+clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_cc_editor.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_command_menu.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_console.cpp	'sscanf' used to convert a string to an unsigned integer value, but function will not report conversion errors; consider using 'strtoul' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_create_server.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	3	atoi/atof on key values: SDK KeyValue idiom
@@ -217,10 +274,14 @@ clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_settings_window.cpp	'atoi' used to 
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_text_scheme.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_text_scheme.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_ui_style.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_worldscreen_editor.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_worldscreen_editor.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/cl_dll/vgui2/sbo_worldscreen_editor.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/score_panel.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/vgui2/world_screen_panel.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/weapon_hand.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/cl_dll/worldscreen/worldscreen.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/alias.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	4	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/apache.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/apache.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/barney.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	atoi/atof on key values: SDK KeyValue idiom
@@ -229,18 +290,28 @@ clang-tidy	cert-err34-c	src/dlls/bmodels.cpp	'atoi' used to convert a string to 
 clang-tidy	cert-err34-c	src/dlls/br.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/buttons.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	8	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/buttons.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	9	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/cheat_commands.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/cheat_commands.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/client.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	
+clang-tidy	cert-err34-c	src/dlls/colorcorrection.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	11	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/colorcorrection.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/colorcorrection.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/coop.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	9	
 clang-tidy	cert-err34-c	src/dlls/darkgrunt.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/dm.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	9	
 clang-tidy	cert-err34-c	src/dlls/doors.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	11	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/doors.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	23	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/effects.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	18	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/effects.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	17	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/effects.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	19	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/effects.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	18	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/env_entity_glow.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/env_entity_glow.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/env_entity_glow.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/env_mirror.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
 clang-tidy	cert-err34-c	src/dlls/env_mirror.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/env_model.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	
 clang-tidy	cert-err34-c	src/dlls/env_model.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	4	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/env_overlay.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	5	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/env_overlay.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/env_particle.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/env_tutor.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	4	
 clang-tidy	cert-err34-c	src/dlls/env_tutor.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	7	
@@ -274,11 +345,15 @@ clang-tidy	cert-err34-c	src/dlls/hassassin.cpp	'atoi' used to convert a string t
 clang-tidy	cert-err34-c	src/dlls/head_scale.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/hgrunt.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/hgrunt.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
+clang-tidy	cert-err34-c	src/dlls/info_waypoint.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/info_waypoint.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/inventory.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/inventory.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	8	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/keyvalue.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
 clang-tidy	cert-err34-c	src/dlls/keyvalue.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/killfeed_icons.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/lights.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
-clang-tidy	cert-err34-c	src/dlls/lights.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	6	
+clang-tidy	cert-err34-c	src/dlls/lights.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	atoi on key values / text (SDK KeyValue idiom), quiet check
+clang-tidy	cert-err34-c	src/dlls/lights.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	
 clang-tidy	cert-err34-c	src/dlls/lights.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/limitator.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	11	
 clang-tidy	cert-err34-c	src/dlls/locus.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	5	
@@ -292,16 +367,17 @@ clang-tidy	cert-err34-c	src/dlls/meteoentity.cpp	'atoi' used to convert a string
 clang-tidy	cert-err34-c	src/dlls/monstermaker.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/monstermaker.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	10	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/monsters.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/monsters.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	11	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/monsters.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	12	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/mortar.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
 clang-tidy	cert-err34-c	src/dlls/mortar.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
+clang-tidy	cert-err34-c	src/dlls/movewith.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/multiplay_gamerules.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
 clang-tidy	cert-err34-c	src/dlls/nodes.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
 clang-tidy	cert-err34-c	src/dlls/objecthint.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/osprey.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/pathcorner.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
-clang-tidy	cert-err34-c	src/dlls/plats.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	13	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/plats.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	14	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/plats.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	14	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/plats.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	15	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/player.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	5	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/player.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/player_calc_ratio.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	atoi/atof on key values: SDK KeyValue idiom
@@ -309,7 +385,7 @@ clang-tidy	cert-err34-c	src/dlls/point_worldtext.cpp	'atof' used to convert a st
 clang-tidy	cert-err34-c	src/dlls/point_worldtext.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	
 clang-tidy	cert-err34-c	src/dlls/point_worldtext.cpp	'sscanf' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/sbo_test.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	15	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/sbo_test.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	9	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/sbo_test.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	20	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/sbo_test.cpp	'atol' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	2	
 clang-tidy	cert-err34-c	src/dlls/scientist.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
 clang-tidy	cert-err34-c	src/dlls/scripted.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	9	atoi/atof on key values: SDK KeyValue idiom
@@ -317,7 +393,7 @@ clang-tidy	cert-err34-c	src/dlls/scripted.cpp	'atoi' used to convert a string to
 clang-tidy	cert-err34-c	src/dlls/sound.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	4	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/sound.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	20	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/state_logic.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	
-clang-tidy	cert-err34-c	src/dlls/state_logic.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	4	
+clang-tidy	cert-err34-c	src/dlls/state_logic.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	6	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/subs.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	4	
 clang-tidy	cert-err34-c	src/dlls/talkmonster.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	6	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/teamplay_gamerules.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	1	
@@ -327,12 +403,13 @@ clang-tidy	cert-err34-c	src/dlls/trigger_condition.cpp	'atof' used to convert a 
 clang-tidy	cert-err34-c	src/dlls/trigger_condition.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	
 clang-tidy	cert-err34-c	src/dlls/trigger_entity_iterator.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	2	
 clang-tidy	cert-err34-c	src/dlls/trigger_entity_iterator.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	5	
+clang-tidy	cert-err34-c	src/dlls/trigger_objective.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	3	atoi on key values / text (SDK KeyValue idiom), quiet check
 clang-tidy	cert-err34-c	src/dlls/trigger_random.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	4	
 clang-tidy	cert-err34-c	src/dlls/trigger_random.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	7	
 clang-tidy	cert-err34-c	src/dlls/trigger_sensor.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/trigger_sensor.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	7	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/triggers.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	18	atoi/atof on key values: SDK KeyValue idiom
-clang-tidy	cert-err34-c	src/dlls/triggers.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	8	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/triggers.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	19	atoi/atof on key values: SDK KeyValue idiom
+clang-tidy	cert-err34-c	src/dlls/triggers.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	9	atoi/atof on key values: SDK KeyValue idiom
 clang-tidy	cert-err34-c	src/dlls/turret.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	1	
 clang-tidy	cert-err34-c	src/dlls/turret.cpp	'atoi' used to convert a string to an integer value, but function will not report conversion errors; consider using 'strtol' instead	4	
 clang-tidy	cert-err34-c	src/dlls/util.cpp	'atof' used to convert a string to a floating-point value, but function will not report conversion errors; consider using 'strtod' instead	3	
@@ -355,8 +432,10 @@ clang-tidy	cert-flp30-c	src/pm_shared/pm_shared.c	loop induction expression shou
 clang-tidy	cert-oop54-cpp	src/game_shared/bitvec.h	operator=() does not handle self-assignment properly	1	
 clang-tidy	clang-analyzer-core.CallAndMessage	src/cl_dll/vgui2/hud_chat_color_picker.cpp	Called C++ object pointer is null	1	infeasible path: GetParent() checked non-null in the loop condition
 clang-tidy	clang-analyzer-core.CallAndMessage	src/dlls/player.cpp	Nst function call argument is an uninitialized value	2	
+clang-tidy	clang-analyzer-core.CallAndMessage	src/dlls/triggers.cpp	Called C++ object pointer is null	1	infeasible: Logic_IsPlayerInPlay(NULL) returns FALSE before the call
 clang-tidy	clang-analyzer-core.CallAndMessage	src/pm_shared/pm_materials.c	Nst function call argument is an uninitialized value	1	infeasible path: an empty directive word is "" and the compare stops at index 0
 clang-tidy	clang-analyzer-core.NonNullParamChecker	src/dlls/vehicle.cpp	Forming reference to null pointer	1	
+clang-tidy	clang-analyzer-core.NullDereference	src/cl_dll/vgui2/controls/sbo_tool_window.cpp	Access to field 'm_iArrowKind' results in a dereference of a null pointer (loaded from variable 'w')	1	infeasible: s_Open holds no null window
 clang-tidy	clang-analyzer-core.NullDereference	src/dlls/coop.cpp	Access to field 'm_iTeamKills' results in a dereference of a null pointer (loaded from variable 'peKiller')	1	IsPlayer() implies CLASS_PLAYER, so peKiller is set (1.38 code)
 clang-tidy	clang-analyzer-core.NullDereference	src/dlls/dm.cpp	Access to field 'm_bHunted' results in a dereference of a null pointer (loaded from variable 'peKiller')	2	
 clang-tidy	clang-analyzer-core.NullDereference	src/dlls/monsters.cpp	Access to field 'm_iNext' results in a dereference of a null pointer (loaded from variable 'pCurrentSound')	1	
@@ -403,11 +482,11 @@ clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/hud_deathnotice.c
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/sbo_gm_menu.cpp	Value stored to 'fN' during its initialization is never read	1	dead store, style
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/sbo_gm_spawn_menu.cpp	Value stored to 'fN' during its initialization is never read	1	dead store, style
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/sbo_gm_spawn_menu.cpp	Value stored to 'y' is never read	1	dead store, style
+clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/sbo_particle_editor.cpp	Value stored to 'y' is never read	1	dead store, quiet check
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/stb_image.h	Although the value stored to 'old_limit' is used in the enclosing expression, the value is never actually read from 'old_limit'	1	dead store, style
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/vgui2/stb_image.h	Value stored to 'idata_limit_old' during its initialization is never read	1	dead store, style
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/view.cpp	Value stored to 'ent' is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/cl_dll/view.cpp	Value stored to 'waterEntity' is never read	1	
-clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/apache.cpp	Value stored to 'flVol' is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/barney.cpp	Value stored to 'ys' is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/chainsaw.cpp	Value stored to 'flUnused' during its initialization is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/chainsaw.cpp	Value stored to 'flUnused' is never read	1	
@@ -427,7 +506,6 @@ clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/fa18.cpp	Value stored to 
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/fistoflegend.cpp	Value stored to 'pEntity' during its initialization is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/func_break.cpp	Value stored to 'size' is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/func_tank.cpp	Value stored to 'lineOfSight' is never read	2	
-clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/func_tank.cpp	Value stored to 'offset' during its initialization is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/ggrenade.cpp	Value stored to 'flRndSound' is never read	1	
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/gmmode.cpp	Value stored to 'pVariants' during its initialization is never read	1	dead store, style
 clang-tidy	clang-analyzer-deadcode.DeadStores	src/dlls/grunt_hunter.cpp	Value stored to 'pmodel' during its initialization is never read	1	
@@ -479,16 +557,26 @@ clang-tidy	clang-analyzer-unix.Stream	src/cl_dll/discord/discord_rpc.cpp	File po
 clang-tidy	clang-analyzer-unix.Stream	src/cl_dll/discord/discord_rpc.cpp	Read function called when stream is in EOF state. Function has no effect	1	
 clang-tidy	clang-analyzer-unix.Stream	src/game_shared/voice_banmgr.cpp	File position of the stream might be 'indeterminate' after a failed operation. Can cause undefined behavior	1	
 clang-tidy	clang-analyzer-unix.Stream	src/game_shared/voice_banmgr.cpp	Read function called when stream is in EOF state. Function has no effect	1	
+clang-tidy	clang-diagnostic-error	src/dlls/monstermaker.cpp	comparison between pointer and integer ('const char *' and 'char')	1	STRING(x)[0] != 0 through the SDK STRING macro (GCC -fpermissive accepts): empty test, correct
+clang-tidy	clang-diagnostic-error	src/dlls/sbo_test.cpp	cannot initialize a parameter of type 'char *' with an rvalue of type 'const char *'	1	test layer: SDK pfnInfoKeyValue takes char *; GCC -fpermissive accepts
 cppcheck	arrayIndexOutOfBoundsCond	src/cl_dll/death.cpp	Either the condition 'killer>N' is redundant or the array 'g_PlayerInfoList[N]' is accessed at index N, which is out of bounds.	1	
 cppcheck	arrayIndexOutOfBoundsCond	src/cl_dll/worldscreen/worldscreen_bsp.cpp	Either the condition 'i<N' is redundant or the array 'want[N]' is accessed at index N, which is out of bounds.	1	loop stops at the terminating 0 of WSCREEN_TOOL_TEXTURE, false alarm
+cppcheck	charLiteralWithCharPtrCompare	src/dlls/monstermaker.cpp	Char literal compared with pointer '(const char*)(gpGlobals->pStringBase+(int)m_iszMonsterClassname)[N]'. Did you intend to dereference it?	1	STRING(x)[0] != 0 through the SDK STRING macro: empty test, correct
 cppcheck	constStatement	src/dlls/soundent.cpp	Unused variable value 'm_cLastActiveSounds'	1	
 cppcheck	ctuOneDefinitionRuleViolation	src/dlls/vector.h	The one definition rule is violated, different classes/structs have the same name 'Vector'	1	
 cppcheck	ctuOneDefinitionRuleViolation	src/dlls/vector.h	The one definition rule is violated, different classes/structs have the same name 'VectorND'	1	
+cppcheck	ctunullpointer	src/dlls/monsters.cpp	Null pointer dereference: pSightEnt	1	infeasible: every LookSkips caller has dereferenced pSightEnt
 cppcheck	duplInheritedMember	src/dlls/airtank.cpp	The class 'CAirtank' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/airtank.cpp	The class 'CAirtank' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/airtank.cpp	The class 'CAirtank' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/airtank.cpp	The class 'CAirtank' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/airtank.cpp	The class 'CAirtank' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseToggle'.	1	
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CBaseAlias' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CInfoAlias' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAlias'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CInfoAlias' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CInfoGroup' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CMultiAlias' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAlias'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/alias.cpp	The class 'CMultiAlias' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/apache.cpp	The class 'CApache' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/apache.cpp	The class 'CApache' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/apache.cpp	The class 'CApache' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
@@ -514,6 +602,7 @@ cppcheck	duplInheritedMember	src/dlls/basemonster.h	The class 'CBaseMonster' def
 cppcheck	duplInheritedMember	src/dlls/basemonster.h	The class 'CBaseMonster' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseToggle'.	1	
 cppcheck	duplInheritedMember	src/dlls/bmodels.cpp	The class 'CFuncRotating' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/bmodels.cpp	The class 'CPendulum' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/buttons.cpp	The class 'CButtonTarget' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/buttons.cpp	The class 'CEnvGlobal' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/buttons.cpp	The class 'CEnvSpark' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/buttons.cpp	The class 'CMomentaryRotButton' defines member function with name 'Instance' also defined in its parent class 'CBaseEntity'.	1	
@@ -534,6 +623,7 @@ cppcheck	duplInheritedMember	src/dlls/cbase.h	The class 'CBaseToggle' defines me
 cppcheck	duplInheritedMember	src/dlls/cbase.h	The class 'CBaseToggle' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/cbase.h	The class 'CBaseToggle' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/cbase.h	The class 'CMultiSource' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/colorcorrection.cpp	The class 'CColorCorrectionBase' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/dark.cpp	The class 'CDark' defines member variable with name 'm_flNextAttack' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/dark.cpp	The class 'CDark' defines member variable with name 'm_scheduleList' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/darkgrunt.cpp	The class 'CDGrunt' defines member variable with name 'm_flLastEnemySightTime' also defined in its parent class 'CSquadMonster'.	1	
@@ -558,10 +648,12 @@ cppcheck	duplInheritedMember	src/dlls/effects.cpp	The class 'CLightning' defines
 cppcheck	duplInheritedMember	src/dlls/effects.h	The class 'CLaser' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/effects.h	The class 'CSprite' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/env_dlight.cpp	The class 'CEnvDLight' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own save table (m_SaveData) / SDK pattern
+cppcheck	duplInheritedMember	src/dlls/env_entity_glow.cpp	The class 'CEnvEntityGlow' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/env_mirror.cpp	The class 'CEnvMirror' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/env_model.cpp	The class 'CEnvModel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/env_model.cpp	The class 'CEnvModel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/env_model.cpp	The class 'CEnvModel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/env_overlay.cpp	The class 'CEnvOverlay' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/explode.cpp	The class 'CEnvExplosion' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/explode.cpp	The class 'CEnvExplosion' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/explode.cpp	The class 'CEnvExplosion' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
@@ -664,6 +756,10 @@ cppcheck	duplInheritedMember	src/dlls/imp_hunter.cpp	The class 'Cimp_hunter' def
 cppcheck	duplInheritedMember	src/dlls/imp_hunter.cpp	The class 'Cimp_hunter' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/imp_hunter.cpp	The class 'Cimp_hunter' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseToggle'.	1	
 cppcheck	duplInheritedMember	src/dlls/imp_hunter.cpp	The class 'Cimp_hunter' defines member variable with name 'm_scheduleList' also defined in its parent class 'CBaseMonster'.	1	
+cppcheck	duplInheritedMember	src/dlls/info_waypoint.cpp	The class 'CInfoWaypoint' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/inventory.cpp	The class 'CItemPickup' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/inventory.cpp	The class 'CPlayerHasInventory' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/inventory.cpp	The class 'CPlayerInventory' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/lights.cpp	The class 'CLight' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/lights.cpp	The class 'CTriggerLightstyle' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/locus.cpp	The class 'CCalcEvalNumber' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
@@ -683,6 +779,8 @@ cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CGamePlayerZone' d
 cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CGamePlayerZone' defines member variable with name 'm_SaveData' also defined in its parent class 'CRuleEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CGameText' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CGameText' defines member variable with name 'm_SaveData' also defined in its parent class 'CRuleEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CMultiSpawn' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CMultiSpawn' defines member variable with name 'm_SaveData' also defined in its parent class 'CRuleEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/maprules.cpp	The class 'CRuleEntity' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/minotaure.cpp	The class 'CMinotaure' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	each class's own save table (m_SaveData) / SDK pattern
 cppcheck	duplInheritedMember	src/dlls/minotaure.cpp	The class 'CMinotaure' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	each class's own save table (m_SaveData) / SDK pattern
@@ -734,6 +832,7 @@ cppcheck	duplInheritedMember	src/dlls/plats.cpp	The class 'CGunTarget' defines m
 cppcheck	duplInheritedMember	src/dlls/plats.cpp	The class 'CGunTarget' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/plats.cpp	The class 'CGunTarget' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/plats.cpp	The class 'CGunTarget' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseToggle'.	1	
+cppcheck	duplInheritedMember	src/dlls/plats.cpp	The class 'CTrainSetSpeed' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/player.cpp	The class 'CRevertSaved' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/player.h	The class 'CBasePlayer' defines member variable with name 'm_lastDamageAmount' also defined in its parent class 'CBaseMonster'.	1	
 cppcheck	duplInheritedMember	src/dlls/point_worldtext.cpp	The class 'CPointWorldText' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
@@ -783,6 +882,8 @@ cppcheck	duplInheritedMember	src/dlls/squeakgrenade.cpp	The class 'CSqueakGrenad
 cppcheck	duplInheritedMember	src/dlls/state_logic.cpp	The class 'CCalcState' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/state_logic.cpp	The class 'CEnvState' defines member function with name 'IsLockedByMaster' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/state_logic.cpp	The class 'CEnvState' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/state_logic.cpp	The class 'CStateWatcher' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/state_logic.cpp	The class 'CWatcherCount' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/subs.cpp	The class 'CBaseDelay' defines member function with name 'SUB_UseTargets' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/subs.cpp	The class 'CBaseToggle' defines member function with name 'IsLockedByMaster' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/talkmonster.h	The class 'CTalkMonster' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
@@ -800,6 +901,7 @@ cppcheck	duplInheritedMember	src/dlls/trains.h	The class 'CPathTrack' defines me
 cppcheck	duplInheritedMember	src/dlls/trigger_changevalue.cpp	The class 'CTriggerChangeValue' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/trigger_condition.cpp	The class 'CTriggerCondition' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/trigger_entity_iterator.cpp	The class 'CTriggerEntityIterator' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
+cppcheck	duplInheritedMember	src/dlls/trigger_objective.cpp	The class 'CTriggerObjective' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/trigger_random.cpp	The class 'CTriggerRandom' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/trigger_random.cpp	The class 'CTriggerTimer' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/trigger_sensor.cpp	The class 'CTriggerSensor' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own save table (m_SaveData) / SDK pattern
@@ -825,7 +927,10 @@ cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CTriggerChangeTarg
 cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CTriggerJump' defines member variable with name 'm_flHeight' also defined in its parent class 'CBaseToggle'.	1	
 cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CTriggerRelay' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CTriggerRelay' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
-cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CWeatherVolume' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own save table (m_SaveData) / SDK pattern
+cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CWeatherBase' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CWeatherBase' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CWeatherBase' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	each class's own m_SaveData save table (SDK pattern)
+cppcheck	duplInheritedMember	src/dlls/triggers.cpp	The class 'CWeatherBase' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseToggle'.	1	each class's own m_SaveData save table (SDK pattern)
 cppcheck	duplInheritedMember	src/dlls/tripmine.cpp	The class 'CTripmineGrenade' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/tripmine.cpp	The class 'CTripmineGrenade' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/tripmine.cpp	The class 'CTripmineGrenade' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
@@ -853,7 +958,6 @@ cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBasePlayerWeapon' de
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBasePlayerWeapon' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBasePlayerWeapon' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBasePlayerWeapon' defines member variable with name 'm_SaveData' also defined in its parent class 'CBasePlayerItem'.	1	
-cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBen' defines member variable with name 'm_fInSpecialReload' also defined in its parent class 'CBasePlayerWeapon'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CBen' defines member variable with name 'm_flPumpTime' also defined in its parent class 'CBasePlayerWeapon'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CRpg' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CRpg' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseDelay'.	1	
@@ -870,8 +974,6 @@ cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSatchel' defines mem
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSatchel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSatchel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBasePlayerItem'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSatchel' defines member variable with name 'm_SaveData' also defined in its parent class 'CBasePlayerWeapon'.	1	
-cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CShotgun' defines member variable with name 'm_fInReload' also defined in its parent class 'CBasePlayerWeapon'.	1	
-cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSpa' defines member variable with name 'm_fInReload' also defined in its parent class 'CBasePlayerWeapon'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CSpa' defines member variable with name 'm_flPumpTime' also defined in its parent class 'CBasePlayerWeapon'.	1	
 cppcheck	duplInheritedMember	src/dlls/weapons.h	The class 'CWeaponBox' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseEntity'.	1	
 cppcheck	duplInheritedMember	src/dlls/werewolf.cpp	The class 'Cwerewolf' defines member variable with name 'm_SaveData' also defined in its parent class 'CBaseAnimating'.	1	
@@ -924,25 +1026,36 @@ cppcheck	invalidPrintfArgType_sint	src/dlls/nodes.cpp	%d in format string (no. N
 cppcheck	invalidPrintfArgType_sint	src/game_shared/voice_status.cpp	%d in format string (no. N) requires 'int' but the argument type is 'unsigned long'.	2	
 cppcheck	invalidPrintfArgType_uint	src/game_shared/voice_status.cpp	%x in format string (no. N) requires 'unsigned int' but the argument type is 'unsigned long'.	1	
 cppcheck	invalidScanfArgType_int	src/game_shared/voice_gamemgr.cpp	%x in format string (no. N) requires 'unsigned int *' but the argument type is 'unsigned long *'.	1	
+cppcheck	legacyUninitvar	src/dlls/env_entity_glow.cpp	Uninitialized variable: iTarget	1	memcpy only the iCount entries written
+cppcheck	memsetClass	src/dlls/sbo_test.cpp	Using 'memset' on class that contains a virtual function.	1	test layer: deliberate 0xFF poison of a freed block (test_remove_on_damage)
 cppcheck	memsetClassFloat	src/cl_dll/StudioModelRenderer.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/ammohistory.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/ammohistory.h	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/aurora/particlesys.cpp	Using memset() on class which contains a floating point number.	2	
 cppcheck	memsetClassFloat	src/cl_dll/aurora/particlesys.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	memsetClassFloat	src/cl_dll/colorcorrection_core.cpp	Using memset() on struct which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/cl_dll/death.cpp	Using memset() on struct which contains a floating point number.	2	
+cppcheck	memsetClassFloat	src/cl_dll/dlights.cpp	Using memset() on class which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/cl_dll/dlights.cpp	Using memset() on struct which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/cl_dll/entity.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/entity.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/health.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/hl/hl_baseentity.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/hl/hl_weapons.cpp	Using memset() on class which contains a floating point number.	2	
 cppcheck	memsetClassFloat	src/cl_dll/hl/hl_weapons.cpp	Using memset() on struct which contains a floating point number.	4	
-cppcheck	memsetClassFloat	src/cl_dll/hud_msg.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	memsetClassFloat	src/cl_dll/hud_msg.cpp	Using memset() on struct which contains a floating point number.	3	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/cl_dll/hud_spectator.cpp	Using memset() on class which contains a floating point number.	3	
 cppcheck	memsetClassFloat	src/cl_dll/hud_spectator.cpp	Using memset() on struct which contains a floating point number.	4	
 cppcheck	memsetClassFloat	src/cl_dll/input.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/cl_dll/input.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	memsetClassFloat	src/cl_dll/light_origin.cpp	Using memset() on class which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/cl_dll/mover_prediction.cpp	Using memset() on class which contains a floating point number.	2	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/cl_dll/mover_prediction.cpp	Using memset() on struct which contains a floating point number.	2	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/cl_dll/objecthint.cpp	Using memset() on class which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/cl_dll/objecthint.cpp	Using memset() on struct which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
+cppcheck	memsetClassFloat	src/cl_dll/objective_core.cpp	Using memset() on struct which contains a floating point number.	2	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/cl_dll/overlay.cpp	Using memset() on struct which contains a floating point number.	2	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/cl_dll/overlay_core.cpp	Using memset() on struct which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/cl_dll/server_menu_preview.cpp	Using memset() on class which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/cl_dll/server_menu_preview.cpp	Using memset() on struct which contains a floating point number.	4	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/cl_dll/static_props.cpp	Using memset() on class which contains a floating point number.	1	
@@ -950,10 +1063,12 @@ cppcheck	memsetClassFloat	src/cl_dll/static_props.cpp	Using memset() on struct w
 cppcheck	memsetClassFloat	src/cl_dll/tri.cpp	Using memset() on struct which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/cl_dll/vgui2/sbo_bridge.cpp	Using memset() on struct which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/cl_dll/vgui2/sbo_command_menu.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	memsetClassFloat	src/cl_dll/waypoint_core.cpp	Using memset() on struct which contains a floating point number.	1	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/dlls/apache.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/barney.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/client.cpp	Using memset() on class which contains a floating point number.	2	
 cppcheck	memsetClassFloat	src/dlls/client.cpp	Using memset() on struct which contains a floating point number.	3	
+cppcheck	memsetClassFloat	src/dlls/client_info.cpp	Using memset() on struct which contains a floating point number.	2	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/dlls/cyborg.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/dark.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/darkgrunt.cpp	Using memset() on struct which contains a floating point number.	1	
@@ -970,11 +1085,13 @@ cppcheck	memsetClassFloat	src/dlls/imp_hunter.cpp	Using memset() on struct which
 cppcheck	memsetClassFloat	src/dlls/keyvalue.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/medikit.cpp	Using memset() on struct which contains a floating point number.	2	
 cppcheck	memsetClassFloat	src/dlls/minotaure.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	memsetClassFloat	src/dlls/movewith.cpp	Using memset() on class which contains a floating point number.	5	memset to zero of plain structs with floats / Vector (SDK idiom)
+cppcheck	memsetClassFloat	src/dlls/movewith.cpp	Using memset() on struct which contains a floating point number.	5	memset to zero of plain structs with floats / Vector (SDK idiom)
 cppcheck	memsetClassFloat	src/dlls/nodes.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/point_worldtext.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/point_worldtext.cpp	Using memset() on struct which contains a floating point number.	1	
-cppcheck	memsetClassFloat	src/dlls/sbo_test.cpp	Using memset() on class which contains a floating point number.	1	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
-cppcheck	memsetClassFloat	src/dlls/sbo_test.cpp	Using memset() on struct which contains a floating point number.	2	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
+cppcheck	memsetClassFloat	src/dlls/sbo_test.cpp	Using memset() on class which contains a floating point number.	6	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
+cppcheck	memsetClassFloat	src/dlls/sbo_test.cpp	Using memset() on struct which contains a floating point number.	6	zeroing plain structs (floats, Vector, EHANDLE) with memset: SDK idiom
 cppcheck	memsetClassFloat	src/dlls/scientist.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/semiclip.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/dlls/sequence.cpp	Using memset() on struct which contains a floating point number.	2	
@@ -986,20 +1103,33 @@ cppcheck	memsetClassFloat	src/dlls/zombies.cpp	Using memset() on struct which co
 cppcheck	memsetClassFloat	src/dlls/zombies_hunter.cpp	Using memset() on struct which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/game_shared/voice_status.cpp	Using memset() on class which contains a floating point number.	1	
 cppcheck	memsetClassFloat	src/game_shared/voice_status.cpp	Using memset() on struct which contains a floating point number.	1	
+cppcheck	negativeIndex	src/cl_dll/env_sky_box.cpp	Either the condition 'k<N' is redundant or the array 'b[N]' is accessed at index -N, which is out of bounds.	2	s_iStToVec entries are +-1..3, never 0: index stays 0..2 (Quake st_to_vec)
 cppcheck	noCopyConstructor	src/cl_dll/vgui2/sbo_text_scheme.cpp	Class 'CSchemeManager' does not have a copy constructor which is recommended since it has dynamic memory/resource allocation(s).	1	
 cppcheck	noOperatorEq	src/cl_dll/vgui2/sbo_text_scheme.cpp	Class 'CSchemeManager' does not have a operator= which is recommended since it has dynamic memory/resource allocation(s).	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/StudioModelRenderer.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/ammo.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/ammo_secondary.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/ammohistory.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/aurora/aurora_doc.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/aurora/aurora_editor.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/aurora/particlemgr.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/aurora/particlesys.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/break_gibs.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/colorcorrection.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/colorcorrection_core.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/colorcorrection_gl.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/colorcorrection_ops.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/death.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/discord/discord_ipc.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/dlights.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/entity.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/entity_glow.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/entity_glow_bsp.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/entity_glow_gl.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/env_sky_box.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/environment.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/ev_hldm.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/fogzone_gl.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/geiger.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/health.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/hl/hl_weapons.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1009,13 +1139,19 @@ cppcheck	normalCheckLevelMaxBranches	src/cl_dll/hud_scale.cpp	Limiting analysis 
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/hud_spectator.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/in_camera.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/input.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/inventory.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/killfeed_icons.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/map_music.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/materials.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/menu.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/message.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/mirror.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/mover_prediction.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/movewith_client.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/objecthint.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/objective_core.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/overlay.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/overlay_core.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/particleman/CBaseParticle.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/particleman/CFrustum.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/particleman/CMiniMem.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1043,6 +1179,7 @@ cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_command_menu.cpp	Limit
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_image_decode.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_killfeed_bridge.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_map_picture.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_objectives_bridge.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_script_file.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_server_address.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/vgui2/sbo_server_menu_proto.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
@@ -1053,13 +1190,17 @@ cppcheck	normalCheckLevelMaxBranches	src/cl_dll/video/video_decoder.cpp	Limiting
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/video/video_player.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/view.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/viewport.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/waypoint.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/waypoint_core.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/weapon_hand.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldscreen/worldscreen.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldscreen/worldscreen_bsp.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldscreen/worldscreen_gl.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
+cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldscreen/worldscreen_layout_doc.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldscreen/worldscreen_video.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldtext.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/cl_dll/worldtext_core.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/alias.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/animating.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/animation.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/apache.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1070,7 +1211,10 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/br.cpp	Limiting analysis of branch
 cppcheck	normalCheckLevelMaxBranches	src/dlls/buttons.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/cbase.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/chainsaw.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/cheat_commands.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/client.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/client_info.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/dlls/colorcorrection.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/combat.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/coop.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/cyborg.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1078,8 +1222,10 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/dark.cpp	Limiting analysis of bran
 cppcheck	normalCheckLevelMaxBranches	src/dlls/dm.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/doors.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/effects.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
+cppcheck	normalCheckLevelMaxBranches	src/dlls/env_entity_glow.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/env_mirror.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/env_model.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/env_overlay.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/env_particle.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/env_static.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/featureful_triggers.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
@@ -1100,9 +1246,11 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/handgrenade.cpp	Limiting analysis 
 cppcheck	normalCheckLevelMaxBranches	src/dlls/hunter2.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/ichthyosaur.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/imp_hunter.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/info_waypoint.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
+cppcheck	normalCheckLevelMaxBranches	src/dlls/inventory.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/keyvalue.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/killfeed_icons.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
-cppcheck	normalCheckLevelMaxBranches	src/dlls/limitator.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/light_origin.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/locus.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/map_compat.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/maprules.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
@@ -1110,6 +1258,7 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/medikit.cpp	Limiting analysis of b
 cppcheck	normalCheckLevelMaxBranches	src/dlls/minotaure.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/monstermaker.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/monsters.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/movewith.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/multiplay_gamerules.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/nodes.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/objecthint.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
@@ -1136,6 +1285,7 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/teamplay_gamerules.cpp	Limiting an
 cppcheck	normalCheckLevelMaxBranches	src/dlls/trigger_changevalue.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/trigger_condition.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/trigger_entity_iterator.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/trigger_objective.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/trigger_sequence.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/triggers.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/tripmine.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1146,6 +1296,7 @@ cppcheck	normalCheckLevelMaxBranches	src/dlls/vehicle.cpp	Limiting analysis of b
 cppcheck	normalCheckLevelMaxBranches	src/dlls/version_gate.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/vgui_screen.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note: analysis depth limit, not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/warhammer.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
+cppcheck	normalCheckLevelMaxBranches	src/dlls/water_hit.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	cppcheck note (analysis depth limit), not a finding
 cppcheck	normalCheckLevelMaxBranches	src/dlls/weapons.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/werewolf_hunter.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
 cppcheck	normalCheckLevelMaxBranches	src/dlls/zombies_hunter.cpp	Limiting analysis of branches. Use --check-level=exhaustive to analyze all branches.	1	
@@ -1176,7 +1327,7 @@ cppcheck	nullPointerRedundantCheck	src/dlls/hunter2.cpp	Either the condition 'pS
 cppcheck	nullPointerRedundantCheck	src/dlls/imp_hunter.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	4	
 cppcheck	nullPointerRedundantCheck	src/dlls/minotaure.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	4	
 cppcheck	nullPointerRedundantCheck	src/dlls/monsters.cpp	Either the condition 'pCurrentSound' is redundant or there is possible null pointer dereference: pCurrentSound.	1	
-cppcheck	nullPointerRedundantCheck	src/dlls/monsters.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	6	SDK code: UTIL_EntitiesInBox entries are never null
+cppcheck	nullPointerRedundantCheck	src/dlls/monsters.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	5	SDK code: UTIL_EntitiesInBox entries are never null
 cppcheck	nullPointerRedundantCheck	src/dlls/monsters.cpp	Either the condition 'pSound' is redundant or there is possible null pointer dereference: pSound.	1	
 cppcheck	nullPointerRedundantCheck	src/dlls/multiplay_gamerules.cpp	Either the condition 'pFileList' is redundant or there is possible null pointer dereference: pFileList.	1	
 cppcheck	nullPointerRedundantCheck	src/dlls/nodes.cpp	Either the condition 'file' is redundant or there is possible null pointer dereference: file.	9	
@@ -1184,10 +1335,11 @@ cppcheck	nullPointerRedundantCheck	src/dlls/nodes.cpp	Either the condition 'pTem
 cppcheck	nullPointerRedundantCheck	src/dlls/werewolf_hunter.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	4	
 cppcheck	nullPointerRedundantCheck	src/dlls/zombies_hunter.cpp	Either the condition 'pSightEnt' is redundant or there is possible null pointer dereference: pSightEnt.	4	
 cppcheck	oppositeInnerCondition	src/dlls/multiplay_gamerules.cpp	Opposite inner 'if' condition leads to a dead code block.	1	
-cppcheck	shiftTooManyBitsSigned	src/cl_dll/ammo.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	3	
+cppcheck	shiftTooManyBitsSigned	src/cl_dll/ammo.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	2	
 cppcheck	shiftTooManyBitsSigned	src/cl_dll/battery.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
 cppcheck	shiftTooManyBitsSigned	src/cl_dll/flashlight.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
 cppcheck	shiftTooManyBitsSigned	src/cl_dll/health.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	2	
+cppcheck	shiftTooManyBitsSigned	src/cl_dll/inventory.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	1 << 31 (suit bit / condition bit 31), defined in GCC
 cppcheck	shiftTooManyBitsSigned	src/dlls/br.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
 cppcheck	shiftTooManyBitsSigned	src/dlls/cbase.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	3	
 cppcheck	shiftTooManyBitsSigned	src/dlls/client.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
@@ -1198,6 +1350,7 @@ cppcheck	shiftTooManyBitsSigned	src/dlls/hassassin.cpp	Shifting signed N-bit val
 cppcheck	shiftTooManyBitsSigned	src/dlls/items.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
 cppcheck	shiftTooManyBitsSigned	src/dlls/multiplay_gamerules.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	
 cppcheck	shiftTooManyBitsSigned	src/dlls/player.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	4	
+cppcheck	shiftTooManyBitsSigned	src/dlls/sbo_test.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	1	1 << 31 (suit bit / condition bit 31), defined in GCC
 cppcheck	shiftTooManyBitsSigned	src/dlls/schedule.cpp	Shifting signed N-bit value by N bits is implementation-defined behaviour	4	
 cppcheck	syntaxError	src/cl_dll/discord/discord_rpc.cpp	syntax error	1	
 cppcheck	uninitDerivedMemberVar	src/cl_dll/environment.cpp	Member variable 'CBaseParticle::m_bAffectedByForce' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseParticle?	4	particleman: InitializeSprite sets the members before use (operator new = CMiniMem)
@@ -1232,6 +1385,33 @@ cppcheck	uninitDerivedMemberVar	src/cl_dll/environment.cpp	Member variable 'CBas
 cppcheck	uninitDerivedMemberVar	src/cl_dll/environment.cpp	Member variable 'CBaseParticle::m_iRendermode' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseParticle?	4	particleman: InitializeSprite sets the members before use (operator new = CMiniMem)
 cppcheck	uninitDerivedMemberVar	src/cl_dll/environment.cpp	Member variable 'CBaseParticle::m_pTexture' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseParticle?	4	particleman: InitializeSprite sets the members before use (operator new = CMiniMem)
 cppcheck	uninitDerivedMemberVar	src/cl_dll/environment.cpp	Member variable 'CBaseParticle::m_szClassname' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseParticle?	4	particleman: InitializeSprite sets the members before use (operator new = CMiniMem)
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_N' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_Nmm' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_argrens' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_bolts' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_buckshot' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_hornets' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_rockets' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::ammo_uranium' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_chargeReady' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_fInAttack' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_fUnscaledHullMove' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_fireState' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flHitboxFrameBias' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flObjectHintDistance' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flReleaseThrow' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flSizeScale' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flStartThrow' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_flTouchedByJumpPad' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_iSboUnknown' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_objectHint' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pGoalEnt' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pLink' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pfnBlocked' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pfnThink' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pfnTouch' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::m_pfnUse' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
+cppcheck	uninitDerivedMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CBaseEntity::pev' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	entity private data is zero-allocated by the engine
 cppcheck	uninitDerivedMemberVar	src/dlls/env_tutor.cpp	Member variable 'CBaseEntity::ammo_N' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	
 cppcheck	uninitDerivedMemberVar	src/dlls/env_tutor.cpp	Member variable 'CBaseEntity::ammo_Nmm' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	
 cppcheck	uninitDerivedMemberVar	src/dlls/env_tutor.cpp	Member variable 'CBaseEntity::ammo_argrens' is not initialized in the constructor. Maybe it should be initialized directly in the class CBaseEntity?	1	
@@ -1375,6 +1555,7 @@ cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iHideHUDDispl
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iIntermission' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iKeyBits' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iLogo' is not initialized in the constructor.	1	
+cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iRenderFOV' is not initialized in the constructor.	1	gHUD is a zero-initialized global
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iRes' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iSpriteCountAllRes' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_iSpriteCountHud' is not initialized in the constructor.	1	gHUD is a zero-initialized global
@@ -1387,6 +1568,8 @@ cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_rghSprites' i
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_rgrcRects' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_rgszSpriteNames' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/hud.h	Member variable 'CHud::m_scrinfo' is not initialized in the constructor.	1	
+cppcheck	uninitMemberVar	src/cl_dll/objective_core.h	Member variable 'List::m_NoticeKinds' is not initialized in the constructor.	1	notice queue read only below m_iNotices
+cppcheck	uninitMemberVar	src/cl_dll/objective_core.h	Member variable 'List::m_Notices' is not initialized in the constructor.	1	notice queue read only below m_iNotices
 cppcheck	uninitMemberVar	src/cl_dll/updater/updater_sha256.cpp	Member variable 'ShaN::m_Buf' is not initialized in the constructor.	1	m_Buf is written before it is read (m_Used counts the bytes)
 cppcheck	uninitMemberVar	src/cl_dll/vgui2/sbo_text_scheme.cpp	Member variable 'CScheme::armedBgColor' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/vgui2/sbo_text_scheme.cpp	Member variable 'CScheme::armedFgColor' is not initialized in the constructor.	1	
@@ -1410,6 +1593,18 @@ cppcheck	uninitMemberVar	src/cl_dll/viewport.cpp	Member variable 'TeamFortressVi
 cppcheck	uninitMemberVar	src/cl_dll/viewport.cpp	Member variable 'TeamFortressViewport::m_iNumberOfTeams' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/viewport.cpp	Member variable 'TeamFortressViewport::m_iSBOInit' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/cl_dll/viewport.cpp	Member variable 'TeamFortressViewport::m_szMOTD' is not initialized in the constructor.	1	
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_bDirty' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_bExclusive' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_bSpawned' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_bUsable' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flBrightness' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flFadeIn' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flFadeOut' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flFadeStart' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flTintAmount' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_flWeightStart' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_iszFile' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
+cppcheck	uninitMemberVar	src/dlls/colorcorrection.cpp	Member variable 'CColorCorrectionBase::m_iszMaster' is not initialized in the constructor.	1	entity private data is zero-allocated by the engine
 cppcheck	uninitMemberVar	src/dlls/env_tutor.cpp	Member variable 'CEnvTutor::m_iszCloseTarget' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/dlls/env_tutor.cpp	Member variable 'CEnvTutor::m_iszIconFile' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/dlls/env_tutor.cpp	Member variable 'CEnvTutor::m_iszMaster' is not initialized in the constructor.	1	
@@ -1438,6 +1633,7 @@ cppcheck	uninitMemberVar	src/dlls/trigger_changevalue.cpp	Member variable 'CTrig
 cppcheck	uninitMemberVar	src/dlls/trigger_changevalue.cpp	Member variable 'CTriggerChangeValue::m_iszKeyName' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/dlls/trigger_changevalue.cpp	Member variable 'CTriggerChangeValue::m_iszNewValue' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/dlls/trigger_changevalue.cpp	Member variable 'CTriggerChangeValue::m_iszSrcKeyName' is not initialized in the constructor.	1	
+cppcheck	uninitMemberVar	src/dlls/water_hit.cpp	Member variable 'CWaterHits::m_iHitPlayer' is not initialized in the constructor.	1	m_iHitPlayer written before m_cHits++, read only below m_cHits
 cppcheck	uninitMemberVar	src/game_shared/voice_gamemgr.cpp	Member variable 'CVoiceGameMgr::m_msgPlayerVoiceMask' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/game_shared/voice_gamemgr.cpp	Member variable 'CVoiceGameMgr::m_msgRequestState' is not initialized in the constructor.	1	
 cppcheck	uninitMemberVar	src/game_shared/voice_gamemgr.cpp	Member variable 'CVoiceGameMgr::m_pHelper' is not initialized in the constructor.	1	
@@ -1452,6 +1648,8 @@ cppcheck	uninitvar	src/cl_dll/hl/hl_weapons.cpp	Uninitialized variable: y	1
 cppcheck	uninitvar	src/cl_dll/vgui2/stb_image.h	Uninitialized variable: lencodes	1	third-party stb_image.h
 cppcheck	uninitvar	src/dlls/combat.cpp	Uninitialized variable: x	1	
 cppcheck	uninitvar	src/dlls/combat.cpp	Uninitialized variable: y	1	
+cppcheck	uninitvar	src/dlls/env_entity_glow.cpp	Uninitialized variable: iPlayer	1	memcpy / reads only the iCount / iWanted entries written
+cppcheck	uninitvar	src/dlls/env_entity_glow.cpp	Uninitialized variable: iWant	1	memcpy / reads only the iCount / iWanted entries written
 cppcheck	uninitvar	src/dlls/gmmode.cpp	Uninitialized variable: bEnabled	1	only the first iCount rows are written and read (GmListMenu)
 cppcheck	uninitvar	src/dlls/gmmode.cpp	Uninitialized variable: iRows	3	only the first iCount rows are written and read (GmListMenu)
 cppcheck	wrongPrintfScanfArgNum	src/dlls/nodes.cpp	fprintf format string requires N parameters but N is given.	1	

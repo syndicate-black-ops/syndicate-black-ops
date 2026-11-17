@@ -111,9 +111,14 @@ void CLocusBeamBeam::DamageThink( void )
 		entvars_t *pevAttacker = pAttacker ? pAttacker->pev : pev;
 		if ( pAttacker && pAttacker->IsPlayer() && pHit->IsPlayer() && pAttacker != pHit )
 			pevAttacker = pev;
+		// TakeDamage can free the entity at once (a TakeDamage hook that removes it with REMOVE_ENTITY)
+		EHANDLE hHit;
+		hHit = pHit;
 		ClearMultiDamage();
 		pHit->TraceAttack( pevAttacker, flDamage, ( tr.vecEndPos - vecStart ).Normalize(), &tr, m_iDamageType );
 		ApplyMultiDamage( pev, pevAttacker );
+		if ( ( pHit = hHit ) == NULL )
+			return;
 	}
 	if ( ( pev->spawnflags & SF_BEAM_DECALS ) && pHit->IsBSPModel() )
 		UTIL_DecalTrace( &tr, DECAL_BIGSHOT1 + RANDOM_LONG( 0, 4 ) );

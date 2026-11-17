@@ -33,6 +33,8 @@
 #include "aurora/particlemgr.h"
 #include "worldtext.h"	// SBO 2.0: point_worldtext
 #include "mirror.h"	// SBO 2.0: env_mirror
+#include "entity_glow.h"	// SBO 2.1: env_entity_glow
+#include "waypoint.h"	// SBO 2.1: info_waypoint
 #include "overlay.h"	// SBO 2.0: env_overlay
 #include "inventory.h"	// SBO 2.0: inventory HUD row
 #include "colorcorrection.h"	// SBO 2.0: color_correction
@@ -427,6 +429,8 @@ void CHud :: Init( void )
 	PlayerAfk_Init();	// SBO 2.0: AFK sign ("PlayerAfk", entity.cpp)
 	Materials_Init();	// SBO 2.0: material system ("MatFile", materials.cpp)
 	Mirror_Init();		// SBO 2.0: env_mirror ("Mirror", mirror.cpp)
+	EntityGlow_Init();	// SBO 2.1: env_entity_glow ("EntGlow", entity_glow.cpp)
+	Waypoint_Init();	// SBO 2.1: info_waypoint ("Waypoint", waypoint.cpp)
 	Overlay_Init();		// SBO 2.0: env_overlay ("Overlay", overlay.cpp)
 	Inventory_Init();	// SBO 2.0: inventory ("Inventory", inventory.cpp)
 	ColorCorr_Init();	// SBO 2.0: color_correction ("ColorCorr", colorcorrection.cpp)
@@ -675,6 +679,8 @@ void CHud :: VidInit( void )
 	Materials_VidInit();	// SBO 2.0: material system, the global files until the map's file is named
 	V_ResetViewModelRender();	// SBO 2.0: "ViewModel" message
 	Mirror_Reset();		// SBO 2.0: env_mirror: a new map has none until the server sends them
+	EntityGlow_Reset();	// SBO 2.1: env_entity_glow: none until the server sends them
+	Waypoint_VidInit();	// SBO 2.1: info_waypoint: none until the server sends them; its sprites loaded again
 	Overlay_VidInit();	// SBO 2.0: env_overlay: none on a new map; the last map's .tga pictures freed
 	Inventory_VidInit();	// SBO 2.0: inventory: the items' icons from the reloaded hud.txt sprites
 

@@ -25,8 +25,8 @@
 //   Buttons, trigger_once / trigger_multiple and multi_manager start a sequence (they send "toggle", which a
 //   trigger_sequence takes as ON); triggered again while it runs, it starts over.
 //   To stop one, trigger it through a trigger_relay with Trigger State "Off".
-//   CAREFUL: a trigger_relay or trigger_auto with Trigger State "Off", or without the key (older maps), sends
-//   OFF. New ones placed with syndicate.fgd are "Toggle", which starts a sequence.
+//   CAREFUL: a trigger_relay or trigger_auto sends OFF unless you change its Trigger State: "Off" is the
+//   default in syndicate.fgd, and older maps without the key send OFF too. Set it to "Toggle" or "On" to start one.
 //   "Fire once": the sequence can be started once; stopped or finished, it stays used.
 //
 // The styles used below (@TitleStyle, @SubtitleStyle, @ObjectiveStyle, @RadioStyle, @SignStyle) are the game's:

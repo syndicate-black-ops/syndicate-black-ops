@@ -572,7 +572,7 @@ int CDark :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, float 
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage * 2, 5000 );
 

@@ -598,6 +598,13 @@ public:
 
 	float m_flNextCyberLight;	// SBO 2.0 cybereye: the next lights ahead of the view (PostThink, CYBEREYE_LIGHT_INTERVAL)
 
+	// SBO 2.1 cloak stealth (player.cpp CloakUpdate, Cloak_HidesFrom): while cloaked, the render amount follows what the
+	// player does, and monsters see him only within a range that grows with it
+	void CloakUpdate( BOOL bSnap );	// PreThink: renderamt toward this frame's target (bSnap: at once)
+#define CLOAK_HURT_TIME	0.5f	// seconds a hit shows a cloaked player
+	float m_flCloakHurtTime;		// until then the cloak shows the player as hurt (TakeDamage)
+	float m_flCloakLastUpdate;		// the time of the last CloakUpdate (the fall rate)
+
 	// SBO 2.0 cybereye: the client keeps one screen fade, so another fade (env_fade, gauss overcharge, ...) replaces
 	// the cybereye's stay-out tint. UTIL_ScreenFadeWrite reports each fade; PostThink sends the tint again once that
 	// fade has ended (0: no tint to restore).
@@ -618,6 +625,12 @@ extern BOOL gInitHUD;
 
 // SBO 2.0: env_mirror (env_mirror.cpp): the active mirrors to a player whose HUD is (re)initialised
 void Mirror_SendAll( CBasePlayer *pPlayer );
+void EntityGlow_SendAll( CBasePlayer *pPlayer );	// env_entity_glow.cpp
+void EntityGlow_ServerDeactivate( void );
+// the entity goes to every client (viewer 0) or to the player with that index whatever their PVS, until released; one
+// count per hold (env_entity_glow targets, info_waypoint's Follow Entity)
+void EntityGlow_Hold( int index, int viewer );
+void EntityGlow_Release( int index, int viewer );
 
 // chat-vgui2 branch: SBO scoreboard categories (multiplay_gamerules.cpp; port of the 1.38 scoreboard plugin)
 #define SBO_SB_FORCE_TEAMINFO	1
@@ -698,6 +711,14 @@ void SboKillfeed_NpcKilled( CBaseEntity *pVictim, entvars_t *pevAttacker );
 // SBO 2.0 env_particle (env_particle.cpp; Spirit of Half-Life's Aurora particle systems, docs/AURORA.md)
 void EnvParticle_ServerActivate( void );			// ServerActivate, before the entities' Activate: their targets
 void EnvStatic_Reset( void );						// ServerDeactivate: the map's props are gone
+// SBO 2.1 cloak: TRUE if pTarget is a cloaked player that pLooker (a monster, turret or func_tank) does not see
+BOOL Cloak_HidesFrom( CBaseEntity *pLooker, CBaseEntity *pTarget );
+BOOL Cloak_IsCloaked( CBaseEntity *pEntity );		// a player with the cloak on
+void Cloak_AfterLook( CBaseMonster *pMonster );		// end of every Look: a cloaked enemy unseen for long is forgotten
+void Cloak_ForgetCheck( CBaseMonster *pMonster );	// RunAI: the same without a Look
+BOOL Cloak_EnemyHidden( CBaseMonster *pMonster );	// its enemy is cloaked and it does not see him (CheckEnemy)
+void Cloak_EnemyShared( CBaseMonster *pMember );	// a squad mate gave it its enemy (SquadMakeEnemy)
+void Cloak_HurtBy( CBaseMonster *pMonster, CBaseEntity *pAttacker );	// TakeDamage
 
 // SBO 2.0 point_worldtext (point_worldtext.cpp, docs/POINT_WORLDTEXT.md)
 void WorldText_Reset( void );						// ServerDeactivate: the map's texts are gone

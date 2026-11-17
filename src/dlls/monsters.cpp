@@ -34,6 +34,7 @@
 #include "soundent.h"
 #include "gamerules.h"
 #include "gmmode.h"	// SBO 2.0 GM mode: doors on a Game Master's order
+#include "player.h"	// SBO 2.1: Cloak_HidesFrom (Look)
 
 #define MONSTER_CUT_CORNER_DIST		8 // 8 means the monster's bounding box is contained without the box of the node in WC
 
@@ -58,6 +59,8 @@ TYPEDESCRIPTION	CBaseMonster::m_SaveData[] =
 	DEFINE_FIELD( CBaseMonster, m_hEnemy, FIELD_EHANDLE ),
 	DEFINE_FIELD( CBaseMonster, m_hTargetEnt, FIELD_EHANDLE ),
 	DEFINE_ARRAY( CBaseMonster, m_hOldEnemy, FIELD_EHANDLE, MAX_OLD_ENEMIES ),
+	DEFINE_FIELD( CBaseMonster, m_flCloakEnemySeen, FIELD_TIME ),	// SBO 2.1
+	DEFINE_FIELD( CBaseMonster, m_vecCloakSeenPos, FIELD_POSITION_VECTOR ),	// SBO 2.1
 	DEFINE_ARRAY( CBaseMonster, m_vecOldEnemy, FIELD_POSITION_VECTOR, MAX_OLD_ENEMIES ),
 	DEFINE_FIELD( CBaseMonster, m_flFieldOfView, FIELD_FLOAT ),
 	DEFINE_FIELD( CBaseMonster, m_flWaitFinished, FIELD_TIME ),
@@ -385,7 +388,8 @@ void CBaseMonster :: Look ( int iDistance )
 
 				// the looker will want to consider this entity
 				// don't check anything else about an entity that can't be seen, or an entity that you don't care about.
-				if ( IRelationship( pSightEnt ) != R_NO && FInViewCone( pSightEnt ) && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) && FVisible( pSightEnt ) )
+				// SBO 2.1: a cloaked player only within the cloak's sight range (player.cpp Cloak_HidesFrom)
+				if ( IRelationship( pSightEnt ) != R_NO && FInViewCone( pSightEnt ) && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) && !Cloak_HidesFrom( this, pSightEnt ) && FVisible( pSightEnt ) )
 				{
 					if ( pSightEnt->IsPlayer() )
 					{
@@ -448,6 +452,7 @@ void CBaseMonster :: Look ( int iDistance )
 	}
 	
 	SetConditions( iSighted );
+	Cloak_AfterLook( this );	// SBO 2.1: a cloaked enemy unseen for long is lost, then forgotten
 }
 
 //=========================================================
@@ -1132,7 +1137,8 @@ int CBaseMonster :: CheckEnemy ( CBaseEntity *pEnemy )
 	iUpdatedLKP = FALSE;
 	ClearConditions ( bits_COND_ENEMY_FACING_ME );
 	
-	if ( !FVisible( pEnemy ) )
+	// SBO 2.1: a cloaked enemy the monster does not see (Look, Cloak_HidesFrom) counts as out of sight too
+	if ( !FVisible( pEnemy ) || Cloak_EnemyHidden( this ) )
 	{
 		ASSERT(!HasConditions(bits_COND_SEE_ENEMY));
 		SetConditions( bits_COND_ENEMY_OCCLUDED );
@@ -1204,7 +1210,8 @@ int CBaseMonster :: CheckEnemy ( CBaseEntity *pEnemy )
 			// UNDONE: use pev->oldorigin?
 		}
 	}
-	else if ( !HasConditions(bits_COND_ENEMY_OCCLUDED|bits_COND_SEE_ENEMY) && ( flDistToEnemy <= 256 ) )
+	// SBO 2.1: not for a cloaked enemy: he is found only by sight (Look, Cloak_HidesFrom)
+	else if ( !HasConditions(bits_COND_ENEMY_OCCLUDED|bits_COND_SEE_ENEMY) && ( flDistToEnemy <= 256 ) && !Cloak_IsCloaked( pEnemy ) )
 	{
 		// if the enemy is not occluded, and unseen, that means it is behind or beside the monster.
 		// if the enemy is near enough the monster, we go ahead and let the monster know where the
@@ -1221,7 +1228,11 @@ int CBaseMonster :: CheckEnemy ( CBaseEntity *pEnemy )
 	else
 		ClearConditions( bits_COND_ENEMY_TOOFAR );
 
-	if ( FCanCheckAttacks() )	
+	// SBO 2.1: no attack at a cloaked enemy it does not see: monsters whose FCanCheckAttacks doesn't ask for sight (the
+	// grunts: only line of fire) would shoot at him wherever he is
+	if ( Cloak_EnemyHidden( this ) )
+		ClearConditions( bits_COND_CAN_RANGE_ATTACK1 | bits_COND_CAN_RANGE_ATTACK2 | bits_COND_CAN_MELEE_ATTACK1 | bits_COND_CAN_MELEE_ATTACK2 );
+	else if ( FCanCheckAttacks() )	
 	{
 		CheckAttacks ( m_hEnemy, flDistToEnemy );
 	}
@@ -1281,6 +1292,12 @@ BOOL CBaseMonster :: PopEnemy( )
 	{
 		if (m_hOldEnemy[i] != NULL)
 		{
+			// SBO 2.1: a cloaked player is not remembered: only sight finds him again
+			if ( Cloak_IsCloaked( m_hOldEnemy[i] ) )
+			{
+				m_hOldEnemy[i] = NULL;
+				continue;
+			}
 			if (m_hOldEnemy[i]->IsAlive( )) // cheat and know when they die
 			{
 				m_hEnemy = m_hOldEnemy[i];

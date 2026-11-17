@@ -126,19 +126,10 @@ BOOL CFederal::Deploy( )
 }
 
 
-void CFederal::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CFederal::Holster( int skiplocal /* = 0 */ )
 {
-	m_fInReload = FALSE;// cancel any reload in progress.
-
-	if ( m_fInZoom )
-	{
-		SecondaryAttack( );
-	}
-
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
-
-	if ( m_iClip )
-		SendWeaponAnim( FEDERAL_DRAW );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 

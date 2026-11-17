@@ -1,5 +1,5 @@
-// Color correction client core (src/cl_dll/colorcorrection_core.cpp): message parsing, the .raw and .cube readers on
-// good, cut and hostile input, the simple keys, the weights, the fades and the blend, and a seeded random fuzz pass over
+// Color correction client core (src/cl_dll/colorcorrection_core.cpp): message parsing, the .raw reader on good, cut
+// and hostile input, the simple keys, the weights, the fades and the blend, and a seeded random fuzz pass over
 // the readers and the message. Run by tests/colorcorrection/run_test.sh with ASan/UBSan. Argument: fuzz iterations
 // (default 20000).
 
@@ -111,13 +111,13 @@ static void TestMessage()
 	NEAR( p.weightNow, 0.5f );
 
 	// volume
-	m = VolumeMessage( 7, COLORCORR_FLAG_ENABLED, 12, "gfx/colorcorrection/teal.cube" );
+	m = VolumeMessage( 7, COLORCORR_FLAG_ENABLED, 12, "gfx/colorcorrection/teal.raw" );
 	CHECK( colorcorr::Parse( m.data(), (int)m.size(), p ) );
 	CHECK( p.model == 12 && ( p.flags & COLORCORR_FLAG_VOLUME ) );
 	NEAR( p.origin[0], -10 );
 	NEAR( p.fadeIn, 1.5f );
 	CHECK( p.minFalloff == -1.0f && p.maxFalloff == -1.0f );
-	CHECK( !strcmp( p.file, "gfx/colorcorrection/teal.cube" ) );
+	CHECK( !strcmp( p.file, "gfx/colorcorrection/teal.raw" ) );
 
 	// removed: index and flags only
 	Writer w;
@@ -141,7 +141,7 @@ static void TestMessage()
 
 	// paths the server would not precache are dropped; a long one is cut, then dropped
 	const char *bad[] = { "../config.cfg", "gfx/colorcorrection/../../x.raw", "gfx/colorcorrection/a.tga",
-		"maps/a.raw", "gfx/colorcorrection/c:\\a.raw", "gfx/colorcorrection/.raw" };
+		"gfx/colorcorrection/a.cube", "maps/a.raw", "gfx/colorcorrection/c:\\a.raw", "gfx/colorcorrection/.raw" };
 	for ( const char *b : bad )
 	{
 		m = PointMessage( 3, 1, 1, 1, 0, 0, 0, 0, 0, -1, -1, 1, 1, 0, 1, 255, 255, 255, 0, b );
@@ -152,28 +152,9 @@ static void TestMessage()
 	m = PointMessage( 3, 1, 1, 1, 0, 0, 0, 0, 0, -1, -1, 1, 1, 0, 1, 255, 255, 255, 0, longName.c_str() );
 	CHECK( colorcorr::Parse( m.data(), (int)m.size(), p ) );
 	CHECK( p.file[0] == 0 );
-	CHECK( ColorCorr_ValidPath( "gfx/colorcorrection/Teal.CUBE" ) );
+	CHECK( ColorCorr_ValidPath( "gfx/colorcorrection/Teal.RAW" ) );
+	CHECK( !ColorCorr_ValidPath( "gfx/colorcorrection/Teal.CUBE" ) );
 	CHECK( ColorCorr_ValidPath( "gfx/colorcorrection/sub/a.raw" ) );
-}
-
-static Bytes Text( const std::string &s )
-{
-	return Bytes( s.begin(), s.end() );
-}
-
-static std::string IdentityCube( int n, const char *header = "" )
-{
-	std::string s = std::string( "# a comment\nTITLE \"identity\"\n" ) + header + "LUT_3D_SIZE " + std::to_string( n ) + "\n";
-	char line[64];
-	for ( int b = 0; b < n; b++ )
-		for ( int g = 0; g < n; g++ )
-			for ( int r = 0; r < n; r++ )
-			{
-				snprintf( line, sizeof( line ), "%.6f %.6f %.6f\n", r / (double)( n - 1 ), g / (double)( n - 1 ),
-					b / (double)( n - 1 ) );
-				s += line;
-			}
-	return s;
 }
 
 static void TestRaw()
@@ -192,101 +173,12 @@ static void TestRaw()
 	// by extension
 	CHECK( colorcorr::ReadTable( "gfx/colorcorrection/x.RAW", raw.data(), (int)raw.size(), lut, err, sizeof( err ) ) );
 	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.tga", raw.data(), (int)raw.size(), lut, err, sizeof( err ) ) );
-}
-
-static void TestCube()
-{
-	colorcorr::Lut lut, ident;
-	char err[160];
-	for ( int n : { 2, 17, 33 } )
-	{
-		Bytes t = Text( IdentityCube( n ) );
-		CHECK( colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		CHECK( lut.size == n );
-		colorcorr::IdentityLut( n, ident );
-		CHECK( lut.rgb == ident.rgb );
-	}
-	// red fastest: entry 1 of a 2-cube is red 1
-	{
-		Bytes t = Text( IdentityCube( 2 ) );
-		CHECK( colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		CHECK( lut.rgb[3] == 255 && lut.rgb[4] == 0 && lut.rgb[5] == 0 );
-	}
-	// CRLF line ends, tabs, domain lines, no newline at the end
-	{
-		std::string s = IdentityCube( 2, "DOMAIN_MIN 0 0 0\r\nDOMAIN_MAX 1.0 1.0 1.0\r\n" );
-		for ( size_t i = 0; ( i = s.find( '\n', i ) ) != std::string::npos; i += 2 )
-			s.replace( i, 1, "\r\n" );
-		s.resize( s.size() - 2 );
-		Bytes t = Text( s );
-		CHECK( colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-	}
-	// values outside 0 .. 1 are clamped
-	{
-		std::string s = "LUT_3D_SIZE 2\n";
-		for ( int i = 0; i < 8; i++ )
-			s += "-1 2 0.5\n";
-		Bytes t = Text( s );
-		CHECK( colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		CHECK( lut.rgb[0] == 0 && lut.rgb[1] == 255 && lut.rgb[2] == 128 );
-	}
-	// hostile and broken files
-	const char *bad[] = {
-		"",
-		"LUT_3D_SIZE 2\n",										// no values
-		"0 0 0\nLUT_3D_SIZE 2\n",								// values first
-		"LUT_3D_SIZE 1\n0 0 0\n",								// too small
-		"LUT_3D_SIZE 65\n",										// too big
-		"LUT_3D_SIZE 100000000\n",
-		"LUT_3D_SIZE -3\n",
-		"LUT_3D_SIZE 2.5\n",
-		"LUT_3D_SIZE 2\nLUT_3D_SIZE 2\n",
-		"LUT_1D_SIZE 1024\n",
-		"LUT_3D_SIZE 2\nDOMAIN_MIN -1 0 0\n",
-		"LUT_3D_SIZE 2\nDOMAIN_MAX 2 2 2\n",
-		"LUT_3D_SIZE 2\nFOO 1\n",
-		"LUT_3D_SIZE 2\n0 0\n",
-		"LUT_3D_SIZE 2\n0 0 0 0\n",
-		"LUT_3D_SIZE 2\nnan 0 0\n",
-		"LUT_3D_SIZE 2\n1e999 0 0\n",
-		"LUT_3D_SIZE 2\n0x 0 0\n",
-		"LUT_3D_SIZE\n",
-	};
-	for ( const char *b : bad )
-	{
-		Bytes t = Text( b );
-		CHECK( !colorcorr::ReadCube( t.empty() ? NULL : t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		CHECK( err[0] != 0 );
-	}
-	// too many values, a keyword after the values, a zero byte, a line too long
-	{
-		Bytes t = Text( IdentityCube( 2 ) + "0 0 0\n" );
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		t = Text( IdentityCube( 2 ) + "TITLE \"x\"\nLUT_3D_SIZE 2\n" );
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		t = Text( IdentityCube( 2 ) );
-		t[30] = 0;
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		t = Text( "LUT_3D_SIZE 2\n" + std::string( 10000, ' ' ) + "0 0 0\n" );
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, err, sizeof( err ) ) );
-		CHECK( strstr( err, "line too long" ) != NULL );
-	}
-	// a cut file: every prefix fails or (at a line end of the full table) succeeds, never reads past
-	{
-		Bytes full = Text( IdentityCube( 3 ) );
-		for ( size_t cut = 1; cut < full.size(); cut += 3 )
-		{
-			Bytes c( full.begin(), full.begin() + cut );
-			colorcorr::ReadCube( c.data(), (int)c.size(), lut, err, sizeof( err ) );
-		}
-	}
+	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.cube", raw.data(), (int)raw.size(), lut, err, sizeof( err ) ) );
+	CHECK( strstr( err, "not a .raw file" ) != NULL );
 	// the error buffer may be tiny or missing
-	{
-		Bytes t = Text( "LUT_3D_SIZE 99\n" );
-		char small[4];
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, small, sizeof( small ) ) );
-		CHECK( !colorcorr::ReadCube( t.data(), (int)t.size(), lut, NULL, 0 ) );
-	}
+	char small[4];
+	CHECK( !colorcorr::ReadRaw( raw.data(), 5, lut, small, sizeof( small ) ) );
+	CHECK( !colorcorr::ReadRaw( raw.data(), 5, lut, NULL, 0 ) );
 }
 
 static colorcorr::Params Neutral()
@@ -469,16 +361,17 @@ static void Fuzz( int iterations )
 {
 	unsigned int seed = 12345;
 	auto Rand = [&]() { seed = seed * 1103515245u + 12345u; return ( seed >> 16 ) & 0x7FFF; };
-	const Bytes cube = Text( IdentityCube( 4, "DOMAIN_MIN 0 0 0\n" ) );
-	const Bytes msg = PointMessage( 5, 7, 1, 1, 1, 1, 1, 2, 3, 4, 5, 1, 1, 0, 1, 1, 2, 3, 4, "gfx/colorcorrection/f.cube" );
+	Bytes table( colorcorr::RAW_BYTES );
+	for ( size_t i = 0; i < table.size(); i++ )
+		table[i] = (unsigned char)( i * 13 );
+	const Bytes msg = PointMessage( 5, 7, 1, 1, 1, 1, 1, 2, 3, 4, 5, 1, 1, 0, 1, 1, 2, 3, 4, "gfx/colorcorrection/f.raw" );
 	const Bytes vol = VolumeMessage( 6, 1, 3, "gfx/colorcorrection/v.raw" );
-	const char *tokens[] = { "LUT_3D_SIZE ", "DOMAIN_MAX ", "\n", "\r", " ", "#", "nan", "1e40", "-", "64", "\0", "TITLE" };
 	colorcorr::Lut lut;
 	colorcorr::Params p;
 	char err[64];
 	for ( int i = 0; i < iterations; i++ )
 	{
-		Bytes c = cube;
+		Bytes c = table;
 		const int edits = 1 + Rand() % 8;
 		for ( int k = 0; k < edits && !c.empty(); k++ )
 		{
@@ -488,16 +381,12 @@ static void Fuzz( int iterations )
 			case 0: c[at] = (unsigned char)Rand(); break;
 			case 1: c.erase( c.begin() + at ); break;
 			case 2: c.resize( at ); break;
-			default:
-			{
-				const char *t = tokens[ Rand() % ( sizeof( tokens ) / sizeof( tokens[0] ) ) ];
-				const size_t len = t[0] ? strlen( t ) : 1;
-				c.insert( c.begin() + at, (const unsigned char *)t, (const unsigned char *)t + len );
-			}
+			default: c.insert( c.begin() + at, 1 + Rand() % 8, (unsigned char)Rand() ); break;
 			}
 		}
-		if ( colorcorr::ReadCube( c.empty() ? NULL : c.data(), (int)c.size(), lut, err, sizeof( err ) ) )
-			CHECK( lut.size >= 2 && lut.size <= 64 && lut.rgb.size() == (size_t)lut.size * lut.size * lut.size * 3 );
+		const char *path = ( Rand() % 4 ) ? "gfx/colorcorrection/f.raw" : "gfx/colorcorrection/f.cube";
+		if ( colorcorr::ReadTable( path, c.empty() ? NULL : c.data(), (int)c.size(), lut, err, sizeof( err ) ) )
+			CHECK( lut.size == 32 && lut.rgb.size() == (size_t)colorcorr::RAW_BYTES );
 
 		Bytes m = ( i & 1 ) ? msg : vol;
 		const int medits = 1 + Rand() % 4;
@@ -533,14 +422,12 @@ static void TestFileChanges()
 {
 	colorcorr::Lut a, b, table;
 	char err[160];
-	Bytes raw( colorcorr::RAW_BYTES, 10 );
+	Bytes raw( colorcorr::RAW_BYTES, 10 ), raw2( colorcorr::RAW_BYTES, 200 );
 	CHECK( colorcorr::ReadTable( "gfx/colorcorrection/x.raw", raw.data(), (int)raw.size(), a, err, sizeof( err ) ) );
-	Bytes cube = Text( IdentityCube( 5 ) );
-	CHECK( colorcorr::ReadTable( "gfx/colorcorrection/x.cube", cube.data(), (int)cube.size(), b, err, sizeof( err ) ) );
-	CHECK( a.size == 32 && b.size == 5 && b.rgb.size() == 5 * 5 * 5 * 3 );
-	// the same Lut object reused for a shorter / failed read keeps a consistent state
-	Bytes bad = Text( "LUT_3D_SIZE 3\n0 0 0\n" );
-	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.cube", bad.data(), (int)bad.size(), b, err, sizeof( err ) ) );
+	CHECK( colorcorr::ReadTable( "gfx/colorcorrection/x.raw", raw2.data(), (int)raw2.size(), b, err, sizeof( err ) ) );
+	CHECK( a.size == 32 && b.size == 32 && a.rgb[0] == 10 && b.rgb[0] == 200 );
+	// the same Lut object reused for a failed read keeps a consistent state
+	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.raw", raw2.data(), (int)raw2.size() - 3, b, err, sizeof( err ) ) );
 	CHECK( b.rgb.size() == (size_t)b.size * b.size * b.size * 3 );
 	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.raw", NULL, 0, a, err, sizeof( err ) ) );
 	CHECK( !colorcorr::ReadTable( "gfx/colorcorrection/x.cube", NULL, 0, a, err, sizeof( err ) ) );
@@ -550,7 +437,10 @@ static void TestFileChanges()
 	p.saturation = 0;
 	colorcorr::BuildLut( p, &a, table );
 	CHECK( table.size == 32 );
-	colorcorr::BuildLut( p, &b, table );
+	// a smaller table the client builds itself is used at its own size
+	colorcorr::Lut small;
+	colorcorr::IdentityLut( 5, small );
+	colorcorr::BuildLut( p, &small, table );
 	CHECK( table.size == 5 && table.rgb.size() == 5 * 5 * 5 * 3 );
 	// a Lut whose size and data disagree (never made by the readers) is not used
 	colorcorr::Lut liar;
@@ -591,7 +481,6 @@ int main( int argc, char **argv )
 	const int iterations = argc > 1 ? atoi( argv[1] ) : 20000;
 	TestMessage();
 	TestRaw();
-	TestCube();
 	TestSimpleKeys();
 	TestWeights();
 	TestBlend();

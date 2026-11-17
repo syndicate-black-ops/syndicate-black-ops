@@ -759,9 +759,6 @@ public:
 	virtual void OnCursorEntered()
 	{
 		BaseClass::OnCursorEntered();
-		wchar_t text[64];
-		GetChatColorDisplayName(ChatColor::FromCode(m_iCode), text, sizeof(text));
-		GetHost(this)->ShowPickerTooltip(this, text);
 	}
 
 	virtual void OnCursorExited()
@@ -899,9 +896,10 @@ void CHudChatColorButton::Paint()
 		vgui2::surface()->DrawFilledRect(0, 0, wide, tall);
 	}
 
-	// the current color (the one being picked while the wheel is dragged)
+	// the current color (the one being picked while the wheel is dragged): with the popup open, the edited setting's
+	// (the name color while "Name" is selected), else the chat color
 	const int swatch = tall;
-	DrawChatColorSwatch(pChat, pChat->GetActiveChatColor(), 0, 0, swatch, false);
+	DrawChatColorSwatch(pChat, bOpen ? pChat->GetPickerColor() : pChat->GetActiveChatColor(), 0, 0, swatch, false);
 
 	// the arrow: points down (opens the popup upwards), up while the popup is open; prompt color
 	Color arrowColor = pChat->GetDefaultTextColor();
@@ -1101,8 +1099,8 @@ void CHudChatColorPicker::Paint()
 		return; // the color field shows the color itself
 
 	// the edited setting's color - the chat color with "Chat" selected, the name color with "Name" (the one being
-	// picked while dragging; a ring for none) - in a small circle right of the switch, the same on both tabs;
-	// the collapsed circle left of the prompt always shows the chat color
+	// picked while dragging; a ring for none) - in a small circle right of the switch, the same on both tabs, as
+	// the collapsed circle left of the prompt shows it
 	if (m_iTargetTall > 4)
 	{
 		const int size = m_iTargetTall - 2;
@@ -1171,11 +1169,6 @@ void CHudChatColorPicker::OnPicked(vgui2::Panel *pSource, bool bSelect)
 	else
 	{
 		pHost->SetPickerPreview(color);
-
-		// the code of the color, as it can be typed in a message or a name
-		wchar_t text[64];
-		GetChatColorDisplayName(color, text, sizeof(text));
-		pHost->ShowPickerTooltip(pSource, text);
 	}
 }
 

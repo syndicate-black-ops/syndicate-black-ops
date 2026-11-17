@@ -12,9 +12,7 @@ S = SUITE
 SUITE.server_args = ('+developer', '1')    # the entities' console lines (ALERT)
 DOC = 'COLOR_CORRECTION.md'
 RAW = 'gfx/colorcorrection/et_test.raw'
-CUBE = 'gfx/colorcorrection/et_test.cube'
 SUITE.add_file(RAW, bytes(98304))
-SUITE.add_file(CUBE, b'LUT_3D_SIZE 2\n' + b'0 0 0\n' * 8)
 
 
 # Every test's entities are in the suite's one map and a fullupdate sends them all: each test tags its own with a
@@ -59,21 +57,21 @@ def point_defaults(t):
 
 
 @S.test('volume: its brush model, fade time in both fade fields (default 1 s), a bare file name is in '
-        'gfx/colorcorrection/, a .cube precached', players=1, doc=DOC,
+        'gfx/colorcorrection/ and precached', players=1, doc=DOC,
         covers=('color_correction_volume', 'color_correction_volume.fadeDuration', 'color_correction_volume.filename',
                 'color_correction_volume.saturation'))
 def volume(t):
     t.trigger('color_correction_volume', size=(128, 128, 128), targetname='a', fadeDuration='2.5', saturation='0.5',
               gamma='1.01')
-    t.trigger('color_correction_volume', size=(64, 64, 64), at=(160, 0, 0), targetname='b', filename='et_test.cube')
+    t.trigger('color_correction_volume', size=(64, 64, 64), at=(160, 0, 0), targetname='b', filename='et_test.raw')
     fullupdate(t)
     t.expect.msg('ColorCorr', to='player1', count=1, after='fu',
                  fields={'volume': 1, 'enabled': 1, 'fadein': 2.5, 'fadeout': 2.5, 'saturation': 0.5, 'gamma': 1.01,
                          'model': {'range': (1, 512)}, 'file': ''})
     t.expect.msg('ColorCorr', to='player1', count=1, after='fu',
-                 fields={'volume': 1, 'fadein': 1, 'fadeout': 1, 'file': CUBE})
+                 fields={'volume': 1, 'fadein': 1, 'fadeout': 1, 'file': RAW})
     t.expect.msg('ColorCorr', to='player1', count=1, after='fu', fields={'first': 1})
-    t.expect.precached(CUBE, kind='generic')
+    t.expect.precached(RAW, kind='generic')
 
 
 @S.test('toggle: Use turns it off and on, a message each time; the point\'s weight in it is where its fade is', players=1, doc=DOC,
@@ -169,21 +167,23 @@ def removed(t):
     t.expect.removed('cc')
 
 
-@S.test('bad files (outside gfx/colorcorrection/, not .raw / .cube, "..") and a volume without a brush: an error, '
+@S.test('bad files (outside gfx/colorcorrection/, not .raw (.tga, .cube), "..") and a volume without a brush: an error, '
         'nothing sent, nothing precached', players=1, doc=DOC, covers=('color_correction', 'color_correction.filename'))
 def bad_file(t):
     t.point('color_correction', targetname='a', filename='gfx/env/boatft.tga')
     t.point('color_correction', targetname='b', filename='maps/x.raw')
     t.point('color_correction', targetname='c', filename='gfx/colorcorrection/../../x.raw')
     t.point('color_correction_volume', targetname='d')
+    t.point('color_correction', targetname='e', filename='gfx/colorcorrection/x.cube')
     fullupdate(t)
     t.mark('go')
-    for n in ('a', 'b', 'c', 'd'):
+    for n in ('a', 'b', 'c', 'd', 'e'):
         t.fire(n)
     t.wait(0.2)
     t.expect.no_msg('ColorCorr', to='player1', after='go')
     t.expect.msg('ColorCorr', to='player1', count=0, min=0, after='fu', fields={'file': 'gfx/env/boatft.tga'})
     t.expect.not_precached('maps/x.raw')
+    t.expect.not_precached('gfx/colorcorrection/x.cube')
     t.expect.console('bad file')
     t.expect.console('without a brush')
 

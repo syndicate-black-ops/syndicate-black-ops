@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fail if a staged src/ file has LF-only lines while its committed (HEAD) version is pure CRLF (keeps diffs readable).
-# Installed as .git/hooks/pre-commit; also runnable by hand.
+# Run by the pre-commit hook (scripts/pre-commit.sh); also runnable by hand.
 #   scripts/check_eol.sh                 the staged files against HEAD (pre-commit)
 #   scripts/check_eol.sh <base> <head>   the src/ files <head> changed since <base> (CI: a push or a pull request)
 #   scripts/check_eol.sh --all           every tracked src/ file: CRLF and LF-only lines must not be mixed (CI: a commit

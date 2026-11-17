@@ -3649,7 +3649,7 @@ static void GmMode_ToggleCommand( void )
 
 	if ( !g_pGameRules || !GmMode_Allowed() )
 	{
-		g_engfuncs.pfnServerPrint( "gm_toggle: Game Master mode needs a co-op map\n" );
+		g_engfuncs.pfnServerPrint( "gm_toggle: Game Master mode needs a Co-op map\n" );
 		return;
 	}
 
@@ -5039,9 +5039,7 @@ void GmMode_PlayerKilled( CBasePlayer *pVictim, entvars_t *pKiller, entvars_t *p
 	if ( iVictim >= 1 && iVictim <= GM_MAX_PLAYERS && pMonster->m_iGmEntry >= 0 && pMonster->m_iGmEntry < GM_CATALOG_COUNT )
 		s_iKilledBy[pOwner->entindex()][iVictim] = pMonster->m_iGmEntry + 1;
 
-	// sma award_gm_kill_level: with the XP system on, a level (point) every two players the GM's monsters kill
-	if ( XP.value < 1 )
-		return;
+	// sma award_gm_kill_level: a level (point) every two players the GM's monsters kill
 
 	GmPlayerState &gm = s_Gm[pOwner->entindex()];
 	// sma syndicate_gmmode_kills_per_level (1-100)

@@ -106,3 +106,23 @@ def target(t):
     t.wait(0.2)
     t.expect.msg(TE, to='player1', fields=text(text='ET_TEXT_TARGET'), count=1)
     t.expect.not_used('after')
+
+
+@S.test('game_text: a second text on a channel that is still showing goes out with its own fade-in and hold, so the '
+        'client shows it from its start (cl_dll/message.cpp MessageAdd clears the channel\'s old slot)', players=1,
+        covers=('game_text.channel=3', 'game_text.holdtime'))
+def same_channel_replace(t):
+    t.point('game_text', targetname='first', message='ET_TEXT_FIRST', channel='3', effect='0', fadein='1',
+            holdtime='4', fadeout='1')
+    t.point('game_text', targetname='second', message='ET_TEXT_SECOND', channel='3', effect='0', fadein='0.1',
+            holdtime='1.5', fadeout='0.5')
+    t.mark('first')
+    t.fire('first', activator='player1')
+    t.wait(2)
+    t.mark('second')
+    t.fire('second', activator='player1')
+    t.wait(0.3)
+    t.expect.msg(TE, to='player1', count=1, after='first', fields=text(
+        text='ET_TEXT_FIRST', channel=3, fadein=1.0, hold=4.0, fadeout=1.0))
+    t.expect.msg(TE, to='player1', count=1, after='second', within=(0, 0.1), fields=text(
+        text='ET_TEXT_SECOND', channel=3, fadein=0.1, hold=1.5, fadeout=0.5))

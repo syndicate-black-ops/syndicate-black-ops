@@ -41,6 +41,8 @@ public:
 		EHANDLE				m_hTargetEnt;	 // the entity that the monster is trying to reach
 		EHANDLE				m_hOldEnemy[ MAX_OLD_ENEMIES ];
 		Vector				m_vecOldEnemy[ MAX_OLD_ENEMIES ];
+		float				m_flCloakEnemySeen;	// SBO 2.1: when Look last saw m_hEnemy (player.cpp Cloak_AfterLook)
+		Vector				m_vecCloakSeenPos;	// SBO 2.1: where it last saw its cloaked enemy within the cloak's range
 
 		float				m_flFieldOfView;// width of monster's field of view ( dot product )
 		float				m_flWaitFinished;// if we're told to wait, this is the time that the wait will be over.
@@ -140,6 +142,9 @@ public:
 // friend of the players becomes military, everything else a player ally)
 	BOOL				m_fForceTakeDamageTrigger;	// SBO 2.0 (Featureful): a hit in a script with flag 524288
 	BOOL				m_fUnkillable;	// SBO 2.1 (Half-Life Unified SDK): "unkillable": damage leaves it at 1 health (TakeDamage)
+	// "unkillable": the part of a hit that leaves at least 1 health (all of it while the key is off). For the monsters
+	// whose damage does not go through CBaseMonster::TakeDamage (the Apache, the turrets, the Sentry Gun).
+	float				UnkillableDamage( float flDamage ) { return ( m_fUnkillable && flDamage > pev->health - 1 ) ? ( pev->health > 1 ? pev->health - 1 : 0 ) : flDamage; }
 	int					m_iClassKey;
 	BOOL				m_fReverseRelationship;
 	int					KeyedClass( int iDefaultClass );

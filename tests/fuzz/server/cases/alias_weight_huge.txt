@@ -1,0 +1,8 @@
+# multi_alias weights near INT_MAX: their total overflowed (UBSan signed overflow in CMultiAlias::KeyValue)
+map co_fuzz
+connect 1
+spawn multi_alias targetname ma m_iMode 1 a 2147483647 b 2147483647 c 99999999999
+spawn info_target targetname a
+activate
+fire ma
+frames 5

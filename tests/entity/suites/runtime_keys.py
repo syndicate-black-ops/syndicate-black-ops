@@ -305,6 +305,21 @@ def sky(t):
                  fields={'mode': 1, 'origin': list(t._abs((0, 0, 100))), 'scale': 8})
 
 
+@S.test('env_sky switched on, then the sky: a new sky fog density and color go to every client at once', players=1,
+        doc=DOC, covers=('env_sky.density', 'env_sky.rendercolor', 'env_sky:1'))
+def sky_fog(t):
+    t.point('env_sky', targetname='fsky', at=(0, 0, 100), spawnflags='1', rendercolor='10 20 30', density='0.001')
+    change(t, 'c_dens', 'fsky', 'density', '0.004')
+    change(t, 'c_col', 'fsky', 'rendercolor', '90 80 70')
+    t.fire('fsky')
+    t.wait(0.2)
+    fire_marked(t, ('c_dens', 'c_col'), wait=0.2)
+    t.expect.msg('SetSky', count=1, after='c_dens', within=(0, 0.15),
+                 fields={'mode': 1, 'fog_color': [10, 20, 30], 'fog_density': dens(0.004)})
+    t.expect.msg('SetSky', count=1, after='c_col', within=(0, 0.15),
+                 fields={'mode': 1, 'fog_color': [90, 80, 70], 'fog_density': dens(0.004)})
+
+
 @S.test('multi_manager: a new delay for a target updates its entry (fired once, at the new time, after the other); '
         'Add works on a delay read back', players=1, doc=DOC, covers=('multi_manager',))
 def multi_manager(t):

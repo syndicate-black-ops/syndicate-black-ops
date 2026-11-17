@@ -96,8 +96,9 @@ void GetChatColorDisplayName(const ChatColor &color, wchar_t *buf, int bufSizeBy
 void DrawChatColorSwatch(Color noneColor, const ChatColor &color, int x, int y, int size, bool bSelected);
 
 //-----------------------------------------------------------------------------
-// Purpose: the collapsed color picker: a circle in the current color (a hollow ring for "none") plus a small
-// arrow; a click opens or closes the popup
+// Purpose: the collapsed color picker: a circle in the current color (a hollow ring for "none"; with the popup
+// open, the color of the setting it edits, the one being picked while dragging) plus a small arrow; a click opens or
+// closes the popup
 //-----------------------------------------------------------------------------
 class CHudChatColorButton : public vgui2::Panel
 {

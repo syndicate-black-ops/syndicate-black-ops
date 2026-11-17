@@ -27,7 +27,9 @@
 //    is not finite or beyond 1e30 ("inf", "nan", 1e999) reads as 0, and the angle and frame lookups stay
 //    defined for any value;
 //  - XashXT / PrimeXT's top-level "lightmodel" (particles tinted by the world light) and "killcondition" (the
-//    system stops for good once its emitter is in empty / water / solid) are read.
+//    system stops for good once its emitter is in empty / water / solid) are read, and their top-level
+//    "attachment" (counted from 1) and "lifetime" are defaults: the attachment of a followed model when the
+//    entity's Attachment point is None, and the length of a Spawn Use copy.
 
 #include <math.h>	// before cl_util.h (its fabs macro)
 #include <stdio.h>
@@ -370,6 +372,8 @@ ParticleSystem::ParticleSystem( int iId, const char *szFilename, const char *szF
 	m_iLightModel = 0;
 	m_iKillCondition = 0;
 	m_bKilled = false;
+	m_iScriptAttachment = -1;
+	m_flScriptLifetime = 0;
 	m_bTypeLimitWarned = false;
 	m_vecEmitter = m_vecEmitterAngles = Vector( 0, 0, 0 );
 	m_bHasEmitter = false;
@@ -452,6 +456,24 @@ ParticleSystem::ParticleSystem( int iId, const char *szFilename, const char *szF
 		{
 			// XashXT / PrimeXT: the contents at the emitter that stop the system
 			ParseKillCondition( szToken );
+		}
+		else if ( !stricmp( szKey, "attachment" ) )
+		{
+			// XashXT / PrimeXT: the attachment of the followed model, counted from 1 (0: none). SBO counts from 0, so
+			// N is attachment N - 1. A default only: the entity's own Attachment point wins (SetPlacement).
+			const int iAttachment = atoi( szToken );
+			if ( iAttachment >= 1 && iAttachment <= AURORA_MAX_ATTACHMENTS )
+				m_iScriptAttachment = iAttachment - 1;
+			else if ( iAttachment != 0 )
+				Aurora_Warn( m_szFile, "attachment out of range (0 for none, 1 to 4), ignored: ", szToken );
+		}
+		else if ( !stricmp( szKey, "lifetime" ) )
+		{
+			// PrimeXT: the seconds the emitter runs after the system is made. Here the length of a Spawn Use
+			// copy (StartOneShot); a system of the entity itself is switched by the entity.
+			m_flScriptLifetime = Aurora_Number( szToken );
+			if ( m_flScriptLifetime < 0 )
+				m_flScriptLifetime = 0;
 		}
 		else
 		{
@@ -952,7 +974,11 @@ bool ParticleSystem::GetEmitter( Vector &origin, Vector &angles )
 
 void ParticleSystem::StartOneShot( float flNow )
 {
-	float flDuration = m_pMainType ? m_pMainType->m_Life.GetInstance() : 0;
+	// the script's top-level "lifetime" first (PrimeXT: the time the emitter runs; its main type's own lifetime
+	// means nothing there, the main particle never dies), else the main type's "lifetime"
+	float flDuration = m_flScriptLifetime;
+	if ( flDuration <= 0 && m_pMainType )
+		flDuration = m_pMainType->m_Life.GetInstance();
 	if ( flDuration <= 0 )
 		flDuration = 5;
 	else if ( flDuration > 120 )

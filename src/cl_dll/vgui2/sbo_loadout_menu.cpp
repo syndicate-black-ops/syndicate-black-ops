@@ -200,7 +200,7 @@ const std::vector<Slot> &Slots()
 		{ sbo::BRIEF_ITEM, "EQUIPMENT", "Equipment",
 		    // damage bars on a 0-300 scale; mobility as the texts say (satchels 300 - 15 in coop.cpp; mines no penalty,
 		    // fix/armor-values)
-		    { G("grenade", "grenade", "Grenades", "The longer you hold it, the sooner it explodes", { { "Damage", "250", 250 / 300.0f }, { "Count", "2" } }, { "250 dmg", "\xc3\x97" "2" }),
+		    { G("grenade", "grenade", "Grenades", "The longer you hold it, the sooner it explodes", { { "Damage", "100", 100 / 300.0f }, { "Count", "2" } }, { "100 dmg", "\xc3\x97" "2" }),
 		        G("tripmine", "tripmine", "Mines", "Goes off when someone walks past", { { "Damage", "280", 280 / 300.0f }, { "Mobility", "No penalty", 1.0f } }, { "280 dmg" }),
 		        G("satchel", "satchel", "Satchels", "Remote detonation for a big area", { { "Damage", "200\xe2\x80\x93" "300", 1.0f }, { "Mobility", "-5%", 0.95f } }, { "200\xe2\x80\x93" "300 dmg" }),
 		        G("pit", "pit", "Pitbull", "A dog that fights at your side", { { "Effect", "Attack dog" } }, { "Companion" }) } },

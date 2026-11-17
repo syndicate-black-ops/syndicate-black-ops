@@ -16,7 +16,6 @@ MONSTERS = ('monster_human_grunt', 'monster_imp', 'monster_hunter', 'monster_imp
         'no damage; a hit on the same monster without the script gives XP', players=1, size=(512, 512, 256), doc=DOC,
         covers=('scripted_sequence.m_takeDamagePolicy=1',))
 def no_xp_for_invulnerable(t):
-    t.console('mp_XP 1')
     t.flags('player1', '+FL_NOTARGET')
     t.flags('player1', '+FL_GODMODE')
     for i, cls in enumerate(MONSTERS):

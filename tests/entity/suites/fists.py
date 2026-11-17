@@ -1,7 +1,7 @@
 """Fists (weapon_wong) with no world model: placed in a map, picked up, given by game_player_equip.
 
-Its own suite: a game_player_equip in the map replaces every player's default fists at spawn
-(multiplay_gamerules.cpp / coop.cpp PlayerSpawn), which the weapons suite's punch test needs."""
+Its own suite: every game_player_equip in the map applies to every spawn in the suite (suite fists_spawn: the fists
+at every spawn beside it)."""
 
 from etest import Suite
 

@@ -7,7 +7,6 @@
 
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 namespace
@@ -74,13 +73,9 @@ float Clamp01( float f )
 	return f > 1.0f ? 1.0f : f;
 }
 
-void SetError( char *err, int errLen, const char *text, int line )
+void SetError( char *err, int errLen, const char *text )
 {
-	if ( !err || errLen <= 0 )
-		return;
-	if ( line > 0 )
-		snprintf( err, (size_t)errLen, "%s (line %d)", text, line );
-	else
+	if ( err && errLen > 0 )
 		snprintf( err, (size_t)errLen, "%s", text );
 }
 
@@ -98,33 +93,6 @@ bool HasExtension( const char *path, const char *ext )
 			return false;
 	}
 	return true;
-}
-
-bool IsSpace( char c )
-{
-	return c == ' ' || c == '\t' || c == '\r' || c == '\f' || c == '\v';
-}
-
-// up to max numbers of a .cube line (a bounded copy: strtod never reads past it); how many were read, -1 on a bad one
-int ReadNumbers( const char *s, double *out, int max )
-{
-	int n = 0;
-	while ( *s )
-	{
-		while ( IsSpace( *s ) )
-			s++;
-		if ( !*s )
-			break;
-		if ( n >= max )
-			return -1;
-		char *end = NULL;
-		const double v = strtod( s, &end );
-		if ( end == s || ( *end && !IsSpace( *end ) ) || !( v == v ) || v > 1e30 || v < -1e30 )
-			return -1;
-		out[n++] = v;
-		s = end;
-	}
-	return n;
 }
 
 unsigned char ToByte( float f )
@@ -195,7 +163,7 @@ bool ReadRaw( const unsigned char *data, int len, Lut &out, char *err, int errLe
 	{
 		char text[96];
 		snprintf( text, sizeof( text ), "a .raw table is %d bytes (32x32x32 RGB), this one is %d", RAW_BYTES, len );
-		SetError( err, errLen, text, 0 );
+		SetError( err, errLen, text );
 		return false;
 	}
 	out.size = RAW_SIZE;
@@ -203,148 +171,11 @@ bool ReadRaw( const unsigned char *data, int len, Lut &out, char *err, int errLe
 	return true;
 }
 
-bool ReadCube( const unsigned char *data, int len, Lut &out, char *err, int errLen )
-{
-	if ( !data || len <= 0 )
-	{
-		SetError( err, errLen, "empty file", 0 );
-		return false;
-	}
-
-	int size = 0, count = 0, total = 0, lineNo = 0;
-	std::vector<unsigned char> rgb;
-	int pos = 0;
-	while ( pos < len )
-	{
-		// one line, at most 255 characters kept (a longer one is an error)
-		char line[256];
-		int n = 0;
-		bool tooLong = false;
-		while ( pos < len && data[pos] != '\n' )
-		{
-			const unsigned char c = data[pos++];
-			if ( !c )
-			{
-				SetError( err, errLen, "a zero byte in the file", lineNo + 1 );
-				return false;
-			}
-			if ( n < (int)sizeof( line ) - 1 )
-				line[n++] = (char)c;
-			else
-				tooLong = true;
-		}
-		if ( pos < len )
-			pos++;	// the newline
-		line[n] = 0;
-		lineNo++;
-		if ( tooLong )
-		{
-			SetError( err, errLen, "line too long", lineNo );
-			return false;
-		}
-
-		const char *s = line;
-		while ( IsSpace( *s ) )
-			s++;
-		if ( !*s || *s == '#' )
-			continue;
-
-		if ( ( *s >= 'A' && *s <= 'Z' ) || ( *s >= 'a' && *s <= 'z' ) || *s == '_' )
-		{
-			// a keyword line
-			char key[32];
-			int k = 0;
-			while ( *s && !IsSpace( *s ) && k < (int)sizeof( key ) - 1 )
-				key[k++] = *s++;
-			key[k] = 0;
-			while ( *s && !IsSpace( *s ) )
-				s++;
-			if ( !strcmp( key, "TITLE" ) )
-				continue;
-			if ( count > 0 )
-			{
-				SetError( err, errLen, "a keyword after the table's values", lineNo );
-				return false;
-			}
-			double v[3];
-			if ( !strcmp( key, "LUT_3D_SIZE" ) )
-			{
-				if ( size || ReadNumbers( s, v, 1 ) != 1 || v[0] != floor( v[0] ) || v[0] < CUBE_MIN_SIZE
-					|| v[0] > CUBE_MAX_SIZE )
-				{
-					SetError( err, errLen, "LUT_3D_SIZE must be given once, 2 to 64", lineNo );
-					return false;
-				}
-				size = (int)v[0];
-				total = size * size * size;
-				rgb.reserve( (size_t)total * 3 );
-				continue;
-			}
-			if ( !strcmp( key, "DOMAIN_MIN" ) || !strcmp( key, "DOMAIN_MAX" ) )
-			{
-				const double want = key[7] == 'M' && key[8] == 'I' ? 0.0 : 1.0;
-				if ( ReadNumbers( s, v, 3 ) != 3 || v[0] != want || v[1] != want || v[2] != want )
-				{
-					SetError( err, errLen, "only the domain 0 0 0 - 1 1 1 is supported", lineNo );
-					return false;
-				}
-				continue;
-			}
-			if ( !strcmp( key, "LUT_1D_SIZE" ) )
-			{
-				SetError( err, errLen, "1D tables are not supported (LUT_3D_SIZE only)", lineNo );
-				return false;
-			}
-			SetError( err, errLen, "unknown keyword", lineNo );
-			return false;
-		}
-
-		// a value line
-		if ( !size )
-		{
-			SetError( err, errLen, "values before LUT_3D_SIZE", lineNo );
-			return false;
-		}
-		double v[3];
-		if ( ReadNumbers( s, v, 3 ) != 3 )
-		{
-			SetError( err, errLen, "a value line needs three numbers", lineNo );
-			return false;
-		}
-		if ( count >= total )
-		{
-			SetError( err, errLen, "more values than LUT_3D_SIZE^3", lineNo );
-			return false;
-		}
-		for ( int c = 0; c < 3; c++ )
-			rgb.push_back( ToByte( (float)v[c] ) );
-		count++;
-	}
-
-	if ( !size )
-	{
-		SetError( err, errLen, "no LUT_3D_SIZE", 0 );
-		return false;
-	}
-	if ( count != total )
-	{
-		char text[96];
-		snprintf( text, sizeof( text ), "%d values, LUT_3D_SIZE %d needs %d", count, size, total );
-		SetError( err, errLen, text, 0 );
-		return false;
-	}
-	out.size = size;
-	out.rgb.swap( rgb );
-	return true;
-}
-
 bool ReadTable( const char *path, const unsigned char *data, int len, Lut &out, char *err, int errLen )
 {
 	if ( path && HasExtension( path, ".raw" ) )
 		return ReadRaw( data, len, out, err, errLen );
-	if ( path && HasExtension( path, ".cube" ) )
-		return ReadCube( data, len, out, err, errLen );
-	SetError( err, errLen, "not a .raw or .cube file", 0 );
+	SetError( err, errLen, "not a .raw file" );
 	return false;
 }
 
@@ -375,10 +206,10 @@ void ApplySimpleKeys( const Params &p, float rgb[3] )
 
 void IdentityLut( int size, Lut &out )
 {
-	if ( size < CUBE_MIN_SIZE )
-		size = CUBE_MIN_SIZE;
-	if ( size > CUBE_MAX_SIZE )
-		size = CUBE_MAX_SIZE;
+	if ( size < LUT_MIN_SIZE )
+		size = LUT_MIN_SIZE;
+	if ( size > LUT_MAX_SIZE )
+		size = LUT_MAX_SIZE;
 	out.size = size;
 	out.rgb.resize( (size_t)size * size * size * 3 );
 	size_t i = 0;
@@ -394,7 +225,7 @@ void IdentityLut( int size, Lut &out )
 
 void BuildLut( const Params &p, const Lut *file, Lut &out )
 {
-	const bool hasFile = file && file->size >= CUBE_MIN_SIZE && file->size <= CUBE_MAX_SIZE
+	const bool hasFile = file && file->size >= LUT_MIN_SIZE && file->size <= LUT_MAX_SIZE
 		&& file->rgb.size() == (size_t)file->size * file->size * file->size * 3;
 	if ( hasFile )
 		out = *file;

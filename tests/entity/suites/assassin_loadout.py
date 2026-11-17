@@ -47,7 +47,6 @@ def die_and_choose(t, loadout):
 @S.test('Assassin dies, the menu picks the legs: the next round has the rc28, the federal and the grenade',
         players=2, doc=DOC)
 def leave_assassin(t):
-    t.console('mp_XP 0')
     t.console('test_join player1 %s' % ASSASSIN)
     new_round(t)
     t.snap('assassin', 'player1', 'weapons')
@@ -67,7 +66,6 @@ def leave_assassin(t):
 def leave_assassin_new_menu(t):
     # CSboLoadoutMenu::Deploy sends every slot's m_Sel + 1; "Remove Assassin" is Pick(SLOT_CYBER, 0) (cyberware 1),
     # the sidearm / primary / equipment picks it dimmed are still the ones made before Assassin
-    t.console('mp_XP 0')
     t.console('test_join player1 %s' % ASSASSIN)
     new_round(t)
     die_and_choose(t, '2 4 4 2 1 4 1')     # chainsaw, pm66, nm33, tripmine, legs, no armor
@@ -81,7 +79,6 @@ def leave_assassin_new_menu(t):
 @S.test('timing: a dead co-op player is a waiting observer about a second after dying, until the next round',
         players=2, doc=DOC)
 def dead_observer_timing(t):
-    t.console('mp_XP 0')
     new_round(t)
     t.damage('player1', 5000, 0)
     for i, s in enumerate((0.3, 0.7, 1.0, 1.0, 2.0, 5.0)):
@@ -93,7 +90,6 @@ def dead_observer_timing(t):
 
 @S.test('a dead player picks Assassin from the menu: the next round has the Assassin kit', players=2, doc=DOC)
 def pick_assassin(t):
-    t.console('mp_XP 0')
     t.console('test_join player1 %s' % NORMAL)
     new_round(t)
     t.snap('normal', 'player1', 'weapons')

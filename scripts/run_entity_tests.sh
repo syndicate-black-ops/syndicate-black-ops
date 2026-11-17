@@ -3,14 +3,16 @@
 # headless stock HLDS with an hl.so built with the test layer (off by default):
 #   scripts/build.sh linux RelWithDebInfo -DSBO_TEST_COMMANDS=ON
 #
-#   scripts/run_entity_tests.sh [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--timescale X] [--list]
+#   scripts/run_entity_tests.sh [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--timescale X] [-j N] [--list]
 #                               [--coverage [--coverage-out DIR]] [--coverage-gate]
+#     -j N       N suites at once, each on its own server (port range, folder, logs); default 1 (env ENTITY_JOBS)
 #     --coverage FGD classes, keys, spawnflag bits and choice values set / asserted by the entity suites and the
 #                map-test cases (tests/maps/cases "# covers:"); no server
 #     --coverage-gate  fails unless every FGD item is asserted or exempted in tests/fgd_exemptions.json; no server
 #     --ci       every suite twice; a test that passes once and fails once is FLAKY (a failure)
 #     --asan     an ASan+UBSan hl.so (scripts/check_sanitizers.sh asan), run in the sniper image with libasan
-# Env: HLDS_DIR (stock HLDS install, default ~/hlds), SDHLT_DIR (ReSDHLT tools), ET_HL, ET_TIMESCALE (default 5).
+# Env: HLDS_DIR (stock HLDS install, default ~/hlds), SDHLT_DIR (ReSDHLT tools), ET_HL, ET_TIMESCALE (default 5),
+#      ENTITY_JOBS (-j), ET_SERVER_MEM_MB (address-space cap of each server, default 1024).
 # Output: build/entity-tests/report.json, junit.xml; per suite map, steps, traces, server consoles. Exit 1 on failure.
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)

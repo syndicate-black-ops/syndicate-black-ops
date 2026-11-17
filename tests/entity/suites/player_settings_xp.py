@@ -1,8 +1,8 @@
 """game_player_settings co-op level and XP keys (docs/FEATUREFUL_GUIDE_ENTITIES.md "game_player_settings"): "level"
 and "xp" with the health / armor prefixes (= set, + add, - take, < at most, > at least; no prefix sets). A level
 change works as level-ups / the teamkill penalty do (level speed, spawn health, the speed at once) and moves the
-scoreboard XP by 5000 per level; "xp" is the XP toward the next level (m_iXP): with mp_XP 1 each full 5000 is a
-level-up, taking stops at 0. ScoreInfo (the level) and SboXP (the scoreboard XP) are sent at once."""
+scoreboard XP by 5000 per level; "xp" is the XP toward the next level (m_iXP): each full 5000 is a level-up,
+taking stops at 0. ScoreInfo (the level) and SboXP (the scoreboard XP) are sent at once."""
 
 from etest import Suite
 
@@ -11,8 +11,7 @@ S = SUITE
 DOC = 'FEATUREFUL_GUIDE_ENTITIES.md'
 
 
-def start(t, level=0, xp=1):
-    t.console('mp_XP %d' % xp)
+def start(t, level=0):
     t.point('game_player_settings', targetname='xp0', xp='=0')
     t.fire('xp0', activator='player1')     # XP toward the next level 0 (an earlier test's left over)
     t.wait(0.2)
@@ -49,7 +48,6 @@ def level_ops(t):
 @S.test('level: speed at once and spawn health follow: +2 is +20 speed and +4 spawn health, then -3 is -15 '
         'speed and -6 spawn health', players=2, doc=DOC, covers=('game_player_settings.level',))
 def level_speed_health(t):
-    t.console('mp_XP 1')
     t.console('test_join player1 2 1 2 1 1 4 1')    # the xp suite's LIGHT loadout: level speed + 30
     t.console('test_player level player1 0')
     t.console('test_round restart')
@@ -84,7 +82,7 @@ def xp_ops(t):
     t.expect.msg('SboXP', fields={'client': 1, 'xp': 3000}, after='set', within=(0, 0.05))
 
 
-@S.test('xp with mp_XP 1: +12000 at 0 XP is two level-ups and 2000 XP (scoreboard XP +12000, ScoreInfo level 2); '
+@S.test('xp: +12000 at 0 XP is two level-ups and 2000 XP (scoreboard XP +12000, ScoreInfo level 2); '
         '=5000 one more', players=2, doc=DOC, covers=('game_player_settings.xp',))
 def xp_levelup(t):
     start(t)
@@ -98,15 +96,6 @@ def xp_levelup(t):
     t.expect.value('exact', 'player1', 'level', 3)
     t.expect.value('exact', 'player1', 'xp', 0)
     t.expect.value('exact', 'player1', 'total_xp', 15000)
-
-
-@S.test('xp with mp_XP 0: +12000 is 12000 XP, no level-up', players=2, doc=DOC, covers=('game_player_settings.xp',))
-def xp_no_levelup(t):
-    start(t, xp=0)
-    step(t, 'gain', 'x_gain0', xp='+12000')
-    t.expect.value('gain', 'player1', 'level', 0)
-    t.expect.value('gain', 'player1', 'xp', 12000)
-    t.expect.value('gain', 'player1', 'total_xp', 12000)
 
 
 @S.test('level then xp in one entity: =1 and +6000 gives level 2, 1000 XP', players=2, doc=DOC,

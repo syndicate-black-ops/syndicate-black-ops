@@ -20,7 +20,7 @@
 //   SHORT  gamma * COLORCORR_KEY_UNIT (signed)
 //   BYTE   tint red, BYTE tint green, BYTE tint blue
 //   BYTE   tint amount * 255
-//   STRING lookup table file ("" = none): gfx/colorcorrection/<name>.raw or .cube
+//   STRING lookup table file ("" = none): gfx/colorcorrection/<name>.raw
 //=========================================================
 
 #ifndef COLORCORRECTION_SHARED_H
@@ -45,8 +45,9 @@
 
 #include <string.h>
 
-// A lookup table path the server precaches and the client reads: gfx/colorcorrection/<name>.raw or .cube (any case),
-// shorter than COLORCORR_MAX_PATH, no "..", ':' or '\\'.
+// A lookup table path the server precaches and the client reads: gfx/colorcorrection/<name>.raw (any case), shorter
+// than COLORCORR_MAX_PATH, no "..", ':' or '\\'. Only .raw: the engine downloads no file whose extension isn't
+// three letters.
 inline bool ColorCorr_ValidPath( const char *path )
 {
 	if ( !path )
@@ -57,21 +58,16 @@ inline bool ColorCorr_ValidPath( const char *path )
 		return false;
 	if ( strstr( path, ".." ) || strchr( path, ':' ) || strchr( path, '\\' ) )
 		return false;
-	auto EndsWith = [&]( const char *ext ) {
-		const size_t n = strlen( ext );
-		if ( len < folder + 1 + n )
+	const char *ext = ".raw";
+	for ( size_t i = 0; i < 4; i++ )
+	{
+		char c = path[len - 4 + i];
+		if ( c >= 'A' && c <= 'Z' )
+			c = (char)( c - 'A' + 'a' );
+		if ( c != ext[i] )
 			return false;
-		for ( size_t i = 0; i < n; i++ )
-		{
-			char c = path[len - n + i];
-			if ( c >= 'A' && c <= 'Z' )
-				c = (char)( c - 'A' + 'a' );
-			if ( c != ext[i] )
-				return false;
-		}
-		return true;
-	};
-	return EndsWith( ".raw" ) || EndsWith( ".cube" );
+	}
+	return true;
 }
 
 #endif // COLORCORRECTION_SHARED_H

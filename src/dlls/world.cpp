@@ -40,6 +40,7 @@
 #include "light_origin.h"	// SBO 2.0: LightOrigin_Reset
 #include "gmmode.h"	// SBO 2.0: GmMode_Precache
 #include "alias.h"	// SBO 2.1: Alias_Reset
+#include "water_hit.h"	// SBO 2.1: WaterHit_Reset
 
 extern CGraph WorldGraph;
 extern CSoundEnt *pSoundEnt;
@@ -539,6 +540,7 @@ void CWorld :: Precache( void )
 	Limitator_ResetForMap();	// SBO 2.0: no Limitator, default reserves; set again by this map's Limitator
 	GuideMonsterTargets_Reset();	// SBO 2.0: filled again by this map's monster_targets (guide_monsters.cpp)
 	Alias_Reset();			// SBO 2.1: no alias change waits from the last map (alias.cpp)
+	WaterHit_Reset();		// SBO 2.1: this map's water brushes are looked up on the first shot (water_hit.cpp)
 	Inventory_MapStart();	// SBO 2.0 inventory: a new map starts with no items held anywhere
 	UTIL_PrecachedClasses_Reset();	// SBO 2.1: filled again by this map's precaches and entities (util.h)
 

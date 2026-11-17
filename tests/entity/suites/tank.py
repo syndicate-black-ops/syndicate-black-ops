@@ -41,7 +41,6 @@ def tank(t, classname, spawnflags):
 
 def fresh_round(t):
     t.console('mp_friendlyfire 1')
-    t.console('mp_XP 1')
     t.console('mp_killfeed_npc 1')
     t.console('test_round restart')     # both alive again (an earlier test's victim)
     t.console('wait_for alive player1 20')

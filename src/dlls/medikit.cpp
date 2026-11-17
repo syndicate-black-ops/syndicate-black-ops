@@ -100,10 +100,10 @@ BOOL CMedikit::Deploy( )
 	return DefaultDeploy( "models/v_medikit.mdl", "models/p_medikit.mdl", MEDIKIT_DRAW, "trip" );
 }
 
-void CMedikit::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CMedikit::Holster( int skiplocal /* = 0 */ )
 {
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.5;
-	SendWeaponAnim( MEDIKIT_DRAW );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 
@@ -250,9 +250,9 @@ int CMedikit::Swing( int fFirst )
 
 			if ( fLivingPlayer && pEntity->pev->health > flOldHealth )
 			{
-				SBO_XP_GAIN( m_pPlayer, RANDOM_FLOAT( 500, 1000 ), XP.value == 1 ? 7500 : INT_MAX );
+				SBO_XP_GAIN( m_pPlayer, RANDOM_FLOAT( 500, 1000 ), 7500 );
 
-				if ( SBO_XP( m_pPlayer ) >= 7500 && XP.value == 1 )
+				if ( SBO_XP( m_pPlayer ) >= 7500 )
 				{
 					SBO_XP( m_pPlayer ) = 0;
 					m_pPlayer->SboLevelUp();	// SBO 2.0 (player.cpp): +5 level speed, +2 spawn health, the speed at once
@@ -365,9 +365,9 @@ void CMedikit::SecondaryAttack( void )
 		// SBO 2.0: XP only when the heal raised the health
 		if ( m_pPlayer->pev->health > flOldHealth )
 		{
-			SBO_XP_GAIN( m_pPlayer, RANDOM_FLOAT( 500, 1000 ), XP.value == 1 ? 7500 : INT_MAX );
+			SBO_XP_GAIN( m_pPlayer, RANDOM_FLOAT( 500, 1000 ), 7500 );
 
-			if ( SBO_XP( m_pPlayer ) >= 7500 && XP.value == 1 )
+			if ( SBO_XP( m_pPlayer ) >= 7500 )
 			{
 				SBO_XP( m_pPlayer ) = 0;
 				m_pPlayer->SboLevelUp();	// SBO 2.0 (player.cpp): +5 level speed, +2 spawn health, the speed at once

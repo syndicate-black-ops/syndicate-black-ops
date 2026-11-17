@@ -627,7 +627,7 @@ int CBarney :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, floa
 	if ( ScriptInvulnerable() )
 		return 0;
 
-	// SBO 2.0: XP for damage to a living barney (2 per point, mp_XP 1), before the damage, as CHGrunt::TakeDamage and
+	// SBO 2.0: XP for damage to a living barney (2 per point), before the damage, as CHGrunt::TakeDamage and
 	// the other monsters give it
 	if ( IsAlive() )
 	{
@@ -639,7 +639,7 @@ int CBarney :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, floa
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage * 2, 5000 );
 

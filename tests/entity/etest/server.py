@@ -4,6 +4,7 @@ import hashlib
 import os
 import shutil
 import subprocess
+import threading
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -13,8 +14,32 @@ SNIPER_IMAGE = os.environ.get('SNIPER_IMAGE',
                               'registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20260805.254768@sha256:1c33c507bc75d012e77df5727f93b0d5b8c3f7c8d4142ba5f7a16882cc92e014')
 
 
+# Address-space cap of every map compiler and server (prlimit: a preexec_fn is not safe with the runner's threads).
+# A server peaks at ~280 MB of address space and ~85 MB resident (stock HLDS 10211 + the test-layer hl.so, monster
+# suites included); the cap stops a runaway one.
+COMPILE_MEM = 4 << 30
+SERVER_MEM = int(os.environ.get('ET_SERVER_MEM_MB', '1024')) << 20
+
+# the servers running now, killed by kill_servers() when the run is stopped (SIGTERM, Ctrl-C)
+_running = set()
+_running_lock = threading.Lock()
+
+
 def log(msg):
     print(msg, flush=True)
+
+
+def limited(cmd, mem):
+    return ['prlimit', '--as=%d' % mem, '--'] + cmd
+
+
+def kill_servers():
+    with _running_lock:
+        for p in list(_running):
+            try:
+                p.kill()
+            except OSError:
+                pass
 
 
 def compile_map(text, mapname, out_dir, sdhlt_dir, threads=2):
@@ -35,11 +60,10 @@ def compile_map(text, mapname, out_dir, sdhlt_dir, threads=2):
         if os.path.exists(p):
             os.remove(p)
     for tool, args in (('sdHLCSG', []), ('sdHLBSP', []), ('sdHLVIS', ['-fast'])):
-        cmd = ['nice', '-n', '10', 'timeout', '300', os.path.join(sdhlt_dir, tool)] + args + \
-              ['-threads', str(threads), '-chart', mapname]
+        cmd = limited(['nice', '-n', '10', 'timeout', '300', os.path.join(sdhlt_dir, tool)] + args +
+                      ['-threads', str(threads), '-chart', mapname], COMPILE_MEM)
         with open(os.path.join(out_dir, tool + '.out'), 'w') as f:
-            res = subprocess.run(cmd, cwd=out_dir, stdout=f, stderr=subprocess.STDOUT,
-                                 preexec_fn=_limit_memory)
+            res = subprocess.run(cmd, cwd=out_dir, stdout=f, stderr=subprocess.STDOUT)
         if res.returncode != 0 or os.path.exists(os.path.join(out_dir, mapname + '.err')):
             raise RuntimeError('%s failed (see %s)' % (tool, os.path.join(out_dir, tool + '.out')))
         if tool == 'sdHLBSP' and os.path.exists(os.path.join(out_dir, mapname + '.pts')):
@@ -47,11 +71,6 @@ def compile_map(text, mapname, out_dir, sdhlt_dir, threads=2):
     with open(stamp, 'w') as f:
         f.write(h)
     return bsp, True
-
-
-def _limit_memory():
-    import resource
-    resource.setrlimit(resource.RLIMIT_AS, (4 << 30, 4 << 30))
 
 
 def timescale_lib(build_dir):
@@ -129,11 +148,14 @@ def setup_server(hlds_dir, srv_dir, hl_so, bsp, mapname, seq_text, steps_text, s
         f.write('\n// entity tests\nmp_timelimit 0\nmp_afk_time 0\nmp_afk_spectate_time 0\n' + extra_cfg)
 
 
-def free_port(start=27961, end=28200):
+def free_port(start=27961, end=28200, slot=0, slots=1):
     """A UDP port nobody listens on: other test runs or servers may be up on this machine. The search starts at a
-    random port of the range, so two runs started together do not pick the same one."""
+    random port of the range, so two runs started together do not pick the same one. With -j, each parallel server
+    (slot) searches its own part of the range."""
     import random
     import socket
+    part = (end - start) // slots
+    start, end = start + slot * part, start + (slot + 1) * part
     span = end - start
     first = random.randrange(span)
     for i in range(span):
@@ -152,25 +174,42 @@ def free_port(start=27961, end=28200):
 PORT_TAKEN = "Couldn't allocate dedicated server IP port"
 
 
-def run_server(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan=False, maxplayers=16, extra_args=()):
-    """Runs the server until test_quit (or the timeout). Returns (exit status, wall seconds). A server that could not
-    bind its port (another run took it between free_port and the bind) is started again on another port."""
+def run_server(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan=False, maxplayers=16, extra_args=(),
+               timescale_so=None, slot=(0, 1), say=log):
+    """Runs the server until test_quit (or the timeout). Returns (exit status, wall seconds, peak RSS in bytes or
+    None). A server that could not bind its port (another run took it between free_port and the bind) is started
+    again on another port. slot: (this server's slot, number of parallel servers) for the port range."""
     for attempt in range(3):
-        status, secs = _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan,
-                                        maxplayers, extra_args)
+        status, secs, rss = _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan,
+                                             maxplayers, extra_args, timescale_so, slot)
         try:
             taken = PORT_TAKEN in open(console_path, errors='replace').read()
         except OSError:
             taken = False
         if not taken:
             break
-        log('port taken by another run: starting the server again (%d)' % (attempt + 1))
-    return status, secs
+        say('port taken by another run: starting the server again (%d)' % (attempt + 1))
+    return status, secs, rss
 
 
-def _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan, maxplayers, extra_args):
-    lib = timescale_lib(os.path.dirname(console_path)) if timescale != 1 else None
-    args = ['./hlds_linux', '-game', 'syndicate', '-nomaster', '-port', str(free_port()), '+sv_lan', '1',
+def _peak_rss(pid):
+    try:
+        with open('/proc/%d/status' % pid) as f:
+            for line in f:
+                if line.startswith('VmHWM:'):
+                    return int(line.split()[1]) << 10
+    except OSError:
+        pass
+    return None
+
+
+def _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_path, asan, maxplayers, extra_args,
+                     timescale_so, slot):
+    lib = None
+    if timescale != 1:
+        lib = timescale_so or timescale_lib(os.path.dirname(console_path))
+    port = free_port(slot=slot[0], slots=slot[1])
+    args = ['./hlds_linux', '-game', 'syndicate', '-nomaster', '-port', str(port), '+sv_lan', '1',
             '+maxplayers', str(maxplayers), '+sys_ticrate', '1000'] + list(extra_args) + ['+map', mapname]
     env = dict(os.environ, LD_LIBRARY_PATH='.', ET_TIMESCALE=str(timescale))
     preload = []
@@ -193,23 +232,40 @@ def _run_server_once(srv_dir, mapname, steps_name, timescale, timeout, console_p
     else:
         if preload:
             env['LD_PRELOAD'] = ' '.join(preload)
-        cmd = ['nice', '-n', '10'] + args
+        cmd = limited(['nice', '-n', '10'] + args, SERVER_MEM)
         cwd = srv_dir
     start = time.time()
+    rss = None
     with open(console_path, 'w') as out:
         p = subprocess.Popen(cmd, cwd=cwd, env=env if not asan else None, stdin=subprocess.PIPE, stdout=out,
                              stderr=subprocess.STDOUT)
-        # "+" commands run before the game library is loaded: test_run goes in on the console
-        p.stdin.write(('test_run %s\n' % steps_name).encode())
-        p.stdin.flush()
+        with _running_lock:
+            _running.add(p)
         try:
-            status = p.wait(timeout=timeout)
-        except subprocess.TimeoutExpired:
+            # "+" commands run before the game library is loaded: test_run goes in on the console
+            p.stdin.write(('test_run %s\n' % steps_name).encode())
+            p.stdin.flush()
+            status = None
+            while status is None:
+                # prlimit and nice exec the server: the process is hlds_linux (the docker client with --asan)
+                if not asan:
+                    rss = max(rss or 0, _peak_rss(p.pid) or 0) or None
+                try:
+                    status = p.wait(timeout=min(1.0, max(0.0, start + timeout - time.time())))
+                except subprocess.TimeoutExpired:
+                    if time.time() >= start + timeout:
+                        p.kill()
+                        status = 'timeout'
+                        p.wait()
+        except BaseException:       # the run is stopped (SIGTERM, Ctrl-C): this server goes too
             p.kill()
-            status = 'timeout'
             p.wait()
-        try:
-            p.stdin.close()
-        except OSError:
-            pass
-    return status, time.time() - start
+            raise
+        finally:
+            with _running_lock:
+                _running.discard(p)
+            try:
+                p.stdin.close()
+            except OSError:
+                pass
+    return status, time.time() - start, rss

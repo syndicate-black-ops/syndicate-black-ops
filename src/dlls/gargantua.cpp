@@ -695,9 +695,13 @@ void CGargantua :: FlameDamage( Vector vecStart, Vector vecEnd, entvars_t *pevIn
 
 	Vector vecAim = (vecEnd - vecStart).Normalize( );
 
-	// iterate on all entities in the vicinity.
-	while ((pEntity = UTIL_FindEntityInSphere( pEntity, vecMid, searchRadius )) != NULL)
+	// iterate on all entities in the vicinity, going on from the edict: TakeDamage can free the entity at once (see
+	// ::RadiusDamage)
+	edict_t *pentFind = NULL;
+	while ( !FNullEnt( pentFind = FIND_ENTITY_IN_SPHERE( pentFind, vecMid, searchRadius ) ) )
 	{
+		if ( ( pEntity = CBaseEntity::Instance( pentFind ) ) == NULL )
+			break;
 		if ( pEntity->pev->takedamage != DAMAGE_NO )
 		{
 			// UNDONE: this should check a damage mask, not an ignore
@@ -942,7 +946,7 @@ int CGargantua::TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, flo
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage, 5000 );
 

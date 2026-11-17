@@ -82,6 +82,37 @@ def static_keys(t):
     t.console('test_player remove latejoin')
 
 
+@S.test('env_static In the 3D sky (4): the prop reaches the clients marked for the sky pass; a prop without the flag '
+        'is not marked', players=1, doc='ENV_STATIC.md', covers=('env_static:4',))
+def static_sky(t):
+    t.point('env_static', at=(0, 100, 0), model='models/barney.mdl', skin='1', spawnflags='4')
+    t.point('env_static', at=(100, 100, 0), model='models/barney.mdl', skin='2')
+    t.wait(0.2)
+    t.mark('join')
+    t.console('test_player add latejoin')
+    t.wait(1.5)
+    t.expect.msg('StaticProp', after='join', min=1, fields={'type': 2, 'skin': 1, 'visible': 1, 'sky': 1})
+    t.expect.msg('StaticProp', after='join', min=1, fields={'type': 2, 'skin': 2, 'visible': 1, 'sky': 0})
+    t.console('test_player remove latejoin')
+
+
+@S.test('env_static removed by killtarget: everybody is told to hide it (StaticProp VISIBLE 0), and a late joiner '
+        'gets it hidden', players=1, doc='ENV_STATIC.md', covers=())
+def static_killtarget(t):
+    t.point('env_static', targetname='prop', at=(0, 100, 0), model='models/barney.mdl', skin='3')
+    t.point('trigger_relay', targetname='kill', killtarget='prop')
+    t.wait(0.2)
+    t.mark('kill')
+    t.fire('kill')
+    t.wait(0.2)
+    t.expect.msg('StaticProp', after='kill', min=1, fields={'type': 3, 'visible': 0})
+    t.mark('join')
+    t.console('test_player add latejoin')
+    t.wait(1.5)
+    t.expect.msg('StaticProp', after='join', min=1, fields={'type': 2, 'skin': 3, 'visible': 0})
+    t.console('test_player remove latejoin')
+
+
 # ---------------------------------------------------------------------------------------------- trigger_motion
 @S.test('trigger_motion Meaning of Angles 1 (rotate by a direction\'s angles) and of Velocity 2 (rotate velocity by '
         'a direction\'s angles); Debug (1) prints what it changed', doc=GUIDE,

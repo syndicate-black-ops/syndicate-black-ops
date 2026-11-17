@@ -280,7 +280,7 @@ def effective_props(classes, name):
 
 def effective_flags(classes, name):
     """The spawnflag bits (strings) the editor offers on the class: the editors merge the spawnflags lists of the
-    class and all its bases (trigger_once's own 8 plus Trigger's 1, 2, 4 and Appearflags' 2048)."""
+    class and all its bases (trigger_once's own 8 plus Trigger's 1, 2 and 4)."""
     out = collections.OrderedDict()
     for cname in base_chain(classes, name):
         prop = classes[cname]["props"].get("spawnflags")

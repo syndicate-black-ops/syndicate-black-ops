@@ -518,7 +518,7 @@ unsigned int ColorCorrGL_CreateLut(const colorcorr::Lut &lut)
 {
 	if (!ColorCorrGL_Available())
 		return 0;
-	if (lut.size < colorcorr::CUBE_MIN_SIZE || lut.size > colorcorr::CUBE_MAX_SIZE ||
+	if (lut.size < colorcorr::LUT_MIN_SIZE || lut.size > colorcorr::LUT_MAX_SIZE ||
 		lut.rgb.size() != (size_t)lut.size * lut.size * lut.size * 3)
 		return 0;
 	const unsigned int before = DrainErrors();

@@ -307,6 +307,7 @@ void CInfoAlias::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 #define MULTIALIAS_ALL		0
 #define MULTIALIAS_CHOOSE	1
 #define MULTIALIAS_PERCENT	2
+#define MULTIALIAS_MAX_WEIGHT	1000000		// a larger weight counts as this
 
 class CMultiAlias : public CBaseAlias
 {
@@ -364,7 +365,8 @@ void CMultiAlias::KeyValue( KeyValueData *pkvd )
 	char tmp[128];
 	UTIL_StripToken( pkvd->szKeyName, tmp, sizeof( tmp ) );
 	m_iszTargets[ m_cTargets ] = ALLOC_STRING( tmp );
-	m_iValues[ m_cTargets ] = max( atoi( pkvd->szValue ), 0 );
+	// a weight is at most MULTIALIAS_MAX_WEIGHT, so the total of MAX_MULTI_TARGETS weights fits in an int
+	m_iValues[ m_cTargets ] = min( max( atoi( pkvd->szValue ), 0 ), MULTIALIAS_MAX_WEIGHT );
 	m_iTotalValue += m_iValues[ m_cTargets ];
 	m_cTargets++;
 }

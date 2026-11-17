@@ -133,3 +133,68 @@ def sky_entities_later(t):
     t.snap('off', 'kid', 'fullpack:player1')
     t.expect.value('later', 'kid', 'fullpack:player1', SKY_BIT, op='&')
     t.expect.value('off', 'kid', 'fullpack:player1', -1)
+
+
+# ---- the sky room's own fog (SBO 2.1, Source's sky_camera fog): rendercolor + density, sent in SetSky
+def _dens(d):
+    return {'range': (d * 0.999, d * 1.001)} if d else 0
+
+
+@S.test('sky fog: the env_sky\'s Sky fog color and density go with SetSky (also with a fullupdate); without them the '
+        'fog is off (density 0, the FGD color 128 128 128)', players=1, doc=DOC,
+        covers=('env_sky.rendercolor', 'env_sky.density'))
+def fog_keys(t):
+    t.point('env_sky', targetname='a', at=(0, 0, 100), spawnflags='1', rendercolor='40 60 90', density='0.003')
+    t.point('env_sky', targetname='b', at=(0, 0, 140), spawnflags='1')
+    t.fire('a')
+    t.wait(0.2)
+    t.mark('fu')
+    t.cmd('player1', 'fullupdate')
+    t.wait(0.5)
+    t.mark('b')
+    t.fire('b')
+    t.wait(0.2)
+    t.expect.msg('SetSky', to='player1', count=1, after='fu', within=(0, 0.4),
+                 fields={'mode': 1, 'fog_color': [40, 60, 90], 'fog_density': _dens(0.003), 'fog_skybox': 1})
+    t.expect.msg('SetSky', count=1, after='b', within=(0, 0.1),
+                 fields={'mode': 1, 'origin': list(t._abs((0, 0, 140))), 'fog_color': [128, 128, 128],
+                         'fog_density': 0, 'fog_skybox': 1})
+
+
+@S.test('sky fog: switching to another env_sky sends that sky\'s own fog; a density above 0.01 is no fog (as '
+        'env_fog)', players=1, doc=DOC, covers=('env_sky.density', 'env_sky.rendercolor', 'env_sky.targetname'))
+def fog_switch(t):
+    t.point('env_sky', targetname='a', at=(0, 0, 100), spawnflags='1', rendercolor='10 20 30', density='0.001')
+    t.point('env_sky', targetname='b', at=(0, 0, 140), spawnflags='1', rendercolor='200 100 50', density='0.02')
+    t.mark('a')
+    t.fire('a')
+    t.wait(0.2)
+    t.mark('b')
+    t.fire('b')
+    t.wait(0.2)
+    t.mark('a2')
+    t.fire('a')
+    t.wait(0.2)
+    t.expect.msg('SetSky', count=1, after='a', within=(0, 0.1),
+                 fields={'mode': 1, 'fog_color': [10, 20, 30], 'fog_density': _dens(0.001)})
+    t.expect.msg('SetSky', count=1, after='b', within=(0, 0.1),
+                 fields={'mode': 1, 'fog_color': [200, 100, 50], 'fog_density': 0})
+    t.expect.msg('SetSky', count=1, after='a2', within=(0, 0.1),
+                 fields={'mode': 1, 'fog_color': [10, 20, 30], 'fog_density': _dens(0.001)})
+
+
+@S.test('Skybox fog: None (0), Partial (1) and Full (2) go with SetSky; a value outside 0-2 is Partial; left out it is '
+        'Partial (the FGD default)', players=1, doc=DOC,
+        covers=('env_sky.fogskybox=0', 'env_sky.fogskybox=1', 'env_sky.fogskybox=2'))
+def fog_skybox(t):
+    for name, value, z in (('n', '0', 100), ('p', '1', 120), ('f', '2', 140), ('x', '7', 160)):
+        t.point('env_sky', targetname='sb_' + name, at=(0, 0, z), spawnflags='1', rendercolor='150 165 185',
+                density='0.0012', fogskybox=value)
+    expect = {'n': 0, 'p': 1, 'f': 2, 'x': 1}
+    for name in ('n', 'p', 'f', 'x'):
+        t.mark('sb_' + name)
+        t.fire('sb_' + name)
+        t.wait(0.2)
+    for name in ('n', 'p', 'f', 'x'):
+        t.expect.msg('SetSky', count=1, after='sb_' + name, within=(0, 0.1),
+                     fields={'mode': 1, 'fog_density': _dens(0.0012), 'fog_skybox': expect[name]})

@@ -853,7 +853,10 @@ public:
 	int		m_iSkyMode = SKY_OFF;
 	Vector	m_vecSkyPos;
 	int		m_iSkyScale = 0;		// parallax: the camera moves 1/scale of the view's offset from the map origin; 0 none
+	FogParameters m_SkyFog = {};	// SBO 2.1: the sky room's own fog (env_sky "rendercolor" / "density"; density 0: none; tri.cpp RenderSkyFog)
+	int		m_iSkyboxFog = 1;		// SBO 2.1: env_sky "fogskybox", how much of that fog covers the 2D skybox: 0 none, 1 partial, 2 full (env_sky_box.cpp)
 	bool	m_bSkyDrawPass = false;	// SBO 2.0: the engine is drawing the sky room (no client models or effects in it)
+	bool	m_bEnvSkyMap = false;	// SBO 2.1: the map has an env_sky (a SetSky came): its 2D skybox fills the env_sky faces while it is off (env_sky_box.cpp)
 
 	cvar_t	*cl_weather = nullptr;	// cs16-client: weather intensity 0-3 (environment.cpp)
 
@@ -929,6 +932,14 @@ struct model_s;
 char Materials_TraceTexture( struct pmtrace_s *pTrace, char *stripped );
 void Materials_Impact( struct pmtrace_s *pTrace, const struct mat_fx_s *fx, const char *hlDecal );
 struct model_s *Materials_Sprite( const char *name );	// loaded once per map; NULL if missing
+bool Materials_EffectsDetail( void );	// cl_effectsdetail above 0: wall puffs, debris chips, water splashes, gun smoke
+// a bullet from start to end that crosses a water surface: true and its entry point (materials.cpp)
+bool Materials_WaterEntry( const Vector &start, const Vector &end, Vector &entry );
+// the splash (column, spray, ripple), drawn while cl_effectsdetail is above 0, for at most WATERSPLASH_PER_SHOT
+// entry points of one shot
+#define WATERSPLASH_PER_SHOT	2
+void Materials_WaterSplash( const Vector &pos, bool sound );
+Vector FindSurfaceDividerPoint( const Vector &vecStart, const Vector &vecFinish );	// environment.cpp
 #ifdef SBO_TEST_COMMANDS
 bool Materials_TestPrint( void );	// test_cl_materials (test builds only)
 void Materials_TestFrame( void );

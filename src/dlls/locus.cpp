@@ -10,6 +10,8 @@
 //
 // SBO changes (marked "SBO" below), all against hostile or broken map data (servers load third-party maps):
 //   * "a..b" with a long left side no longer overflows a 128-byte buffer (Featureful strncpy'd it unchecked).
+//   * Blanks around ".." are allowed: "x y z .. x y z" reads the second vector from its first number, and each side
+//     of a number range "a .. b" is read without its blanks.
 //   * Calc entities that refer to each other (A uses B uses A) stop at a depth of 32 instead of recursing until the
 //     stack overflows.
 //   * Clamp "wrap" / "bounce" with a huge value or an empty range no longer loops forever.
@@ -104,14 +106,17 @@ void Locus_StringToRandomVector( float *pVector, const char *pString )
 		for ( j = j + 1; j < 3; j++ )
 			pVector[j] = 0;
 	}
-	else if ( *pstr == '.' )
+	else
 	{
-		pstr++;
-		if ( *pstr != '.' )
+		// SBO: blanks around ".." are skipped, so the second vector is read from its first number (Spirit and
+		// Featureful read it from the blank after "..": "0 0 0 .. 10 20 30" went up to 10 10 20)
+		while ( *pstr == ' ' )
+			pstr++;
+		if ( pstr[0] != '.' || pstr[1] != '.' )
 			return;
-		pstr++;
-		if ( *pstr != ' ' )
-			return;
+		pstr += 2;
+		while ( *pstr == ' ' )
+			pstr++;
 
 		UTIL_StringToVector( pAltVec, pstr );
 
@@ -184,6 +189,23 @@ BOOL TryCalcLocus_Velocity( CBaseEntity *pEntity, CBaseEntity *pLocus, const cha
 	return TRUE;
 }
 
+// SBO: szText[0..len) without its leading and trailing blanks into szOut; FALSE when that does not fit
+static BOOL Locus_CopyTrimmed( char *szOut, int iSize, const char *szText, int len )
+{
+	while ( len > 0 && *szText == ' ' )
+	{
+		szText++;
+		len--;
+	}
+	while ( len > 0 && szText[len - 1] == ' ' )
+		len--;
+	if ( len >= iSize )
+		return FALSE;
+	memcpy( szOut, szText, len );
+	szOut[len] = '\0';
+	return TRUE;
+}
+
 static BOOL TryCalcLocus_RatioNonRandom( CBaseEntity *pLocus, const char *szText, float &result, BOOL showError )
 {
 	if ( Locus_IsLikelyNumber( szText ) )
@@ -218,16 +240,16 @@ BOOL TryCalcLocus_Ratio( CBaseEntity *pLocus, const char *szText, float &result,
 		{
 			bRange = TRUE;
 
-			// SBO: the left side must fit the buffer (Featureful copied it unchecked)
-			char szComponentName[128];
-			if ( i >= (int)sizeof( szComponentName ) )
+			// SBO: each side without the blanks around it ("1 .. 5"), and it must fit the buffer (Featureful
+			// copied the left side unchecked)
+			char szLeft[128], szRight[128];
+			if ( !Locus_CopyTrimmed( szLeft, sizeof( szLeft ), szText, i )
+				|| !Locus_CopyTrimmed( szRight, sizeof( szRight ), &szText[i + 2], strlen( &szText[i + 2] ) ) )
 				return FALSE;
-			memcpy( szComponentName, szText, i );
-			szComponentName[i] = '\0';
 
 			float A = 0, B = 0;
-			BOOL bA = TryCalcLocus_RatioNonRandom( pLocus, szComponentName, A, showError );
-			BOOL bB = TryCalcLocus_RatioNonRandom( pLocus, &szText[i + 2], B, showError );
+			BOOL bA = TryCalcLocus_RatioNonRandom( pLocus, szLeft, A, showError );
+			BOOL bB = TryCalcLocus_RatioNonRandom( pLocus, szRight, B, showError );
 
 			if ( bA && bB )
 				value = RANDOM_FLOAT( A, B );
@@ -241,7 +263,11 @@ BOOL TryCalcLocus_Ratio( CBaseEntity *pLocus, const char *szText, float &result,
 	}
 
 	if ( !bRange )
-		ok = TryCalcLocus_RatioNonRandom( pLocus, szText, value, showError );
+	{
+		char szValue[128];
+		ok = Locus_CopyTrimmed( szValue, sizeof( szValue ), szText, strlen( szText ) )
+			&& TryCalcLocus_RatioNonRandom( pLocus, szValue, value, showError );
+	}
 
 	if ( !ok || !Locus_Finite( value ) )
 		return FALSE;

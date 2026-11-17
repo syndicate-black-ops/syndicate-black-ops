@@ -1878,7 +1878,8 @@ static void V_SkyViewStart( struct ref_params_s *pparams )
 	s_bSkyViewPending = true;
 	gHUD.m_bSkyDrawPass = true;
 
-	// SoHL 1.8: no fog in the sky room, as on the skybox (the fog the Fog message sets leaves the skybox clear)
+	// SoHL 1.8: no fog in the sky room, as on the skybox (the fog the Fog message sets leaves the skybox clear).
+	// SBO 2.1: or the env_sky's own fog (tri.cpp RenderSkyFog)
 	RenderSkyFog();
 }
 

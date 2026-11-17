@@ -740,6 +740,42 @@ static void TestDrawnSmoothAtJitter( void )
 		viewOffMax );
 }
 
+// The player stands on a lift that is a movewith child (the deck) of a small mover beside it (the chain's root, more
+// than MP_DRAW_NEAR away from him), rising at 100 u/s: the root is drawn at its predicted pose, so the deck placed on
+// it stays under his predicted feet (drawn at the engine's pose, the deck sank ~0.29 s x 100 units below them)
+static void TestRiderOnChildDrawsRoot( void )
+{
+	Reset();
+	cl_entity_t *root = Brush( 10, Vector( 200, 0, 0 ), Vector( -8, -8, -8 ), Vector( 8, 8, 8 ), Vector( 0, 0, 100 ) );
+	cl_entity_t *deck = Brush( 11, Vector( -200, 0, 0 ), Vector( -64, -64, -16 ), Vector( 64, 64, 0 ), Vector( 0, 0, 0 ), 10 );
+	s_bPresent[1] = true;
+	s_Ents[1].player = 1;
+	DrawFrame();
+	float gap = 0;
+	for ( int f = 0; f < 12; f++ )
+	{
+		s_flReal += 0.05;
+		root->curstate.origin = Vector( 200.0f, 0.0f, 5.0f * f );	// the server's root at the received time
+		BuildPhysents();
+		s_PlayerMove.origin = Vector( 0.0f, 0.0f, 5.0f * f + 36 );	// the server's player, on the deck
+		s_PlayerMove.onground = SlotOf( 11 );
+		s_PlayerMove.time = (float)( 11000 + f * 50 );
+		for ( int k = 0; k < 30; k++ )
+			Command( 10, 11 );
+		root->origin = root->curstate.origin;		// the engine's poses (the deck's: its local one)
+		deck->origin = deck->curstate.origin;
+		MoverPrediction_AddEntity( ET_NORMAL, root );
+		MoveWith_AddEntity( ET_NORMAL, root );
+		MoveWith_AddEntity( ET_NORMAL, deck );
+		MoveWith_CreateEntities();
+		MoverPrediction_CreateEntities();
+		gap = ( s_PlayerMove.origin[2] - 36 ) - deck->origin[2];
+	}
+	CHECK( root->origin[2] - root->curstate.origin[2] > 20, "the root is drawn at its predicted pose (%.1f above the engine's)",
+		root->origin[2] - root->curstate.origin[2] );
+	CHECK( fabsf( gap ) < 3, "the deck is drawn under his predicted feet: feet %.1f above its top", gap );
+}
+
 int main( void )
 {
 	TestDeckCarries();
@@ -756,6 +792,7 @@ int main( void )
 	TestOtherRiderOnTiltedDeck();
 	TestOtherRiderDrawnOnMover();
 	TestDrawnSmoothAtJitter();
+	TestRiderOnChildDrawsRoot();
 	printf( "%d checks, %d failed\n", s_iChecks, s_iFailures );
 	return s_iFailures ? 1 : 0;
 }

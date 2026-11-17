@@ -54,7 +54,6 @@ cvar_t	friendlyfire= {"mp_friendlyfire","1", FCVAR_SERVER };
 cvar_t	easymode	= {"mp_easymode","1", FCVAR_SERVER };
 cvar_t	ban			= {"mp_ban","0", FCVAR_SERVER };
 cvar_t	gmmode		= {"mp_gmmode","0", FCVAR_SERVER };
-cvar_t	XP			= {"mp_XP","1", FCVAR_SERVER };
 cvar_t	hardcore	= {"mp_hardcore","100", FCVAR_SERVER };
 cvar_t	loadouttime	= {"mp_loadouttime","45", FCVAR_SERVER };	// SBO 2.0: co_/br_ rounds stop waiting for a player without a loadout this many seconds after the player joined or last used the loadout menus (0 = wait forever)
 cvar_t	afk_time	= {"mp_afk_time","60", FCVAR_SERVER };	// SBO 2.0: a player in play without any input for this many seconds gets the AFK sign above the head (0 turns it off; player.cpp AfkThink)
@@ -81,7 +80,6 @@ cvar_t	juniorpvmonst = {"mp_juniorpvmonst","1", FCVAR_SERVER };
 cvar_t	makermon	= {"mp_makermon","1", FCVAR_SERVER };	// SBO: 0 = half, 1 = unscaled, 2 = double, 3 = triple monstermaker counts; production servers run 1
 cvar_t	speedmon	= {"mp_speedmon","1", FCVAR_SERVER };	// SBO: 0 half, 1 normal, 2 double, 3 triple monstermaker speed, -1 off (monstermaker.cpp)
 
-cvar_t	falldamage	= {"mp_falldamage","0", FCVAR_SERVER };
 cvar_t	weaponstay	= {"mp_weaponstay","0", FCVAR_SERVER };
 cvar_t	forcerespawn= {"mp_forcerespawn","1", FCVAR_SERVER };
 cvar_t	flashlight	= {"mp_flashlight","1", FCVAR_SERVER };
@@ -214,7 +212,6 @@ void GameDLLInit( void )
 	CVAR_REGISTER (&ban);
 	CVAR_REGISTER (&gmmode);
 	GmMode_Init();	// SBO 2.0: the gm_toggle server command (gmmode.cpp)
-	CVAR_REGISTER (&XP);
 	CVAR_REGISTER (&hardcore);
 	CVAR_REGISTER (&loadouttime);	// SBO 2.0
 	CVAR_REGISTER (&afk_time);	// SBO 2.0
@@ -230,7 +227,6 @@ void GameDLLInit( void )
 	CVAR_REGISTER (&juniorpvmonst);
 	CVAR_REGISTER (&makermon);
 	CVAR_REGISTER (&speedmon);
-	CVAR_REGISTER (&falldamage);
 	CVAR_REGISTER (&weaponstay);
 	CVAR_REGISTER (&forcerespawn);
 	CVAR_REGISTER (&flashlight);

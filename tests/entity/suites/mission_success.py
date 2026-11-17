@@ -43,6 +43,7 @@ def game_end(t):
     t.expect.fired('=game_mission_success', activator='world', count=1, after='open')
     t.expect.not_fired('=game_mission_success', after='locked', within=(0, 0.4))
     t.expect.used('flip', count=1, after='open')
+    t.expect.msg('TextMsg', fields={'text': 'FAILED MISSION\n'}, count=0, after='open')   # the flip shows nothing
     t.expect.order('=game_round_end', '=game_mission_success')
     t.expect.not_fired('=game_mission_failed')
     t.expect.not_fired('=game_round_failed')

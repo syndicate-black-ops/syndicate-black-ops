@@ -338,10 +338,10 @@ void ApplyAll( const std::vector<Operation> &ops, float rgb[3] )
 
 void BuildLut( const std::vector<Operation> &ops, int size, Lut &out )
 {
-	if ( size < CUBE_MIN_SIZE )
-		size = CUBE_MIN_SIZE;
-	if ( size > CUBE_MAX_SIZE )
-		size = CUBE_MAX_SIZE;
+	if ( size < LUT_MIN_SIZE )
+		size = LUT_MIN_SIZE;
+	if ( size > LUT_MAX_SIZE )
+		size = LUT_MAX_SIZE;
 	out.size = size;
 	out.rgb.resize( (size_t)size * size * size * 3 );
 	size_t o = 0;

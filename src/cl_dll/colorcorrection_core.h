@@ -1,6 +1,6 @@
 //=========================================================
 // SBO 2.0 color_correction / color_correction_volume, client side: the "ColorCorr" message, the lookup table readers
-// (.raw, .cube), the simple keys, the weights and the blend, without engine headers (tests/colorcorrection/run_test.sh
+// (.raw), the simple keys, the weights and the blend, without engine headers (tests/colorcorrection/run_test.sh
 // runs them with ASan/UBSan on good, cut and hostile input). Format: game_shared/colorcorrection_shared.h;
 // docs/COLOR_CORRECTION.md.
 //=========================================================
@@ -42,15 +42,12 @@ struct Lut
 
 constexpr int RAW_SIZE = 32;							// Source .raw: 32^3
 constexpr int RAW_BYTES = RAW_SIZE * RAW_SIZE * RAW_SIZE * 3;	// 98,304
-constexpr int CUBE_MIN_SIZE = 2;
-constexpr int CUBE_MAX_SIZE = 64;
+constexpr int LUT_MIN_SIZE = 2;							// points per side of any table the client builds
+constexpr int LUT_MAX_SIZE = 64;
 
 // Source's .raw (exactly RAW_BYTES). False with a reason in err.
 bool ReadRaw( const unsigned char *data, int len, Lut &out, char *err, int errLen );
-// Adobe / Resolve .cube: LUT_3D_SIZE 2 .. 64, domain 0 .. 1, size^3 lines of three values 0 .. 1 (red fastest).
-// False with a reason (and the line) in err.
-bool ReadCube( const unsigned char *data, int len, Lut &out, char *err, int errLen );
-// By the path's extension. False with a reason in err.
+// A .raw path's table (any other extension is refused). False with a reason in err.
 bool ReadTable( const char *path, const unsigned char *data, int len, Lut &out, char *err, int errLen );
 
 // Any simple key away from its neutral value (saturation 1, contrast 1, brightness 0, gamma 1, tint amount 0)

@@ -1027,7 +1027,7 @@ int CApache :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, floa
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage * 100, 5000 );
 
@@ -1074,6 +1074,7 @@ int CApache :: TakeDamage( entvars_t* pevInflictor, entvars_t* pevAttacker, floa
 	*/
 
 	// ALERT( at_console, "%.0f\n", flDamage );
+	flDamage = UnkillableDamage( flDamage );	// SBO 2.1 (Half-Life Unified SDK): "unkillable": it never crashes
 	int result = CBaseEntity::TakeDamage(  pevInflictor, pevAttacker, flDamage, bitsDamageType );
 
 	// halflife-updated (halflife #3262): the damage conditions, so the AI trigger "Take Damage" (FCheckAITrigger)

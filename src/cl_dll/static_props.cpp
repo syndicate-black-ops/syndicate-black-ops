@@ -5,6 +5,10 @@
 // handed to the engine every frame with CL_CreateVisibleEntity while its box is in the view's PVS
 // (TriAPI BoxInPVS). The model is loaded by name (IEngineStudio.Mod_ForName), so it takes no slot in the precache
 // list the server sends; the server offers the file for download (PRECACHE_GENERIC). No model: no prop.
+// SBO 2.1: a prop flagged "In the 3D sky" stands in the env_sky sky room: it is handed to the engine only while the
+// 3D sky is on, without the PVS test (the sky room is not in the view's PVS), and drawn only in the sky pass
+// (GameStudioModelRenderer.cpp R_StudioDrawModel, StaticProps_IsSkyProp); the studio renderer's view check culls it
+// there.
 //=========================================================
 
 #include "hud.h"
@@ -36,6 +40,7 @@ struct client_static_prop_t
 {
 	BOOL		used;
 	BOOL		visible;
+	BOOL		sky;		// SBO 2.1: STATICPROP_F_SKY
 	int			model;
 	cl_entity_t	ent;
 	vec3_t		absmin, absmax;	// for the PVS test
@@ -176,7 +181,7 @@ static int MsgFunc_StaticProp( const char *pszName, int iSize, void *pbuf )
 		int sequence = READ_SHORT();
 		float scale = READ_SHORT() / 256.0f;
 		float framerate = READ_SHORT() / 256.0f;
-		int visible = READ_BYTE();
+		int flags = READ_BYTE();
 
 		if ( !READ_OK() || id < 0 || id >= STATICPROP_MAX_PROPS || model < 0 || model >= STATICPROP_MAX_MODELS )
 			break;
@@ -184,7 +189,8 @@ static int MsgFunc_StaticProp( const char *pszName, int iSize, void *pbuf )
 		client_static_prop_t *p = &s_Props[id];
 		memset( p, 0, sizeof( *p ) );
 		p->used = TRUE;
-		p->visible = visible != 0;
+		p->visible = ( flags & STATICPROP_F_VISIBLE ) != 0;
+		p->sky = ( flags & STATICPROP_F_SKY ) != 0;
 		p->model = model;
 
 		cl_entity_t *ent = &p->ent;
@@ -263,6 +269,15 @@ BOOL StaticProps_LightOrigin( const cl_entity_t *ent, float *out )
 	return TRUE;
 }
 
+// SBO 2.1: a prop flagged "In the 3D sky" (drawn in the sky pass only)
+bool StaticProps_IsSkyProp( const cl_entity_t *ent )
+{
+	if ( ent->index != 0 || ent->curstate.iuser3 != STATICPROP_ENT_TAG )
+		return false;
+	const int id = ent->curstate.iuser4;
+	return id >= 0 && id < STATICPROP_MAX_PROPS && s_Props[id].used && s_Props[id].sky;
+}
+
 void StaticProps_Init( void )
 {
 	gEngfuncs.pfnHookUserMsg( "StaticProp", MsgFunc_StaticProp );
@@ -281,6 +296,10 @@ void StaticProps_CreateEntities( void )
 		if ( !p->used || !p->visible )
 			continue;
 
+		// SBO 2.1: a sky prop only while there is a sky pass to draw it in
+		if ( p->sky && gHUD.m_iSkyMode != SKY_ON )
+			continue;
+
 		model_t *mod = StaticProps_Model( p->model );
 		if ( !mod )
 			continue;
@@ -292,7 +311,7 @@ void StaticProps_CreateEntities( void )
 		}
 
 		// only what the view can see through the map (the engine draws visible entities without a PVS test)
-		if ( gEngfuncs.pTriAPI && gEngfuncs.pTriAPI->BoxInPVS && !gEngfuncs.pTriAPI->BoxInPVS( p->absmin, p->absmax ) )
+		if ( !p->sky && gEngfuncs.pTriAPI && gEngfuncs.pTriAPI->BoxInPVS && !gEngfuncs.pTriAPI->BoxInPVS( p->absmin, p->absmax ) )
 			continue;
 
 		gEngfuncs.CL_CreateVisibleEntity( ET_NORMAL, &p->ent );

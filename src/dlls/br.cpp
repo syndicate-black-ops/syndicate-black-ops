@@ -687,7 +687,6 @@ void CBr::PlayerSpawn( CBasePlayer *pPlayer )
 	while ( pWeaponEntity = UTIL_FindEntityByClassname( pWeaponEntity, "game_player_equip" ))
 	{
 		pWeaponEntity->Touch( pPlayer );
-		addDefault = FALSE;
 	}
 
 	if ( pPlayer->m_iSpawnMode == 0 )
@@ -725,7 +724,10 @@ void CBr::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->pev->movetype = MOVETYPE_WALK;
 	}
 
-	if ( addDefault )
+	// SBO 2.1: the fists at every spawn in play, whatever game_player_equip entities the map has (an equip only adds
+	// items; player_weaponstrip takes them away). Not a second pair when an equip gave them: the game rules refuse it
+	// (CGameRules::CanHavePlayerItem) and the new entity would stay in the world
+	if ( addDefault && !pPlayer->HasNamedPlayerItem( "weapon_wong" ) )
 		pPlayer->GiveNamedItem( "weapon_wong" );
 
 	pPlayer->m_iSpawnProtectTime = gpGlobals->time + 2;

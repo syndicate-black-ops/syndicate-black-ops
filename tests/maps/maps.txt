@@ -2,6 +2,8 @@
 # Not here: the HLDM maps fellaville / co_fellaville, the test maps co_amxx, rc_kart_sbotest01, syndicate_bot,
 # and older versions of maps that have a newer one. A new or updated map: add or rename it here, run
 # scripts/run_map_tests.sh replay <map>, and give every difference it shows a decision in baseline.toml.
+# co_sbo_showcase comes with the SDK, not the game: tests/maps/map_tests.py finds it in
+# sdk/examples/maps/co_sbo_showcase/syndicate/.
 bk_burnzone
 bk_butcherbay
 bk_city

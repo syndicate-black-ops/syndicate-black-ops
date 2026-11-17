@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 """Color correction lookup tables for color_correction / color_correction_volume (docs/COLOR_CORRECTION.md).
 
-    scripts/colorlut.py convert IN OUT                      .cube <-> .raw (a .cube of another size is resampled to
-                                                            the 32x32x32 of a .raw; a .raw becomes a 32-point .cube)
-    scripts/colorlut.py bake OUT [--size N] [--from IN] [--preset NAME]
+    scripts/colorlut.py bake OUT [--from IN] [--preset NAME]
                              [--saturation S] [--contrast C] [--brightness B] [--gamma G]
                              [--tint "R G B"] [--tintamount A]
                                                             a table from the simple keys (the same math as the game),
-                                                            over a preset or another table; OUT .raw or .cube
+                                                            over a preset or another table
     scripts/colorlut.py strip OUT.png [--size N] [--from IN]
                                                             a strip image (N squares of N x N side by side, red across,
                                                             green down, blue square by square): neutral, or IN's
@@ -15,8 +13,9 @@
     scripts/colorlut.py fromstrip IN.png OUT                the graded strip image back to a table
     scripts/colorlut.py presets                             the preset names
 
-Formats: Source .raw (32x32x32 RGB bytes, 98,304 bytes, red fastest), .cube (LUT_3D_SIZE 2 - 64, values 0 - 1, red
-fastest). Python 3 standard library only.
+Tables are Source .raw files (32x32x32 RGB bytes, 98,304 bytes, red fastest), the only format the game reads (the
+engine downloads no file whose extension isn't three letters). A strip of another size is resampled to 32 points.
+Python 3 standard library only.
 """
 
 import argparse
@@ -49,62 +48,21 @@ def read_raw(path):
     return RAW_SIZE, [(data[i] / 255.0, data[i + 1] / 255.0, data[i + 2] / 255.0) for i in range(0, len(data), 3)]
 
 
-def read_cube(path):
-    size, values = 0, []
-    for no, line in enumerate(open(path, encoding="latin-1"), 1):
-        s = line.strip()
-        if not s or s.startswith("#"):
-            continue
-        word = s.split()[0]
-        if word == "TITLE":
-            continue
-        if word == "LUT_3D_SIZE":
-            size = int(s.split()[1])
-            if not 2 <= size <= 64:
-                sys.exit(f"{path}:{no}: LUT_3D_SIZE must be 2 to 64")
-            continue
-        if word in ("DOMAIN_MIN", "DOMAIN_MAX"):
-            want = 0.0 if word == "DOMAIN_MIN" else 1.0
-            if [float(x) for x in s.split()[1:4]] != [want] * 3:
-                sys.exit(f"{path}:{no}: only the domain 0 0 0 - 1 1 1 is supported")
-            continue
-        if word[0].isalpha():
-            sys.exit(f"{path}:{no}: unsupported keyword {word}")
-        parts = s.split()
-        if len(parts) != 3:
-            sys.exit(f"{path}:{no}: a value line needs three numbers")
-        values.append(tuple(clamp01(float(x)) for x in parts))
-    if not size or len(values) != size ** 3:
-        sys.exit(f"{path}: {len(values)} values, LUT_3D_SIZE {size} needs {size ** 3}")
-    return size, values
-
-
 def read_table(path):
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".raw":
-        return read_raw(path)
-    if ext == ".cube":
-        return read_cube(path)
-    sys.exit(f"{path}: not a .raw or .cube file")
+    if os.path.splitext(path)[1].lower() != ".raw":
+        sys.exit(f"{path}: not a .raw file")
+    return read_raw(path)
 
 
-def write_table(path, table, title="SBO color correction"):
-    size, values = table
-    ext = os.path.splitext(path)[1].lower()
-    if ext == ".raw":
-        if size != RAW_SIZE:
-            table = resample(table, RAW_SIZE)
-            size, values = table
-        out = bytearray()
-        for r, g, b in values:
-            out += bytes((round(clamp01(r) * 255), round(clamp01(g) * 255), round(clamp01(b) * 255)))
-        open(path, "wb").write(bytes(out))
-    elif ext == ".cube":
-        lines = [f'TITLE "{title}"', f"LUT_3D_SIZE {size}", "DOMAIN_MIN 0.0 0.0 0.0", "DOMAIN_MAX 1.0 1.0 1.0"]
-        lines += [f"{clamp01(r):.6f} {clamp01(g):.6f} {clamp01(b):.6f}" for r, g, b in values]
-        open(path, "w", newline="\n").write("\n".join(lines) + "\n")
-    else:
-        sys.exit(f"{path}: write a .raw or .cube file")
+def write_table(path, table):
+    if os.path.splitext(path)[1].lower() != ".raw":
+        sys.exit(f"{path}: write a .raw file")
+    if table[0] != RAW_SIZE:
+        table = resample(table, RAW_SIZE)
+    out = bytearray()
+    for r, g, b in table[1]:
+        out += bytes((round(clamp01(r) * 255), round(clamp01(g) * 255), round(clamp01(b) * 255)))
+    open(path, "wb").write(bytes(out))
 
 
 def sample(table, r, g, b):
@@ -271,12 +229,8 @@ def from_strip(path):
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
-    p = sub.add_parser("convert")
-    p.add_argument("src")
-    p.add_argument("dst")
     p = sub.add_parser("bake")
     p.add_argument("dst")
-    p.add_argument("--size", type=int, default=RAW_SIZE)
     p.add_argument("--from", dest="src")
     p.add_argument("--preset", default="identity", choices=sorted(PRESETS))
     p.add_argument("--saturation", type=float, default=1.0)
@@ -295,14 +249,8 @@ def main():
     sub.add_parser("presets")
     a = ap.parse_args()
 
-    if a.cmd == "convert":
-        write_table(a.dst, read_table(a.src))
-    elif a.cmd == "bake":
-        if not 2 <= a.size <= 64:
-            sys.exit("--size must be 2 to 64")
-        base = read_table(a.src) if a.src else identity(a.size)
-        if base[0] != a.size and not a.src:
-            base = resample(base, a.size)
+    if a.cmd == "bake":
+        base = read_table(a.src) if a.src else identity(RAW_SIZE)
         tint = tuple(int(x) for x in a.tint.split())
         if len(tint) != 3:
             sys.exit('--tint needs "R G B"')
@@ -310,7 +258,7 @@ def main():
         size, values = base
         values = [simple_keys(preset(v), a.saturation, a.contrast, a.brightness, a.gamma, tint, a.tintamount)
                   for v in values]
-        write_table(a.dst, (size, values), title=f"SBO {a.preset}")
+        write_table(a.dst, (size, values))
     elif a.cmd == "strip":
         table = read_table(a.src) if a.src else identity(a.size)
         strip_image(a.dst, table)

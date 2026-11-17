@@ -42,7 +42,7 @@ public:
 	void PrimaryAttack( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	int m_iSwing;
 	int m_iGlowSprite;
 	TraceResult m_trHit;
@@ -124,10 +124,10 @@ BOOL CSword::Deploy( )
 	return DefaultDeploy( "models/v_sword.mdl", "models/p_sword.mdl", SWORD_DRAW, "crowbar" );
 }
 
-void CSword::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CSword::Holster( int skiplocal /* = 0 */ )
 {
-	m_pPlayer->m_flNextAttack = gpGlobals->time + 0.7;
-	SendWeaponAnim( SWORD_HOLSTER );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 
@@ -267,6 +267,10 @@ int CSword::Swing( int fFirst )
 
 		gSkillData.gargantuaDmgFire = RANDOM_FLOAT( 222, 280 );
 
+		// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+		// reads NULL afterwards, and the hit counts as a world hit instead of reading freed memory
+		EHANDLE hEntity;
+		hEntity = pEntity;
 		ClearMultiDamage( );
 
 		if ( (m_flNextPrimaryAttack + 1 < gpGlobals->time ) || g_pGameRules->IsMultiplayer() )
@@ -280,6 +284,7 @@ int CSword::Swing( int fFirst )
 			pEntity->TraceAttack(m_pPlayer->pev, gSkillData.gargantuaDmgFire, gpGlobals->v_forward, &tr, DMG_CLUB ); 
 		}	
 		ApplyMultiDamage( m_pPlayer->pev, m_pPlayer->pev );
+		pEntity = hEntity;
 
 		m_flNextPrimaryAttack = gpGlobals->time + 0.7;
 

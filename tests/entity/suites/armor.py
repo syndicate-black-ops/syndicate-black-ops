@@ -1,6 +1,6 @@
 """Co-op armor and loadout speed against the item descriptions (#SBO_Item_<item> in
 gamedir/syndicate/ui/resource/language/sbo_ui_english.txt): each armor absorbs the share its description gives on
-the parts it names (CBasePlayer::TakeDamage, m_iArmorType), and the tripmine costs no speed (CCoop::PlayerSpawn).
+the parts it names (CBasePlayer::TakeDamage, m_iArmorType), and the tripmine costs 6 speed (CCoop::PlayerSpawn).
 
 Each hit is test_damage with a hit group: TraceAttack (SBO's multipliers: head x10, chest x2, stomach x3, arms x1,
 legs x0.5; the armor location 'loca') and then TakeDamage, from the world, 100 damage. The victim's health and armor
@@ -36,7 +36,6 @@ def loadout(item=1, armor=4):
 
 
 def spawn(t, item=1, armor=4):
-    t.console('mp_XP 1')
     t.console('test_join player1 %s' % loadout(item, armor))
     t.console('test_player level player1 0')
     t.console('test_round restart')
@@ -83,7 +82,7 @@ def torso_skull(t):
     hits(t, 100, dict(head=300, chest=60, stomach=90, larm=100, rarm=100, lleg=50, rleg=50, generic=100))
 
 
-@S.test('loadout speed: tripmines cost nothing (330 as with grenades), satchels 5% (315)', players=1, doc=DOC)
+@S.test('loadout speed: tripmines cost 6 (324, grenades 330), satchels 5% (315)', players=1, doc=DOC)
 def mine_speed(t):
     spawn(t, item=1)
     t.snap('grenade', 'player1', 'maxspeed', 'sbo_maxspeed')
@@ -93,8 +92,9 @@ def mine_speed(t):
     t.snap('satchel', 'player1', 'maxspeed', 'sbo_maxspeed')
     t.console('test_join player1 1 1 1 1 1 1 1')
     t.expect.value('grenade', 'player1', 'maxspeed', 330)
-    t.expect.value('tripmine', 'player1', 'maxspeed', 330)
-    t.expect.value('tripmine', 'player1', 'sbo_maxspeed', 330)
+    # CCoop::PlayerSpawn (coop.cpp): m_iSboMaxSpeed -= 6 for the tripmine (#SBO_Item_tripmine "Speed malus :-2%")
+    t.expect.value('tripmine', 'player1', 'maxspeed', 324)
+    t.expect.value('tripmine', 'player1', 'sbo_maxspeed', 324)
     t.expect.value('satchel', 'player1', 'maxspeed', 315)
 
 
@@ -142,7 +142,6 @@ def assassin_armor_speed(t):
     # cyberware 5 (Assassin) clears sidearm, primary and equipment and gives the armor skin: 300 - skin 30 + 25.
     # The chainsaw blade weighs nothing. 1.38 took the hidden armor pick's weight (skin / skull -30, torso -15, none 0).
     for armor in (1, 2, 3, 4):
-        t.console('mp_XP 1')
         t.console('test_join player1 2 1 2 1 5 %d 1' % armor)
         t.console('test_player level player1 0')
         t.console('test_round restart')

@@ -42,7 +42,7 @@ public:
 	void PrimaryAttack( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	void WeaponIdle( void );
 	int m_iSwing;
 	int m_fIdleSound;
@@ -128,14 +128,12 @@ BOOL CChainsaw::Deploy( )
 	return DefaultDeploy( "models/v_katana.mdl", "models/p_katana.mdl", CHAINSAW_DRAW, "crowbar" );
 }
 
-void CChainsaw::Holster( void )
+// The base Holster, and the idle loop (CHAN_WEAPON on the player, looped) stopped: a death, a strip, a drop with no
+// next weapon or a disconnect deploys nothing that would stop it (DefaultDeploy does). No holster sound or animation.
+void CChainsaw::Holster( int skiplocal /* = 0 */ )
 {
-	STOP_SOUND(ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/chain_idle.wav");
-	EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/chain_holster.wav", 1, ATTN_NORM, 0, PITCH_NORM);
-	m_pPlayer->m_flNextAttack = gpGlobals->time + 0.5;
-	m_flTimeWeaponIdle = gpGlobals->time + 0.5;
-	m_fIdleSound = 0;
-	SendWeaponAnim( CHAINSAW_HOLSTER );
+	STOP_SOUND( ENT(m_pPlayer->pev), CHAN_WEAPON, "weapons/chain_idle.wav" );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 
@@ -282,6 +280,10 @@ int CChainsaw::Swing( int fFirst )
 
 		gSkillData.gargantuaDmgSlash = RANDOM_FLOAT( 44, 110 );
 
+		// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+		// reads NULL afterwards, and the hit counts as a world hit instead of reading freed memory
+		EHANDLE hEntity;
+		hEntity = pEntity;
 		ClearMultiDamage( );
 
 		if ( (m_flNextPrimaryAttack + 1 < gpGlobals->time ) || g_pGameRules->IsMultiplayer() )
@@ -295,6 +297,7 @@ int CChainsaw::Swing( int fFirst )
 			pEntity->TraceAttack(m_pPlayer->pev, gSkillData.gargantuaDmgSlash, gpGlobals->v_forward, &tr, DMG_CLUB );
 		}
 		ApplyMultiDamage( m_pPlayer->pev, m_pPlayer->pev );
+		pEntity = hEntity;
 
 		m_flNextPrimaryAttack = gpGlobals->time + 0.5;
 		m_flTimeWeaponIdle = gpGlobals->time + 0.5;

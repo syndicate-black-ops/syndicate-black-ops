@@ -2464,6 +2464,11 @@ stbi_inline static stbi_uc stbi__clamp(int x)
    t1 += p2+p4;                                \
    t0 += p1+p3;
 
+// SBO: a damaged JPEG can make this integer IDCT overflow int; the result is only wrong pixels (it wraps on every
+// supported compiler, no memory access depends on it), so UBSan is told not to stop on it here (upstream stb 2.30 as is).
+#if defined(__GNUC__) || defined(__clang__)
+__attribute__((no_sanitize("signed-integer-overflow")))
+#endif
 static void stbi__idct_block(stbi_uc *out, int out_stride, short data[64])
 {
    int i,val[64],*v=val;

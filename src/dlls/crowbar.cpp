@@ -230,6 +230,10 @@ int CCrowbar::Swing( int fFirst )
 		fDidHit = TRUE;
 		CBaseEntity *pEntity = CBaseEntity::Instance(tr.pHit);
 
+		// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+		// reads NULL afterwards, and the hit counts as a world hit instead of reading freed memory
+		EHANDLE hEntity;
+		hEntity = pEntity;
 		ClearMultiDamage( );
 
 		if ( (m_flNextPrimaryAttack + 1 < UTIL_WeaponTimeBase() ) || g_pGameRules->IsMultiplayer() )
@@ -243,6 +247,7 @@ int CCrowbar::Swing( int fFirst )
 			pEntity->TraceAttack(m_pPlayer->pev, gSkillData.plrDmgCrowbar / 2, gpGlobals->v_forward, &tr, DMG_CLUB ); 
 		}	
 		ApplyMultiDamage( m_pPlayer->pev, m_pPlayer->pev );
+		pEntity = hEntity;
 
 		// play thwack, smack, or dong sound
 		float flVol = 1.0;

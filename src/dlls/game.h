@@ -26,7 +26,6 @@ extern cvar_t	teamplay;
 extern cvar_t	fraglimit;
 extern cvar_t	timelimit;
 extern cvar_t	friendlyfire;
-extern cvar_t	falldamage;
 extern cvar_t	weaponstay;
 extern cvar_t	forcerespawn;
 extern cvar_t	flashlight;
@@ -40,7 +39,6 @@ extern cvar_t	defaultteam;
 extern cvar_t	easymode;
 extern cvar_t	ban;
 extern cvar_t	gmmode;
-extern cvar_t	XP;
 extern cvar_t	hardcore;
 extern cvar_t	afk_time;	// SBO 2.0: mp_afk_time (player.cpp AfkThink)
 extern cvar_t	afk_spectate_time;	// SBO 2.0: mp_afk_spectate_time

@@ -25,6 +25,7 @@
 #include "animation.h"
 #include "saverestore.h"
 #include "soundent.h"
+#include "player.h"	// SBO 2.1: Cloak_ForgetCheck (RunAI)
 
 //=========================================================
 // SetState
@@ -105,6 +106,8 @@ void CBaseMonster :: RunAI ( void )
 
 			GetEnemy();
 		}
+
+		Cloak_ForgetCheck( this );	// SBO 2.1: also when Look was skipped (player.cpp)
 
 		// do these calculations if monster has an enemy.
 		if ( m_hEnemy != NULL )

@@ -95,7 +95,7 @@ reason = "co_fondery: the miniturrets (spawnflags 544) fire s_2 / s_3 when they 
 [[decision]]
 id = "showcase-2-0-map"
 status = "approved"
-reason = "co_sbo_showcase is SBO 2.0's own showcase map (in the game since 2c0290b): it uses classes and keys 1.38 does not have. Compared so that a crash or hang on develop shows."
+reason = "co_sbo_showcase is SBO 2.0's own showcase map (in the game from 2c0290b, in the SDK download, sdk/examples/maps/co_sbo_showcase/syndicate/, since 2.2.0): it uses classes and keys 1.38 does not have. Compared so that a crash or hang on develop shows."
 
 [[decision]]
 id = "failed-mission-no-vote"
@@ -2909,7 +2909,7 @@ test = "co_sbo_showcase"
 segment = "@@FIRE fin_mm"
 line = "Found: point_worldtext, firing (fin_txt)"
 legacy = 0
-develop = 1
+develop = 2
 decision = "showcase-2-0-map"
 
 [[difference]]
@@ -3035,7 +3035,7 @@ test = "co_sbo_showcase"
 segment = "@@FIRE ls_fail"
 line = "Found: point_worldtext, firing (fin_txt)"
 legacy = 0
-develop = 1
+develop = 2
 decision = "showcase-2-0-map"
 
 [[difference]]
@@ -3493,7 +3493,7 @@ suite = "replay"
 test = "co_sbo_showcase"
 segment = "@start"
 line = "@@NOCLASS point_worldtext"
-legacy = 126
+legacy = 141
 develop = 0
 decision = "showcase-2-0-map"
 

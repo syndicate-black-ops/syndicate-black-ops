@@ -47,6 +47,7 @@ void V_PunchAxis( int axis, float punch );
 void VectorAngles( const float *forward, float *angles );
 
 extern cvar_t *cl_lw;
+extern "C" int CL_IsThirdPerson( void );
 
 extern "C"
 {
@@ -394,6 +395,7 @@ void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int 
 	pmtrace_t tr;
 	int iShot;
 	int tracer;
+	int iSplashes = 0;	// SBO 2.1: water splashes of this shot (at most WATERSPLASH_PER_SHOT; the first gets the sound)
 	
 	for ( iShot = 1; iShot <= cShots; iShot++ )	
 	{
@@ -521,8 +523,92 @@ void EV_HLDM_FireBullets( int idx, float *forward, float *right, float *up, int 
 			}
 		}
 
+		// SBO 2.1: a splash where the bullet crosses a water surface, with the sound once per shot
+		Vector vecEntry;
+		if ( iSplashes < WATERSPLASH_PER_SHOT && Materials_WaterEntry( Vector( vecSrc ), Vector( tr.endpos ), vecEntry ) )
+		{
+			Materials_WaterSplash( vecEntry, iSplashes == 0 );
+			iSplashes++;
+		}
+
 		gEngfuncs.pEventAPI->EV_PopPMStates();
 	}
+}
+
+//======================
+//	    GUN SMOKE
+//======================
+// SBO 2.1 (Featureful EV_CreateShotSmoke, EV_SmokeRise, EV_HugWalls): a puff of smoke at the barrel of the shooter's
+// view model, in first person only, at most one every 0.1 s, while cl_effectsdetail is above 0. The puff drifts
+// forward with the shooter's speed, slows down and, from a quarter of its animation on, rises.
+
+#define GUNSMOKE_INTERVAL		0.1f
+#define GUNSMOKE_FORWARD_SPEED	20.0f
+#define GUNSMOKE_RISE_ACCEL		100.0f		// units per second per second, and the highest rise speed
+#define GUNSMOKE_RISE_FRAME		0.25f		// share of the animation before the puff rises
+#define GUNSMOKE_DRAG			0.97f		// share of the speed kept every 1/100 s
+
+static float g_flNextGunSmoke;
+
+static void EV_GunSmokeRise( TEMPENTITY *te, float frametime, float currenttime )
+{
+	if ( te->entity.curstate.frame < te->frameMax * GUNSMOKE_RISE_FRAME )
+		return;
+
+	// the same slowdown at every frame rate: GUNSMOKE_DRAG of the speed is kept every 1/100 s
+	te->entity.baseline.origin = te->entity.baseline.origin * powf( GUNSMOKE_DRAG, frametime * 100.0f );
+	te->entity.baseline.origin.z += GUNSMOKE_RISE_ACCEL * frametime;
+	if ( te->entity.baseline.origin.z > GUNSMOKE_RISE_ACCEL )
+		te->entity.baseline.origin.z = GUNSMOKE_RISE_ACCEL;
+}
+
+// a puff that touches a wall slides along it
+static void EV_GunSmokeHugWalls( TEMPENTITY *te, pmtrace_t *ptr )
+{
+	const Vector velocity = te->entity.baseline.origin;
+	const Vector normal = ptr->plane.normal;
+	te->entity.baseline.origin = CrossProduct( CrossProduct( velocity.Normalize(), normal ), normal ) * velocity.Length();
+}
+
+// attachment: the view model's barrel attachment (0 is the model's first)
+static void EV_GunSmoke( int idx, const float *forward, const float *velocity, int attachment )
+{
+	if ( !EV_IsLocal( idx ) || CL_IsThirdPerson() || !Materials_EffectsDetail() )
+		return;
+
+	const float flTime = gEngfuncs.GetClientTime();
+	if ( g_flNextGunSmoke > flTime + GUNSMOKE_INTERVAL )	// the client's clock went back (a new map)
+		g_flNextGunSmoke = 0.0f;
+	if ( flTime < g_flNextGunSmoke )
+		return;
+
+	cl_entity_t *viewModel = gEngfuncs.GetViewModel();
+	model_t *sprite = Materials_Sprite( "sprites/stmbal1.spr" );
+	if ( !viewModel || !viewModel->model || !sprite || attachment < 0 || attachment > 3 )
+		return;
+
+	TEMPENTITY *te = gEngfuncs.pEfxAPI->CL_TempEntAlloc( viewModel->attachment[ attachment ], sprite );
+	if ( !te )
+		return;
+
+	te->callback = EV_GunSmokeRise;
+	te->hitcallback = EV_GunSmokeHugWalls;
+	te->flags |= FTENT_SPRANIMATE | FTENT_COLLIDEALL | FTENT_CLIENTCUSTOM;
+	te->entity.curstate.rendermode = kRenderTransAdd;
+	te->entity.curstate.rendercolor.r = 60;
+	te->entity.curstate.rendercolor.g = 60;
+	te->entity.curstate.rendercolor.b = 60;
+	te->entity.curstate.renderamt = gEngfuncs.pfnRandomLong( 100, 180 );
+	te->entity.curstate.scale = gEngfuncs.pfnRandomFloat( 0.5f, 0.6f );
+	te->entity.curstate.framerate = 35;
+	te->entity.curstate.frame = 0;
+	for ( int i = 0; i < 3; i++ )
+		te->entity.baseline.origin[ i ] = forward[ i ] * GUNSMOKE_FORWARD_SPEED + velocity[ i ];
+	te->frameMax = sprite->numframes - 1;
+	te->die = flTime + te->frameMax / te->entity.curstate.framerate;
+	te->clientIndex = idx;
+
+	g_flNextGunSmoke = flTime + GUNSMOKE_INTERVAL;
 }
 
 //======================
@@ -571,6 +657,7 @@ void EV_FireRc28_1( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 8, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -641,6 +728,7 @@ void EV_FireRc28_2( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 8, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -711,6 +799,7 @@ void EV_FireK444( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 9, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -781,6 +870,7 @@ void EV_FireCanon1( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 6, vecSrc, vecAiming, 8192, 10, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -849,6 +939,7 @@ void EV_FireCanon2( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 12, vecSrc, vecAiming, 8192, 10, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -916,6 +1007,7 @@ void EV_FireSpa1( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 4, vecSrc, vecAiming, 8192, 15, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -984,6 +1076,7 @@ void EV_FireSpa2( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 8, vecSrc, vecAiming, 8192, 15, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1051,6 +1144,7 @@ void EV_FireBen( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 8, vecSrc, vecAiming, 8192, 14, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1118,6 +1212,7 @@ void EV_FirePm66( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 11, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1188,6 +1283,7 @@ void EV_FirePm66_2( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 2, vecSrc, vecAiming, 8192, 11, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1258,6 +1354,7 @@ void EV_FireFederal( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 12, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1328,6 +1425,7 @@ void EV_FireFa18_1( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 13, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1398,6 +1496,7 @@ void EV_FireFa18_2( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 1 );	// the under-barrel shotgun
 		EV_HLDM_FireBullets( idx, forward, right, up, 4, vecSrc, vecAiming, 8192, 13, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1466,6 +1565,7 @@ void EV_FireNm33( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 6, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1534,6 +1634,7 @@ void EV_FireSw( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 1, vecSrc, vecAiming, 8192, 16, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )
@@ -1603,6 +1704,7 @@ void EV_FireChaingun( event_args_t *args )
 
 		VectorCopy( forward, vecAiming );
 
+		EV_GunSmoke( idx, forward, velocity, 0 );
 		EV_HLDM_FireBullets( idx, forward, right, up, 3, vecSrc, vecAiming, 8192, 7, 0, &tracerCount[idx-1], args->fparam1, args->fparam2 );
 
 		if ( gHUD.m_iKeyBits & ( IN_JUMP | IN_FORWARD | IN_BACK | IN_MOVELEFT | IN_MOVERIGHT | IN_LEFT | IN_RIGHT ) )

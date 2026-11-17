@@ -26,4 +26,5 @@ The `legacy` branch has the source of SBO 1.38
 ## Links
 
 - Discord: https://discord.sbotnas.io
-- Website: https://syndicateblackops.neocities.org/
+- Website: https://sbo.sbotnas.io
+- Fan site: https://syndicateblackops.neocities.org/

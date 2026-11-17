@@ -50,7 +50,7 @@ DESCRIPTION INFO_OPTIONS
 
 	"cl_effectsdetail"
 	{
-		"Bullet impact debris and smoke"
+		"Bullet impact and gun effects"
 		{
 			LIST
 			"Off" "0"

@@ -14,6 +14,7 @@
 #ifndef SBO_VGUI2_CONTROLS_SBO_PICTURE_PICKER_H
 #define SBO_VGUI2_CONTROLS_SBO_PICTURE_PICKER_H
 
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <string>

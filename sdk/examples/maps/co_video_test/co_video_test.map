@@ -447,11 +447,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "776 4 268"
+"spawnflags" "2"
+"angles" "0 270 0"
+"origin" "776 1 268"
 "message" "MOVIE SCREENS\nbuttons 6-8 on the other wall"
 "textsize" "8"
 "color" "120 255 120 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "info_teleport_destination"
@@ -523,11 +525,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "72 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "72 899 118"
 "message" "1 ONLY YOU"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -581,11 +585,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "184 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "184 899 118"
 "message" "2 EVERYBODY"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -639,11 +645,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "296 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "296 899 118"
 "message" "3 MISSING FILE"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -697,11 +705,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "408 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "408 899 118"
 "message" "4 VIDEO, THEN DEATH"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -755,11 +765,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "520 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "520 899 118"
 "message" "5 INFO"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -813,11 +825,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "632 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "632 899 118"
 "message" "6 START OVER"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -871,11 +885,13 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "744 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "744 899 118"
 "message" "7 SCREEN ON / OFF"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "func_button"
@@ -929,17 +945,21 @@
 }
 {
 "classname" "point_worldtext"
-"origin" "856 880 118"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "856 899 118"
 "message" "8 FOUR MORE SCREENS"
 "textsize" "8"
 "color" "255 255 255 255"
-"orientation" "2"
+"orientation" "0"
 }
 {
 "classname" "point_worldtext"
-"origin" "776 896 250"
+"spawnflags" "2"
+"angles" "0 90 0"
+"origin" "776 899 250"
 "message" "VIDEO TEST\nfirst copy sbo_sample.ogv into syndicate/video/\npress a button, Esc ends the video"
 "textsize" "9"
 "color" "120 255 120 255"
-"orientation" "2"
+"orientation" "0"
 }

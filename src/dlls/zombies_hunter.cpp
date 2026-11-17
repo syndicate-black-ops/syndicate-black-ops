@@ -170,7 +170,7 @@ int Czombie_hunter :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacke
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage / 5, 5000 );
 
@@ -492,7 +492,8 @@ void Czombie_hunter :: Look ( int iDistance )
 				if ( LookSkips( pSightEnt ) )
 					continue;
 				// SBO 2.0: FL_NOTARGET entities are not seen, as in CBaseMonster::Look
-				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) )
+				// SBO 2.1: nor a cloaked player out of the cloak's sight range (player.cpp Cloak_HidesFrom)
+				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) && !Cloak_HidesFrom( this, pSightEnt ) )
 				{
 					if ( pSightEnt->IsPlayer() )
 					{
@@ -545,6 +546,7 @@ void Czombie_hunter :: Look ( int iDistance )
 	}
 	
 	SetConditions( iSighted );
+	Cloak_AfterLook( this );	// SBO 2.1: a cloaked enemy unseen for long is lost, then forgotten
 }
 
 //=========================================================

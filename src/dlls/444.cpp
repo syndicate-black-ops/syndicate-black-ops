@@ -106,13 +106,10 @@ BOOL CK444::Deploy( )
 	return DefaultDeploy( "models/v_k444.mdl", "models/p_k444.mdl", K444_DRAW, "onehanded" );
 }
 
-void CK444::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CK444::Holster( int skiplocal /* = 0 */ )
 {
-	m_fInReload = FALSE;// cancel any reload in progress.
-
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 1.0;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0, 5 );
-	SendWeaponAnim( K444_HOLSTER );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 void CK444::PrimaryAttack( void )

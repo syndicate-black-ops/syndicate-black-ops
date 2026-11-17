@@ -132,17 +132,11 @@ BOOL CSw::Deploy( )
 }
 
 
-void CSw::Holster( void )
+// The base Holster and the weapon's zoom state reset: no holster animation, sound or attack delay.
+void CSw::Holster( int skiplocal /* = 0 */ )
 {
-	m_fInReload = FALSE;// cancel any reload in progress.
-
-	m_pPlayer->pev->fov = m_pPlayer->m_iFOV = 0;
-	m_fInZoom = 0;
-
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.3;
-
-	if ( m_iClip )
-		SendWeaponAnim( SW_HOLSTER );
+	CBasePlayerWeapon::Holster( skiplocal );
+	m_fInZoom = 0;	// the weapon's own zoom state (Deploy sets it too); the view's FOV is left as it is
 }
 
 

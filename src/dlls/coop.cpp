@@ -52,10 +52,6 @@ int limit;
 static int s_iRoundShown;
 int GmEngage;
 
-// SBO 2.0: the mission's outcome (g_bMissionFailed: 1 failed, 0 accomplished), kept from the start of the mission end
-// (state 5) so a game_end / mission_failed / change_touch during it can't turn it around
-static int s_iMissionFailed;
-
 // SBO 2.0: when the mission ended (gpGlobals->time at BeginMissionEnd): mp_missionendtime counts from here
 static float s_flMissionEndStart;
 
@@ -102,7 +98,6 @@ CCoop::CCoop()
 	m_iNextRoundStep = -1;
 	g_bMissionOutcomePending = 0;
 	g_bMissionFailed = 0;
-	s_iMissionFailed = 0;
 	s_flMissionEndStart = 0;
 	s_bMissionEndObservers = FALSE;
 	s_flMissionEndObserversTime = 0;
@@ -138,16 +133,19 @@ void CCoop::Think( void )
 	// SBO 2.0: a mission outcome (change_touch, game_end, mission_failed) ends the mission in every state a round is
 	// played in or started from: 3, 1 (just lost; the mission outcome wins), 0 and 4 (between rounds). SBO acted on
 	// it only in state 3, so an outcome between rounds first started a new round that respawned everyone. In the
-	// mission end (5) the outcome is already decided: a change_touch then waits (g_bChangeLevelTouched stays set), game_end /
-	// mission_failed are ignored.
+	// mission end (5) the outcome is already decided. Only the first result counts (g_bMissionOutcomePending stays set
+	// until the next map): a later change_touch, game_end or mission_failed does nothing.
 	if ( m_iRoundState == ROUND_PAUSE || m_iRoundState == ROUND_WAITING || m_iRoundState == ROUND_OVER
 		|| m_iRoundState == ROUND_ACTIVE || m_iRoundState == ROUND_SETUP )
 	{
 		if ( g_bChangeLevelTouched == 1 )	// SBO checked it at the end of Think, in every state
 		{
-			g_bMissionOutcomePending = 1;
-			g_bMissionFailed = 0;
-			UTIL_ClientPrintAll( HUD_PRINTCENTER, "SUCCESSFULL MISSION\n" );
+			if ( !g_bMissionOutcomePending )
+			{
+				g_bMissionOutcomePending = 1;
+				g_bMissionFailed = 0;
+				UTIL_ClientPrintAll( HUD_PRINTCENTER, "SUCCESSFULL MISSION\n" );
+			}
 			g_bChangeLevelTouched = 0;
 		}
 
@@ -184,8 +182,6 @@ void CCoop::Think( void )
 
 		if ( flElapsed >= MissionEndTime() )
 		{
-			g_bMissionOutcomePending = 0;
-			g_bMissionFailed = s_iMissionFailed;
 			MissionEnd();
 		}
 		else if ( !s_bMissionEndObservers && flElapsed >= STOCK_MISSION_END_TIME )
@@ -245,8 +241,8 @@ static float MissionEndTime( void )
 
 //=========================================================
 // SBO 2.0: the mission is over (g_bMissionOutcomePending: game_end or change_touch accomplished it, mission_failed or the
-// round limit failed it): MissionEnd after mp_missionendtime seconds (state 5). Keeps the outcome (s_iMissionFailed)
-// for MissionEnd.
+// round limit failed it): MissionEnd after mp_missionendtime seconds (state 5). g_bMissionOutcomePending stays set, so
+// the outcome (g_bMissionFailed) is final.
 //=========================================================
 void CCoop::BeginMissionEnd( void )
 {
@@ -259,8 +255,7 @@ void CCoop::BeginMissionEnd( void )
 		LogWorldEvent( g_bMissionFailed ? "Failed_Mission" : "Successful_Mission" );
 	}
 
-	s_iMissionFailed = g_bMissionFailed;
-	g_bMissionOutcomePending = 0;
+	g_bMissionOutcomePending = 1;	// the round limit gets here without it
 	m_iNumAliveAtStart = 0;
 	s_flMissionEndStart = gpGlobals->time;
 	m_iNextRoundStep = -1;	// not used in the mission end: mp_missionendtime, counted from s_flMissionEndStart (Think)
@@ -269,9 +264,9 @@ void CCoop::BeginMissionEnd( void )
 
 	GmMode_StopAll();	// SBO 2.0 GM mode ends with the mission (MrCalvin's plugin: mission success / failed)	// the players still alive play on for now (Think: STOCK_MISSION_END_TIME)
 
-	// SBO 2.0: game_mission_success / game_mission_failed, last: the outcome is kept (s_iMissionFailed) and the state is
-	// the mission end, so a hook that fires game_end or mission_failed changes nothing
-	RoundHooks_MissionEnd( s_iMissionFailed );
+	// SBO 2.0: game_mission_success / game_mission_failed, last: the outcome is final (g_bMissionOutcomePending), so a
+	// hook that fires game_end or mission_failed changes nothing
+	RoundHooks_MissionEnd( g_bMissionFailed );
 }
 
 //=========================================================
@@ -413,10 +408,17 @@ void CCoop::ClientDisconnected( edict_t *pClient )
 }
 
 //=========================================================
-// SBO 2.0: a player leaves the round (disconnect, Game Master mode on): no longer a participant, so the counts
-// (CountRoundPlayers) leave them out, and the round is checked without them. SBO took one off its player counter for
-// everyone, also players the round never counted (joined mid-round, no loadout, Game Masters), so the numbers drifted
-// and the round ended or stalled wrongly (production's round_counter_fix plugin patched the counters every frame).
+// SBO 2.0: a player leaves the round (disconnect, Game Master mode on, spectator mode on: PlayerStartsSpectating): no
+// longer a participant, so the counts (CountRoundPlayers) leave them out. In a round in play the round goes on as if
+// the player had never been in it: the base of mp_hardcore's share (m_iNumAliveAtStart, the players alive at the round
+// start) loses them too. Leaving alive is no loss, and an earlier death in this round no longer counts. The round still
+// ends when, without the player, nobody is alive (the last survivor leaves the dead: FAILED ROUND), nobody is left at
+// all (back to waiting; the round number stays used, else a team could dodge the round limit by leaving), or the
+// deaths already reach mp_hardcore's share of the smaller round. Only a participant lowers the base, once: the mark
+// is cleared here, so a later disconnect of a Game Master or spectator, or a dead player leaving GM mode, changes
+// nothing. SBO took one off its player counter for everyone, also players the round never counted (joined
+// mid-round, no loadout, Game Masters), so the numbers drifted and the round ended or stalled wrongly (production's
+// round_counter_fix plugin patched the counters every frame).
 //=========================================================
 void CCoop::PlayerLeavesRound( CBasePlayer *pPlayer )
 {
@@ -428,7 +430,18 @@ void CCoop::PlayerLeavesRound( CBasePlayer *pPlayer )
 
 	if ( m_iRoundState == ROUND_ACTIVE )
 	{
-		if ( bParticipant )
+		if ( !bParticipant )
+			return;
+
+		if ( m_iNumAliveAtStart > 0 )
+			m_iNumAliveAtStart--;
+
+		int iPlayers, iAlive;
+		CountRoundPlayers( iPlayers, iAlive );
+
+		// a loss needs a death: in a small round mp_hardcore's share rounds down to 0 (one death loses it), which
+		// CheckRoundOver would read as lost with nobody dead. Nobody alive / nobody left: Think, this frame.
+		if ( iAlive < m_iNumAliveAtStart )
 			CheckRoundOver();
 		return;
 	}
@@ -577,7 +590,8 @@ BOOL IsRoundCandidate( CBasePlayer *pPlayer )
 // themselves every time a decision needs them, as ReGameDLL_CS does (CHalfLifeMultiplay::InitializePlayerCounts).
 // A round player is one CheckWho spawned (m_bRoundParticipant) who still counts (IsRoundCandidate: not disconnected,
 // Game Master, spectator); alive = in play (m_bOutOfPlay 0). Whoever takes a player out of the round only has to
-// change the player's state before the round is checked.
+// change the player's state before the round is checked (a participant who leaves a round in play: PlayerLeavesRound,
+// which also lowers mp_hardcore's base).
 //=========================================================
 void CountRoundPlayers( int &iPlayers, int &iAlive )
 {
@@ -620,37 +634,14 @@ int MonsterScalePlayers( void )
 }
 
 //=========================================================
-// SBO 2.0 spectator mode on (CBasePlayer::StartSpectating). Spectators count for nothing, so unlike a disconnect
-// (PlayerLeavesRound) the round goes on as if the player had never been in it: also the base of mp_hardcore's share
-// (m_iNumAliveAtStart, the players alive at the round start) loses them. Leaving alive is no loss, and an earlier death in
-// this round no longer counts. The round still ends when, without the player, nobody is alive (the last survivor
-// leaves the dead: FAILED ROUND), nobody is left at all (back to waiting; the round number stays used, else a team
-// could dodge the round limit by spectating), or the deaths already reach mp_hardcore's share of the smaller round.
-// A team-limited heavy weapon (grenade / nuclear launcher) is freed for the others until the player joins again.
+// SBO 2.0 spectator mode on (CBasePlayer::StartSpectating). Spectators count for nothing: the player leaves the round
+// as on a disconnect (PlayerLeavesRound: out of the counts and of mp_hardcore's base; a round waiting for players is
+// checked again). A team-limited heavy weapon (grenade / nuclear launcher) is freed for the others until the player
+// joins again.
 //=========================================================
 void CCoop::PlayerStartsSpectating( CBasePlayer *pPlayer )
 {
-	pPlayer->m_flRoundJoinTime = 0;	// spectating again within the 3 s after leaving (PlayerStopsSpectating)
-
-	if ( m_iRoundState == ROUND_ACTIVE && pPlayer->m_bRoundParticipant )
-	{
-		pPlayer->m_bRoundParticipant = FALSE;	// out of the counts from here on
-
-		if ( m_iNumAliveAtStart > 0 )
-			m_iNumAliveAtStart--;
-
-		int iPlayers, iAlive;
-		CountRoundPlayers( iPlayers, iAlive );
-
-		// a loss needs a death: in a small round mp_hardcore's share rounds down to 0 (one death loses it), which
-		// CheckRoundOver would read as lost with nobody dead. Nobody alive / nobody left: Think, this frame.
-		if ( iAlive < m_iNumAliveAtStart )
-			CheckRoundOver();
-	}
-	else
-	{
-		PlayerLeavesRound( pPlayer );	// not in the round in play: a round waiting for players
-	}
+	PlayerLeavesRound( pPlayer );
 }
 
 //=========================================================
@@ -726,9 +717,10 @@ static BOOL SpectateExitsDue( void )
 // SBO 2.0 Game Master mode (gmmode.cpp, docs/GM_MODE.md): "gmon" and the gm_toggle server command, as the GM
 // mode plugin (enter_gm_mode): mp_gmmode 1, a living or dead player (as SBO's gmon; the plugin's "only while alive"
 // rule stays in the plugin), never a spectator (client.cpp also blocks their "gmon") or an HLTV proxy, not in the
-// mission end; one Game Master at a time (GmEngage; by design). The player leaves the round (CheckRoundOver counts
-// the players again, so a dead player leaving changes no count) and becomes an observer where they are (a dead
-// observer stays one and roams); the intro window comes up over a black screen. The loadout stays.
+// mission end; one Game Master at a time (GmEngage; by design). The player leaves the round as on a disconnect
+// (PlayerLeavesRound: out of the counts and of mp_hardcore's base, so an earlier death in this round no longer counts)
+// and becomes an observer where they are (a dead observer stays one and roams); the intro window comes up over a
+// black screen. The loadout stays.
 //=========================================================
 BOOL CCoop::GameMasterOn( CBasePlayer *pPlayer, BOOL bAdmin )
 {
@@ -1026,8 +1018,7 @@ void CCoop::MissionEnd( void )
 	// SBO 2.0: a failed mission ends like an accomplished one: intermission, then the next map of the map cycle. SBO
 	// stripped the players and opened a "Reload map?" vote here (round state 2, ShowVGUI 18, vote_yes / vote_no,
 	// ReloadMap); it never worked and is gone.
-	g_bMissionOutcomePending = 0;
-	g_bMissionFailed = 0;
+	// the mission's result stays (g_bMissionOutcomePending): a game_end or mission_failed in the intermission does nothing
 	m_iRoundState = ROUND_PAUSE;
 	GoToIntermission();
 }
@@ -1687,7 +1678,6 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 	while ( pWeaponEntity = UTIL_FindEntityByClassname( pWeaponEntity, "game_player_equip" ))
 	{
 		pWeaponEntity->Touch( pPlayer );
-		addDefault = FALSE;
 	}
 
 	if ( pPlayer->m_iSpawnMode == 0 )
@@ -1728,7 +1718,10 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->pev->movetype = MOVETYPE_WALK;
 	}
 
-	if ( addDefault )
+	// SBO 2.1: the fists at every spawn in play, whatever game_player_equip entities the map has (an equip only adds
+	// items; player_weaponstrip takes them away). Not a second pair when an equip gave them: the game rules refuse it
+	// (CGameRules::CanHavePlayerItem) and the new entity would stay in the world
+	if ( addDefault && !pPlayer->HasNamedPlayerItem( "weapon_wong" ) )
 		pPlayer->GiveNamedItem( "weapon_wong" );
 
 	pPlayer->m_iSpawnProtectTime = gpGlobals->time + 2;
@@ -1747,8 +1740,7 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->m_iLoadoutHeavy = 0;
 		pPlayer->m_iLoadoutBlade = 0;
 		pPlayer->pev->weapons |= (1<<WEAPON_SUIT);
-		g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pPlayer->edict() ), g_engfuncs.pfnGetInfoKeyBuffer( pPlayer->edict() ), "model", "hunted" );
-		pPlayer->m_iLoadoutModel = 0;
+		pPlayer->m_iLoadoutModel = 0;	// the "hunted" model is set after the model switch below
 		pPlayer->m_bMaleAgent = 1;
 	}
 
@@ -1788,6 +1780,10 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 		g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pPlayer->edict() ), g_engfuncs.pfnGetInfoKeyBuffer( pPlayer->edict() ), "model", "agent" );
 		break;
 	}
+
+	// SBO 2.0: a banned teamkiller wears the "hunted" model, set after the switch so the loadout model doesn't replace it
+	if ( ban.value == 1 && pPlayer->m_iTeamKills >= 5 )
+		g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pPlayer->edict() ), g_engfuncs.pfnGetInfoKeyBuffer( pPlayer->edict() ), "model", "hunted" );
 
 	// SBO 2.0: Assassin (cyberware 5) gives the armor skin, so its weight is the skin's. 1.38 applied the weight of the
 	// armor picked before Assassin (kept in m_iLoadoutArmor): Assassin's speed changed with a pick the menu no longer shows.
@@ -1852,7 +1848,7 @@ void CCoop::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->GiveNamedItem( "weapon_handgrenade" );
 		break;
 	case 2:
-		// SBO 2.0: no speed penalty, as #SBO_Item_tripmine says ("Speed malus : 0"; 1.38 took 6 = 2%)
+		pPlayer->m_iSboMaxSpeed -= 6;	// #SBO_Item_tripmine: "Speed malus :-2%"
 		pPlayer->GiveNamedItem( "weapon_tripmine" );
 		break;
 	case 3:
@@ -2013,15 +2009,12 @@ int CCoop::IPointsForKill( CBasePlayer *pAttacker, CBasePlayer *pKilled )
 
 //=========================================================
 //=========================================================
-// The teamkill / self-kill penalty applies only when mp_XP is 1: without XP no monster or medikit gives a level-up,
-// so a lost level or spawn health could never come back. (The 1.38 release's hl.dll and the production hl_i386.so
-// do the same; the release hl_i386.so, built from another source snapshot, applied it always: NOTES.md, "Server
-// binaries: release vs production".)
-//
-// The penalty: five levels (CBasePlayer::SboLevelPenalty: no lower limit, the speed effect stops at level -40), and
-// the spawn health (m_iSboHealth) 25 lower, never below 10. The scoreboard XP (m_iSboTotalXP) follows the levels it
-// takes away, 5000 XP (a monster level-up) per level lost, and may go negative, so the XP column and the level column
-// agree. The level is the scoreboard's: (m_iSboSpeed - 300) / 5.
+// The teamkill / self-kill penalty: five levels (CBasePlayer::SboLevelPenalty: no lower limit, the speed effect stops
+// at level -40), and the spawn health (m_iSboHealth) 25 lower, never below 10. The scoreboard XP (m_iSboTotalXP)
+// follows the levels it takes away, 5000 XP (a monster level-up) per level lost, and may go negative, so the XP column
+// and the level column agree; where the XP was ahead of the level (medikit level-ups take 7500), the scoreboard then
+// keeps it inside the new level's range (multiplay_gamerules.cpp SboScoreboard_KeepXPToLevel). The level is the
+// scoreboard's: (m_iSboSpeed - 300) / 5.
 #define SBO_PENALTY_LEVEL( speed )	( ( (speed) - 300 ) / 5 )
 #define SBO_PENALTY_XP_PER_LEVEL	5000
 
@@ -2030,9 +2023,6 @@ int CCoop::IPointsForKill( CBasePlayer *pAttacker, CBasePlayer *pKilled )
 
 static void SboKillPenalty( CBasePlayer *pPlayer )
 {
-	if ( XP.value != 1 )
-		return;
-
 	int iOldSpeed = pPlayer->m_iSboSpeed;
 	pPlayer->SboLevelPenalty();
 

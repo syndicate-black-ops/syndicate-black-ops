@@ -24,6 +24,8 @@ main checkout of a git worktree, where the gitignored dist/ is):
   SBO_DEVELOP_SO    the hl.so under test     default build/linux/hl.so
   SBO_MAP_DIRS      folders with the .bsp files, searched in order (colon-separated)
                     default gamedir/syndicate/maps:dist/custom-maps
+                    (then always sdk/examples/maps/<map>/syndicate/maps; the same <map>/syndicate/ folders come
+                    after SBO_CONTENT_PATH)
   SBO_CONTENT_PATH  folders the stub engine reads game files from after gamedir/syndicate (models, sprites, sounds a
                     production server has; colon-separated, missing ones skipped)
                     default dist/hlds-1.38/syndicate:dist/hlds-1.38/valve:
@@ -81,6 +83,18 @@ def resolve(path, main_fallback=True):
     return os.path.join(ROOT, path)
 
 
+def sdk_game_dirs():
+    """The SDK example maps that come with their compiled files (sdk/examples/maps/<map>/syndicate/, laid out like the
+    game folder, e.g. co_sbo_showcase): always searched after SBO_MAP_DIRS / SBO_CONTENT_PATH, so a map that comes with
+    the SDK instead of the game is found with its sequence file and briefing in every checkout and in CI."""
+    base = os.path.join(ROOT, 'sdk', 'examples', 'maps')
+    try:
+        names = sorted(os.listdir(base))
+    except OSError:
+        return []
+    return [os.path.join(base, n, 'syndicate') for n in names if os.path.isdir(os.path.join(base, n, 'syndicate'))]
+
+
 def config():
     hlds = os.path.expanduser(os.environ.get('HLDS_DIR', '~/hlds'))
     content = os.environ.get('SBO_CONTENT_PATH',
@@ -90,8 +104,9 @@ def config():
         'legacy': resolve(os.environ.get('SBO_138_SO', 'dist/release-1.38/syndicate/dlls/hl_i386.so')),
         'develop': resolve(os.environ.get('SBO_DEVELOP_SO', 'build/linux/hl.so'), False),
         'map_dirs': [resolve(p) for p in os.environ.get(
-            'SBO_MAP_DIRS', 'gamedir/syndicate/maps:dist/custom-maps').split(':') if p],
-        'content': [resolve(p) for p in content.split(':') if p and os.path.isdir(resolve(p))],
+            'SBO_MAP_DIRS', 'gamedir/syndicate/maps:dist/custom-maps').split(':') if p]
+                    + [os.path.join(d, 'maps') for d in sdk_game_dirs()],
+        'content': [resolve(p) for p in content.split(':') if p and os.path.isdir(resolve(p))] + sdk_game_dirs(),
         'out': resolve(os.environ.get('MAP_TESTS_OUT', 'build/map-tests'), False),
     }
 

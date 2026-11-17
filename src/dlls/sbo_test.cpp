@@ -41,6 +41,7 @@
 #include "inventory.h"
 #include "client_info.h"
 #include "entity_state.h"	// fullpack:<player> (AddToFullPack)
+#include "water_hit.h"	// test_bulletbench
 
 
 #ifndef _WIN32
@@ -96,6 +97,7 @@ struct FakePlayer
 	float fwd, side, up;
 	unsigned short buttons;
 	long frames;			// input held for this many frames (-1: until changed)
+	int lightlevel;			// the light a client reports in its moves (pev->light_level; test_lightlevel)
 };
 static std::vector<FakePlayer> s_fakes;
 
@@ -536,6 +538,16 @@ static std::string Snapshot( edict_t *e, const Args &fields, size_t from )
 		if ( strncmp( fields[j].c_str(), "physinfo:", 9 ) )
 			continue;
 		const char *pszValue = g_engfuncs.pfnGetPhysicsKeyValue( e, fields[j].c_str() + 9 );
+		s += Fmt( "%s%s:", first ? "" : ",", Json( fields[j].c_str() ).c_str() ) + Json( pszValue ? pszValue : "" );
+		first = false;
+	}
+	// userinfo:<key>: a player's userinfo key value as the engine holds it (pfnGetInfoKeyBuffer; suite player_text)
+	for ( size_t j = from; p && p->IsPlayer() && j < fields.size(); j++ )
+	{
+		if ( strncmp( fields[j].c_str(), "userinfo:", 9 ) )
+			continue;
+		char *pszInfo = g_engfuncs.pfnGetInfoKeyBuffer( e );
+		const char *pszValue = pszInfo ? g_engfuncs.pfnInfoKeyValue( pszInfo, fields[j].c_str() + 9 ) : NULL;
 		s += Fmt( "%s%s:", first ? "" : ",", Json( fields[j].c_str() ).c_str() ) + Json( pszValue ? pszValue : "" );
 		first = false;
 	}
@@ -1219,6 +1231,71 @@ static void Cmd_ShotLuck( const Args &a, edict_t * )
 	Trace( "shotluck", Fmt( "\"on\":%d", s_bShotLuckOff ? 0 : 1 ) );
 }
 
+// test_bulletbench <shooter> <aim entity> <calls> <shots>: the shooter's FireBullets from its eyes at the aim entity's
+// origin, calls times with the water splash check off and calls times with it on, in blocks of 100 that alternate;
+// prints and traces the wall-clock microseconds per call of each (water_hit.cpp's cost)
+static bool s_bWaterHitOff = false;
+
+BOOL Test_WaterHitOff( void )
+{
+	return s_bWaterHitOff ? TRUE : FALSE;
+}
+
+static void Cmd_BulletBench( const Args &a, edict_t *pSelf )
+{
+	if ( a.size() < 5 )
+	{
+		Print( "usage: test_bulletbench <shooter> <aim entity> <calls> <shots>\n" );
+		return;
+	}
+	edict_t *pShooter = ResolveOne( a[1], pSelf, "test_bulletbench" );
+	edict_t *pAim = ResolveOne( a[2], pSelf, "test_bulletbench" );
+	CBaseEntity *pEntity = pShooter ? CBaseEntity::Instance( pShooter ) : NULL;
+	if ( !pEntity || !pAim )
+		return;
+	const int iCalls = ( atoi( a[3].c_str() ) > 100 ? atoi( a[3].c_str() ) : 100 ) / 100 * 100;
+	const int iShots = atoi( a[4].c_str() ) > 1 ? atoi( a[4].c_str() ) : 1;
+	const Vector vecSrc = pEntity->pev->origin + pEntity->pev->view_ofs;
+	const Vector vecDir = ( pAim->v.origin - vecSrc ).Normalize();
+	double flTime[ 2 ] = { 0.0, 0.0 };
+	for ( int iBlock = 0; iBlock < iCalls / 100 * 2; iBlock++ )
+	{
+		const int iOn = iBlock & 1;
+		s_bWaterHitOff = !iOn;
+		const double flStart = WallTime();
+		for ( int i = 0; i < 100; i++ )
+			pEntity->FireBullets( iShots, vecSrc, vecDir, VECTOR_CONE_2DEGREES, 8192, BULLET_MONSTER_MP5, 0 );
+		flTime[ iOn ] += WallTime() - flStart;
+	}
+	s_bWaterHitOff = false;
+	const double flOff = flTime[ 0 ] * 1e6 / iCalls, flOn = flTime[ 1 ] * 1e6 / iCalls;
+
+	// the check alone, on the same bullet: 10000 times the water check (CWaterHits, no message) and 10000 times
+	// the bullet's own trace, timed apart from the rest of FireBullets
+	TraceResult tr;
+	UTIL_TraceLine( vecSrc, vecSrc + vecDir * 8192, dont_ignore_monsters, pShooter, &tr );
+	const Vector vecEnd = tr.vecEndPos;
+	double flStart = WallTime();
+	int cHit = 0;
+	for ( int i = 0; i < 10000; i++ )
+	{
+		CWaterHits waterHits( vecSrc, TRUE );
+		waterHits.Add( vecEnd, tr.pHit );
+		cHit += waterHits.Count();
+	}
+	const double flCheck = ( WallTime() - flStart ) * 1e6 / 10000;
+	flStart = WallTime();
+	for ( int i = 0; i < 10000; i++ )
+		UTIL_TraceLine( vecSrc, vecSrc + vecDir * 8192, dont_ignore_monsters, pShooter, &tr );
+	const double flTrace = ( WallTime() - flStart ) * 1e6 / 10000;
+
+	Print( "test_bulletbench: %d calls of %d shots: %.2f us per call without the water check, %.2f us with it; "
+		"the check alone %.3f us per bullet (%s), the bullet's trace %.3f us\n", iCalls, iShots, flOff, flOn, flCheck,
+		cHit ? "crosses water" : "no water", flTrace );
+	Trace( "bulletbench", Fmt( "\"calls\":%d,\"shots\":%d,\"off_us\":%.3f,\"on_us\":%.3f,\"check_us\":%.4f,\"water\":%d,"
+		"\"trace_us\":%.4f", iCalls, iShots, flOff, flOn, flCheck, cHit ? 1 : 0, flTrace ) );
+}
+
 // test_fullpack <player> ... | off: every frame, what the engine does for a real client after a server frame
 // (SV_WriteEntitiesToClient): SetupVisibility with the player's eye, then AddToFullPack for every entity, with the
 // player as the host. The engine does this only for real clients, never for fake ones, so without it the game code
@@ -1364,6 +1441,19 @@ static void Cmd_Player( const Args &a, edict_t * )
 		Trace( "player_level", "\"ent\":" + EntRef( e ) + Fmt( ",\"level\":%d", iLevel ) );
 		return;
 	}
+	// test_player sbo_speed <player> <speed>: the level speed m_iSboSpeed alone (300 + 5 per level), the way an AMXX
+	// plugin writes it (set_ent_data "m_iSboSpeed" / its alias "m_iHpBonus"): the scoreboard XP is left as it is
+	if ( a.size() >= 4 && a[1] == "sbo_speed" )
+	{
+		edict_t *e = ResolveOne( a[2], NULL, "test_player" );
+		CBaseEntity *p = e ? CBaseEntity::Instance( e ) : NULL;
+		if ( !p || !p->IsPlayer() )
+			return;
+		CBasePlayer *pl = (CBasePlayer *)p;
+		pl->m_iSboSpeed = atoi( a[3].c_str() );
+		Trace( "player_sbo_speed", "\"ent\":" + EntRef( e ) + Fmt( ",\"sbo_speed\":%d", pl->m_iSboSpeed ) );
+		return;
+	}
 	// test_player sbo_health <player> <health>: the spawn health (m_iSboHealth) the next spawn gives
 	if ( a.size() >= 4 && a[1] == "sbo_health" )
 	{
@@ -1376,7 +1466,23 @@ static void Cmd_Player( const Args &a, edict_t * )
 		Trace( "player_sbo_health", "\"ent\":" + EntRef( e ) + Fmt( ",\"sbo_health\":%d", pl->m_iSboHealth ) );
 		return;
 	}
-	Print( "usage: test_player add [name] [bot] | remove <player> | level <player> <level> | sbo_health <player> <health>\n" );
+	// test_player xp <player> <xp>: the XP toward the next level (m_iXP), without a level-up; the scoreboard XP moves
+	// by the same amount, as game_player_settings "xp" moves it (maprules.cpp PlayerSettings_ChangeXP)
+	if ( a.size() >= 4 && a[1] == "xp" )
+	{
+		edict_t *e = ResolveOne( a[2], NULL, "test_player" );
+		CBaseEntity *p = e ? CBaseEntity::Instance( e ) : NULL;
+		if ( !p || !p->IsPlayer() )
+			return;
+		CBasePlayer *pl = (CBasePlayer *)p;
+		int iXP = atoi( a[3].c_str() );
+		pl->m_iSboTotalXP += iXP - pl->m_iXP;
+		pl->m_iXP = iXP;
+		SboScoreboard_SendScoreInfo( pl );
+		Trace( "player_xp", "\"ent\":" + EntRef( e ) + Fmt( ",\"xp\":%d", iXP ) );
+		return;
+	}
+	Print( "usage: test_player add [name] [bot] | remove <player> | level <player> <level> | xp <player> <xp> | sbo_speed <player> <speed> | sbo_health <player> <health>\n" );
 }
 
 // the selection menu's "Go !" (client.cpp Spectate_MenuConfirmed: blade, light, heavy, item, cyberware, armor,
@@ -1425,19 +1531,21 @@ static void Cmd_Cmd( const Args &a, edict_t *pSelf )
 	FakeClientCommand( e, cmd );
 }
 
-// test_userinfo <player> <key> <value>: a client setting changed (ClientUserInfoChanged)
+// test_userinfo <player> <key> <value> [<key> <value> ...]: client settings changed, then one ClientUserInfoChanged
+// (several pairs: a connect's whole userinfo; suite player_text)
 static void Cmd_Userinfo( const Args &a, edict_t *pSelf )
 {
 	if ( a.size() < 4 )
 	{
-		Print( "usage: test_userinfo <player> <key> <value>\n" );
+		Print( "usage: test_userinfo <player> <key> <value> [<key> <value> ...]\n" );
 		return;
 	}
 	edict_t *e = ResolvePlayer( a[1], pSelf, "test_userinfo" );
 	if ( !e )
 		return;
 	char *info = s_engine.pfnGetInfoKeyBuffer( e );
-	s_engine.pfnSetClientKeyValue( ENTINDEX( e ), info, (char *)a[2].c_str(), (char *)a[3].c_str() );
+	for ( size_t i = 2; i + 1 < a.size(); i += 2 )
+		s_engine.pfnSetClientKeyValue( ENTINDEX( e ), info, (char *)a[i].c_str(), (char *)a[i + 1].c_str() );
 	ClientUserInfoChanged( e, info );
 }
 
@@ -1746,6 +1854,25 @@ static void Cmd_Move( const Args &a, edict_t *pSelf )
 	}
 }
 
+// test_lightlevel <player> <0-255>: the light the test player reports from now on (0: as RunPlayerMove, dark)
+static void Cmd_LightLevel( const Args &a, edict_t *pSelf )
+{
+	if ( a.size() < 3 )
+	{
+		Print( "usage: test_lightlevel <player> <0-255>\n" );
+		return;
+	}
+	FakePlayer *fp = FindFake( ResolveOne( a[1], pSelf, "test_lightlevel" ) );
+	if ( !fp )
+	{
+		Print( "test_lightlevel: not a test player\n" );
+		return;
+	}
+	int level = atoi( a[2].c_str() );
+	fp->lightlevel = level < 0 ? 0 : ( level > 255 ? 255 : level );
+	fp->ed->v.light_level = fp->lightlevel;
+}
+
 static void Cmd_Look( const Args &a, edict_t *pSelf )
 {
 	if ( a.size() < 4 )
@@ -2003,12 +2130,12 @@ static const CmdEntry s_cmds[] =
 {
 	{ "test_run", Cmd_Run }, { "test_trace", Cmd_Trace }, { "test_seed", Cmd_Seed }, { "test_mark", Cmd_Mark },
 	{ "test_time", Cmd_Time }, { "test_snap", Cmd_Snap }, { "test_player", Cmd_Player }, { "test_join", Cmd_Join },
-	{ "test_cmd", Cmd_Cmd }, { "test_spawn", Cmd_Spawn }, { "test_teleport", Cmd_Teleport }, { "test_move", Cmd_Move },
+	{ "test_cmd", Cmd_Cmd }, { "test_spawn", Cmd_Spawn }, { "test_teleport", Cmd_Teleport }, { "test_move", Cmd_Move }, { "test_lightlevel", Cmd_LightLevel },
 	{ "test_look", Cmd_Look }, { "test_fire", Cmd_Fire }, { "test_kv", Cmd_Kv }, { "test_damage", Cmd_Damage },
 	{ "test_round", Cmd_Round }, { "test_quit", Cmd_Quit }, { "test_userinfo", Cmd_Userinfo },
 	{ "test_flags", Cmd_Flags }, { "test_precache_first", Cmd_PrecacheFirst }, { "test_create", Cmd_Create },
 	{ "test_hitscan", Cmd_Hitscan }, { "test_weaponlist", Cmd_WeaponList }, { "test_weapon_hi", Cmd_WeaponHi }, { "test_drop", Cmd_Drop }, { "test_inventory", Cmd_Inventory }, { "test_clientinfo", Cmd_ClientInfo },
-	{ "test_shotluck", Cmd_ShotLuck }, { "test_fullpack", Cmd_Fullpack }, { "test_animevent", Cmd_AnimEvent },
+	{ "test_shotluck", Cmd_ShotLuck }, { "test_bulletbench", Cmd_BulletBench }, { "test_fullpack", Cmd_Fullpack }, { "test_animevent", Cmd_AnimEvent },
 
 };
 
@@ -2192,6 +2319,9 @@ void Test_StartFrame( void )
 		byte msec = (byte)( ms < 1 ? 1 : ms > 255 ? 255 : ms );
 		bool held = fp.frames != 0;
 		s_engine.pfnRunPlayerMove( fp.ed, fp.angles, held ? fp.fwd : 0, held ? fp.side : 0, 0, held ? fp.buttons : 0, 0, msec );
+		// a real client's move carries the light at its view (usercmd_t lightlevel), which the engine puts in
+		// pev->light_level and returns as GETENTITYILLUM for a player; RunPlayerMove sends 0
+		fp.ed->v.light_level = fp.lightlevel;
 		// the engine clears fixangle when it sends the angles to a client (SV_WriteClientdataToMessage), which it
 		// never does for a fake client: a teleport's fixangle would stay set, and the AFK code would ignore this
 		// player's input for good (PostThink: fixangle -> AfkIgnoreInput). A real client takes the angles the game

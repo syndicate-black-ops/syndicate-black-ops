@@ -294,6 +294,28 @@ def seq_off(t):
     t.expect.not_fired('b')
 
 
+@S.test('trigger_sequence: holdtime -1 (global.seq\'s RadioStyle and SignStyle, or set on the line) sends a hold of '
+        '1 second plus 0.05 seconds for each character of the text, never -1',
+        doc=SQ + '#the-games-styles-globalseq', players=1,
+        covers=('trigger_sequence', 'trigger_sequence.sequence_id'))
+def seq_hold_by_length(t):
+    radio = 'ET_RADIO'                          # 8 characters: 1.4 s
+    sign = 'ET_SIGN_LONGER_LINE'                # 19 characters: 1.95 s
+    own = 'ET_OWN'                              # 6 characters: 1.3 s, not SubtitleStyle's 4
+    seq = t.sequence('hold', '    @RadioStyle\n    #text = "%s", pause = 0.2\n    @SignStyle\n    #text = "%s", '
+                     'pause = 0.2\n    @SubtitleStyle\n    #text = "%s", holdtime = -1' % (radio, sign, own))
+    t.point('trigger_sequence', targetname='seq', sequence_id=seq)
+    t.mark('go')
+    t.fire('seq', use='on', activator='player1')
+    t.wait(0.7)
+    TE = 'svc:23'
+    t.expect.msg(TE, to='player1', count=1, after='go', fields={'te': 29, 'text': radio, 'channel': 3, 'y': 0.7,
+                                                                'fadein': 0.1, 'fadeout': 0.5, 'hold': 1.4})
+    t.expect.msg(TE, to='player1', count=1, after='go', fields={'te': 29, 'text': sign, 'channel': 0, 'y': 0.56,
+                                                                'fadein': 0.2, 'fadeout': 0.5, 'hold': 1.95})
+    t.expect.msg(TE, to='player1', count=1, after='go', fields={'te': 29, 'text': own, 'hold': 1.3})
+
+
 @S.test('trigger_sequence: a sound line without a speaker plays everywhere (ambient sound, ATTN_NONE, full volume), '
         'not as the entity\'s own sound (the engine sends that only to the players near it)', doc=SQ + '#sounds',
         covers=('trigger_sequence', 'trigger_sequence.sequence_id'))

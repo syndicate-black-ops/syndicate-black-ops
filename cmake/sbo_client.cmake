@@ -77,9 +77,16 @@ set(SBO_CLIENT_SOURCES
   ${SBO_SRC_DIR}/cl_dll/colorcorrection_core.cpp
   ${SBO_SRC_DIR}/cl_dll/colorcorrection_gl.cpp
   ${SBO_SRC_DIR}/cl_dll/colorcorrection_ops.cpp
+  ${SBO_SRC_DIR}/cl_dll/fogzone_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/entity_glow.cpp
+  ${SBO_SRC_DIR}/cl_dll/entity_glow_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/entity_glow_bsp.cpp
+  ${SBO_SRC_DIR}/cl_dll/waypoint.cpp
+  ${SBO_SRC_DIR}/cl_dll/waypoint_core.cpp
   ${SBO_SRC_DIR}/cl_dll/overlay_core.cpp
   ${SBO_SRC_DIR}/cl_dll/objective_core.cpp
   ${SBO_SRC_DIR}/cl_dll/overlay_gl.cpp
+  ${SBO_SRC_DIR}/cl_dll/env_sky_box.cpp
   ${SBO_SRC_DIR}/cl_dll/inventory.cpp
   ${SBO_SRC_DIR}/cl_dll/inventory_core.cpp
   ${SBO_SRC_DIR}/cl_dll/weapon_hand.cpp

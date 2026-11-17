@@ -10,8 +10,9 @@
 // the PropertySheet, the sheet passes it to the dialog, and the dialog enables Apply when a page has changes (back to
 // the saved values = disabled again). Apply / OK write the changes and disable it (PropertyDialog::OnCommand).
 //
-// Tabs: General (Discord Rich Presence, left-handed weapons, Experimental new menus), Chat (text size, name and chat colors, sound, message time), Version (build version + update
-// check; BHL options_about.cpp).
+// Tabs: General (Discord Rich Presence, left-handed weapons, on-screen objectives, new GameUI and in-game menus, update
+// check at start), Chat (text size, name and chat colors, sound, message time, chat color), Voice (voice gain),
+// Version (build version + update check; BHL options_about.cpp).
 // Add further pages in CSboOptionsDialog's constructor.
 //
 // SDK world (hl1_source_sdk headers); cvars go through sbo_bridge.h.
@@ -130,6 +131,9 @@ private:
 	vgui2::Label *m_pMenusHelp = nullptr;
 	CSboCvarCheckButton *m_pIngame = nullptr; //!< cl_new_ingame_menus, in the Menus section
 	vgui2::Label *m_pIngameHelp = nullptr;
+	vgui2::Label *m_pUpdatesTitle = nullptr;
+	CSboCvarCheckButton *m_pCheckUpdates = nullptr; //!< cl_check_for_updates
+	vgui2::Label *m_pCheckUpdatesHelp = nullptr;
 };
 
 //-----------------------------------------------------------------------------

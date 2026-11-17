@@ -24,6 +24,7 @@
 #include "saverestore.h"
 #include "squadmonster.h"
 #include "plane.h"
+#include "player.h"	// SBO 2.1: Cloak_EnemyShared
 
 //=========================================================
 // Save/Restore
@@ -271,6 +272,7 @@ void CSquadMonster :: SquadMakeEnemy ( CBaseEntity *pEnemy )
 				pMember->m_hEnemy = pEnemy;
 				pMember->m_vecEnemyLKP = pEnemy->pev->origin;
 				pMember->SetConditions ( bits_COND_NEW_ENEMY );
+				Cloak_EnemyShared( pMember );	// SBO 2.1: a cloaked one: only where he was, unseen
 			}
 		}
 	}

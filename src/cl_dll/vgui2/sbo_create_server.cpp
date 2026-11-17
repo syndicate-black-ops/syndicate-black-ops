@@ -135,7 +135,6 @@ const char *ScrTooltip(const char *cvar)
 		{ "mp_junior", "Hits to a player's head, chest and stomach do less damage" },
 		{ "mp_easymode", "Co-op only: a mission fails after 1.5 times as many rounds (10 instead of 7 on most maps)" },
 		{ "mp_gmmode", "A game master can spawn and remove monsters during the game" },
-		{ "mp_XP", "Players gain speed and health levels by damaging monsters" },
 		{ "mp_footsteps", "Players' footsteps make sounds" },
 		{ "mp_flashlight", "Players can use the flashlight" },
 	};
@@ -644,7 +643,7 @@ void CSboCreateServer::Start()
 		}
 	}
 	// The engine loads the game DLL with the first "map" of the session (Host_Map_f: Host_InitializeGameDLL), so
-	// until then the game's own cvars (mp_gmmode, mp_XP, ...) do not exist and a value sent now is lost. Those are
+	// until then the game's own cvars (mp_gmmode, mp_ban, ...) do not exist and a value sent now is lost. Those are
 	// kept and set by VGui2_CreateServer_ApplyPending as soon as the DLL has registered them, during the map load.
 	s_PendingCvars.clear();
 	if (m_bHaveScr)

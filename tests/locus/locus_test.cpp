@@ -13,7 +13,13 @@ static int s_iFailures;
 #define CHECK( x ) do { if ( !( x ) ) { printf( "FAIL %s:%d: %s\n", __FILE__, __LINE__, #x ); s_iFailures++; } } while ( 0 )
 
 void ALERT( ALERT_TYPE, const char *fmt, ... ) { char buf[1024]; va_list a; va_start( a, fmt ); vsnprintf( buf, sizeof( buf ), fmt, a ); va_end( a ); }
-float RANDOM_FLOAT( float lo, float hi ) { return lo + ( hi - lo ) * ( s_Rng() % 1000 ) / 1000.0f; }
+static int s_iRandomPick;	// 0 random, 1 always the low end, 2 always the high end
+float RANDOM_FLOAT( float lo, float hi )
+{
+	if ( s_iRandomPick == 1 ) return lo;
+	if ( s_iRandomPick == 2 ) return hi;
+	return lo + ( hi - lo ) * ( s_Rng() % 1000 ) / 1000.0f;
+}
 
 void UTIL_StringToVector( float *pVector, const char *pString )
 {
@@ -91,6 +97,26 @@ int main()
 	CHECK( !TryCalcLocus_Ratio( NULL, ( longLeft + "..5" ).c_str(), f ) );	// Featureful overflowed here
 	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3", v ) && v.x == 1 && v.y == 2 && v.z == 3 );
 	CHECK( TryCalcLocus_Velocity( NULL, NULL, "0 0 0 .. 10 10 10", v ) && v.x >= 0 && v.x <= 10 );
+
+	// ranges: each side read whole, blanks around ".." allowed (low end / high end of the random pick)
+	s_iRandomPick = 2;
+	CHECK( TryCalcLocus_Velocity( NULL, NULL, "0 0 0 .. 10 20 30", v ) && v.x == 10 && v.y == 20 && v.z == 30 );
+	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3 .. 4 5 6", v ) && v.x == 4 && v.y == 5 && v.z == 6 );
+	CHECK( TryCalcLocus_Color( NULL, NULL, "0 0 0 .. 255 128 64", v ) && v.x == 255 && v.y == 128 && v.z == 64 );
+	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3   ..   -4 -5 -6", v ) && v.x == -4 && v.y == -5 && v.z == -6 );
+	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3 ..4 5 6", v ) && v.x == 4 && v.y == 5 && v.z == 6 );
+	CHECK( TryCalcLocus_Ratio( NULL, "1 .. 5", f ) && f == 5 );
+	CHECK( TryCalcLocus_Ratio( NULL, "1..5", f ) && f == 5 );
+	CHECK( TryCalcLocus_Ratio( NULL, "num7 .. 9", f ) && f == 9 );
+	CHECK( TryCalcLocus_Ratio( NULL, "  -3  ..  num7  ", f ) && f == 7 );
+	s_iRandomPick = 1;
+	CHECK( TryCalcLocus_Velocity( NULL, NULL, "0 0 0 .. 10 20 30", v ) && v.x == 0 && v.y == 0 && v.z == 0 );
+	CHECK( TryCalcLocus_Ratio( NULL, "num7 .. 9", f ) && f == 7 );
+	CHECK( TryCalcLocus_Ratio( NULL, "1.5 .. 5", f ) && f == 1.5f );
+	s_iRandomPick = 0;
+	CHECK( TryCalcLocus_Ratio( NULL, " 2 ", f ) && f == 2 );
+	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3 .", v ) && v.x == 1 && v.y == 2 && v.z == 3 );	// no range
+	CHECK( TryCalcLocus_Position( NULL, NULL, "1 2 3 ", v ) && v.x == 1 && v.y == 2 && v.z == 3 );
 
 	// clamp
 	f = 1e30f; CHECK( ClampToMinMax( NULL, f, S( "0" ), S( "1" ), 1 ) && f >= 0 && f <= 1 );		// wrap, huge

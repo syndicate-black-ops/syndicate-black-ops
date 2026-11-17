@@ -708,6 +708,8 @@ edict_t *CFuncTank :: FindTarget( void )
 			continue;
 		if ( pPlayer->pev->flags & FL_NOTARGET )
 			continue;
+		if ( Cloak_HidesFrom( this, pPlayer ) )	// SBO 2.1: a cloaked player out of the cloak's sight range
+			continue;
 		if ( pPlayer->IsObserver() || ( pPlayer->m_afPhysicsFlags & PFLAG_OBSERVER ) )
 			continue;
 
@@ -790,6 +792,8 @@ edict_t *CFuncTank :: FindClassTarget( void )
 	{
 		CBaseEntity *pEnt = pList[i];
 		if ( pEnt == this || !pEnt->IsAlive() || ( pEnt->pev->flags & FL_NOTARGET ) )
+			continue;
+		if ( Cloak_HidesFrom( this, pEnt ) )	// SBO 2.1: a cloaked player out of the cloak's sight range
 			continue;
 		if ( pEnt->IsPlayer() )
 		{

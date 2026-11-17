@@ -35,7 +35,6 @@
 extern int gmsgPlayVideo;	// player.cpp: game_playvideo
 #include "weapons.h"		// SBO 2.0: game_player_settings
 #include "round_hooks.h"	// SBO 2.0: Logic_IsPlayerInPlay
-#include "game.h"			// SBO 2.0: game_player_settings (mp_XP)
 
 class CRuleEntity : public CBaseEntity
 {
@@ -55,7 +54,9 @@ private:
 	string_t	m_iszMaster;
 };
 
-// SBO: coop mission state (read by coop.cpp)
+// SBO: coop mission state (read by coop.cpp). SBO 2.0: g_bMissionOutcomePending is set by the mission's first result
+// (game_end, mission_failed, change_touch or the round limit) and stays set until the next map, so a later one does
+// nothing; g_bMissionFailed is that result (1 failed, 0 accomplished)
 int g_bMissionOutcomePending = 0;
 int g_bMissionFailed = 0;
 
@@ -224,8 +225,8 @@ void CGameEnd::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useT
 	if ( !CanFireForActivator( pActivator ) )
 		return;
 
-	// SBO: in coop, game_end means the mission was accomplished
-	if ( m_Mode == MODE_COOP )
+	// SBO: in coop, game_end means the mission was accomplished. SBO 2.0: unless the mission already has its result
+	if ( m_Mode == MODE_COOP && !g_bMissionOutcomePending )
 	{
 		g_bMissionOutcomePending = 1;
 		g_bMissionFailed = 0;
@@ -252,7 +253,8 @@ void CMissionFail::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 	if ( !CanFireForActivator( pActivator ) )
 		return;
 
-	if ( m_Mode == MODE_COOP )
+	// SBO 2.0: unless the mission already has its result
+	if ( m_Mode == MODE_COOP && !g_bMissionOutcomePending )
 	{
 		g_bMissionOutcomePending = 1;
 		g_bMissionFailed = 1;
@@ -1007,6 +1009,24 @@ void CGamePlayerEquip::Touch( CBaseEntity *pOther )
 	EquipPlayer( pOther );
 }
 
+// The player holds a weapon of this class that takes no ammo
+static BOOL HoldsWeaponWithoutAmmo( CBasePlayer *pPlayer, const char *pszClass )
+{
+	if ( strnicmp( pszClass, "weapon_", 7 ) )
+		return FALSE;
+
+	for ( int i = 0; i < MAX_ITEM_TYPES; i++ )
+	{
+		for ( CBasePlayerItem *pItem = pPlayer->m_rgpPlayerItems[i]; pItem; pItem = pItem->m_pNext )
+		{
+			if ( !stricmp( STRING( pItem->pev->classname ), pszClass ) )
+				return pItem->pszAmmo1() == NULL;
+		}
+	}
+
+	return FALSE;
+}
+
 void CGamePlayerEquip::EquipPlayer( CBaseEntity *pEntity )
 {
 	CBasePlayer *pPlayer = NULL;
@@ -1025,6 +1045,11 @@ void CGamePlayerEquip::EquipPlayer( CBaseEntity *pEntity )
 			break;
 		for ( int j = 0; j < m_weaponCount[i]; j++ )
 		{
+			// SBO 2.1: a weapon without ammo the player already holds (the fists every spawn gives, a melee weapon) is
+			// left out: the game rules refuse a second one (CGameRules::CanHavePlayerItem), and the new entity stayed in
+			// the world at the player's feet
+			if ( HoldsWeaponWithoutAmmo( pPlayer, STRING( m_weaponNames[i] ) ) )
+				break;
  			pPlayer->GiveNamedItem( STRING(m_weaponNames[i]) );
 		}
 	}
@@ -1462,7 +1487,7 @@ void CGamePlayVideo::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYP
 // the singleplayer "equip at spawn".
 // SBO keys: "level" and "xp" change the co-op level and XP with the same prefixes (no prefix sets). The level is
 // the game's own (m_iSboSpeed, the scoreboard's); "xp" is the XP toward the next level (m_iXP: a level-up at 5000,
-// with mp_XP 1, as monster damage gives). Both keep the scoreboard XP (m_iSboTotalXP) in step the way the game does
+// as monster damage gives). Both keep the scoreboard XP (m_iSboTotalXP) in step the way the game does
 // (PlayerSettings_ChangeLevel, PlayerSettings_ChangeXP), and the scoreboard updates at once. A value with a
 // prefix needs it before any sign: "=-5" sets level -5, "-5" takes five levels.
 //=========================================================
@@ -1733,8 +1758,8 @@ static void PlayerSettings_ChangeLevel( CBasePlayer *player, int levels )
 }
 
 // SBO: the XP toward the next level (m_iXP) set to a value, never below 0 (taking XP takes no level). The scoreboard
-// XP changes by the same amount, as a gain adds it (SBO_XP_GAIN). With mp_XP 1 every full 5000 is a level-up (the
-// rest stays), as monster damage gives one; with mp_XP 0 there are no level-ups (the game's rule).
+// XP changes by the same amount, as a gain adds it (SBO_XP_GAIN). Every full 5000 is a level-up (the rest stays),
+// as monster damage gives one.
 static void PlayerSettings_ChangeXP( CBasePlayer *player, int xp )
 {
 	if ( xp < 0 )
@@ -1742,8 +1767,6 @@ static void PlayerSettings_ChangeXP( CBasePlayer *player, int xp )
 	player->m_iSboTotalXP += xp - player->m_iXP;
 	player->m_iXP = xp;
 
-	if ( XP.value != 1 )
-		return;
 	while ( player->m_iXP >= PLAYERSETTINGS_XP_PER_LEVEL )
 	{
 		player->m_iXP -= PLAYERSETTINGS_XP_PER_LEVEL;

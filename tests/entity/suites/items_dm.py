@@ -1,11 +1,11 @@
 """Deathmatch loadout items against their descriptions (#SBO_Item_<item> in
 gamedir/syndicate/ui/resource/language/sbo_ui_english.txt): the Adrenaline Surge gives +75 health as in co-op
-(1.38: health 150, +50), the tripmine costs no speed (1.38: -6). CDm::PlayerSpawn (dm.cpp). The co-op side is in
+(1.38: health 150, +50), the tripmine costs 6 speed (as 1.38). CDm::PlayerSpawn (dm.cpp). The co-op side is in
 suite armor. The map is dm_et_items_dm (no co_ prefix: deathmatch game rules)."""
 
 from etest import Suite
 
-SUITE = Suite('items_dm', 'Deathmatch loadout: adrenaline +75 health, tripmines cost no speed, Assassin speed', players=1)
+SUITE = Suite('items_dm', 'Deathmatch loadout: adrenaline +75 health, tripmines cost 6 speed, Assassin speed', players=1)
 S = SUITE
 S.map_prefix = 'dm_'
 
@@ -26,7 +26,7 @@ def adrenaline_dm(t):
     t.expect.value('spawn', 'player1', 'health', 175)
 
 
-@S.test('tripmine: no speed penalty (the same max speed as with grenades); satchel -15', players=1)
+@S.test('tripmine: -6 speed (274, grenades 280); satchel -15', players=1)
 def tripmine_speed_dm(t):
     respawn_with(t, '2 1 2 1 2 4 1')     # cyberware 2 (targeting): no speed change
     t.snap('grenade', 'player1', 'maxspeed')
@@ -35,7 +35,7 @@ def tripmine_speed_dm(t):
     respawn_with(t, '2 1 2 3 2 4 1')
     t.snap('satchel', 'player1', 'maxspeed')
     t.expect.value('grenade', 'player1', 'maxspeed', 280)    # 300 - federal 20
-    t.expect.value('tripmine', 'player1', 'maxspeed', 280)
+    t.expect.value('tripmine', 'player1', 'maxspeed', 274)   # CDm::PlayerSpawn (dm.cpp): m_iSboMaxSpeed -= 6
     t.expect.value('satchel', 'player1', 'maxspeed', 265)
 
 

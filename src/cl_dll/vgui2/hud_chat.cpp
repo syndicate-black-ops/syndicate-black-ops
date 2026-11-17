@@ -1043,7 +1043,7 @@ static void MessageMode2VGUI2()
 		return;
 	}
 
-	// SBO: say_team is deprecated (the server treats it like say): messagemode2 opens
+	// SBO: the game has no team chat (the server has no say_team): messagemode2 opens
 	// the same public chat input as messagemode.
 	CHudChat::Get()->StartMessageMode(MM_SAY);
 }
@@ -1299,7 +1299,7 @@ void CHudChat::Printf(const char *fmt, ...)
 //-----------------------------------------------------------------------------
 void CHudChat::StartMessageMode(int iMessageModeType)
 {
-	// SBO: no team-only chat mode any more (say_team is deprecated server-side)
+	// SBO: no team-only chat mode (the server has no say_team)
 	(void)iMessageModeType;
 	m_nMessageMode = MM_SAY;
 

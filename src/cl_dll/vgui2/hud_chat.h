@@ -651,7 +651,8 @@ public:
 	//! userinfo: the engine sends it to the server, which sends it to every client (GetPlayerNameColor).
 	ChatColor GetNameColor();
 	void SetNameColor(const ChatColor &color);
-	//! SBO: the chat color to show (collapsed circle, typed text): the color being picked while the wheel /
+	//! SBO: the chat color to show (typed text; the collapsed circle while the popup is closed or edits the chat
+	//! color): the color being picked while the wheel /
 	//! brightness bar is dragged for the chat color, else GetChatColor
 	ChatColor GetActiveChatColor();
 	//! SBO: the color being picked (wheel / brightness bar drag) for the setting the popup edits

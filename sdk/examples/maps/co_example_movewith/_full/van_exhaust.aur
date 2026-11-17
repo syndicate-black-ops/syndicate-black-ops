@@ -1,0 +1,37 @@
+// van_exhaust.aur - the full Move With example map: a thin exhaust from a tailpipe, for an env_particle with "Move with entity"
+// (target). Small puffs leave the pipe slowly, lose their speed ("drag") and stay behind as the vehicle drives on.
+// Sprite: fasmoke2 (SBO).
+"particles" "64"
+"maintype" "pipe"
+
+{
+  "name" "pipe"
+  "spraytype" "puff"
+  "sprayrate" "20"
+  "sprayforce" "10..20"
+  "spraypitch" "-15..0"
+  "sprayyaw" "-10..10"
+}
+
+{
+  "name" "puff"
+  "sprite" "sprites/fasmoke2.spr"
+  "rendermode" "solid"
+  "gravity" "6"
+  "drag" "2.5"
+  "lifetime" "1.2..1.8"
+  "startsize" "3"
+  "endsize" "12..16"
+  "startred" "0.6"
+  "startgreen" "0.6"
+  "startblue" "0.6"
+  "endred" "0.8"
+  "endgreen" "0.8"
+  "endblue" "0.8"
+  "startalpha" "0.7"
+  "endalpha" "0"
+  "startframe" "0..120"
+  "framerate" "12"
+  "startangle" "0..360"
+  "angledelta" "-30..30"
+}

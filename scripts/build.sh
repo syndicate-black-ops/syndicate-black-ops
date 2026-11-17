@@ -22,6 +22,8 @@
 set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 WHAT=${1:-all}; shift || true
+# The second argument is the build type: a -D flag there would configure a broken build tree
+case "${1:-}" in -*) echo "build.sh: give the build type before cmake flags, e.g. scripts/build.sh linux RelWithDebInfo $1" >&2; exit 2;; esac
 CLANG_CL_IMAGE=${CLANG_CL_IMAGE:-sbo/clang-cl:local}
 SNIPER_IMAGE=${SNIPER_IMAGE:-registry.gitlab.steamos.cloud/steamrt/sniper/sdk:3.0.20260805.254768@sha256:1c33c507bc75d012e77df5727f93b0d5b8c3f7c8d4142ba5f7a16882cc92e014}
 

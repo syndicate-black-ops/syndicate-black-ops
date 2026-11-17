@@ -161,16 +161,19 @@ class Expectations:
         self._add('msg', name=name, to=to, min=0, count=0, fields=None, after=after, within=within)
 
     def sound(self, sample, ent=None, min=1, count=None, after=None, within=None, flags=None, attn=None, vol=None,
-              pitch=None, ambient=None, chan=None, max=None):
+              pitch=None, ambient=None, chan=None, max=None, within_frames=None):
         """A sound whose sample name (or, for a sentence sent by its number, the sentence name, e.g. "SC_POK") contains
         `sample` was emitted (by `ent`). flags: bits that must all be set
         (e.g. 32, SND_STOP: the sound was stopped). attn: its attenuation; vol: a (lo, hi) range of its volume.
         ambient: True = only ambient sounds (EMIT_AMBIENT_SOUND, sent to every client), False = only the entity's
         own sounds (EMIT_SOUND, sent to the clients in its PAS); None = either. chan: its channel (CHAN_WEAPON 1,
         CHAN_VOICE 2, CHAN_ITEM 3, CHAN_BODY 4, CHAN_STATIC 6); sample '' matches every sample. max: at most that
-        many (with min: a range, for a rate)."""
+        many (with min: a range, for a rate). within_frames: (lo, hi) server frames after `after` instead of seconds,
+        for a rate that counts per user command (a weapon's clock runs on the commands' msec, while a loaded
+        machine stretches the game time between frames)."""
         self._add('sound', sample=sample, ent=ent, min=min, count=count, after=after, within=within, flags=flags,
-                  attn=attn, vol=vol, pitch=pitch, ambient=ambient, chan=chan, max=max)
+                  attn=attn, vol=vol, pitch=pitch, ambient=ambient, chan=chan, max=max,
+                  **({'within_frames': list(within_frames)} if within_frames else {}))
 
     def setview(self, ent, view, min=1, count=None, after=None, within=None):
         """The engine was told to show player `ent` the view of `view` (SET_VIEW; `ent` itself: his own view back)."""

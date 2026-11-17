@@ -1,6 +1,6 @@
 """Object hints (docs/OBJECT_HINTS.md; Featureful): an entity's "objecthint" key names a template; every 0.1 s the
 server sends each living player an "ObjectHint" message per hint he sees (unreliable). The interaction hint
-(flags 1) marks what +use would use now; scan hints (flags 0) mark hinted objects (every template but hidden) within
+(flags 1) marks what +use would use now; scan hints (flags 0) mark hinted objects (every template) within
 the hint distance: the "objecthint_distance" key, 512 units when it is empty or 0. Spectators get none.
 Its own suite: the last test leaves player2 in spectator mode."""
 

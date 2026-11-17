@@ -19,11 +19,12 @@
 #include "pmtrace.h"
 #include "pm_materials.h"
 #include "particleman.h"
+#include "cl_entity.h"
 
 extern IParticleMan *g_pParticleMan;
 extern const Vector g_vecZero;
 
-static cvar_t *cl_effectsdetail;	// CS:CZ Deleted Scenes' client cvar: 0 no debris chips and wall puffs
+static cvar_t *cl_effectsdetail;	// CS:CZ Deleted Scenes' client cvar: 0 no debris chips, wall puffs, water splashes and gun smoke
 
 static unsigned char *Materials_Load( const char *path, int *length )
 {
@@ -304,6 +305,175 @@ void Materials_Impact( pmtrace_t *pTrace, const mat_fx_t *fx, const char *hlDeca
 	}
 }
 
+// ---------------------------------------------------------------------------------------------------------------
+// water splashes (Featureful EV_HLDM_WaterEntryPoint / EV_WaterHit)
+// ---------------------------------------------------------------------------------------------------------------
+
+bool Materials_EffectsDetail( void )
+{
+	return !cl_effectsdetail || cl_effectsdetail->value > 0.0f;
+}
+
+static bool Materials_IsLiquid( int contents )
+{
+	return contents <= CONTENTS_WATER && contents >= CONTENTS_LAVA;
+}
+
+bool Materials_WaterEntry( const Vector &start, const Vector &end, Vector &entry )
+{
+	if ( Materials_IsLiquid( gEngfuncs.PM_PointContents( (float *)&start, NULL ) )
+		== Materials_IsLiquid( gEngfuncs.PM_PointContents( (float *)&end, NULL ) ) )
+		return false;
+
+	entry = FindSurfaceDividerPoint( start, end );
+	return true;
+}
+
+// the splash column: brightness fades to 0 over the last WATERSPLASH_FADE seconds of its life
+#define WATERSPLASH_LIFE	0.8f
+#define WATERSPLASH_FADE	0.3f
+#define WATERSPLASH_NEAR	64.0f	// a splash closer than this to the player's eyes draws only its ripple
+
+class CPartSplash : public CBaseParticle
+{
+public:
+	void Think( float flTime ) override
+	{
+		const float flLeft = m_flDieTime - flTime;
+		if ( flLeft < WATERSPLASH_FADE )
+			m_flBrightness = m_flStartBrightness * ( flLeft > 0.0f ? flLeft / WATERSPLASH_FADE : 0.0f );
+		CBaseParticle::Think( flTime );
+	}
+
+	float m_flStartBrightness = 150.0f;
+};
+
+// a bullet that crosses a water surface at pos: a splash column, a spray of drops and a ripple on the surface, and the
+// slosh material's hit sound when sound is set. Shown while cl_effectsdetail is above 0.
+void Materials_WaterSplash( const Vector &pos, bool sound )
+{
+	if ( !Materials_EffectsDetail() )
+		return;
+
+	if ( sound )
+	{
+		const mat_hit_t *hit = MAT_GetHit( MAT_SloshType() );
+		if ( hit->sounds.count > 0 )
+		{
+			gEngfuncs.pEventAPI->EV_PlaySound( 0, (float *)&pos, CHAN_STATIC,
+				hit->sounds.name[ gEngfuncs.pfnRandomLong( 0, hit->sounds.count - 1 ) ], hit->volume, hit->attenuation, 0,
+				96 + gEngfuncs.pfnRandomLong( 0, 0xf ) );
+		}
+	}
+
+	if ( !g_pParticleMan )
+		return;
+
+	const float flTime = gEngfuncs.GetClientTime();
+
+	// within WATERSPLASH_NEAR of this player's eyes only the ripple: the column and the drops would fill the view
+	bool bNearEyes = false;
+	cl_entity_t *local = gEngfuncs.GetLocalPlayer();
+	if ( local )
+	{
+		Vector vecViewOfs;
+		gEngfuncs.pEventAPI->EV_LocalPlayerViewheight( vecViewOfs );
+		bNearEyes = ( pos - ( Vector( local->origin ) + vecViewOfs ) ).Length() < WATERSPLASH_NEAR;
+	}
+
+	model_t *sprite;
+	// the splash column: rises, falls back and fades out before it reaches the water again
+	sprite = bNearEyes ? NULL : Materials_Sprite( "sprites/xsmoke3.spr" );
+	if ( sprite )
+	{
+		CPartSplash *splash = new CPartSplash();
+		if ( !splash )		// the particle cap (CMiniMem::MaxParticles)
+			return;
+		const float size = gEngfuncs.pfnRandomFloat( 30.0f, 40.0f );
+		splash->InitializeSprite( pos - Vector( 0.0f, 0.0f, size / 6.0f ), g_vecZero, sprite, size, 150.0f );
+		splash->m_flStretchY = 1.4f;
+		splash->m_iRendermode = kRenderTransAdd;
+		splash->SetRenderFlag( RENDER_FACEPLAYER );
+		splash->SetLightFlag( LIGHT_NONE );
+		splash->SetCullFlag( CULL_PVS | CULL_FRUSTUM_SPHERE );
+		splash->m_flDieTime = flTime + WATERSPLASH_LIFE;
+		splash->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
+		splash->m_flGravity = 0.5f;
+		splash->m_vVelocity = Vector( 0.0f, 0.0f, gEngfuncs.pfnRandomFloat( 110.0f, 130.0f ) );
+	}
+
+	// the spray: three small drops that face the viewer, fly up and apart, and die when they fall back into the
+	// water
+	sprite = bNearEyes ? NULL : Materials_Sprite( "sprites/mommaspout.spr" );
+	if ( sprite )
+	{
+		for ( int i = 0; i < 3; i++ )
+		{
+			CBaseParticle *drop = new CBaseParticle();
+			if ( !drop )
+				return;
+			drop->InitializeSprite( pos + Vector( 0.0f, 0.0f, i * 5.0f ), g_vecZero, sprite,
+				gEngfuncs.pfnRandomFloat( 8.0f, 12.0f ), 120.0f );
+			drop->m_vVelocity = Vector( gEngfuncs.pfnRandomFloat( -30.0f, 30.0f ), gEngfuncs.pfnRandomFloat( -30.0f, 30.0f ),
+				gEngfuncs.pfnRandomFloat( 100.0f, 110.0f ) );
+			drop->SetCollisionFlags( TRI_COLLIDEWORLD | TRI_COLLIDEKILL | TRI_WATERTRACE );
+			drop->SetRenderFlag( RENDER_FACEPLAYER );
+			drop->SetLightFlag( LIGHT_NONE );
+			drop->SetCullFlag( CULL_PVS | CULL_FRUSTUM_SPHERE );
+			drop->m_iRendermode = kRenderTransAlpha;
+			drop->m_flMass = 1.0f;
+			drop->m_flGravity = 0.4f;
+			drop->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
+			drop->m_flDieTime = flTime + 1.0f;
+		}
+	}
+
+	// the ripple: flat on the surface, grows and fades
+	sprite = Materials_Sprite( "sprites/effects/ripple.spr" );
+	if ( sprite )
+	{
+		CBaseParticle *ripple = new CBaseParticle();
+		if ( !ripple )
+			return;
+		ripple->InitializeSprite( pos, Vector( 90.0f, 0.0f, 0.0f ), sprite, 20.0f, 150.0f );
+		ripple->m_iRendermode = kRenderTransAdd;
+		ripple->m_flFadeSpeed = 4.0f;
+		ripple->SetLightFlag( LIGHT_NONE );
+		ripple->SetCullFlag( CULL_PVS | CULL_FRUSTUM_SPHERE );
+		ripple->m_flScaleSpeed = 2.0f;
+		ripple->m_flDieTime = flTime + 2.0f;
+		ripple->m_vColor = Vector( 255.0f, 255.0f, 255.0f );
+	}
+}
+
+// "WaterHit": byte count (at most MAT_WATERHIT_MAX), then per point its position (3 coords) and the player the bullet
+// hit (entity index, 0 none). The server sends it for one FireBullets call of a monster, turret or mounted gun whose
+// bullets cross a water surface. A point whose bullet hit this client's own player draws nothing here; of the others,
+// the first WATERSPLASH_PER_SHOT splash and the first of those gets the sound.
+static int __MsgFunc_WaterHit( const char *pszName, int iSize, void *pbuf )
+{
+	BEGIN_READ( pbuf, iSize );
+	int count = READ_BYTE();
+	if ( count > MAT_WATERHIT_MAX )
+		count = MAT_WATERHIT_MAX;
+	cl_entity_t *local = gEngfuncs.GetLocalPlayer();
+	const int iLocal = local ? local->index : -1;
+	int iSplashes = 0;
+	for ( int i = 0; i < count; i++ )
+	{
+		Vector pos;
+		pos.x = READ_COORD();
+		pos.y = READ_COORD();
+		pos.z = READ_COORD();
+		const int iHitPlayer = READ_BYTE();
+		if ( iHitPlayer == iLocal || iSplashes >= WATERSPLASH_PER_SHOT )
+			continue;
+		Materials_WaterSplash( pos, iSplashes == 0 );
+		iSplashes++;
+	}
+	return 1;
+}
+
 #ifdef SBO_TEST_COMMANDS
 // test_cl_materials 1 (test builds only, docs/MATERIALS.md "Testing"): the client prints every footstep
 // (pm_shared.c), bullet hit sound and impact (ev_hldm.cpp) with the texture and its letter
@@ -324,6 +494,7 @@ void Materials_TestFrame( void )
 void Materials_Init( void )
 {
 	gEngfuncs.pfnHookUserMsg( "MatFile", __MsgFunc_MatFile );
+	gEngfuncs.pfnHookUserMsg( "WaterHit", __MsgFunc_WaterHit );
 	cl_effectsdetail = CVAR_CREATE( "cl_effectsdetail", "1", FCVAR_ARCHIVE );
 #ifdef SBO_TEST_COMMANDS
 	test_cl_materials = CVAR_CREATE( "test_cl_materials", "0", 0 );

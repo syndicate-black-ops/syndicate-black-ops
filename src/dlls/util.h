@@ -362,6 +362,11 @@ extern const char	*UTIL_ChatPlayerName( const char *pszName, edict_t *pPlayer );
 // the colour code ("^N" / "^xRGB" / "^#RRGGBB", "" = none) of a player's name colour (userinfo key "namecolor") into
 // pszCode (10 chars); returns its length
 extern int			UTIL_NameColorCode( edict_t *pPlayer, char *pszCode );
+// the same for a namecolor value (may be NULL)
+extern int			UTIL_NameColorValueCode( const char *pszValue, char *pszCode );
+// removes the colour codes (^0..^9, ^xRGB, ^#RRGGBB) and the markup bytes \x01..\x08 from psz in place; pszFirstCode
+// (10 chars, may be NULL) gets the first ^ code ("" = none); returns how many were removed (see util.cpp)
+extern int			UTIL_RemoveColorCodes( char *psz, char *pszFirstCode );
 
 
 typedef struct hudtextparms_s

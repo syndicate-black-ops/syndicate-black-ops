@@ -11,5 +11,7 @@ void StaticProps_Reset( void );			// VidInit: a new map or server has no props u
 void StaticProps_CreateEntities( void );	// HUD_CreateEntities: the visible props in the view's PVS
 // SBO 2.0 info_light_origin: the point a prop is lit from (FALSE: not a prop, or lit as usual)
 BOOL StaticProps_LightOrigin( const struct cl_entity_s *ent, float *out );
+// SBO 2.1: a prop flagged "In the 3D sky": drawn in the env_sky pass only
+bool StaticProps_IsSkyProp( const struct cl_entity_s *ent );
 
 #endif // STATIC_PROPS_CLIENT_H

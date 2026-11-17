@@ -455,18 +455,23 @@ void CHudMessage::MessageAdd( const char *pName, float time )
 		tempMessage = &g_pCustomMessage;
 	}
 
+	// SBO 2.1 (Half-Life Unified SDK): a net message (game_text, a trigger_sequence text, or a plugin's HUD message)
+	// on a channel that is still showing overwrites the same object, so the old slot is cleared and the message
+	// starts again with its fade-in, effect and full hold time; the slot kept the first message's start time, so a
+	// game_text fired again on its channel came up without its fade-in and went away early. Every slot is checked
+	// before a free one is taken: a free slot in front of the old one would otherwise find the old one "already in
+	// the list" and keep its start time, so a shorter message on that channel was over before it was drawn.
+	if ( tempMessage->pName && !strncmp( tempMessage->pName, "__NETMESSAGE__", sizeof( "__NETMESSAGE__" ) - 1 ) )
+	{
+		for ( i = 0; i < maxHUDMessages; i++ )
+		{
+			if ( m_pMessages[i] == tempMessage )
+				m_pMessages[i] = NULL;
+		}
+	}
+
 	for ( i = 0; i < maxHUDMessages; i++ )
 	{
-		// SBO 2.1 (Half-Life Unified SDK): a net message (game_text, or a plugin's HUD message) on a channel that is
-		// still showing overwrites the same object, so the old slot is cleared and the message starts again with its
-		// fade-in, effect and full hold time; the slot kept the first message's start time, so a game_text fired again
-		// on its channel came up without its fade-in and went away early.
-		if ( tempMessage == m_pMessages[i] && tempMessage->pName &&
-			!strncmp( tempMessage->pName, "__NETMESSAGE__", sizeof( "__NETMESSAGE__" ) - 1 ) )
-		{
-			m_pMessages[i] = NULL;
-		}
-
 		if ( !m_pMessages[i] )
 		{
 			for ( j = 0; j < maxHUDMessages; j++ )

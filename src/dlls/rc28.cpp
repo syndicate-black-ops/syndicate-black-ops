@@ -105,13 +105,10 @@ BOOL CRc28::Deploy( )
 }
 
 
-void CRc28::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CRc28::Holster( int skiplocal /* = 0 */ )
 {
-	m_fInReload = FALSE;// cancel any reload in progress.
-
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 1.0;
-	m_flTimeWeaponIdle = UTIL_WeaponTimeBase() + 10 + UTIL_SharedRandomFloat( m_pPlayer->random_seed, 0, 5 );
-	SendWeaponAnim( RC28_DRAW );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 void CRc28::PrimaryAttack()

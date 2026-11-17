@@ -26,6 +26,7 @@
 #include "video/video_player.h"	// SBO 2.0: game_playvideo
 #include "overlay.h"	// SBO 2.0: env_overlay
 #include "inventory.h"	// SBO 2.0: inventory HUD row
+#include "waypoint.h"	// SBO 2.1: info_waypoint markers
 #include "colorcorrection.h"	// SBO 2.0: color_correction
 
 #define MAX_LOGO_FRAMES 56
@@ -184,6 +185,11 @@ int CHud :: Redraw( float flTime, int intermission )
 
 	// if no redrawing is necessary
 	// return 0;
+
+	// SBO 2.1: info_waypoint markers: under the HUD elements, hidden as they are (hud_draw 0, a camera's "Hide HUD", a
+	// server menu, the intermission)
+	Waypoint_Redraw( flTime, m_pCvarDraw->value && !intermission && !(m_iHideHUDDisplay & HIDEHUD_ALL)
+		&& !ServerMenu_HidesHud() );
 	
 	if ( m_pCvarDraw->value )
 	{

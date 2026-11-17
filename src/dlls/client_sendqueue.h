@@ -5,7 +5,7 @@
 // ambient_generic (sound.cpp: the map's music and play mode sounds for a client that joined), vgui_screen (world
 // screens and their kept control state), env_dlight (the dynamic lights that are on), head_scale.cpp (players' head scales),
 // killfeed_icons.cpp (the killfeed icons plugins set), inventory.cpp (the player's items and the shared pool),
-// trigger_objective.cpp (the map's objective list).
+// trigger_objective.cpp (the map's objective list), info_waypoint.cpp (the markers that are on).
 
 //
 // A sender registers once (a static SendQueue_Sender object in its .cpp) under its id. CBasePlayer starts all
@@ -30,7 +30,8 @@ enum
 	SENDQUEUE_KFICON,		// killfeed_icons.cpp (plugins' killfeed icons)
 	SENDQUEUE_INVENTORY,	// inventory.cpp (the player's items and the shared pool)
 	SENDQUEUE_OBJECTIVE,	// trigger_objective.cpp (the map's objective list)
-	SENDQUEUE_MAX = 10		// full: a new sender needs a larger SENDQUEUE_MAX
+	SENDQUEUE_WAYPOINT,		// info_waypoint.cpp (the markers that are on)
+	SENDQUEUE_MAX = 11		// full: a new sender needs a larger SENDQUEUE_MAX
 
 };
 

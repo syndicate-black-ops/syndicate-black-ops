@@ -1,6 +1,7 @@
 """Decoders for SBO's user messages (the server's writers; the client parsers must read the same).
 Each returns a dict, or None when the payload does not fit the format."""
 
+import re
 import struct
 
 
@@ -403,9 +404,50 @@ def mirror(r):
     return out
 
 
+def ent_glow(r):
+    # env_entity_glow.cpp SendState: short entity, byte flags (1 on); on: byte mode, byte style, byte r g b a,
+    # byte count, count x short entity index
+    out = {'ent': r.short()}
+    flags = r.byte()
+    out.update(flags=flags, on=int(bool(flags & 1)))
+    if not flags & 1:
+        return out
+    out.update(mode=r.byte(), style=r.byte(), color=[r.byte(), r.byte(), r.byte(), r.byte()])
+    n = r.byte()
+    out.update(count=n, targets=[r.short() for _ in range(n)])
+    return out
+
+
+def waypoint(r):
+    # info_waypoint.cpp SendState (game_shared/waypoint_shared.h): short id (0: forget every marker), byte flags (1 on,
+    # 2 distance, 4 follow, 8 no edge arrow); on: 3 floats position, short sprite (0 default), byte r g b, short
+    # follow, 3 floats offset, short min range, short max range, byte owner (0 own, else the watched player's index),
+    # string label
+    out = {'id': r.short()}
+    flags = r.byte()
+    out.update(flags=flags, on=int(bool(flags & 1)), distance=int(bool(flags & 2)), follows=int(bool(flags & 4)),
+               no_edge=int(bool(flags & 8)))
+    if not flags & 1:
+        return out
+    out['pos'] = [round(r.float(), 1) for _ in range(3)]
+    out.update(sprite=r.short(), color=[r.byte(), r.byte(), r.byte()])
+    out['follow'] = r.short()
+    out['offset'] = [round(r.float(), 1) for _ in range(3)]
+    out.update(min_range=r.short(), max_range=r.short(), owner=r.byte())
+    out.update(label=r.string(), custom_sprite=int(out['sprite'] > 0), owned=int(out['owner'] > 0))
+    return out
+
+
 def set_sky(r):
-    # effects.cpp CEnvSky::SendState (SoHL "SetSky"): byte mode (1 on), coord x y z, byte scale
-    return {'mode': r.byte(), 'origin': [r.short() / 8.0 for _ in range(3)], 'scale': r.byte()}
+    # effects.cpp CEnvSky::SendState (SoHL "SetSky"): byte mode (1 on), coord x y z, byte scale; SBO 2.1: the sky
+    # room's fog, byte r g b, density (float, byte by byte; 0 none), byte Skybox fog
+    out = {'mode': r.byte(), 'origin': [r.short() / 8.0 for _ in range(3)], 'scale': r.byte()}
+    if r.left() >= 7:
+        out['fog_color'] = [r.byte(), r.byte(), r.byte()]
+        out['fog_density'] = r.float()
+    if r.left() >= 1:
+        out['fog_skybox'] = r.byte()    # Skybox fog: 0 none, 1 partial, 2 full
+    return out
 
 
 def world_text(r):
@@ -470,7 +512,8 @@ def light_origin(r):
 def static_prop(r):
     # env_static.cpp (game_shared/static_props_shared.h): byte type; MODEL (1): byte id, string file; PROP (2): short
     # prop id, byte model id, 3 long origin (1/8), 3 angle bytes, byte rendermode, byte renderfx, 3 byte color, byte
-    # renderamt, byte body, byte skin, short sequence, short scale (1/256), short framerate (1/256), byte visible;
+    # renderamt, byte body, byte skin, short sequence, short scale (1/256), short framerate (1/256), byte flags
+    # (1 visible, 2 in the 3D sky);
     # VISIBLE (3): short prop id, byte visible; LIGHTORIGIN (4): short prop id, 3 long origin (1/8)
     out = {'type': r.byte()}
     if out['type'] == 1:
@@ -481,8 +524,9 @@ def static_prop(r):
             out.update(model_id=r.byte(), origin=[r.long() / 8.0 for _ in range(3)],
                        angles=[r.byte() * 360.0 / 256 for _ in range(3)], rendermode=r.byte(), renderfx=r.byte(),
                        color=[r.byte() for _ in range(3)], renderamt=r.byte(), body=r.byte(), skin=r.byte(),
-                       sequence=r.short(), scale=round(r.short() / 256.0, 3), framerate=round(r.short() / 256.0, 3),
-                       visible=r.byte())
+                       sequence=r.short(), scale=round(r.short() / 256.0, 3), framerate=round(r.short() / 256.0, 3))
+            flags = r.byte()
+            out.update(visible=flags & 1, sky=(flags >> 1) & 1)
         except Exception:
             pass
     elif out['type'] == 3:
@@ -511,7 +555,15 @@ def show_menu(r):
     return out
 
 
-DECODERS = {'Aurora': aurora, 'Mirror': mirror, 'SetSky': set_sky, 'WorldText': world_text,
+def say_text(r):
+    sender = r.byte()
+    text = r.string()
+    body = text.split(': ', 1)[1] if ': ' in text else text
+    codes = bool(re.search(r'\^([0-9]|[xX][0-9A-Fa-f]{3}|#[0-9A-Fa-f]{6})|[\x01-\x08]', text.lstrip('\x02')))
+    return {'sender': sender, 'text': text, 'body': body.rstrip('\n'), 'codes': codes}
+
+
+DECODERS = {'Aurora': aurora, 'Mirror': mirror, 'EntGlow': ent_glow, 'Waypoint': waypoint, 'SetSky': set_sky, 'WorldText': world_text,
             'WorldTextP': lambda r: {'id': r.short(), 'text': r.string()},
             'BreakModel': break_model, 'KeyedDLight': keyed_dlight, 'LightOrigin': light_origin, 'StaticProp': static_prop, 'ObjectHint': object_hint, 'PlayVideo': play_video, 'WScreen': wscreen, 'svc:23': temp_entity, 'MapMusic': map_music, 'DeathMsg': death_msg, 'SboDeathMsg': sbo_death_msg, 'GameTimer': game_timer, 'Fog': fog, 'FogZone': fog_zone, 'WeatherVol': weather_vol, 'MessageBox': message_box, 'Overlay': overlay, 'ColorCorr': color_corr, 'TutorText': tutor_text,
             'Objective': objective,
@@ -519,9 +571,16 @@ DECODERS = {'Aurora': aurora, 'Mirror': mirror, 'SetSky': set_sky, 'WorldText': 
             'GrassInfo': lambda r: {'sprite': r.string(), 'fade': r.short() / 8.0, 'min': r.short() / 8.0,
                                     'max': r.short() / 8.0, 'density': r.long()},
             'MatFile': lambda r: {'file': r.string()},     # player.cpp: the map's materials file ("" none)
+            # water_hit.cpp CWaterHits::Send: byte count, count x (3 coords, byte player hit or 0): the water entry
+            # points of one FireBullets
+            'WaterHit': lambda r: (lambda n: {'count': n, 'points': [{'pos': [r.short() / 8.0 for _ in range(3)],
+                                                                      'player': r.byte()} for _ in range(n)]})(r.byte()),
             # player.cpp UpdateClientData: the HIDEHUD_* bits (4 HIDEHUD_ALL: the whole HUD)
             'HideWeapon': lambda r: (lambda f: {'flags': f, 'all': bool(f & 4)})(r.byte()),
             'TextMsg': text_msg, 'TutorPart': lambda r: {'text': r.string()},
+            # SayText (util.cpp UTIL_SayText, client.cpp Host_Say): byte sender, string text; 'body' = the text after
+            # the first ': ' without the newline (a say line's message), 'codes' = it has a ^ color code or markup byte
+            'SayText': say_text,
             # inventory.cpp Inv_Write (game_shared/inventory_shared.h): short count, string item, string icon, byte flags
             'Inventory': lambda r: {'count': r.short(), 'item': r.string(), 'icon': r.string(), 'shared': r.byte() & 1},
             # coop.cpp HeavyLimit_Update: grenade launchers the other players hold, their limit, nuclear launchers, limit

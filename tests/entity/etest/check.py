@@ -175,6 +175,9 @@ def check_test(test, run):
         base = marks.get(name, t0)
         if e['f'] < mark_frame.get(name, 0):
             return False
+        wf = x.get('within_frames')
+        if wf is not None and not (wf[0] <= e['f'] - mark_frame.get(name, 0) <= wf[1]):
+            return False
         w = x.get('within')
         if w is None:
             return True
@@ -670,6 +673,8 @@ def check_test(test, run):
 def _when(x):
     if x.get('within'):
         return ' within %g-%g s after %s' % (x['within'][0], x['within'][1], x.get('after') or 'begin')
+    if x.get('within_frames'):
+        return ' within frames %d-%d after %s' % (x['within_frames'][0], x['within_frames'][1], x.get('after') or 'begin')
     return ''
 
 

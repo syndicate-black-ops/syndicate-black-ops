@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """Runs the entity test suites (docs/dev/ENTITY_TESTS.md). Use scripts/run_entity_tests.sh.
 
-    run.py [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--repeat N] [--timescale X] [--list]
+    run.py [suite ...] [--hl hl.so] [--hlds DIR] [--asan] [--ci] [--repeat N] [--timescale X] [-j N] [--list]
            [--coverage [--coverage-out DIR]] [--coverage-gate]
 
 Each suite: one generated map (tests/entity/suites/<suite>.py), compiled with ReSDHLT (cached), run on a throw-away
 copy of a stock HLDS with the hl.so under test, checked against the trace the test layer writes. Output in
-build/entity-tests/: report.json, junit.xml, per suite the map, steps, trace and server console.
+build/entity-tests/: report.json, junit.xml, per suite the map, steps, trace and server console. With -j N, N
+suites run at once, each on its own server (own folder, port range and logs); a suite's console lines print together
+when it ends, and the summary table keeps the suite order.
 """
 
 import argparse
 import glob
 import importlib.util
 import os
+import queue
+import signal
 import sys
+import threading
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(os.path.dirname(HERE))
@@ -73,6 +78,8 @@ def main():
     ap.add_argument('--repeat', type=int, default=None)
     ap.add_argument('--timescale', type=float, default=float(os.environ['ET_TIMESCALE']) if 'ET_TIMESCALE' in os.environ
                     else None, help='game clock speed (tests/entity/timescale); default 5, or 2 on a loaded machine')
+    ap.add_argument('-j', '--jobs', type=int, default=int(os.environ.get('ENTITY_JOBS') or 1),
+                    help='suites run at once, each on its own server (env ENTITY_JOBS; default 1)')
     ap.add_argument('--list', action='store_true', help='list the suites and tests')
     ap.add_argument('--ignore-requires', action='store_true', help="run suites whose branch code the hl.so lacks")
     ap.add_argument('--coverage', action='store_true',
@@ -142,61 +149,148 @@ def main():
         a.timescale = 5 if load < 0.75 * (os.cpu_count() or 4) else 2
         print('== timescale %g (load %.1f)' % (a.timescale, load))
     repeat = a.repeat or (2 if a.ci else 1)
+    if a.jobs < 1:
+        sys.exit('-j must be 1 or more')
     os.makedirs(a.out, exist_ok=True)
-    rows_all = []
-    failed = False
-    for s in suites:
-        mapname = s.map_prefix + 'et_' + s.name
-        sdir = os.path.join(a.out, s.name)
-        os.makedirs(sdir, exist_ok=True)
-        text = build.write_map(s, 'anzymut.wad')
-        try:
-            bsp, compiled = server.compile_map(text, mapname, os.path.join(sdir, 'map'), a.sdhlt)
-        except RuntimeError as e:
-            print('== suite %s: map compile failed: %s' % (s.name, e))
-            failed = True
-            continue
-        server.log('== suite %s: %d tests, map %s%s' % (s.name, len(s.tests), mapname, ' (compiled)' if compiled else ''))
-        seq = build.write_seq(s)
-        steps_name = 'et_%s.steps' % s.name
-        trace_name = 'et_%s.trace.jsonl' % s.name
-        steps = build.write_steps(s, trace_name)
-        with open(os.path.join(sdir, steps_name), 'w') as f:
-            f.write(steps)
-        results_runs, problems_all, wall_all = [], [], 0.0
-        for n in range(1, repeat + 1):
-            srv = os.path.join(a.out, 'run', '%s-%d' % (s.name, n))
-            server.setup_server(a.hlds, srv, os.path.abspath(a.hl), bsp, mapname, seq, steps, steps_name, '', s.compat,
-                                getattr(s, 'lump_index', {}), getattr(s, 'files', {}))
-            console = os.path.join(sdir, 'console-%d.log' % n)
-            timeout = 90 + build.duration(s) / a.timescale * 3
-            status, wall = server.run_server(srv, mapname, steps_name, a.timescale, timeout, console, asan=a.asan,
-                                             maxplayers=max(8, s.players + 2),
-                                             extra_args=getattr(s, 'server_args', ()))
-            wall_all += wall
-            tpath = os.path.join(srv, 'syndicate', trace_name)
-            tcopy = os.path.join(sdir, 'trace-%d.jsonl' % n)
-            if os.path.exists(tpath):
-                with open(tpath) as fi, open(tcopy, 'w') as fo:
-                    fo.write(fi.read())
-            run = check.Run(check.load_trace(tcopy), open(console, errors='replace').read())
-            results, problems = check.check_run(s, run)
-            if status not in (0, 'timeout') and not problems:
-                problems.append('server exit status %s' % status)
-            if status == 'timeout':
-                problems.append('server timeout after %.0f s' % timeout)
-            for asan in glob.glob(os.path.join(srv, 'asan*')):
-                problems.append('sanitizer report %s' % asan)
-            results_runs.append(results)
-            problems_all += ['run %d: %s' % (n, p) if repeat > 1 else p for p in problems]
-        rows = report.merge(results_runs)
-        rows_all.append((s, rows, problems_all, wall_all))
-        failed |= bool(problems_all) or any(r[1] not in ('pass', 'xfail') for r in rows)
+    # one timescale shim for every server (built in docker before the servers start)
+    ts_lib = server.timescale_lib(a.out) if a.timescale != 1 else None
+    results = [None] * len(suites)
+    old_term = signal.signal(signal.SIGTERM, _interrupted)    # stopped (timeout, kill): no server left running
+    try:
+        if a.jobs == 1:
+            for i, s in enumerate(suites):
+                results[i] = run_suite(s, a, repeat, ts_lib, (0, 1), 2, server.log)
+        else:
+            jobs = min(a.jobs, max(1, len(suites)))
+            print('== %d suites, %d at once' % (len(suites), jobs), flush=True)
+            results = run_parallel(suites, a, repeat, ts_lib, jobs)
+    except BaseException:
+        server.kill_servers()
+        raise
+    finally:
+        signal.signal(signal.SIGTERM, old_term)
+    rows_all = [r[0] for r in results if r is not None and r[0] is not None]
+    failed = any(r is None or r[1] for r in results)
     print(report.table(rows_all))
-    report.write_json(os.path.join(a.out, 'report.json'), rows_all)
+    report.write_json(os.path.join(a.out, 'report.json'), rows_all,
+                      {r[0][0].name: r[2] for r in results if r is not None and r[0] is not None})
     report.write_junit(os.path.join(a.out, 'junit.xml'), rows_all)
     print('report: %s, %s' % (os.path.join(a.out, 'report.json'), os.path.join(a.out, 'junit.xml')))
+    bad = [s.name for s, r in zip(suites, results) if r is None or r[1]]
+    if bad:
+        print('failed: %s (logs: %s/<suite>/)' % (' '.join(bad), a.out))
     return 1 if failed else 0
+
+
+def _interrupted(signum, frame):
+    raise KeyboardInterrupt('signal %d' % signum)
+
+
+def run_suite(s, a, repeat, ts_lib, slot, threads, say):
+    """One suite: its map, then `repeat` server runs, checked. Returns ((suite, rows, problems, wall) or None when the
+    map did not compile, failed, peak server RSS in bytes)."""
+    mapname = s.map_prefix + 'et_' + s.name
+    sdir = os.path.join(a.out, s.name)
+    os.makedirs(sdir, exist_ok=True)
+    text = build.write_map(s, 'anzymut.wad')
+    try:
+        bsp, compiled = server.compile_map(text, mapname, os.path.join(sdir, 'map'), a.sdhlt, threads=threads)
+    except RuntimeError as e:
+        say('== suite %s: map compile failed: %s' % (s.name, e))
+        return None, True, None
+    say('== suite %s: %d tests, map %s%s' % (s.name, len(s.tests), mapname, ' (compiled)' if compiled else ''))
+    seq = build.write_seq(s)
+    steps_name = 'et_%s.steps' % s.name
+    trace_name = 'et_%s.trace.jsonl' % s.name
+    steps = build.write_steps(s, trace_name)
+    with open(os.path.join(sdir, steps_name), 'w') as f:
+        f.write(steps)
+    results_runs, problems_all, wall_all, peak = [], [], 0.0, None
+    for n in range(1, repeat + 1):
+        srv = os.path.join(a.out, 'run', '%s-%d' % (s.name, n))
+        server.setup_server(a.hlds, srv, os.path.abspath(a.hl), bsp, mapname, seq, steps, steps_name, '', s.compat,
+                            getattr(s, 'lump_index', {}), getattr(s, 'files', {}))
+        console = os.path.join(sdir, 'console-%d.log' % n)
+        timeout = 90 + build.duration(s) / a.timescale * 3
+        status, wall, rss = server.run_server(srv, mapname, steps_name, a.timescale, timeout, console, asan=a.asan,
+                                              maxplayers=max(8, s.players + 2),
+                                              extra_args=getattr(s, 'server_args', ()), timescale_so=ts_lib,
+                                              slot=slot, say=say)
+        wall_all += wall
+        if rss:
+            peak = max(peak or 0, rss)
+        tpath = os.path.join(srv, 'syndicate', trace_name)
+        tcopy = os.path.join(sdir, 'trace-%d.jsonl' % n)
+        if os.path.exists(tpath):
+            with open(tpath) as fi, open(tcopy, 'w') as fo:
+                fo.write(fi.read())
+        run = check.Run(check.load_trace(tcopy), open(console, errors='replace').read())
+        results, problems = check.check_run(s, run)
+        if status not in (0, 'timeout') and not problems:
+            problems.append('server exit status %s' % status)
+        if status == 'timeout':
+            problems.append('server timeout after %.0f s' % timeout)
+        for asan in glob.glob(os.path.join(srv, 'asan*')):
+            problems.append('sanitizer report %s' % asan)
+        results_runs.append(results)
+        problems_all += ['run %d: %s' % (n, p) if repeat > 1 else p for p in problems]
+    rows = report.merge(results_runs)
+    failed = bool(problems_all) or any(r[1] not in ('pass', 'xfail') for r in rows)
+    return (s, rows, problems_all, wall_all), failed, peak
+
+
+def run_parallel(suites, a, repeat, ts_lib, jobs):
+    """run_suite on `jobs` threads, each with its own port slot; the servers are separate processes. A suite's lines
+    print together when it ends, then one progress line."""
+    results = [None] * len(suites)
+    todo = queue.Queue()
+    for i in range(len(suites)):
+        todo.put(i)
+    out_lock = threading.Lock()
+    stop = threading.Event()
+    done = [0]
+    errors = []
+
+    def worker(slot):
+        while not stop.is_set():
+            try:
+                i = todo.get_nowait()
+            except queue.Empty:
+                return
+            s = suites[i]
+            lines = []
+            try:
+                r = run_suite(s, a, repeat, ts_lib, (slot, jobs), 1, lines.append)
+            except BaseException as e:      # reported by the main thread; the other suites go on
+                lines.append('== suite %s: runner error: %r' % (s.name, e))
+                errors.append((s.name, e))
+                r = (None, True, None)
+            results[i] = r
+            with out_lock:
+                done[0] += 1
+                rows = r[0][1] if r[0] else []
+                npass = sum(1 for x in rows if x[1] in ('pass', 'xfail'))
+                lines.append('-- [%d/%d] suite %s: %s, %d/%d pass (%.1f s%s)' % (
+                    done[0], len(suites), s.name, 'FAILED' if r[1] else 'ok', npass, len(rows),
+                    r[0][3] if r[0] else 0, ', peak RSS %d MB' % (r[2] >> 20) if r[2] else ''))
+                print('\n'.join(lines), flush=True)
+
+    threads = [threading.Thread(target=worker, args=(k,), daemon=True) for k in range(jobs)]
+    try:
+        for t in threads:
+            t.start()
+        for t in threads:
+            while t.is_alive():
+                t.join(0.5)
+    except KeyboardInterrupt:
+        stop.set()
+        server.kill_servers()
+        for t in threads:
+            t.join(10)
+        raise
+    if errors:
+        print('runner errors: %s' % ', '.join('%s: %r' % e for e in errors), flush=True)
+    return results
 
 
 if __name__ == '__main__':

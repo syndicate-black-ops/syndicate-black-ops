@@ -953,7 +953,8 @@ void MoverPrediction_AddEntity( int type, struct cl_entity_s *ent )
 	float target = 0;
 	if ( current )
 	{
-		if ( s_lastGroundEnt == ent->index )
+		// he stands on it, or on a movewith child of it (the chain's parts are placed on this pose)
+		if ( s_lastGroundEnt == ent->index || ( s_lastGroundEnt > 0 && MP_ChainRoot( s_lastGroundEnt ) == ent->index ) )
 		{
 			target = 1;
 		}

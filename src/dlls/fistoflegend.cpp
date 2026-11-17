@@ -107,10 +107,10 @@ BOOL CWong::Deploy( )
 	return DefaultDeploy( "models/v_wong.mdl", "models/p_wong.mdl", WONG_DRAW, "crowbar" );
 }
 
-void CWong::Holster( void )
+// The base Holster only: no holster animation, sound or attack delay.
+void CWong::Holster( int skiplocal /* = 0 */ )
 {
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.3;
-	SendWeaponAnim( WONG_HOLSTER );
+	CBasePlayerWeapon::Holster( skiplocal );
 }
 
 
@@ -254,6 +254,10 @@ int CWong::Swing( int fFirst )
 
 		EMIT_SOUND_DYN(ENT(m_pPlayer->pev), CHAN_ITEM, "weapons/wong_hitbody1.wav", 1, ATTN_NORM, 0, PITCH_NORM);
 
+		// TakeDamage can free the victim at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the handle
+		// reads NULL afterwards, and the hit counts as a world hit instead of reading freed memory
+		EHANDLE hEntity;
+		hEntity = pEntity;
 		ClearMultiDamage( );
 
 		if ( (m_flNextPrimaryAttack + 1 < UTIL_WeaponTimeBase() ) || g_pGameRules->IsMultiplayer() )
@@ -267,6 +271,7 @@ int CWong::Swing( int fFirst )
 			pEntity->TraceAttack(m_pPlayer->pev, gSkillData.houndeyeDmgBlast, gpGlobals->v_forward, &tr, DMG_CLUB );
 		}
 		ApplyMultiDamage( m_pPlayer->pev, m_pPlayer->pev );
+		pEntity = hEntity;
 
 		m_flNextPrimaryAttack = UTIL_WeaponTimeBase() + 0.3;
 

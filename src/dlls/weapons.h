@@ -1165,7 +1165,7 @@ public:
 
 	void ItemPostFrame( void );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int) (vtable has 94 slots, ret without args)
+	void Holster( int skiplocal = 0 );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	void Reload( void );
@@ -1202,7 +1202,7 @@ public:
 	void PrimaryAttack( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	int m_iSwing;
 	TraceResult m_trHit;
 
@@ -1257,7 +1257,7 @@ public:
 	int AddToPlayer( CBasePlayer *pPlayer );
 
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	void PrimaryAttack( void );
 	void Reload( void );
 	void WeaponIdle( void );
@@ -1453,7 +1453,7 @@ public:
 	int AddToPlayer( CBasePlayer *pPlayer );
 
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	void ItemPostFrame( void );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
@@ -1494,7 +1494,7 @@ public:
 	void SecondaryAttack( void );
 	int Swing( int fFirst );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	int m_iSwing;
 	TraceResult m_trHit;
 
@@ -1521,7 +1521,7 @@ public:
 
 	void ItemPostFrame( void );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	void Reload( void );
@@ -1556,7 +1556,7 @@ public:
 	void PrimaryAttack( void );
 	void SecondaryAttack( void );
 	BOOL Deploy( void );
-	void Holster( void );	// SBO: non-virtual, hides Holster(int)
+	void Holster( int skiplocal = 0 );
 	void Reload( void );
 	void WeaponIdle( void );
 	float m_flSoundDelay;

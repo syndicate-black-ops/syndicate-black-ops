@@ -1,0 +1,356 @@
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"wad" "halflife.wad;anzymut.wad;roux.wad;co_escape.wad;sbo_tools.wad"
+"message" "SBO example: weather"
+"skyname" "citynight"
+"MaxRange" "100000"
+{
+( -912 -656 0 ) ( -912 -656 -16 ) ( -912 656 0 ) 666GRASS2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 0 ) ( 912 656 -16 ) ( 912 -656 0 ) 666GRASS2 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 0 ) ( -912 656 0 ) ( 912 656 -16 ) 666GRASS2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 -16 ) ( -912 -656 -16 ) ( 912 -656 0 ) 666GRASS2 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 0 ) ( -912 -656 0 ) ( 912 656 0 ) 666GRASS2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 912 656 -16 ) ( -912 656 -16 ) ( 912 -656 -16 ) 666GRASS2 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -912 -656 656 ) ( -912 -656 640 ) ( -912 656 656 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 656 ) ( 912 656 640 ) ( 912 -656 656 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 656 ) ( -912 656 656 ) ( 912 656 640 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 640 ) ( -912 -656 640 ) ( 912 -656 656 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 656 ) ( -912 -656 656 ) ( 912 656 656 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 912 656 640 ) ( -912 656 640 ) ( 912 -656 640 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -896 640 192 ) ( -896 640 0 ) ( -896 656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 656 192 ) ( 896 656 0 ) ( 896 640 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 656 192 ) ( -896 656 192 ) ( 896 656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 0 ) ( -896 640 0 ) ( 896 640 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 192 ) ( -896 640 192 ) ( 896 656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 896 656 0 ) ( -896 656 0 ) ( 896 640 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -896 640 640 ) ( -896 640 192 ) ( -896 656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 656 640 ) ( 896 656 192 ) ( 896 640 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 656 640 ) ( -896 656 640 ) ( 896 656 192 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 192 ) ( -896 640 192 ) ( 896 640 640 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 640 ) ( -896 640 640 ) ( 896 656 640 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 896 656 192 ) ( -896 656 192 ) ( 896 640 192 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -896 -656 192 ) ( -896 -656 0 ) ( -896 -640 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 192 ) ( 896 -640 0 ) ( 896 -656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 192 ) ( -896 -640 192 ) ( 896 -640 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -656 0 ) ( -896 -656 0 ) ( 896 -656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -656 192 ) ( -896 -656 192 ) ( 896 -640 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 896 -640 0 ) ( -896 -640 0 ) ( 896 -656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -896 -656 640 ) ( -896 -656 192 ) ( -896 -640 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 640 ) ( 896 -640 192 ) ( 896 -656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 640 ) ( -896 -640 640 ) ( 896 -640 192 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -656 192 ) ( -896 -656 192 ) ( 896 -656 640 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -656 640 ) ( -896 -656 640 ) ( 896 -640 640 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 896 -640 192 ) ( -896 -640 192 ) ( 896 -656 192 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 896 -656 192 ) ( 896 -656 0 ) ( 896 656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 192 ) ( 912 656 0 ) ( 912 -656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 192 ) ( 896 656 192 ) ( 912 656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 0 ) ( 896 -656 0 ) ( 912 -656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 192 ) ( 896 -656 192 ) ( 912 656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 912 656 0 ) ( 896 656 0 ) ( 912 -656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 896 -656 640 ) ( 896 -656 192 ) ( 896 656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 640 ) ( 912 656 192 ) ( 912 -656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 656 640 ) ( 896 656 640 ) ( 912 656 192 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 192 ) ( 896 -656 192 ) ( 912 -656 640 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 912 -656 640 ) ( 896 -656 640 ) ( 912 656 640 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 912 656 192 ) ( 896 656 192 ) ( 912 -656 192 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -912 -656 192 ) ( -912 -656 0 ) ( -912 656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 656 192 ) ( -896 656 0 ) ( -896 -656 192 ) 666CONCRETE1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 656 192 ) ( -912 656 192 ) ( -896 656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 -656 0 ) ( -912 -656 0 ) ( -896 -656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 -656 192 ) ( -912 -656 192 ) ( -896 656 192 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -896 656 0 ) ( -912 656 0 ) ( -896 -656 0 ) 666CONCRETE1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -912 -656 640 ) ( -912 -656 192 ) ( -912 656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 656 640 ) ( -896 656 192 ) ( -896 -656 640 ) sky [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 656 640 ) ( -912 656 640 ) ( -896 656 192 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 -656 192 ) ( -912 -656 192 ) ( -896 -656 640 ) sky [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -896 -656 640 ) ( -912 -656 640 ) ( -896 656 640 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -896 656 192 ) ( -912 656 192 ) ( -896 -656 192 ) sky [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -48 -640 2 ) ( -48 -640 0 ) ( -48 640 2 ) 666ASPHALT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 640 2 ) ( 48 640 0 ) ( 48 -640 2 ) 666ASPHALT [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 640 2 ) ( -48 640 2 ) ( 48 640 0 ) 666ASPHALT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 -640 0 ) ( -48 -640 0 ) ( 48 -640 2 ) 666ASPHALT [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 48 -640 2 ) ( -48 -640 2 ) ( 48 640 2 ) 666ASPHALT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 48 640 0 ) ( -48 640 0 ) ( 48 -640 0 ) 666ASPHALT [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "light_environment"
+"origin" "0 0 600"
+"angles" "-60 135 0"
+"pitch" "-60"
+"_light" "200 210 230 180"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-32 -540 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "32 -540 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-32 -604 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "32 -604 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_start"
+"origin" "0 -540 37"
+"angles" "0 90 0"
+}
+{
+"classname" "func_rainvolume"
+"targetname" "rain"
+"intensity" "300"
+"wind_x" "100"
+"wind_y" "200"
+"spawnflags" "1"
+{
+( -896 -640 640 ) ( -896 -640 0 ) ( -896 640 640 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -48 640 640 ) ( -48 640 0 ) ( -48 -640 640 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -48 640 640 ) ( -896 640 640 ) ( -48 640 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -48 -640 0 ) ( -896 -640 0 ) ( -48 -640 640 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -48 -640 640 ) ( -896 -640 640 ) ( -48 640 640 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -48 640 0 ) ( -896 640 0 ) ( -48 -640 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "trigger_changevalue"
+"origin" "-872 -616 616"
+"targetname" "storm"
+"target" "rain"
+"m_iszValueName" "intensity"
+"m_iszNewValue" "900"
+"m_iszValueType" "0"
+"message" "storm_wind"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "-856 -616 616"
+"targetname" "storm_wind"
+"target" "rain"
+"m_iszValueName" "wind_x"
+"m_iszNewValue" "400"
+"m_iszValueType" "0"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "-840 -616 616"
+"targetname" "calm"
+"target" "rain"
+"m_iszValueName" "intensity"
+"m_iszNewValue" "300"
+"m_iszValueType" "0"
+"message" "calm_wind"
+}
+{
+"classname" "trigger_changevalue"
+"origin" "-824 -616 616"
+"targetname" "calm_wind"
+"target" "rain"
+"m_iszValueName" "wind_x"
+"m_iszNewValue" "100"
+"m_iszValueType" "0"
+}
+{
+"classname" "func_snowvolume"
+"intensity" "300"
+{
+( 48 -640 640 ) ( 48 -640 0 ) ( 48 640 640 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 640 ) ( 896 640 0 ) ( 896 -640 640 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 640 640 ) ( 48 640 640 ) ( 896 640 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 0 ) ( 48 -640 0 ) ( 896 -640 640 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 896 -640 640 ) ( 48 -640 640 ) ( 896 640 640 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 896 640 0 ) ( 48 640 0 ) ( 896 -640 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "env_fogzone"
+"rendercolor" "150 150 160"
+"density" "0.004"
+{
+( -256 320 320 ) ( -256 320 0 ) ( -256 640 320 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 256 640 320 ) ( 256 640 0 ) ( 256 320 320 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 256 640 320 ) ( -256 640 320 ) ( 256 640 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 256 320 0 ) ( -256 320 0 ) ( 256 320 320 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 256 320 320 ) ( -256 320 320 ) ( 256 640 320 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 256 640 0 ) ( -256 640 0 ) ( 256 320 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "0 -639 168"
+"message" "WEATHER"
+"textsize" "12"
+"color" "255 255 255 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "0 -639 146"
+"message" "Rain to the west, snow to the east, a fog zone to the north."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-384 -639 110"
+"message" "STORM"
+"textsize" "7"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "storm"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -390 -640 78 ) ( -390 -640 66 ) ( -390 -638 78 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -378 -638 78 ) ( -378 -638 66 ) ( -378 -640 78 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -378 -638 78 ) ( -390 -638 78 ) ( -378 -638 66 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -378 -640 66 ) ( -390 -640 66 ) ( -378 -640 78 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -378 -640 78 ) ( -390 -640 78 ) ( -378 -638 78 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -378 -638 66 ) ( -390 -638 66 ) ( -378 -640 66 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "-256 -639 110"
+"message" "CALM"
+"textsize" "7"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "calm"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -262 -640 78 ) ( -262 -640 66 ) ( -262 -638 78 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -250 -638 78 ) ( -250 -638 66 ) ( -250 -640 78 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -250 -638 78 ) ( -262 -638 78 ) ( -250 -638 66 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -250 -640 66 ) ( -262 -640 66 ) ( -250 -640 78 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -250 -640 78 ) ( -262 -640 78 ) ( -250 -638 78 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -250 -638 66 ) ( -262 -638 66 ) ( -250 -640 66 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "info_weather"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 186 -640 78 ) ( 186 -640 66 ) ( 186 -638 78 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 -638 78 ) ( 198 -638 66 ) ( 198 -640 78 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 -638 78 ) ( 186 -638 78 ) ( 198 -638 66 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 -640 66 ) ( 186 -640 66 ) ( 198 -640 78 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 -640 78 ) ( 186 -640 78 ) ( 198 -638 78 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 198 -638 66 ) ( 186 -638 66 ) ( 198 -640 66 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "192 -639 86"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-808 -616 616"
+"targetname" "info_weather"
+"title" "Weather"
+"message" "rain is a func_rainvolume (Start Active) over the west half: Raindrops per update 300, Wind X 100, Wind Y 200, so every drop slants the same way. Rain and snow only fall where the sky is above.\n\nSTORM fires two trigger_changevalues that set the rain's Raindrops per update to 900 and Wind X to 400; CALM sets them back to 300 and 100. Every player sees the change at once.\n\nThe east half is a func_snowvolume with Snowflakes per update 300.\n\nThe box at the north wall is an env_fogzone: Density 0.004, Fog color 150 150 160. From outside it looks like haze; inside, the fog thickens the deeper you go."
+}
+{
+"classname" "point_worldtext"
+"origin" "-472 -300 2"
+"message" "RAIN"
+"textsize" "24"
+"color" "160 200 255 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "472 -300 2"
+"message" "SNOW"
+"textsize" "24"
+"color" "255 255 255 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "0 260 2"
+"message" "FOG ZONE"
+"textsize" "16"
+"color" "220 220 220 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 90 0"
+"spawnflags" "2"
+}

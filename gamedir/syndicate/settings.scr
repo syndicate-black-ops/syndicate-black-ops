@@ -181,13 +181,6 @@ DESCRIPTION SERVER_OPTIONS
 		{ "0" }
 	}
 
-	"mp_XP"
-	{
-		"Allow XP mode "
-		{ BOOL }
-		{ "1" }
-	}
-
 	"mp_footsteps"
 	{
 		"Footsteps"

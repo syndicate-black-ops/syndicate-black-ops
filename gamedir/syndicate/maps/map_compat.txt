@@ -51,7 +51,7 @@ co_crackdown_v1	0f43c462	set	monster_furniture	#717	angles	"89.87 220.66 319.74"
 co_crackdown_v1	0f43c462	set	monster_furniture	#717	origin	"791.61 2065.35 268.56"
 
 // Named monstermakers with flag 1 "Start ON": 1.38 never started them (no first think) and their first trigger turned
-// them off. SBO 2.0 starts them at the map start. These entries keep the maps as they played in 1.38: cyclic makers
+// them off. SBO 2.0.0 starts them at the map start. These entries keep the maps as they played in 1.38: cyclic makers
 // (flag 4) made one monster per trigger and still do without flag 1; the others keep flag 1 with a Frequency of
 // 1000000000 s, so they start with no monster coming, as in 1.38, and the map's one trigger turns them off.
 bk_pipes	011ba245	set	monstermaker	weapon_spawner_1	spawnflags	4

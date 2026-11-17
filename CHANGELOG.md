@@ -4,6 +4,70 @@ All notable changes to Syndicate Black Ops for players, mappers and server opera
 newest release is first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.2.0]
+
+### New
+
+- The 2.0.0 docs are now available, see: https://sbo.sbotnas.io (if you see the old page hard-refresh or clear your browser cache)
+- Added an offline copy of the docs to the game in `syndicate/manual/`, with search
+- Bullets that hit water make a splash with a ripple and a splash sound, including shots from monsters, turrets and mounted guns
+- Guns give off a puff of smoke from the barrel in first person when you fire
+- The classic Advanced window has a Check for updates at start option on the General tab, as the New GameUI menus already had
+
+### Changed
+
+- The Assassin's cloak now hides you from monsters, turrets and mounted guns, which only spot you within a range that shrinks the less you move, and shrinks further in the dark
+- Trip mines slow you down by 6 again, as in 1.38, and their description now says so
+- In Co-op, when a player kills another player, the kill feed shows the weapon icon in green
+- No default key quits the game anymore. In 1.38, F10 opened the quit window and F12 quit the game
+- Enter is no longer bound by default. In 1.38, a new install used it for Use, and Use Defaults made it Primary attack
+- Team chat (`say_team`) has been removed, and U is no longer bound to it. In 1.38, the server ignored team messages, so they were never sent
+- The Bullet impact debris and smoke option is now called Bullet impact and gun effects, and it also turns the water splashes and gun smoke on and off
+- Fog volumes look the same from every angle, and their sides fade softly where they meet open air
+
+### Fixed
+
+- Fixed your name color disappearing after you change your name
+- Fixed weapons and items briefly flashing in your view when a map, a command or a plugin gives them to you
+- Fixed new installs starting with a darker screen than SBO is made for, because the gamma and brightness values the SBO team shipped were missing. If you already have SBO installed, set Gamma and Brightness in Options > Video (this requires a game restart), or type `gamma 3` and `brightness 1` in the console, the values SBO 1.38 shipped with
+- Fixed the Pitbull pickup showing Half-Life's snark nest world model instead of the Pitbull world model
+- Fixed the hand grenade's loadout description saying 250 damage, while a thrown grenade does 100
+- Fixed the Targeting system being spelled "Targetting" in the loadout menu
+- Fixed a Co-op player banned for teamkills (`mp_ban 1`) looking like a normal agent instead of wearing the hunted model
+- Fixed on-screen map text sometimes not showing when it replaced another text that was still on the screen
+- Fixed the radio key opening an empty radio menu in Bounty Killer. The radio only works in Co-op
+- Fixed a Co-op player who leaves the server or becomes the Game Master counting as a death, which could lose the round early with `mp_hardcore`
+- Fixed a Co-op mission showing both FAILED MISSION and SUCCESSFULL MISSION when the map triggers both. The game showed every result and could count the second one. Now only the first result shows and counts. This was a bug in SBO 1.38
+- Fixed the sky smearing when a map turns its 3D sky off. The map's normal skybox shows instead
+- Fixed the name color picker not showing the current color or updating as you move through the color wheel
+
+### For mappers
+
+- Added an SDK download with example maps, prefabs and the FGD to each release
+- Removed `co_sbo_showcase` from the game download. It now comes with the SDK
+- `info_waypoint` marks a spot with an icon, a label and its distance in meters. It shows through walls and moves to the edge of the screen with an arrow when the spot is off the screen
+- Fixed J.A.C.K. not reading any entity after `env_particle` in the editor file (FGD). A helper line for an upcoming series of J.A.C.K. plugins stopped it, and it has been removed
+- `env_entity_glow` draws an outline or a soft halo around models and brush entities, also through walls and floors, to mark an objective or anything else players should find
+- `env_static` has a new In the 3D sky flag, which shows the model in the sky room of an `env_sky` without any network cost
+- `env_sky` has new Sky fog color, Sky fog density and Skybox fog keys, which give the sky room of a 3D sky its own fog, while the map's fog stays out of it
+- A Kill target on an `env_static` now hides its model. Before, the model stayed on screen
+- Aurora particle scripts read the top-level `attachment` and `lifetime` keys of XashXT and PrimeXT scripts
+- Players always get their fists when they spawn, also on maps with a `game_player_equip`. Before, any `game_player_equip` took the fists away
+- Color correction lookup files must be `.raw` files, the only kind the game can send to players
+- The "hidden" Object Hint Template has been removed. It did the same as None
+- The editor file (FGD) no longer offers the Not in multiplayer flag (2048). The engine removes every entity with this flag on any SBO server
+- Fixed the Unkillable key doing nothing on the Apache, turrets and sentry guns
+- Fixed locus ranges of two positions, such as `0 0 0 .. 10 20 30`, reading the second position wrong. Blanks around `..` are now allowed
+- More help text in the editor file (FGD) was corrected to match what the game does
+- The SDK has nine small example maps, one topic each, such as locus, calc_ entities, color correction and world text
+- Added `env_sky` tool texture to `sbo_tools.wad` for 3D skyboxes
+
+### For server operators
+
+- `mp_XP` has been removed. XP and levels are always on, and Create server no longer shows the option
+- `mp_falldamage` has been removed. It did nothing, fall damage always depends on the speed of the fall
+- Fixed a server crash when a plugin removes an entity while it takes damage, as the sentry gun plugin did
+
 ## [2.1.0] - 2026-11-13
 
 ### New
@@ -18,7 +82,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 ### Changed
 
 - Dead players can enter Game Master mode again, as in 1.38
-- Kill lines in the console show the full name of the weapon instead of its class name, for example "Fists" instead of "wong"
+- Kill lines in the console now show the full name of the weapon instead of its class name, for example "Fists" instead of "wong"
 - Monster names in the kill feed were updated to match the original SBO names
 - The SourceMod-style radio menus have a dark background, so you can read them on bright maps
 
@@ -31,13 +95,13 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Fixed an empty minigun playing its firing animation for as long as you hold the fire button
 - Fixed the next hand grenade popping into your hand without its draw animation after a throw
 - Fixed the flashlight cutting off the chainsaw's sound when you switch it on or off
-- Fixed Werewolves missing a run animation, leading to them being unable to move 50% of the time
+- Fixed Werewolves being unable to move about 50% of the time. Their model has a second walk animation with no ground movement, and the game picked it at random
 - Destroyed turrets, sentry guns and ichthyosaur bodies fade away when the map sets the `Fade Corpse` flag
-- On co_necropolis a final wave of Feds have been fixed. The original version had a bug in the multi_manager, so they never spawned
-- On co_dfs and co_rain_of_fire additional mortar strikes are now enabled. The original version had a bug in the multi_manager, so they never spawned
+- Fixed the last wave of Feds on `co_necropolis` never coming. Its monster makers asked for a monster type that does not exist in SBO
+- Fixed some mortar strikes on `co_dfs` and `co_rain_of_fire` never coming. Their `multi_manager` has 22 targets, but SBO 1.38 fired only the first 16
 - Fixed chapter titles showing only to the first player on the server. Every player sees them now, including players who join later
-- Fixed fans and other spinning objects always playing their sound at full volume, ignoring whatever volume the mapper set
-- Fixed spinning objects pushing spectators around and turning their view
+- Fixed fans and other spinning objects always playing their sound at full volume, ignoring whatever volume the mapper set. The game read the volume key under a differently written name, so it never found it
+- Fixed spinning objects pushing spectators around and turning their view. The game still treated dead and waiting players as walking, so a spinning object they touched carried them along
 - Fixed radiation (Geiger counter) clicks carrying over into the next map
 - Fixed the Apache and Osprey rotor sound changing pitch for everyone whenever the first player on the server moved
 - Fixed on-screen map text (`game_text`) disappearing too early when the map shows it again before the first one has faded out. The repeated text now restarts and stays for its full time
@@ -56,7 +120,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 - New entities:
   - `trigger_objective`: shows mission objectives in a panel on the player's screen, which players can switch between short, full and hidden with H. On maps that use it, the scoreboard also gets an objectives section that players can expand and collapse
-  - `color_correction` and `color_correction_volume`: change the colors of the player's view (color grading), for the whole map or inside an area, with simple keys or `.raw` and `.cube` lookup files
+  - `color_correction` and `color_correction_volume`: change the colors of the player's view (color grading), for the whole map or inside an area, with simple keys or `.raw` lookup files
   - `env_overlay`: show a static image, animated sprite, or a color tint over the player's screen
   - `env_elight`: a dynamic light that lights models only
   - `info_light_origin`: a model takes its lighting from this marker instead of beneath its origin
@@ -80,7 +144,8 @@ versions follow [Semantic Versioning](https://semver.org/).
 - `trigger_gravity` can be switched on and off by name, has a Master, and has Start Off and Reset on leave options
 - `trigger_camera` has new All Players and Hide HUD and crosshair flags
 - `monster_apache` has a new No Wreckage flag (1024). Flag 8, which the editor called No Wreckage, is renamed Explode sooner, because that is what it always did
-- `trigger_relay` has a Master, and the Master key now actually works on `button_target`, `trigger_hurt`, `trigger_push`, `trigger_monsterjump`, `momentary_rot_button` and a triggered `game_player_equip`
+- `trigger_relay` has a Master
+- Fixed the Master key doing nothing on `button_target`, `trigger_hurt`, `trigger_push`, `trigger_monsterjump`, `momentary_rot_button` and a triggered `game_player_equip`. These entities never checked their Master, so they worked while locked
 - Spawn On Break of `func_breakable` and `func_pushable` accepts any item, weapon or ammo class name, not only the fixed list
 - Monsters have an Unkillable key that keeps them from dying
 - A key written as `#name` on a monster maker is passed on as `name` to every monster it makes
@@ -94,24 +159,26 @@ versions follow [Semantic Versioning](https://semver.org/).
   - A monster maker that ran out starts again when it gets a new Number of Monsters, and raising a monster's health above its maximum raises the maximum too
   - Changes that would crash the server or break the entity, such as a model the map has not loaded, are refused
 
-- Fixed the New Train rot. Speed key of `path_corner` being ignored
+- Fixed the New Train rot. Speed key of `path_corner` being ignored. The game never read the key
 - Fixed a moving `func_guntarget` not stopping when triggered. It restarted from its next stop instead
-- Fixed rotating buttons never playing their locked and unlocked sounds
+- Fixed rotating buttons never playing their locked and unlocked sounds. The game never loaded those sounds for rotating buttons
 - Fixed a named monster maker with Start ON not starting with the map (its first trigger turned it off)
 - Fixed a bug in monster maker set to unlimited monsters (-1) stopping after about 4.29 billion monsters had been spawned. If anyone wants to confirm, run the any map for 138 years and let me know if it's fixed
-- Fixed `trigger_changetarget` ignoring its Delay and its Kill target
-- Fixed a `trigger_hurt` with only a Kill target not removing that target
+- Fixed `trigger_changetarget` ignoring its Delay and its Kill target. It changed the target at once and never read either key
+- Fixed a `trigger_hurt` with only a Kill target not removing that target. It fired its targets only when it also had a Target
 - Fixed `aiscripted_sequence` ignoring its interruption setting
-- Fixed server crashes from a `func_trackautochange` used without an activator, a monster maker without a monster type, and a `game_player_equip` that gives an item not placed on the map
-- Fixed `max_round` 1 and 2 being changed to 5
+- Fixed a `func_trackautochange` crashing the server when a trigger without an activator used it. The game used the activator without checking that there was one
+- Fixed a monster maker without a monster type stopping the server when the map loaded. It tried to load a monster with an empty name
+- Fixed a `game_player_equip` that gives an item the map does not place crashing the server. The game never loaded the item
+- Fixed `max_round` 1 and 2 being changed to 5. The game turned any value of 2 or less into 5
 - Fixed the Limitator giving 1 reserve ammo for a value of 0 or above 910. A value of 0 now gives none, and anything above 900 gives 900, the most a player can carry
 - Fixed a `func_rotating` with volume 0 playing at full volume, and an `env_shooter` without a Material Sound making glass sounds
-- Fixed turrets and sentry guns never firing their trigger conditions, and the Apache and Osprey never firing their Trigger on death
+- Fixed turrets, Sentry Guns, the Apache and the Osprey never firing their Trigger Condition. In SBO 1.38, their own AI code never checked it
 - Fixed Custom Field Of View, Prisoner to, Ignored by, Speak As and Fire after moving doing nothing on turrets, sentry guns, Apache, Osprey, Pitbull, Cyborg, Cyber Minotaur, sitting scientist and named `aiscripted_sequence` entities
 - Fixed Feds dropped by an Osprey ignoring the Osprey's Classification and Is player ally, so an allied Osprey drops allied Feds
-- Fixed a `trigger_camera` started by a monster or a timer taking over the view of the player in the first server slot, even a spectator
-- Fixed a `trigger_teleport` without a Target sending players to a random spot
-- Fixed entities with a Global Entity Name, such as some breakable objects, staying destroyed when the server changes back to their map
+- Fixed a `trigger_camera` started by a monster or a timer taking over the view of the player in the first server slot, even a spectator. When no player started the camera, the game gave the view to that slot
+- Fixed a `trigger_teleport` without a Target sending players to a random spot. An empty Target matched any entity without a name
+- Fixed entities with a Global Entity Name, such as some breakable objects, staying destroyed when the server changes back to their map. The game never cleared their saved state on a map change
 - Fixed entity behavior that did not match the editor help:
   - `calc_velocity_polar` turned vectors that pointed up into vectors that pointed down
   - `env_state` did the opposite of On and Off while it was turning on
@@ -130,20 +197,24 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 - SBO 2.0.0 needs the Half-Life 25th Anniversary update and runs natively on Linux.
 - A new chat box shows names in green while alive, red while dead and yellow without a loadout.
+- Chat has been completely reimplemented using VGUI2, and as a result now supports name and chat colors, copy + paste, multi-line messages, history, unicode characters, and more
 - You can pick your chat and name colors with a color wheel, and set the chat text size, colors, new message sound and message time.
 - A new scoreboard shows Steam avatars, level, XP and the round count, with a mute button and a right-click menu.
-- The kill feed has icons for every weapon and monster, and for headshots.
+- The kill feed has an icon for every SBO weapon and a turret icon. SBO 1.38 had no kill feed icons for them, so the game used the default skull icon as a fallback each time
+- The kill feed shows a headshot icon for kills by a headshot
+- The kill feed names the monster that killed a player and shows the monsters that players kill, while SBO 1.38 showed no killer for a monster kill and didn't show monster deaths
 - Players talking on voice show their Steam avatars.
-- The console shows text in color.
+- The console keeps a copy of every chat line with its time, such as `[12:34:56]`, and also shows kill lines and server text in their respective colors
 - `hud_scale 1` makes the HUD larger on big screens.
-- The server browser, Options, Create Server and the joining screen are new, and Half-Life's own menus are still available in Advanced options.
-- The loadout, map briefing and message of the day windows are new, and the B key opens the map briefing.
+- The server browser, Options, Create server and the joining screen are new, and Half-Life's default menu style is still available in Advanced options
+- The loadout, map briefing and message of the day windows are new
+- B opens the map briefing (`showbriefing`). In 1.38, the only way to see the map briefing was by hitting Enter in spectator, which was removed in 2.0.0
 - Servers can show a web page as their message of the day.
 - The game updates itself automatically.
 - Spectators have six camera modes, including first person and a map overview with a picture-in-picture view.
 - `spectate` or `/spec` lets you watch, and spectating stays on through map changes and reconnects.
 - An info box shows the watched player's health, armor, weapon, legs and level.
-- Game Master mode is built into the game: on co-op maps the Game Master can fly around, spawn monsters by tier, place weapon and ammo drops and teleporters, select monsters and give them orders, and see health bars over players and monsters.
+- Game Master mode is built into the game: on Co-op maps the Game Master can fly around, spawn monsters by tier, place weapon and ammo drops and teleporters, select monsters and give them orders, and see health bars over players and monsters.
 - Players pass through each other for the first 15 seconds of a round.
 - Maps can have rain, snow and fog.
 - Footsteps and bullet impacts have their own sounds and effects for each surface, such as wood, grass, snow, carpet and gravel.
@@ -160,7 +231,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Changed
 
-- SBO no longer ships a config.cfg, so updates keep your settings.
+- SBO no longer ships a `config.cfg`, so updates keep your settings
 - The default keys changed: Space jumps, M opens the model menu and F12 no longer quits. SBO 1.38 had no jump key on Space, left the model menu without a key and quit the game on F12.
 - All menus are redone, and the radio and text menus are larger.
 - After a failed mission the server goes to the next map.
@@ -168,28 +239,29 @@ versions follow [Semantic Versioning](https://semver.org/).
 - The speed you gain from leveling up applies right away. In SBO 1.38 the new speed took effect only after your next weapon switch.
 - The speed you lose for team kills and suicides applies right away.
 - Levels can go below -40, but speed stops dropping at -40.
-- Suicides no longer cost points in Battle Royale and Bounty Killer. Losing points for a suicide only made matches last longer.
+- In Co-op, your speed after the speed penalties of your loadout is never below 80. In 1.38, a player at level −40 with a heavy loadout couldn't move
+- Suicides no longer cost points in Battle Royale and Bounty Killer. In SBO 1.38 a suicide cost 5 points in Battle Royale and 10 in Bounty Killer, which only made matches last longer
 - Items now do what their descriptions say: Croon Armor Skin absorbs 60%, Croon Cyber Torso Armor covers the stomach, and Croon Cyber Torso and Skull Armor absorbs 70% and covers the stomach. The item descriptions said this, but the code gave less, so the code now matches the descriptions.
 - Trip mines no longer slow you down, satchel charges deal 200 to 300 damage, and the Adrenaline Surge gives 75 extra health in every mode. The item descriptions said trip mines don't slow you down and satchels deal 200 to 300 damage, but the code took 6 off your speed and always dealt 200. Co-op already gave 75 extra health, so every mode now does the same.
 - The descriptions of the Canon, Benelli, rocket launcher, minigun and RC 28 show their real damage and fire rates. The descriptions gave other numbers than the code used, so they now match the code.
-- You can pick up satchels while your own are placed. This comes from the Half-Life 25th Anniversary update.
-- Bullet hits on monsters sound like flesh. This comes from the Half-Life 25th Anniversary update.
+- Bullet hits on monsters sound like flesh.
 - Weapons move with screen shake and recoil.
 - `m_rawinput 1` turns on raw mouse input.
-- Steam's "Mute players" setting works and matches the scoreboard. The fix comes from halflife-updated.
-- Servers can no longer change your mouse sensitivity. This protection comes from the Half-Life Unified SDK.
+- Steam's "Mute players" setting works and matches the scoreboard.
+- Servers can no longer change your mouse sensitivity.
 
 ### Fixed
 
+- Fixed not being able to pick up satchels, from the map or a dead player's backpack, while you have satchels deployed
 - Buttons with the Sparks flag now spark at the button, as their mappers set them. Half-Life placed the sparks in the wrong spot and stopped them after the first one, so in 1.38 they never showed; co_aemos and some custom maps have such buttons.
 - The sniper scope works at every resolution and field of view. This was a bug in SBO 1.38.
 - Your field of view is kept after leg injuries, falls and respawns. This was a bug in SBO 1.38.
 - The K444 crosshair is centered. This was a bug in SBO 1.38.
-- The Vindico grenade launcher reloads when one grenade is left. In SBO 1.38 the reload filled only one grenade, so with one grenade loaded there was nothing to reload.
+- Fixed the Vindico grenade launcher not reloading when one grenade is left in the magazine
 - Other players now see RC 28 shots, the FA18 reload sound plays, and RPG explosions show their full smoke. This was a bug in SBO 1.38.
 - A primed grenade is no longer thrown by itself when you leave a mounted gun. This was a bug in SBO 1.38.
 - You can throw Pitbulls while looking straight up. This was a bug in SBO 1.38.
-- Satchels and trip mines no longer jam doors. This was a bug in SBO 1.38.
+- Fixed a satchel charge or a trip mine under a door jamming the door. The door now sets it off. This was a bug in SBO 1.38
 - Grenade launcher and plasma sniper kills show their own kill icons. This was a bug in SBO 1.38.
 - A VERY BAD SHOT can now actually happen. In SBO 1.38 the hit roll dropped its fractions, so the roll for VERY BAD SHOT almost never came up.
 - Cops give XP for every hit, not only the killing one. In SBO 1.38 a Cop gave XP only for hits during its death animation.
@@ -200,9 +272,9 @@ versions follow [Semantic Versioning](https://semver.org/).
 - No new round starts during the mission end or the map vote. This was a bug in SBO 1.38.
 - A joining player can no longer cancel a mission success. This was a bug in SBO 1.38.
 - A player who leaves frees their place for the grenade launcher or the nuke launcher. This was a bug in SBO 1.38.
-- Battle Royale with one player waits for a second player instead of restarting the round every 10 seconds. This was a bug in SBO 1.38.
+- Fixed a single player in Battle Royale losing their weapons and respawning with "ROUND START" every 10 seconds. The game now waits for a second player
 - In Bounty Killer, the first player spawns once, as the Hunted. This was a bug in SBO 1.38.
-- Players in menus or waiting for the next round now see the chat. This was a bug in SBO 1.38.
+- Fixed players in the menus or waiting for the next round seeing no chat. The game only sent chat to players it counted as in the game, and SBO 1.38 counted waiting players as observers instead, so they were skipped
 - Spectators move at the right speed. This was a bug in SBO 1.38.
 - The spectator clock runs. This was a bug in SBO 1.38.
 - Players who join late see the map's fire and smoke before they first spawn. This was a bug in SBO 1.38.
@@ -218,7 +290,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - The G-Man moves at the end of a mission. This was a bug in SBO 1.38.
 - Map cameras give your view back when you die or start spectating. This was a bug in SBO 1.38.
 - Ice floors stop being slippery when you step off them. This was a bug in SBO 1.38.
-- The sky light no longer carries over from the previous map. This was a bug in SBO 1.38.
+- Fixed maps without sky light using the sky light of the previous map. The game never reset the sky light between maps. This was a bug in SBO 1.38
 - Train and elevator sounds stop when they stop. This was a bug in SBO 1.38.
 - Gibs that get stuck disappear. This was a bug in SBO 1.38.
 - The nuclear explosion's afterglow shows. This was a bug in SBO 1.38.
@@ -233,7 +305,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 
 ### Removed
 
-- The "Reload map?" vote after a failed mission is gone.
+- The "Reload map?" vote after a failed mission is gone. A failed mission now moves on to the next map.
 
 ### For mappers
 
@@ -250,7 +322,7 @@ versions follow [Semantic Versioning](https://semver.org/).
 - Monster makers pass weapons, squads and spawnflags on to their monsters.
 - A new FGD comes with editor icons and models.
 - `maxplayers 1` lets you test a map alone, and noclip, god mode and all weapons work with `sv_cheats 1` set in the console.
-- The sources of every shipped model and of co_sbo_showcase are included.
+- The sources of every shipped model and of `co_sbo_showcase` are included
 
 ### For server operators
 

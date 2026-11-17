@@ -113,16 +113,11 @@ BOOL CNm33::Deploy( )
 }
 
 
-void CNm33::Holster( void )
+// The base Holster and the weapon's zoom state reset: no holster animation, sound or attack delay.
+void CNm33::Holster( int skiplocal /* = 0 */ )
 {
-	m_fInReload = FALSE;// cancel any reload in progress.
-
-	m_pPlayer->m_flNextAttack = UTIL_WeaponTimeBase() + 0.3;
-	m_pPlayer->pev->fov = m_pPlayer->m_iFOV = 0;
-	m_iZoomLevel = 1;
-
-	if ( m_iClip )
-		SendWeaponAnim( NM33_DRAW );
+	CBasePlayerWeapon::Holster( skiplocal );
+	m_iZoomLevel = 1;	// the weapon's own zoom state (Deploy sets it too); the view's FOV is left as it is
 }
 
 

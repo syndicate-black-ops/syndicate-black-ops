@@ -749,6 +749,17 @@ def _env_particle():
     return c
 
 
+@icon("env_entity_glow", "effects", "Entity glow (outline or halo)", where="feat/entity-glow")
+def _env_entity_glow():
+    c = Canvas((90, 70, 140))
+    glow = (255, 200, 40)
+    # the glow: a wide band around the figure's shape, then the figure on it
+    head, body = circle(32, 17, 10), rrect(17, 21, 47, 56, 8)
+    c.draw(lambda x, y: head(x, y) or body(x, y), glow)
+    person(c, 32, 11, 1.25, fill=(250, 210, 150), body=(60, 90, 160))
+    return c
+
+
 @icon("nuclear_explosion", "effects", "Nuclear explosion")
 def _nuclear():
     c = Canvas((255, 205, 0))
@@ -811,6 +822,19 @@ def _trigger_objective():
     c.draw(rect(34, 25, 43, 27), (139, 148, 156), outline=None)
     c.draw(poly((22, 35), (29, 39), (22, 43)), (30, 170, 155), outline=None)
     c.draw(rect(32, 38, 43, 40), (60, 60, 70), outline=None)
+    return c
+
+
+@icon("info_waypoint", "rules", "Waypoint (HUD marker on a spot, through walls)", where="feat/info-waypoint")
+def _info_waypoint():
+    c = Canvas((40, 140, 110))
+    # a screen: the marker (a diamond ring around a diamond) on its left, an edge arrow on its right side
+    c.draw(rrect(11, 17, 53, 47, 3), (36, 42, 54), shade=True, hi=(66, 74, 90))
+    gold = (255, 200, 40)
+    c.draw(minus(poly((25, 21), (36, 32), (25, 43), (14, 32)), poly((25, 26), (31, 32), (25, 38), (19, 32))), gold,
+           outline=None)
+    c.draw(poly((25, 29), (28, 32), (25, 35), (22, 32)), gold, outline=None)
+    c.draw(poly((40, 25), (50, 32), (40, 39), (43, 32)), gold, outline=None)
     return c
 
 
@@ -1373,14 +1397,12 @@ LEAF_LIT = (255, 214, 60)
       where=REDRAWN)
 def _info_leaf():
     c = Canvas((200, 200, 255))
-    # a floor plan cut into four convex leaves; the one this entity stands in is lit, a pin marks the spot
-    for pts, col in ((((14, 18), (34, 15), (30, 33), (12, 36)), LEAF_CELL),
-                     (((34, 15), (50, 20), (52, 34), (30, 33)), LEAF_LIT),
-                     (((12, 36), (30, 33), (28, 50), (16, 47)), LEAF_CELL),
-                     (((30, 33), (52, 34), (46, 47), (28, 50)), LEAF_CELL)):
-        c.draw(poly(*pts), col)
-    c.draw(union(circle(41, 22, 4.5), poly((37, 24), (45, 24), (41, 31))), (230, 50, 50), shade=True)
-    c.draw(circle(41, 22, 1.5), WHITE, outline=None)
+    # a map cut into four leaves (a 2x2 grid, mirror-symmetric about the disk center); the lit one is the leaf this
+    # entity marks, a pin in its middle marks the spot
+    for x0, y0, col in ((13, 13, LEAF_CELL), (34, 13, LEAF_LIT), (13, 34, LEAF_CELL), (34, 34, LEAF_CELL)):
+        c.draw(rrect(x0, y0, x0 + 17, y0 + 17, 3), col, shade=True)
+    c.draw(union(circle(42.5, 19.5, 4.5), poly((38.5, 21.5), (46.5, 21.5), (42.5, 28))), (230, 50, 50), shade=True)
+    c.draw(circle(42.5, 19.5, 1.6), WHITE, outline=None)
     return c
 
 

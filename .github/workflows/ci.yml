@@ -2,7 +2,8 @@
 # repository checks. Tags (v*) run release.yml instead. "[skip ci]" in the commit message skips it (GitHub's own rule).
 #   build     client + server for Windows (clang-cl) and Linux (sniper), artifacts build-windows / build-linux
 #   binaries  scripts/check_no_test_commands.sh on the four libraries (the test layer is off by default)
-#   tests     tests/*/run_test.sh (ASan/UBSan, not tests/fuzz), scripts/fgd.py check, scripts/check_lowercase.sh,
+#   tests     tests/*/run_test.sh (ASan/UBSan, not tests/fuzz), scripts/fgd.py check, scripts/check_fgd_stock.py
+#             (the FGD loads completely in stock Hammer / J.A.C.K.), scripts/check_lowercase.sh,
 #             scripts/check_eol.sh over the pushed commits
 name: CI
 
@@ -67,6 +68,9 @@ jobs:
       - name: FGD check
         if: ${{ !cancelled() }}
         run: python3 scripts/fgd.py check
+      - name: FGD in stock editors
+        if: ${{ !cancelled() }}
+        run: python3 scripts/check_fgd_stock.py
       - name: Lower-case names
         if: ${{ !cancelled() }}
         run: bash scripts/check_lowercase.sh

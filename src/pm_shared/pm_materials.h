@@ -60,6 +60,7 @@
 #define MAT_NAME_LEN		32			// material name ("concrete")
 #define MAT_FILE_MAX		( 256 * 1024 )	// larger files are refused
 
+#define MAT_WATERHIT_MAX	4			// water entry points in one "WaterHit" message (one FireBullets call)
 #define MAT_PATH_LEN		64			// a data file's path, with the terminator (the engine's MAX_QPATH)
 #define MAT_INCLUDE_DEPTH	2			// #include in a map's file, and in the file it includes
 #define MAT_MAP_FILES_MAX	8			// files a map's file may pull in, itself included

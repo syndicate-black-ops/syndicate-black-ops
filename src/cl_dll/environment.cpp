@@ -196,7 +196,8 @@ constexpr int DEFAULT_PRECIPITATION_MAX_HEIGHT = 300;
 
 CEnvironment g_Environment;
 
-static Vector FindSurfaceDividerPoint(const Vector& vecStart, const Vector& vecFinish)
+// the point where the contents change between vecStart and vecFinish (a water surface), to 4 units
+Vector FindSurfaceDividerPoint(const Vector& vecStart, const Vector& vecFinish)
 {
 	Vector vecBegin = vecStart;
 	Vector vecEnd = vecFinish;

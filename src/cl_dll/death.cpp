@@ -24,6 +24,7 @@
 
 #include "viewport.h"
 #include "vgui2/vgui2_api.h"
+#include "vgui2/sbo_bridge.h"
 
 DECLARE_MESSAGE( m_DeathNotice, DeathMsg );
 
@@ -94,6 +95,17 @@ static bool SboKillFeed_IsLocal( int client )
 	return client > 0 && client <= MAX_PLAYERS && g_PlayerInfoList[client].thisplayer;
 }
 
+// Co-op: a player killed another player. The kill feed draws its weapon icon in the team-kill color; the DeathMsg
+// itself is unchanged (plugins read it). Not one: a suicide, the world, a trigger or an NPC (killer 0; a Game Master's
+// monster is killer 0 with the "gm" icon, its name comes in SboDeathMsg), a kill by a Game Master (scoreboard team 1,
+// never a teammate), any kill on a Bounty Killer, BR or team play map.
+static bool SboKillFeed_IsCoopTeamKill( int killer, int victim )
+{
+	if ( killer <= 0 || killer > MAX_PLAYERS || victim <= 0 || victim > MAX_PLAYERS || killer == victim )
+		return false;
+	return sbo::IsCoopMap() && g_PlayerExtraInfo[killer].teamnumber != 1;
+}
+
 // DeathMsg -> VGUI2 kill feed row. weapon: DeathMsg string (no "d_"). Player names must be current
 // (GetAllPlayersInfo was called). headshot: the DeathMsg's headshot byte.
 static void SboKillFeed_FromDeathMsg( int killer, int victim, const char *weapon, bool headshot )
@@ -121,7 +133,7 @@ static void SboKillFeed_FromDeathMsg( int killer, int victim, const char *weapon
 	int flags = headshot ? VGUI2_KF_FLAG_HEADSHOT : 0;
 	int killerColor = VGUI2_KF_COLOR_CLIENT( killer );
 
-	if ( !strcmp( weapon, "teammate" ) )
+	if ( !strcmp( weapon, "teammate" ) || SboKillFeed_IsCoopTeamKill( killer, victim ) )
 		flags |= VGUI2_KF_FLAG_TEAMKILL;
 
 	if ( killer == victim )
@@ -407,6 +419,9 @@ int CHudDeathNotice :: MsgFunc_DeathMsg( const char *pszName, int iSize, void *p
 	int iHeadshotByte = READ_BYTE();
 	bool bHeadshot = READ_OK() && iHeadshotByte > 0;
 
+	// team play's "teammate" kill: the console line says "killed his teammate" (a co-op team kill only colors the icon)
+	bool bTeammateWeapon = !strcmp( killedwith, "d_teammate" );
+
 	if (gViewPort)
 		gViewPort->DeathMsg( killer, victim );
 
@@ -479,8 +494,8 @@ int CHudDeathNotice :: MsgFunc_DeathMsg( const char *pszName, int iSize, void *p
 		if ( killer == victim || killer == 0 )
 			rgDeathNoticeList[i].iSuicide = TRUE;
 
-		if ( !strcmp( killedwith, "d_teammate" ) )
-			rgDeathNoticeList[i].iTeamKill = TRUE;
+		if ( bTeammateWeapon || SboKillFeed_IsCoopTeamKill( killer, victim ) )
+			rgDeathNoticeList[i].iTeamKill = TRUE;	// the icon in the team-kill color
 
 		rgDeathNoticeList[i].iHeadshot = bHeadshot;
 	}
@@ -519,7 +534,7 @@ int CHudDeathNotice :: MsgFunc_DeathMsg( const char *pszName, int iSize, void *p
 				ConsolePrint( " killed self" );
 			}
 		}
-		else if ( rgDeathNoticeList[i].iTeamKill )
+		else if ( bTeammateWeapon )
 		{
 			DeathNotice_ConsolePrintName( killer_name );
 			ConsolePrint( " killed his teammate " );
@@ -532,7 +547,7 @@ int CHudDeathNotice :: MsgFunc_DeathMsg( const char *pszName, int iSize, void *p
 			DeathNotice_ConsolePrintName( victim_name );
 		}
 
-		if ( killedwith && *killedwith && (*killedwith > 13 ) && strcmp( killedwith, "d_world" ) && !rgDeathNoticeList[i].iTeamKill )
+		if ( killedwith && *killedwith && (*killedwith > 13 ) && strcmp( killedwith, "d_world" ) && !bTeammateWeapon )
 		{
 			ConsolePrint( " with " );
 

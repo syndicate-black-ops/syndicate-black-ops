@@ -77,7 +77,6 @@ def owner_dead(t):
         size=ROOM, doc=DOC)
 def player_xp(t):
     t.point('monster_gargantua', at=(GX, GY, 0), targetname='garg', angles='0 45 0', spawnflags='16')
-    t.console('mp_XP 1')
     t.console('wait_for alive player1 20')
     t.console('test_player level player1 0')
     t.wait(0.5)

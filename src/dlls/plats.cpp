@@ -118,11 +118,16 @@ void CBasePlatTrain :: KeyValue( KeyValueData *pkvd )
 	else if (FStrEq(pkvd->szKeyName, "volume"))
 	{
 		m_volume = atof(pkvd->szValue);
-		// SBO 2.0: "nan" / "inf" read as unset (0.85): a non-finite volume reached EMIT_SOUND (the engine turns
-		// it into its volume byte: undefined for NaN)
+		// SBO 2.0: "nan" / "inf" and negative values read as unset (0.85): a non-finite or negative volume reached
+		// EMIT_SOUND (the engine turns it into its volume byte: undefined for NaN, refused when negative)
 		if ( !( m_volume > -1e30 && m_volume < 1e30 ) )
 		{
 			ALERT( at_console, "%s \"%s\": volume \"%s\" is not a number, using the default\n", STRING( pev->classname ), STRING( pev->targetname ), pkvd->szValue );
+			m_volume = 0;
+		}
+		else if ( m_volume < 0 )
+		{
+			ALERT( at_console, "%s \"%s\": volume \"%s\" is negative, using the default\n", STRING( pev->classname ), STRING( pev->targetname ), pkvd->szValue );
 			m_volume = 0;
 		}
 		pkvd->fHandled = TRUE;

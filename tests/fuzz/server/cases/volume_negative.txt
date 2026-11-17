@@ -1,0 +1,13 @@
+# a negative "volume" on func_trackchange and func_plat: it reached EMIT_SOUND (the engine refuses a negative volume)
+map sp_fuzz
+connect 1
+spawn func_trackchange model *1 volume -5607 height 64 rotation 0
+spawn func_plat model *2 volume -1 height 64
+activate
+use 0 world
+use 1 player 1
+frames 20
+use 0 player 1
+frames 20
+expect func_trackchange "": volume "-5607" is negative
+expect func_plat "": volume "-1" is negative

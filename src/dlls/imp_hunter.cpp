@@ -26,6 +26,7 @@
 #include	"decals.h"
 #include	"soundent.h"
 #include	"game.h"
+#include	"player.h"	// SBO 2.1: Cloak_EnemyHidden
 #include	"player.h"
 #include	"sbo_monster.h"
 
@@ -380,7 +381,7 @@ int Cimp_hunter :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 			if ( pAttacker && pAttacker->Classify() == CLASS_PLAYER )
 				pPlayer = (CBasePlayer *)pAttacker;
 
-			if ( pPlayer && XP.value == 1 )
+			if ( pPlayer )
 			{
 				SBO_XP_GAIN( pPlayer, flDamage * 1.5, 5000 );
 
@@ -1490,7 +1491,8 @@ void Cimp_hunter :: Look ( int iDistance )
 				if ( LookSkips( pSightEnt ) )
 					continue;
 				// SBO 2.0: FL_NOTARGET entities are not seen, as in CBaseMonster::Look
-				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) )
+				// SBO 2.1: nor a cloaked player out of the cloak's sight range (player.cpp Cloak_HidesFrom)
+				if ( IRelationship( pSightEnt ) != R_NO && !FBitSet( pSightEnt->pev->flags, FL_NOTARGET ) && !Cloak_HidesFrom( this, pSightEnt ) )
 				{
 					if ( pSightEnt->IsPlayer() )
 					{
@@ -1543,6 +1545,7 @@ void Cimp_hunter :: Look ( int iDistance )
 	}
 	
 	SetConditions( iSighted );
+	Cloak_AfterLook( this );	// SBO 2.1: a cloaked enemy unseen for long is lost, then forgotten
 }
 
 //=========================================================
@@ -1556,7 +1559,8 @@ int Cimp_hunter :: CheckEnemy ( CBaseEntity *pEnemy )
 	iUpdatedLKP = FALSE;
 	ClearConditions ( bits_COND_ENEMY_FACING_ME );
 	
-	if ( !FVisible( pEnemy ) )
+	// SBO 2.1: a cloaked enemy the monster does not see (Look, Cloak_HidesFrom) counts as out of sight too
+	if ( !FVisible( pEnemy ) || Cloak_EnemyHidden( this ) )
 	{
 		ASSERT(!HasConditions(bits_COND_SEE_ENEMY));
 		SetConditions( bits_COND_ENEMY_OCCLUDED );
@@ -1634,7 +1638,11 @@ int Cimp_hunter :: CheckEnemy ( CBaseEntity *pEnemy )
 	else
 		ClearConditions( bits_COND_ENEMY_TOOFAR );
 
-	if ( FCanCheckAttacks() )	
+	// SBO 2.1: no attack at a cloaked enemy it does not see: monsters whose FCanCheckAttacks doesn't ask for sight (the
+	// grunts: only line of fire) would shoot at him wherever he is
+	if ( Cloak_EnemyHidden( this ) )
+		ClearConditions( bits_COND_CAN_RANGE_ATTACK1 | bits_COND_CAN_RANGE_ATTACK2 | bits_COND_CAN_MELEE_ATTACK1 | bits_COND_CAN_MELEE_ATTACK2 );
+	else if ( FCanCheckAttacks() )	
 	{
 		CheckAttacks ( m_hEnemy, flDistToEnemy );
 	}

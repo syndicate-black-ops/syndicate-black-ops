@@ -1443,7 +1443,6 @@ def player_speed_after_penalty(t):
     # last in the suite: it restarts the round and leaves player2 five levels down
     t.point('player_speed', targetname='abs', maxspeed='160', value_notion='1')
     t.console('mp_friendlyfire 1')
-    t.console('mp_XP 1')
     t.console('test_round restart')
     t.console('wait_for alive player1 20')
     t.console('wait_for alive player2 20')

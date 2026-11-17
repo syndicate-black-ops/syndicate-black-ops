@@ -21,6 +21,7 @@ class ParticleSystem;
 #define AURORA_MAX_SPRAY_PER_FRAME	16		// children one particle sprays in one frame (rates above the frame rate)
 #define AURORA_MAX_TYPES			64		// particle types in one script
 #define AURORA_MAX_OVERLAYS			4		// overlay layers on one particle
+#define AURORA_MAX_ATTACHMENTS		4		// a studio model's attachments the client has (cl_entity_t attachment[4])
 #define AURORA_ONESHOT_GRACE		30		// seconds a stopped one-shot copy may keep particles alive at most
 #define AURORA_LIGHT_INTERVAL		0.1f	// "lightmodel": seconds between two world light samples of one particle
 
@@ -222,11 +223,18 @@ public:
 	// the emitter: position and turn this frame; false while it can't be placed (its target isn't in this frame)
 	bool GetEmitter( Vector &origin, Vector &angles );
 
-	void SetPlacement( const AuroraPlacement &placement ) { m_Placement = placement; }
+	// the entity's placement; with a followed target and Attachment point None, the script's "attachment"
+	void SetPlacement( const AuroraPlacement &placement )
+	{
+		m_Placement = placement;
+		if ( m_Placement.iTarget && m_Placement.iAttachment < 0 )
+			m_Placement.iAttachment = m_iScriptAttachment;
+	}
 	void SetOn( bool bOn ) { m_bOn = bOn; }
 	bool IsOn() const { return m_bOn; }
 
-	// a one-shot copy (Spawn Use): on for the main type's "lifetime" (5 s if it has none, 120 s at most)
+	// a one-shot copy (Spawn Use): on for the script's top-level "lifetime", else its main type's "lifetime" (5 s if
+	// neither is set, 120 s at most)
 	void StartOneShot( float flNow );
 
 	// "killcondition": stops the system for good once its emitter is in those contents
@@ -265,6 +273,8 @@ private:
 	int m_iLightModel;			// "lightmodel": 0 unlit, 1 (and 2) tinted by the world light
 	int m_iKillCondition;		// "killcondition": CONTENT_EMPTY / WATER / SOLID, 0 = none
 	bool m_bKilled;				// the kill condition was met: emits no more (the particles alive finish)
+	int m_iScriptAttachment;	// top-level "attachment" (XashXT / PrimeXT, from 1) as SBO's 0 .. 3; -1 = not set
+	float m_flScriptLifetime;	// top-level "lifetime" (PrimeXT): a Spawn Use copy's length; 0 = not set
 
 	Vector m_vecEmitter;		// this frame's emitter position and turn (GetEmitter)
 	Vector m_vecEmitterAngles;

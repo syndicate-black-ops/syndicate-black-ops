@@ -2030,6 +2030,14 @@ def grunt_and_zombie(t, **zkv):
     t.wait(WAKE + 2.0)
     t.snap('s', 'grunt', 'enemy')
     t.snap('s', 'zom', 'enemy')
+    # Both are removed after the snapshot: with health 100000 their fight would go on for the rest of the suite,
+    # and its gunfire (combat sounds carry through walls) sends the scientists of later rooms into cover (ALERT,
+    # Fail) just as a follow test +uses one (followfailpolicy t113, flaky).
+    for n in ('grunt', 'zom'):
+        t.point('trigger_relay', targetname='rm_' + n, killtarget=n, triggerstate='2')
+    t.wait(0.1)
+    for n in ('grunt', 'zom'):
+        t.fire('rm_' + n)
     t.flags('player1', '-FL_NOTARGET')
 
 

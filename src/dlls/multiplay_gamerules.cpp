@@ -692,10 +692,11 @@ void CHalfLifeMultiplay :: PlayerSpawn( CBasePlayer *pPlayer )
 	while ( pWeaponEntity = UTIL_FindEntityByClassname( pWeaponEntity, "game_player_equip" ))
 	{
 		pWeaponEntity->Touch( pPlayer );
-		addDefault = FALSE;
 	}
 
-	if ( addDefault )
+	// SBO 2.1: the fists always, beside any game_player_equip (one pair: a second is refused and would stay in the
+	// world)
+	if ( addDefault && !pPlayer->HasNamedPlayerItem( "weapon_wong" ) )
 	{
 		pPlayer->GiveNamedItem( "weapon_wong" );
 	}
@@ -2047,6 +2048,39 @@ static void SboScoreboard_WriteTeamNames( int iDest, edict_t *pTo, int iGMLabel 
 	MESSAGE_END();
 }
 
+// Coop: the scoreboard XP keeps to the level (docs/dev/SCOREBOARD_PORT.md "Negative levels"), 5000 XP per level as
+// the teamkill / suicide penalty counts it (coop.cpp SboKillPenalty): level L shows at least L * 5000 XP and, below
+// level 0, less than (L + 1) * 5000, so a negative level never shows next to positive XP, nor a level of 0 or more
+// next to negative XP. m_iSboTotalXP is the XP gained this map and leaves that range on its own: a medikit level-up
+// takes 7500 XP, a death halves the XP toward the next level (m_iXP) but not the scoreboard XP, game_player_settings
+// can take levels from a player whose XP is ahead of his level, and an AMXX plugin may write the level speed
+// m_iSboSpeed alone. Out of range it becomes the level's start plus the XP toward the next level (at most 4999).
+// Every ScoreInfo / SboXP send goes through SboScoreboard_Update, which calls this first, and it runs every frame.
+#define SBO_SB_XP_PER_LEVEL		5000
+
+static void SboScoreboard_KeepXPToLevel( CBasePlayer *pPlayer )
+{
+	const long long llLevel = ( pPlayer->m_iSboSpeed - SBO_BASE_LEVEL_BONUS ) / SBO_LEVEL_BONUS_STEP;
+	const long long llMin = llLevel * SBO_SB_XP_PER_LEVEL;
+	const long long llXP = pPlayer->m_iSboTotalXP;
+
+	if ( llXP >= llMin && ( llLevel >= 0 || llXP < llMin + SBO_SB_XP_PER_LEVEL ) )
+		return;
+
+	int iProgress = pPlayer->m_iXP;
+	if ( iProgress < 0 )
+		iProgress = 0;
+	else if ( iProgress > SBO_SB_XP_PER_LEVEL - 1 )
+		iProgress = SBO_SB_XP_PER_LEVEL - 1;
+
+	long long llNew = llMin + iProgress;
+	if ( llNew < INT_MIN + 1 )
+		llNew = INT_MIN + 1;	// INT_MIN is s_iSboXP's "none"
+	else if ( llNew > INT_MAX )
+		llNew = INT_MAX;
+	pPlayer->m_iSboTotalXP = (int)llNew;
+}
+
 // Recompute a player's category/score; broadcast TeamInfo when the team changed and ScoreInfo when anything
 // changed (iForce: SBO_SB_FORCE_TEAMINFO / SBO_SB_FORCE_SCOREINFO send regardless).
 void SboScoreboard_Update( CBasePlayer *pPlayer, int iForce )
@@ -2059,6 +2093,10 @@ void SboScoreboard_Update( CBasePlayer *pPlayer, int iForce )
 		return;
 
 	int iTeam = SboScoreboard_GetTeam( pPlayer );
+	// keeps the XP inside the level's range; not for the Game Master, whose score column shows frags, not a level
+	if ( m_Mode == MODE_COOP && !SboScoreboard_IsGM( pPlayer ) )
+		SboScoreboard_KeepXPToLevel( pPlayer );
+
 	int iScore = SboScoreboard_GetScore( pPlayer );
 	int iDeaths = pPlayer->m_iDeaths;
 	int iClass = SboScoreboard_GetClass( pPlayer );
@@ -2084,8 +2122,8 @@ void SboScoreboard_Update( CBasePlayer *pPlayer, int iForce )
 	s_iSboDeaths[i] = iDeaths;
 	s_iSboClass[i] = iClass;
 
-	// coop XP: on change (XP is gained/lost in the monsters' TakeDamage, coop death, InitHUD; the per-frame check
-	// catches all of them)
+	// coop XP: on change (XP is gained/lost in the monsters' TakeDamage, the medikit, coop death, game_player_settings,
+	// InitHUD, SboScoreboard_KeepXPToLevel above; the per-frame check catches all of them)
 	if ( m_Mode == MODE_COOP && pPlayer->m_iSboTotalXP != s_iSboXP[i] )
 	{
 		s_iSboXP[i] = pPlayer->m_iSboTotalXP;

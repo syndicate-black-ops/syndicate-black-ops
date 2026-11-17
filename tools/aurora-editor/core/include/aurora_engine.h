@@ -168,6 +168,7 @@ struct cl_enginefuncs_s
 	float ( *pfnRandomFloat )( float flLow, float flHigh );
 	int ( *pfnRandomLong )( int lLow, int lHigh );
 	void ( *Con_Printf )( const char *fmt, ... );
+	void ( *Con_DPrintf )( const char *fmt, ... );
 	char *( *COM_ParseFile )( char *data, char *token );
 	byte *( *COM_LoadFile )( char *path, int usehunk, int *pLength );
 	void ( *COM_FreeFile )( void *buffer );

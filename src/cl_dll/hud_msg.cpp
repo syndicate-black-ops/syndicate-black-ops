@@ -24,6 +24,8 @@
 #include "aurora/particlemgr.h"
 #include "worldtext.h"
 #include "mirror.h"
+#include "entity_glow.h"	// SBO 2.1: env_entity_glow
+#include "waypoint.h"	// SBO 2.1: info_waypoint
 #include "overlay.h"
 #include "inventory.h"
 #include "colorcorrection.h"
@@ -109,6 +111,9 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	// SoHL (LRC): no 3D sky. SBO 2.0: the server sends the map's env_sky right after this (CBasePlayer::
 	// UpdateClientData), with every HUD initialisation, so a player who joins later has it too.
 	m_iSkyMode = SKY_OFF;
+	m_bEnvSkyMap = false;
+	memset( &m_SkyFog, 0, sizeof( m_SkyFog ) );
+	m_iSkyboxFog = 1;
 
 	g_Environment.Initialize();
 
@@ -133,6 +138,10 @@ void CHud :: MsgFunc_InitHUD( const char *pszName, int iSize, void *pbuf )
 	Aurora_Reset();
 	// SBO 2.0: new server/map: no env_mirror until the server's Mirror
 	Mirror_Reset();
+	// SBO 2.1: new server/map, or fullupdate: no env_entity_glow until the server's EntGlow
+	EntityGlow_Reset();
+	// SBO 2.1: new server/map: no info_waypoint markers until the server's Waypoint
+	Waypoint_Reset();
 	// SBO 2.0: new server/map: no env_overlay until the server's Overlay
 	Overlay_Reset();
 	// SBO 2.0: new server/map, or fullupdate: no inventory items until the server's Inventory messages
@@ -271,6 +280,36 @@ int CHud :: MsgFunc_SetSky( const char *pszName, int iSize, void *pbuf )
 	m_vecSkyPos.y = READ_COORD();
 	m_vecSkyPos.z = READ_COORD();
 	m_iSkyScale = READ_BYTE();
+	m_bEnvSkyMap = true;
+
+	// SBO 2.1: the sky room's fog, as in the Fog message (color, the density float as 4 bytes; 0: none)
+	memset( &m_SkyFog, 0, sizeof( m_SkyFog ) );
+	if ( iSize >= 15 )
+	{
+		m_SkyFog.color[0] = READ_BYTE();
+		m_SkyFog.color[1] = READ_BYTE();
+		m_SkyFog.color[2] = READ_BYTE();
+
+		union
+		{
+			float f;
+			unsigned char b[4];
+		} density;
+
+		for ( int i = 0; i < 4; i++ )
+			density.b[i] = READ_BYTE();
+
+		// the server keeps it in 0-0.01 (dlls/effects.cpp CEnvSky::KeyValue); anything else is no fog
+		m_SkyFog.density = ( density.f > 0.0f && density.f <= 0.01f ) ? density.f : 0.0f;
+	}
+
+	// SBO 2.1: Skybox fog (0 none, 1 partial, 2 full); partial when the message has none
+	m_iSkyboxFog = 1;
+	if ( iSize >= 16 )
+	{
+		const int iSkyboxFog = READ_BYTE();
+		m_iSkyboxFog = ( iSkyboxFog >= 0 && iSkyboxFog <= 2 ) ? iSkyboxFog : 1;
+	}
 
 	return 1;
 }

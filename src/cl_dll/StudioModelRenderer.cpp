@@ -33,6 +33,7 @@
 #include "studio_fullbright_gl.h"	// SBO 2.0: fullbright model textures
 #include "mirror.h"	// SBO 2.0: env_mirror
 #include "mirror_gl.h"	// SBO 2.0: env_mirror: clip plane
+#include "entity_glow.h"	// SBO 2.1: env_entity_glow: the targets as drawn
 #include "weapon_hand.h"	// SBO 2.0: weapon hand (cl_righthand)
 #include "studio_attachments.h"	// SBO 2.0: attachments of transparent models for their followers
 #include "head_scale.h"	// SBO 2.0: players' head scales
@@ -2044,11 +2045,16 @@ void CStudioModelRenderer::StudioComputeAttachments( cl_entity_t *ent )
 	IEngineStudio.StudioSetHeader( m_pStudioHeader );
 	IEngineStudio.SetRenderModel( m_pRenderModel );
 
-	StudioSetUpTransform( 0 );
-	StudioSetupBones( );
-	StudioCalcAttachments( );
-}
-
+	StudioSetUpTransform( 0 );
+
+	StudioSetupBones( );
+
+	StudioCalcAttachments( );
+
+}
+
+
+
 /*
 ====================
 StudioAttachmentModelSpace
@@ -2391,6 +2397,11 @@ void CStudioModelRenderer::StudioRenderFinal_Hardware( void )
 	}
 	else
 	{
+		// SBO 2.1: env_entity_glow: a glow target's pose and submodels for the glow pass (not its reflections, nor
+		// the glow shell's second draw)
+		if ( !m_fMirrorPass && !IEngineStudio.GetForceFaceFlags() )
+			EntityGlow_Capture( m_pCurrentEntity, m_pStudioHeader, (const float (*)[3][4])m_pbonetransform );
+
 		for (i=0 ; i < m_pStudioHeader->numbodyparts ; i++)
 		{
 			IEngineStudio.StudioSetupModel( i, (void **)&m_pBodyPart, (void **)&m_pSubModel );

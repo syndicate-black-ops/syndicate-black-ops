@@ -30,7 +30,7 @@ WEAPONS = [
     ('weapon_rpg', 'models/w_rpg.mdl'),
     ('weapon_handgrenade', 'models/w_grenade.mdl'),
     ('weapon_tripmine', 'models/v_tripmine.mdl'),
-    ('weapon_snark', 'models/w_sqknest.mdl'),
+    ('weapon_snark', 'models/w_squeak.mdl'),
     ('weapon_satchel', 'models/w_weaponbox.mdl'),
     ('weapon_medikit', 'models/w_medikit.mdl'),
 ]

@@ -35,6 +35,11 @@ def rpg_inflight_detonate(t):
     t.move('player1', 0, 0, 3, '+attack')
     t.wait(0.5)                 # ignited (0.4 s)
     t.kv('@rpg_rocket', 'movetype', '0')    # MOVETYPE_NONE: it stays in the air, its thinks go on
+    # Once more on the next frame: on a loaded machine the 0.5 s step can land on the frame whose think is the
+    # ignition (IgniteThink sets MOVETYPE_FLY again, after the step), and the rocket flies into the ceiling.
+    # The step's frame is past the ignition time, so by the next frame IgniteThink has run.
+    t.wait_frames(1)
+    t.kv('@rpg_rocket', 'movetype', '0')
     t.wait(1.3)                 # past the first second after ignition
     t.mark('slowed')
     t.kv('@rpg_rocket', 'velocity', '0 0 0')    # FollowThink: under 1500 u/s -> Detonate(), no touch
@@ -440,9 +445,12 @@ def pm66_hold_fire(t, player, at, ticrate):
         size=ROOM)
 def pm66_fire_rate_60(t):
     pm66_hold_fire(t, 'player9', (0, -150, 0), 60)
-    # 0.04 s from shot to shot: 31 in the first 1.2 s (the first at once), 29 with the weapon clock up to 1 ms per
-    # frame behind; never more than 31. 1.38's 0.05 s: 25
-    t.expect.sound('pm66_fire1', ent='player9', min=28, max=31, after='held', within=(0, 1.2))
+    # Counted in frames, not seconds: the weapon's clock runs on the user commands' msec, but a loaded machine
+    # stretches the game time between frames (18.6 ms a frame at sys_ticrate 60 in one run: 26 shots in 1.2 s at
+    # a steady 0.04 s of the weapon's clock). 72 frames (1.2 s at 60 a second): 0.04 s from shot to shot is 2.4
+    # frames, 31 shots (the first at once), 29 with the clock up to 1 ms per frame behind; never more than 31.
+    # 1.38, every third frame: 24
+    t.expect.sound('pm66_fire1', ent='player9', min=28, max=31, after='held', within_frames=(0, 72))
     # each shot still takes one round: the 50-round clip is empty after 50 shots, 50 events
     t.expect.event('pm66', ent='player9', count=50, after='held')
     t.expect.msg('CurWeapon', to='player9', fields={'state': 1, 'id': WEAPON_PM66, 'clip': 0}, after='held')
@@ -453,7 +461,8 @@ def pm66_fire_rate_60(t):
         players=10, size=ROOM)
 def pm66_fire_rate_30(t):
     pm66_hold_fire(t, 'player10', (0, 150, 0), 30)
-    t.expect.sound('pm66_fire1', ent='player10', min=28, max=31, after='held', within=(0, 1.2))
+    # 36 frames (1.2 s at 30 a second), in frames as at 60 (above). 1.38, every second frame: 18
+    t.expect.sound('pm66_fire1', ent='player10', min=28, max=31, after='held', within_frames=(0, 36))
     t.expect.event('pm66', ent='player10', count=50, after='held')
 
 
@@ -575,3 +584,50 @@ def weapon_id_40_death(t):
     t.expect.value('held', 'player12', 'weapons_high', BIT_TEST_HI)
     t.expect.value('dead', 'player12', 'weapons_high', 0)
     t.expect.msg('WeaponsHigh', to='player12', fields={'bits': 0}, after='kill', within=(0, 0.5))
+
+
+# A strip (player_weaponstrip, a round reset, a plugin: CBasePlayer::RemoveAllItems) while a sniper rifle is zoomed
+# ends the zoom (FOV 0, the player's own default_fov) and its slowdown (SBO_ZOOM_MAXSPEED 80), as the next weapon's
+# Deploy does on a switch.
+def strip_zoomed(t, weapon, fov, at):
+    p = 'player13'
+    t.point('player_weaponstrip', targetname='zoomstrip')
+    t.point(weapon, at=at)
+    t.teleport(p, at, yaw=90)
+    tough(t, p)
+    t.wait(2.5)                     # past the spawn protection of a player who joined for this test
+    t.cmd(p, weapon)
+    t.wait(1.5)                     # deploy
+    t.snap('ready', p, 'fov', 'maxspeed')
+    t.move(p, 0, 0, 3, '+attack2')
+    t.wait(0.5)
+    t.snap('zoomed', p, 'fov', 'maxspeed')
+    t.mark('strip')
+    t.fire('zoomstrip', activator=p)
+    t.wait(1.0)
+    t.snap('after', p, 'fov', 'maxspeed')
+    t.expect.value('ready', p, 'fov', 0)
+    t.expect.value('zoomed', p, 'fov', fov)
+    t.expect.value('zoomed', p, 'maxspeed', 80)
+    t.expect.value('after', p, 'fov', 0)
+    t.expect.same('ready', 'after', p, 'maxspeed')
+    t.expect.value('after', p, 'maxspeed', 80, op='>')
+    t.expect.msg('SetFOV', to=p, fields={'fov': 0}, after='strip', within=(0, 0.5))
+
+
+@S.test('NM33 zoomed, then player_weaponstrip: FOV 0 and the speed from before the zoom', players=13, size=ROOM,
+        covers=('player_weaponstrip',))
+def strip_zoomed_nm33(t):
+    strip_zoomed(t, 'weapon_nm33', 20, (-150, -150, 0))
+
+
+@S.test('SW zoomed, then player_weaponstrip: FOV 0 and the speed from before the zoom', players=13, size=ROOM,
+        covers=('player_weaponstrip',))
+def strip_zoomed_sw(t):
+    strip_zoomed(t, 'weapon_sw', 30, (150, -150, 0))
+
+
+@S.test('Federal zoomed, then player_weaponstrip: FOV 0 and the speed from before the zoom', players=13, size=ROOM,
+        covers=('player_weaponstrip',))
+def strip_zoomed_federal(t):
+    strip_zoomed(t, 'weapon_federal', 30, (150, 150, 0))

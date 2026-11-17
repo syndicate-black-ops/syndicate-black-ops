@@ -52,10 +52,13 @@ def table(suite_rows):
     return '\n'.join(lines)
 
 
-def write_json(path, suite_rows):
+def write_json(path, suite_rows, peak_rss=None):
+    """peak_rss: suite name -> the highest server RSS of its runs, in bytes (when measured)."""
     out = []
     for suite, rows, problems, wall in suite_rows:
+        rss = (peak_rss or {}).get(suite.name)
         out.append({'suite': suite.name, 'wall': round(wall, 2), 'problems': problems,
+                    'peak_rss_mb': round(rss / 2 ** 20) if rss else None,
                     'tests': [{'id': t.id, 'key': t.key, 'title': t.title, 'doc': t.doc, 'status': s, 'failures': f,
                                'notes': n} for t, s, f, n in rows]})
     with open(path, 'w') as f:

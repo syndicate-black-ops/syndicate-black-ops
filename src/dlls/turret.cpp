@@ -1079,6 +1079,8 @@ int CBaseTurret::TakeDamage(entvars_t *pevInflictor, entvars_t *pevAttacker, flo
 	if (!m_iOn)
 		flDamage /= 10.0;
 
+	flDamage = UnkillableDamage( flDamage );	// SBO 2.1 (Half-Life Unified SDK): "unkillable": it never dies
+
 	pev->health -= flDamage;
 	if (pev->health <= 0)
 	{
@@ -1307,6 +1309,8 @@ int CSentry::TakeDamage(entvars_t *pevInflictor, entvars_t *pevAttacker, float f
 		if ( pAttacker && IRelationship( pAttacker ) == R_AL )
 			return 0;
 	}
+
+	flDamage = UnkillableDamage( flDamage );	// SBO 2.1 (Half-Life Unified SDK): "unkillable": it never dies
 
 	pev->health -= flDamage;
 	if (pev->health <= 0)

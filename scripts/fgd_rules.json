@@ -31,7 +31,7 @@
       "models/garg.mdl", "models/gman.mdl", "models/hair.mdl", "models/hassassin.mdl", "models/icky.mdl",
       "models/light.mdl", "models/miniturret.mdl", "models/osprey.mdl", "models/player.mdl",
       "models/scientist.mdl", "models/sentry.mdl", "models/tree.mdl", "models/turret.mdl",
-      "models/w_battery.mdl", "models/w_crowbar.mdl", "models/w_oxygen.mdl", "models/w_sqknest.mdl"
+      "models/w_battery.mdl", "models/w_crowbar.mdl", "models/w_oxygen.mdl"
     ]
   },
   "not_for_mappers": [
@@ -112,6 +112,7 @@
     }
   },
   "left_out_flags": {
+    "infodecal:2048": "Not in deathmatch (SF_DECAL_NOTINDEATHMATCH, CDecal::Spawn): every SBO mode plays by multiplayer rules, so the decal is always removed; the engine also frees any entity with 2048 when a server with more than one slot loads the map. It only removes the entity, so the FGD does not offer it",
     "monster_furniture:4": "MonsterClip: CFurniture::Spawn sets MOVETYPE_NONE (scripted.cpp), so the furniture never walks and no monster clip can block it (its Target path is never walked either)",
     "dark_grunt:256": "Pre-Disaster: this monster does not talk; only CBaseMonster::ReportAIState (a debug print) reads it here (the talking monsters, which read it for their sentence groups, offer it through TalkMonster)",
     "monster_alien_slave:256": "Pre-Disaster: this monster does not talk; only CBaseMonster::ReportAIState (a debug print) reads it here (the talking monsters, which read it for their sentence groups, offer it through TalkMonster)",

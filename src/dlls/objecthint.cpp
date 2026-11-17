@@ -22,7 +22,7 @@
 extern int gmsgObjectHint;
 
 #define OBJECTHINT_USE_RADIUS	64.0f	// SBO's PLAYER_SEARCH_RADIUS (player.cpp PlayerUse)
-#define OBJECTHINT_DEFAULT_DISTANCE	512.0f	// scan distance of every template but hidden, without "objecthint_distance"
+#define OBJECTHINT_DEFAULT_DISTANCE	512.0f	// scan distance of every template, without "objecthint_distance"
 #define OBJECTHINT_MAX_DISTANCE		4096.0f	// "objecthint_distance" is clamped to this
 #define OBJECTHINT_SEARCH_MARGIN	256.0f	// the sphere search measures to the box center, the distance to the box
 
@@ -65,7 +65,7 @@ static const ObjectHintVisual s_VisualLock			= { OBJECTHINT_SPRITE, 255,  50,  0
 
 // A visual set key that the JSON leaves out takes "default"; one set to null shows nothing (Featureful
 // ReadFromDocument). The pointers below are what that reading gives for the example file, plus SBO's scan stage
-// { default base, unusable null } on "button", "charger" and "eyescanner"; every template but hidden scans within
+// { default base, unusable null } on "button", "charger" and "eyescanner"; every template scans within
 // OBJECTHINT_DEFAULT_DISTANCE unless the entity's "objecthint_distance" key sets its own.
 static const ObjectHintSpec s_Templates[] =
 {
@@ -91,11 +91,6 @@ static const ObjectHintSpec s_Templates[] =
 		{ &s_VisualBase, NULL, &s_VisualBase },
 		{ &s_VisualInteractable, NULL, &s_VisualInteractable },
 		OBJECTHINT_DEFAULT_DISTANCE, 0 },
-	// "hidden": {}
-	{ "hidden",
-		{ NULL, NULL, NULL },
-		{ NULL, NULL, NULL },
-		0, 0 },
 };
 
 static float ObjectHint_MaxDistance( void )
@@ -182,7 +177,7 @@ BOOL ObjectHint_KeyValue( CBaseEntity *pEntity, const char *szKeyName, const cha
 	pEntity->m_objectHint = ALLOC_STRING( szValue );
 	s_bMapHasHints = TRUE;
 	if ( !ObjectHint_GetSpec( szValue ) )
-		ALERT( at_console, "%s: objecthint \"%s\" is not a template (button, charger, eyescanner, pickup, hidden)\n",
+		ALERT( at_console, "%s: objecthint \"%s\" is not a template (button, charger, eyescanner, pickup)\n",
 			STRING( pEntity->pev->classname ), szValue );
 	return TRUE;
 }

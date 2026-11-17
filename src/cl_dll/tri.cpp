@@ -23,7 +23,11 @@
 #include "worldscreen/worldscreen.h"
 #include "spray_anim.h"
 #include "colorcorrection.h"	// SBO 2.0: color_correction
+#include "fogzone_gl.h"	// SBO 2.0: env_fogzone per-pixel fog volume
+#include "entity_glow.h"	// SBO 2.1: env_entity_glow
+#include "waypoint.h"	// SBO 2.1: info_waypoint
 #include "view.h"	// SoHL env_sky: EnvSky_ShowEntities
+#include "env_sky_box.h"
 
 #define DLLEXPORT __declspec( dllexport )
 
@@ -157,11 +161,12 @@ static void Fog_Update( void )
 =================
 env_fogzone PROTOTYPE (docs/WEATHER.md "env_fogzone prototype")
 
-The engine has one fog for the whole view, so a fog volume is faked in two parts:
- - haze: the far faces of the zone's box (the faces the view looks at from the inside of the box, whether the eye is in
-   it or not), drawn as a grid of quads in the zone's color. Each vertex gets the alpha the fog would have over the
-   part of the view ray that lies inside the box, 1 - exp( -( length * density )^2 ) (the engine's fog curve), so the
-   haze is thick where the ray goes through much of the zone and fades out at the box's outline.
+The engine has one fog for the whole view, so a fog volume is drawn in two parts:
+ - haze: the fog of the zone's box as a volume, per pixel (fogzone_gl.cpp): the part of the view ray inside the box
+   and in front of what the view shows there (the view's depth), alpha 1 - exp( -( length * density )^2 ) (the
+   engine's fog curve). No edges at the box's outline from any angle; what is inside the zone is fogged by what lies
+   in front of it. Without GLSL or a usable depth copy (FogZoneGL_Why), the far faces of the box are drawn instead, as
+   a grid of quads whose vertices get the alpha of the ray from the eye to them.
  - fog: with the eye inside, the engine's fog goes from the map's own to the zone's by how deep the eye is in the zone
    (distance to the nearest face one can walk through), and the haze fades out by the same amount.
 The zone's box is the brush model's bounding box. Tuning constants:
@@ -170,7 +175,7 @@ The zone's box is the brush model's bounding box. Tuning constants:
 #define FOGZONE_CLIENT_SIDE		1		// 0: off (dlls/player.cpp SendFog has the same switch for the old way)
 #define FOGZONE_MAX				32
 #define FOGZONE_GRID			8		// quads per face edge
-#define FOGZONE_INSET			1.0f	// the drawn faces sit this far inside the box (walls at the box's faces)
+#define FOGZONE_INSET			1.0f	// the far-face haze sits this far inside the box (walls at the box's faces)
 #define FOGZONE_FULL_DEPTH		128.0f	// units inside an open face at which the fog has the zone's full density...
 #define FOGZONE_FULL_DEPTH_FRAC	0.5f	// ...or this part of the box's smallest half-size, whichever is less
 #define FOGZONE_SMOOTH_TIME		0.25f	// seconds: the strength follows the depth with this time constant
@@ -184,6 +189,8 @@ struct fogzone_t
 	float mins[3], maxs[3];
 	float color[3];		// 0..255
 	float density;
+	bool facesChecked;	// open[] is set (FogZone_CheckFaces, on the first draw after a FogZone message)
+	bool open[6];		// min x, y, z, max x, y, z: open air behind the face (the fog thins out toward it)
 };
 
 static fogzone_t g_FogZones[FOGZONE_MAX];
@@ -224,8 +231,50 @@ void FogZone_Set( int iIndex, bool bActive, const float *mins, const float *maxs
 	zone.active = bActive;
 	VectorCopy( mins, zone.mins );
 	VectorCopy( maxs, zone.maxs );
+
+	// the message has the entity's absmin / absmax, which the engine (SV_LinkEdict, cbase.cpp SetObjectCollisionBox)
+	// pads by 1 unit on every side: the brush's own box is 1 unit in. Without this, the far faces sat exactly on the
+	// walls of a room the zone fills and lost the depth test (no haze from outside at all).
+	for ( int i = 0; i < 3; i++ )
+	{
+		if ( zone.maxs[i] - zone.mins[i] > 2.0f )
+		{
+			zone.mins[i] += 1.0f;
+			zone.maxs[i] -= 1.0f;
+		}
+	}
 	VectorCopy( color, zone.color );
 	zone.density = flDensity;
+	zone.facesChecked = false;
+}
+
+// Which faces of the zone's box have open air behind them: of 5 x 5 points 8 units outside the face (inset from its
+// edges), more than half not solid. A face against a wall, floor or ceiling keeps the fog's full density up to it, so
+// a zone that fills a room looks the same as without the thinning; a doorway in a wall does not open the face.
+static void FogZone_CheckFaces( fogzone_t &zone )
+{
+	zone.facesChecked = true;
+	for ( int iAxis = 0; iAxis < 3; iAxis++ )
+	{
+		const int iU = ( iAxis + 1 ) % 3, iV = ( iAxis + 2 ) % 3;
+		for ( int iSide = 0; iSide < 2; iSide++ )
+		{
+			int iOpen = 0;
+			for ( int u = 0; u < 5; u++ )
+			{
+				for ( int v = 0; v < 5; v++ )
+				{
+					vec3_t vecProbe;
+					vecProbe[iAxis] = iSide ? zone.maxs[iAxis] + FOGZONE_OPEN_PROBE : zone.mins[iAxis] - FOGZONE_OPEN_PROBE;
+					vecProbe[iU] = zone.mins[iU] + ( zone.maxs[iU] - zone.mins[iU] ) * ( 0.1f + 0.2f * u );
+					vecProbe[iV] = zone.mins[iV] + ( zone.maxs[iV] - zone.mins[iV] ) * ( 0.1f + 0.2f * v );
+					if ( gEngfuncs.PM_PointContents( vecProbe, NULL ) != CONTENTS_SOLID )
+						iOpen++;
+				}
+			}
+			zone.open[iSide * 3 + iAxis] = iOpen > 12;
+		}
+	}
 }
 
 // How much of the zone's fog an eye at this point gets, 0 (outside, or at an open face) .. 1; -1: not in the box
@@ -373,8 +422,21 @@ static float FogZone_RayLength( const fogzone_t &zone, const float *eye, const f
 	return sqrt( flLength ) * ( 1.0f - flEnter );
 }
 
-// The haze of every active zone, for the view at v_origin (HUD_DrawTransparentTriangles; not on the overview map)
-static void FogZone_Draw( void )
+// How much of a zone's haze shows in this view: 1 - the strength of its fog the eye already has
+static float FogZone_HazeScale( int iZone )
+{
+	const fogzone_t &zone = g_FogZones[iZone];
+	if ( gHUD.m_Spectator.m_bInsetDrawPass )
+	{
+		const float fl = FogZone_DepthStrength( zone, v_origin );
+		return fl > 0.0f ? 1.0f - fl : 1.0f;
+	}
+	return iZone == g_iFogZoneInside ? 1.0f - g_flFogZoneStrength : 1.0f;
+}
+
+// The fallback haze: the far faces of every active zone as a grid of quads with per-vertex alpha (no GLSL, or the
+// view's depth can't be copied here)
+static void FogZone_DrawFaces( void )
 {
 #if FOGZONE_CLIENT_SIDE
 	bool bBegun = false;
@@ -386,15 +448,7 @@ static void FogZone_Draw( void )
 			continue;
 
 		// the zone whose fog is on: the haze makes room for it
-		float flScale = 1.0f;
-		if ( iZone == g_iFogZoneInside && !gHUD.m_Spectator.m_bInsetDrawPass )
-			flScale = 1.0f - g_flFogZoneStrength;
-		else if ( gHUD.m_Spectator.m_bInsetDrawPass )
-		{
-			const float fl = FogZone_DepthStrength( zone, v_origin );
-			if ( fl > 0.0f )
-				flScale = 1.0f - fl;
-		}
+		const float flScale = FogZone_HazeScale( iZone );
 		if ( flScale <= 0.01f )
 			continue;
 
@@ -477,6 +531,65 @@ static void FogZone_Draw( void )
 #endif
 }
 
+// The haze of every active zone, for the view at v_origin (HUD_DrawTransparentTriangles; not on the overview map):
+// the per-pixel fog volume, or the far faces where it can't run. With developer 1 the console says once per GL context
+// (and on a change) which of the two draws.
+static void FogZone_Draw( void )
+{
+#if FOGZONE_CLIENT_SIDE
+	static int s_iLoggedGeneration = -1;
+	static int s_iLoggedPath = -1;	// 0: far faces, 1: per pixel
+
+	int iZones[FOGZONE_MAX];
+	int iCount = 0;
+
+	for ( int iZone = 0; iZone < FOGZONE_MAX; iZone++ )
+	{
+		fogzone_t &zone = g_FogZones[iZone];
+		if ( !zone.used || !zone.active || zone.density <= 0.0f || FogZone_HazeScale( iZone ) <= 0.01f )
+			continue;
+
+		// a box the view can't see (outside the PVS, the eye not in it) costs nothing, no depth copy
+		if ( FogZone_DepthStrength( zone, v_origin ) < 0.0f && !gEngfuncs.pTriAPI->BoxInPVS( zone.mins, zone.maxs ) )
+			continue;
+
+		iZones[iCount++] = iZone;
+	}
+
+	if ( !iCount )
+		return;
+
+	const bool bPerPixel = FogZoneGL_Begin( v_origin );
+	const int iPath = bPerPixel ? 1 : 0;
+	if ( iPath != s_iLoggedPath || FogZoneGL_Generation() != s_iLoggedGeneration )
+	{
+		s_iLoggedPath = iPath;
+		s_iLoggedGeneration = FogZoneGL_Generation();
+		if ( bPerPixel )
+			gEngfuncs.Con_DPrintf( "env_fogzone: %s\n", FogZoneGL_Describe() );
+		else
+			gEngfuncs.Con_DPrintf( "env_fogzone: far-face haze (fallback): %s\n", FogZoneGL_Why() );
+	}
+
+	if ( !bPerPixel )
+	{
+		FogZone_DrawFaces();
+		return;
+	}
+
+	for ( int i = 0; i < iCount; i++ )
+	{
+		fogzone_t &zone = g_FogZones[iZones[i]];
+		if ( !zone.facesChecked )
+			FogZone_CheckFaces( zone );
+		const float color[3] = { zone.color[0] / 255.0f, zone.color[1] / 255.0f, zone.color[2] / 255.0f };
+		FogZoneGL_Zone( zone.mins, zone.maxs, color, zone.density, FogZone_HazeScale( iZones[i] ), zone.open );
+	}
+
+	FogZoneGL_End();
+#endif
+}
+
 /*
 =================
 RenderFog
@@ -533,10 +646,24 @@ SoHL 1.8 (cl_dll/view.cpp: "no fog in the env_sky"): the sky room of an env_sky 
 (view.cpp V_SkyViewStart) and stands for its skybox, which the fog of the Fog message leaves clear. The engine draws a
 world with the fog the view before it left on (HUD_DrawTransparentTriangles), so the view before the sky room ends with
 this, and the sky room ends with the view's fog (RenderFog), which its world then has.
+SBO 2.1 (Source's sky_camera fog): an env_sky with a fog of its own ("rendercolor", "density", SetSky) gets that fog
+instead, in the same way as RenderFog sets the map's: the sky room's world, its entities and the env_static props in
+it are fogged by their distance from the sky camera, in sky-room units; its 2D skybox stays clear, as the map's does.
 =================
 */
 void RenderSkyFog( void )
 {
+	const FogParameters &fog = gHUD.m_SkyFog;
+
+	if ( fog.density > 0.0f )
+	{
+		// SBO: FogParams is a Steam engine addition to the triangle API (RenderFog)
+		if ( gEngfuncs.pTriAPI->FogParams )
+			gEngfuncs.pTriAPI->FogParams( fog.density, false );
+		gEngfuncs.pTriAPI->Fog( (float *)fog.color, 100.0f, 2000.0f, 1 );
+		return;
+	}
+
 	gEngfuncs.pTriAPI->Fog( g_FogParameters.color, 100.0f, 2000.0f, 0 );
 }
 
@@ -642,9 +769,13 @@ Non-transparent triangles-- add them here
 */
 void DLLEXPORT HUD_DrawNormalTriangles( void )
 {
-	// SoHL env_sky: nothing of the client's own in the sky room drawn before the view (view.cpp V_SkyViewStart)
+	// SoHL env_sky: nothing of the client's own in the sky room drawn before the view (view.cpp V_SkyViewStart), but
+	// SBO 2.1 the sky fog on its 2D skybox (env_sky_box.cpp)
 	if ( gHUD.m_bSkyDrawPass )
+	{
+		EnvSkyBox_DrawSkyFog();
 		return;
+	}
 
 	// SBO 2.0: the map image and the icons of the overview are not fogged (XDM tri.cpp: no fog in the overview pass);
 	// RenderFog puts the fog back at the end of this view
@@ -653,6 +784,8 @@ void DLLEXPORT HUD_DrawNormalTriangles( void )
 
 	// SBO 2.0: the current frames of animated sprays (spray_anim.cpp), once per frame
 	SprayAnim_Frame();
+
+	EnvSkyBox_Draw();	// SBO 2.1: the 2D skybox on the env_sky faces while the 3D sky is off (env_sky_box.cpp)
 
 	gHUD.m_Spectator.DrawOverview();
 	
@@ -681,14 +814,35 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 	// SBO 2.0, env_sky: the next view after the sky room is its view, which gets the view's fog (RenderFog; the eye is
 	// still the view's, v_origin). Nothing else of the client's own in the sky room (the effects are around the view
 	// and run once per view).
+	FogZoneGL_NewView();	// SBO 2.1: a new view: its depth is copied again (env_fogzone, env_entity_glow)
+
 	if ( gHUD.m_bSkyDrawPass )
 	{
+		EntityGlow_SkipView();	// SBO 2.1: env_entity_glow: no glow in the sky room
 		RenderFog();
 		return;
 	}
 
 	// SoHL env_sky: this view's entities are drawn; the sky room's entities, moved out of it, go back (view.cpp)
 	EnvSky_ShowEntities();
+
+	// SBO 2.0: env_fogzone: the zones' fog, on this view's world and models (before color correction grades the view;
+	// nothing of the 3D world on the spectator's overview map)
+	if ( !gHUD.m_Spectator.m_bOverviewDrawPass )
+		FogZone_Draw();
+
+	// SBO 2.1: env_entity_glow: outlines and halos around this view's targets (after the fog zones' haze, so the
+	// haze does not cover them; not on the spectator's overview map)
+	if ( !gHUD.m_Spectator.m_bOverviewDrawPass )
+		EntityGlow_Draw();
+	else
+		EntityGlow_SkipView();
+
+	// SBO 2.1: info_waypoint: the main view places the HUD markers, and a spectator's first-person inset its own
+	if ( !gHUD.m_Spectator.m_bOverviewDrawPass && !gHUD.m_Spectator.m_bInsetDrawPass )
+		Waypoint_ViewDrawn( 0 );
+	else if ( !gHUD.m_Spectator.m_bOverviewDrawPass && gHUD.m_Spectator.InsetMode() == INSET_IN_EYE )
+		Waypoint_ViewDrawn( 1 );	// the first-person inset: the watched player's view
 
 	// SBO 2.0: color_correction: this view's world is drawn (a view without a view model is graded after it)
 	ColorCorr_ViewDrawn();
@@ -697,8 +851,8 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 	RenderFog();
 
 	// SBO 2.0, env_sky: the next view is a sky room (every view that draws the world has one first), which has no fog
-	// (SoHL 1.8, view.cpp V_SkyViewStart). Before this fix the view's own world had none: the fog was off after the
-	// sky room, and fog zones and env_fog showed on models and effects only.
+	// (SoHL 1.8, view.cpp V_SkyViewStart), or SBO 2.1 its env_sky's own. Before this fix the view's own world had none:
+	// the fog was off after the sky room, and fog zones and env_fog showed on models and effects only.
 	if ( gHUD.m_iSkyMode == SKY_ON )
 		RenderSkyFog();
 
@@ -727,8 +881,6 @@ void DLLEXPORT HUD_DrawTransparentTriangles( void )
 	// (HUD_TempEntUpdate)
 	if ( gHUD.m_Spectator.m_bInsetDrawPass && g_pParticleMan )
 		g_pParticleMan->SetVariables( g_flGravity, v_angles );
-
-	FogZone_Draw();	// PROTOTYPE env_fogzone: the zones' haze
 
 	// SBO: particle emitters
 	gHUD.m_Flamme.m_List.Afficher( gHUD.m_flTimeDelta );

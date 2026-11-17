@@ -12,7 +12,10 @@
 //     table; a prop without a targetname then removes its edict at once (the slot is reused by the next entity).
 //   * The clients get the table after their HUD is (re)initialised, a few props at a time (EnvStatic_SendQueued,
 //     client_sendqueue.h, like env_particle), so a map with hundreds of props never fills a
-//     client's reliable channel. A named prop's "Use" shows or hides it for everybody (one message).
+//     client's reliable channel. A named prop's "Use" shows or hides it for everybody (one message); removing it
+//     (killtarget) hides it for good.
+//   * SBO 2.1: flag 4 "In the 3D sky": the clients draw the prop only in the env_sky pass (it stands in the sky room).
+//   * Everything else is fixed at map start: no key changes, no movement, no parent.
 //=========================================================
 
 #include	"extdll.h"
@@ -27,6 +30,7 @@
 extern int gmsgStaticProp;
 
 #define SF_ENVSTATIC_START_INVISIBLE	2	// XDM
+#define SF_ENVSTATIC_SKY				4	// SBO 2.1: in the env_sky sky room, drawn in the 3D sky
 
 #define ENVSTATIC_QUEUE_DELAY		0.5f	// after the client's InitHUD, before its first props
 #define ENVSTATIC_SEND_INTERVAL		0.1f
@@ -49,6 +53,7 @@ struct static_prop_t
 	int		body, skin, sequence;
 	float	scale, framerate;
 	BOOL	visible;
+	BOOL	sky;		// SBO 2.1: SF_ENVSTATIC_SKY
 	string_t	lightorigin;	// SBO 2.0: the info_light_origin it is lit from (light_origin.h)
 	int		lightState;			// 0: not looked up yet, 1: found (lightPos), 2: none
 	Vector	lightPos;
@@ -188,7 +193,7 @@ static void EnvStatic_WriteProp( int iProp )
 	WRITE_SHORT( Clamp( p->sequence, 0, 32767 ) );
 	WRITE_SHORT( Clamp( (int)( p->scale * 256.0f ), 0, 32767 ) );
 	WRITE_SHORT( Clamp( (int)( p->framerate * 256.0f ), -32768, 32767 ) );
-	WRITE_BYTE( p->visible ? 1 : 0 );
+	WRITE_BYTE( ( p->visible ? STATICPROP_F_VISIBLE : 0 ) | ( p->sky ? STATICPROP_F_SKY : 0 ) );
 }
 
 // SBO 2.0: the prop's info_light_origin (looked up once, after every entity spawned); FALSE: none
@@ -209,6 +214,19 @@ static void EnvStatic_WriteLightOrigin( int iProp )
 		WRITE_LONG( (int)( p->lightPos[i] * 8.0f ) );
 }
 
+// a prop was shown or hidden: one message to everybody
+static void EnvStatic_SendVisible( int iProp )
+{
+	if ( !gmsgStaticProp )
+		return;
+
+	MESSAGE_BEGIN( MSG_ALL, gmsgStaticProp );
+		WRITE_BYTE( STATICPROP_VISIBLE );
+		WRITE_SHORT( iProp );
+		WRITE_BYTE( s_Props[ iProp ].visible ? 1 : 0 );
+	MESSAGE_END();
+}
+
 //=========================================================
 
 class CEnvStatic : public CPointEntity
@@ -217,6 +235,7 @@ public:
 	void Spawn( void );
 	void KeyValue( KeyValueData *pkvd );
 	void Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE useType, float value );
+	void UpdateOnRemove( void );
 
 	int m_iProp;	// index in s_Props, -1 none
 	string_t m_iszLightOrigin;	// SBO 2.0: "lightorigin"
@@ -277,6 +296,7 @@ void CEnvStatic::Spawn( void )
 		p->scale = pev->scale;
 		p->framerate = pev->framerate;
 		p->visible = !( pev->spawnflags & SF_ENVSTATIC_START_INVISIBLE );
+		p->sky = ( pev->spawnflags & SF_ENVSTATIC_SKY ) ? TRUE : FALSE;
 		p->lightorigin = m_iszLightOrigin;
 		p->lightState = FStringNull( m_iszLightOrigin ) ? 2 : 0;
 		if ( s_Models[ iModel ].firstProp < 0 )
@@ -312,15 +332,21 @@ void CEnvStatic::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE us
 		return;
 
 	p->visible = !p->visible;
+	EnvStatic_SendVisible( m_iProp );
+}
 
-	if ( !gmsgStaticProp )
-		return;
+// SBO 2.1: killtarget (or any removal of the named prop's edict) hides the prop for good: the table keeps it hidden
+// for late joiners, and nothing can show it again
+void CEnvStatic::UpdateOnRemove( void )
+{
+	if ( m_iProp >= 0 && m_iProp < s_iProps && s_Props[ m_iProp ].visible )
+	{
+		s_Props[ m_iProp ].visible = FALSE;
+		EnvStatic_SendVisible( m_iProp );
+	}
+	m_iProp = -1;
 
-	MESSAGE_BEGIN( MSG_ALL, gmsgStaticProp );
-		WRITE_BYTE( STATICPROP_VISIBLE );
-		WRITE_SHORT( m_iProp );
-		WRITE_BYTE( p->visible ? 1 : 0 );
-	MESSAGE_END();
+	CPointEntity::UpdateOnRemove();
 }
 
 //=========================================================

@@ -116,6 +116,46 @@ def unkillable_runtime(t):
     t.expect.value('off', 'z', 'deadflag', 0, op='>')
 
 
+# The Apache and the turrets take damage in their own TakeDamage (CApache: CBaseEntity::TakeDamage; CBaseTurret,
+# CSentry: their own health code), not CBaseMonster's. Each is placed with Unkillable Yes, takes a hit of 100000, then
+# a trigger_changevalue turns the key off and the same hit kills it.
+OWN_DAMAGE = {
+    'monster_apache': dict(at=(0, 0, 400), spawnflags='64'),        # Start Inactive: it hovers in place
+    'monster_turret': dict(at=(0, 0, 32), spawnflags='16'),         # Prisoner: it sees nobody
+    'monster_miniturret': dict(at=(0, 0, 32), spawnflags='16'),
+    'monster_sentry': dict(at=(0, 0, 0), spawnflags='16'),
+}
+
+
+def own_damage_case(cls):
+    @S.test('%s "unkillable" 1: a hit of 100000 leaves it alive with 1 health; switched to 0 with '
+            'trigger_changevalue, the same hit kills it' % cls, size=(512, 512, 1024),
+            covers=('%s.unkillable' % cls, '%s.unkillable=1' % cls, '%s.unkillable=0' % cls, 'trigger_changevalue'))
+    def case(t):
+        t.point(cls, targetname='m', angles='0 90 0', unkillable='1', **OWN_DAMAGE[cls])
+        t.point('trigger_changevalue', targetname='off', target='m', m_iszValueName='unkillable', m_iszNewValue='0')
+        t.wait(1.0)
+        t.damage('m', 100000)
+        t.wait(0.3)
+        t.snap('on', 'm', 'health', 'takedamage', 'deadflag')
+        t.fire('off')
+        t.wait(0.1)
+        t.damage('m', 100000)
+        t.wait(0.5)
+        t.snap('off', 'm', 'health', 'takedamage')
+        t.expect.value('on', 'm', 'health', 1)
+        t.expect.value('on', 'm', 'takedamage', 0, op='>')
+        t.expect.value('on', 'm', 'deadflag', 0)
+        t.expect.value('off', 'm', 'health', 0)
+        t.expect.value('off', 'm', 'takedamage', 0)
+    case.__name__ = 'unkillable_' + cls.replace('monster_', '')
+    return case
+
+
+for _cls in OWN_DAMAGE:
+    own_damage_case(_cls)
+
+
 @S.test('multi_manager with 20 targets fires all 20 (the limit is 64, Half-Life Unified SDK; it was 16)',
         covers=('multi_manager',))
 def multi_manager_20(t):

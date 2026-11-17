@@ -21,6 +21,7 @@ BOOL Test_ClientCommand( edict_t *pEntity, const char *pcmd );	// a player's tes
 void Test_TraceFire( const char *pszTarget, CBaseEntity *pActivator, CBaseEntity *pCaller, int useType, float value );
 void Test_TraceUse( CBaseEntity *pTarget, CBaseEntity *pActivator, CBaseEntity *pCaller, int useType, float value );
 BOOL Test_ShotLuckOff( void );						// test_shotluck 0: no random perfect / failed hits (combat.cpp)
+BOOL Test_WaterHitOff( void );						// test_bulletbench: its blocks without the water check (water_hit.cpp)
 
 #define SBO_TEST_CALL( x )	x
 

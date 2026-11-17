@@ -6,6 +6,7 @@
 #     syndicate/            the game folder: gamedir/syndicate (git-tracked files, LFS content; with the FGD's editor
 #                           models and sprites, models/editor + sprites/editor) + sdk/syndicate.fgd
 #                           + client.dll + client.pdb, hl.dll + hl.pdb, client.so, hl.so (as built, with debug info)
+#                           + manual/ (the offline docs, with MANUAL_DIR)
 #     syndicate_addon/      gamedir/syndicate_addon: empty but for readme.txt (the player's own content folder)
 #                           nothing else: no config.cfg (the player's own; a new install gets default.cfg's binds,
 #                           docs/DEFAULT_BINDS.md), no files at the zip's top level
@@ -13,7 +14,9 @@
 #     syndicate/dlls/       hl.so with debug info, hl.dll + hl.pdb
 #     syndicate/addons/     the addons dir's addons/
 #     symbols/cl_dlls/      client.so with debug info, client.dll + client.pdb (crash analysis only)
-#   SHA256SUMS              sha256 of the two zips
+#   sbo-sdk-<tag>.zip       mappers: sdk/syndicate.fgd, sdk/examples/ (example maps with their readme, sequences,
+#                           video) and sdk/prefabs/ (not modelsrc/ or spritesrc/); never in the player zip
+#   SHA256SUMS              sha256 of the zips
 #   manifest.sha256         sha256 of every file in syndicate/ (sha256sum format, paths relative; the input of
 #                           scripts/verify.sh / verify.ps1, which the script also runs on the package)
 #   build.txt               tag, commit, version lines, layout, install steps, checks, binary hashes (build record)
@@ -31,6 +34,9 @@
 #        UPDATE_PREVIOUS  the previous release's manifest.json (or a manifest.sha256): its versions of the files
 #                         players edit, so an unedited one is replaced on installs without installed.json
 #        SBO_UPDATE_SIGNING_KEY  the Ed25519 private key (PEM text) that signs manifest.json
+#        MANUAL_DIR  the offline manual (the docs built with SBO_DOCS_MANUAL=1; the unzipped sbo-manual-v<version>.zip
+#                    of the website repository's release manual-v<version>): shipped as syndicate/manual/, checked
+#                    with scripts/docs_manual.sh check (only page, script, style, picture and font files, size cap)
 #
 # Fails when: a game file is an un-fetched Git LFS pointer, a binary holds the test layer
 # (scripts/check_no_test_commands.sh), verify.sh disagrees with the manifest, or
@@ -53,7 +59,7 @@ for so in "$LIN/client.so" "$LIN/hl.so"; do
 done
 
 STAGE=$OUT/stage; P=$STAGE/player; S=$STAGE/server
-rm -rf "$STAGE" "$OUT/$NAME.zip" "$OUT/$NAME-server.zip" "$OUT/SHA256SUMS" "$OUT/manifest.sha256" "$OUT/build.txt"
+rm -rf "$STAGE" "$OUT/$NAME.zip" "$OUT/$NAME-server.zip" "$OUT"/sbo-sdk-*.zip "$OUT/SHA256SUMS" "$OUT/manifest.sha256" "$OUT/build.txt"
 mkdir -p "$P/syndicate" "$P/syndicate_addon" "$S/server/syndicate/dlls" "$S/server/symbols/cl_dlls"
 
 # copy git-tracked files under <repo dir> into <dest> (no untracked / ignored leftovers from the checkout)
@@ -72,9 +78,21 @@ copy_tracked gamedir/syndicate "$P/syndicate"
 [ -f "$P/syndicate/default.cfg" ] || { echo "syndicate/default.cfg is missing (a new install's binds)" >&2; exit 1; }
 copy_tracked gamedir/syndicate_addon "$P/syndicate_addon"
 cp -p "$SRC/sdk/syndicate.fgd" "$P/syndicate/syndicate.fgd"
+if [ -n "${MANUAL_DIR:-}" ]; then
+  [ ! -e "$P/syndicate/manual" ] || { echo "gamedir/syndicate/manual exists: the offline manual's folder is taken" >&2; exit 1; }
+  bash "$ROOT/scripts/docs_manual.sh" check "$MANUAL_DIR" || { echo "MANUAL_DIR $MANUAL_DIR failed the manual checks" >&2; exit 1; }
+  mkdir -p "$P/syndicate/manual"; cp -a "$MANUAL_DIR/." "$P/syndicate/manual/"
+  echo "  manual: $(find "$P/syndicate/manual" -type f | wc -l) files (MANUAL_DIR)"
+fi
+
+# the mappers' SDK zip: the FGD, the example maps and the prefabs (tracked files; LFS content checked below)
+SD=$STAGE/sdk; mkdir -p "$SD/sdk"
+copy_tracked sdk/examples "$SD/sdk/examples"
+copy_tracked sdk/prefabs "$SD/sdk/prefabs"
+cp -p "$SRC/sdk/syndicate.fgd" "$SD/sdk/syndicate.fgd"
 
 # Git LFS: CI must have fetched the objects; a pointer file would ship as a broken model / sound / map
-pointers=$(grep -rlI -m1 '^version https://git-lfs.github.com/spec/' "$P" || true)
+pointers=$(grep -rlI -m1 '^version https://git-lfs.github.com/spec/' "$P" "$SD" || true)
 if [ -n "$pointers" ]; then
   echo "Git LFS pointers instead of content (LFS objects not fetched):" >&2; echo "$pointers" | head -20 >&2; exit 1
 fi
@@ -146,6 +164,13 @@ echo "==== build.txt ===="
   echo "  syndicate/            the complete game folder ($(count "$P/syndicate") files): Windows and Linux client and server"
   echo "                        libraries, maps, sprites, sounds, configs, models, fonts, syndicate.fgd, ..."
   echo "  syndicate_addon/      empty but for readme.txt: the players' own content (Options, \"Allow custom addon content\")"
+  if [ -n "${MANUAL_DIR:-}" ]; then
+    echo "  syndicate/manual/     the offline docs: open index.html ($(find "$P/syndicate/manual" -type f | wc -l) files)"
+  else
+    echo "  (no syndicate/manual/: built without MANUAL_DIR)"
+  fi
+  echo "sbo-sdk-$TAG.zip (mappers): sdk/syndicate.fgd, sdk/examples/ ($(count "$SD/sdk/examples") files), sdk/prefabs/"
+  echo "  ($(count "$SD/sdk/prefabs") files)"
   echo "manifest.sha256 (not in a zip): sha256 of every file in syndicate/ ($manifest_lines lines), for scripts/verify.sh /"
   echo "  verify.ps1 (read only)"
   if [ -n "$AMXX" ]; then
@@ -161,7 +186,7 @@ echo "==== build.txt ===="
   echo "  2. Delete (or rename as a backup) Half-Life\\syndicate."
   echo "  3. Copy this syndicate folder into Half-Life\\."
   echo "  4. Put your config.cfg back into Half-Life\\syndicate. Without one, the first start gives you SBO's default"
-  echo "     keys, name Sadako and running speed (default.cfg) on top of your own Half-Life settings, and the game writes a"
+  echo "     keys, name Sadako, running speed and brightness (default.cfg) on top of your own Half-Life settings, and the game writes a"
   echo "     new config.cfg."
   echo "  5. Half-Life\\syndicate_addon (with \"Allow custom addon content\" on) and syndicate_hd are read BEFORE syndicate. For a clean test,"
   echo "     rename them too: a stale hud.txt, sprite, menu file, overview or model in there replaces the one in this build."
@@ -185,7 +210,7 @@ echo "==== build.txt ===="
   echo "CHECKS"
   echo "  scripts/check_no_test_commands.sh: all player and server binaries pass."
   echo "  verify.sh against the package's own syndicate folder: $verify_out"
-  echo "  Both zips: no .git* / dot files, editor or build leftovers (checked by scripts/package_full_release.sh)."
+  echo "  Every zip: no .git* / dot files, editor or build leftovers (checked by scripts/package_full_release.sh)."
   echo
   echo "BINARIES"
   for f in "${BINS[@]}"; do
@@ -202,7 +227,10 @@ make_zip() {  # <dir> <zip>
   (cd "$1" && find . -type f -printf '%P\n' | LC_ALL=C sort | zip -X -q -@ "$2")
 }
 make_zip "$P" "$OUT/$NAME.zip"
-ZIPS=("$NAME.zip")
+SDKNAME=sbo-sdk-$(printf '%s' "$TAG" | tr -c 'A-Za-z0-9._-' '_')
+rm -f "$OUT/$SDKNAME.zip"
+make_zip "$SD" "$OUT/$SDKNAME.zip"
+ZIPS=("$NAME.zip" "$SDKNAME.zip")
 if [ -n "$AMXX" ]; then make_zip "$S" "$OUT/$NAME-server.zip"; ZIPS+=("$NAME-server.zip"); fi
 
 # the updater's release files (docs/UPDATER.md): manifest.json = every syndicate/ file of the player zip with its place
@@ -230,7 +258,11 @@ done
 [ $bad -eq 0 ] || { echo "release zips contain .git* / editor / build leftovers" >&2; exit 1; }
 top=$(unzip -Z1 "$OUT/$NAME.zip" | sed 's|/.*||' | LC_ALL=C sort -u | tr '\n' ' ')
 [ "$top" = "syndicate syndicate_addon " ] || { echo "$NAME.zip holds more than syndicate/ and syndicate_addon/: $top" >&2; exit 1; }
-bash "$ROOT/scripts/check_lowercase.sh" --zip "$OUT/$NAME.zip" \
-  || { echo "the player zip contains names with upper-case letters" >&2; exit 1; }
+bash "$ROOT/scripts/check_lowercase.sh" --zip "$OUT/$NAME.zip" "$OUT/$SDKNAME.zip" \
+  || { echo "the player or SDK zip contains names with upper-case letters" >&2; exit 1; }
+top=$(unzip -Z1 "$OUT/$SDKNAME.zip" | sed 's|/.*||' | LC_ALL=C sort -u | tr '\n' ' ')
+[ "$top" = "sdk " ] || { echo "$SDKNAME.zip holds more than sdk/: $top" >&2; exit 1; }
+bad=$(unzip -Z1 "$OUT/$SDKNAME.zip" | grep -vE '^sdk/(syndicate\.fgd|examples/|prefabs/)' || true)
+[ -z "$bad" ] || { echo "$SDKNAME.zip holds files outside the FGD, examples/ and prefabs/: $bad" >&2; exit 1; }
 (cd "$OUT" && sha256sum "${ZIPS[@]}" > SHA256SUMS && cat SHA256SUMS)
 [ -n "${KEEP_STAGE:-}" ] || rm -rf "$STAGE"

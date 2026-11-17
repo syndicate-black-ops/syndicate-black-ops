@@ -52,6 +52,14 @@
 #include "effects.h"	// SoHL env_sky: the sky room's entities (EnvSky_IsSkyEntity)
 
 extern BOOL g_bAlwaysSend[ MAX_EDICTS ];	// SBO 2.0: env_model.cpp
+extern unsigned int g_iGlowViewers[ MAX_EDICTS ];	// SBO 2.1: env_entity_glow.cpp: players who see the entity glow
+static inline bool EntityGlow_SendsTo( int e, edict_t *host )
+{
+	if ( !g_iGlowViewers[ e ] )
+		return false;
+	const int iHost = ENTINDEX( host );
+	return iHost >= 1 && iHost <= 32 && ( g_iGlowViewers[ e ] & ( 1u << ( iHost - 1 ) ) ) != 0;
+}
 #include "vgui_screen.h"	// SBO 2.0: world screens
 #include "version_gate.h"	// SBO 2.0: the version gate
 #include "client_info.h"	// SBO 2.0: per-player client info (version, engine, renderer) for the server log
@@ -541,8 +549,11 @@ called when a player disconnects from a server
 GLOBALS ASSUMED SET:  g_fGameOver
 ============
 */
+static void NameColor_ClientDisconnect( edict_t *pEntity );
+
 void ClientDisconnect( edict_t *pEntity )
 {
+	NameColor_ClientDisconnect( pEntity );	// SBO 2.0: the next client in this slot has no remembered name color
 	SboScoreboard_ClientDisconnected( pEntity );	// chat-vgui2: clear the scoreboard entry
 	Tutor_ClientDisconnected( pEntity );	// CS:CZ tutor window: the slot's queue and env_tutor show counts
 	MsgBox_ClientDisconnected( pEntity );	// game_messagebox: the slot's open boxes
@@ -734,11 +745,11 @@ extern CVoiceGameMgr g_VoiceGameMgr;
 // or as
 // blah blah blah
 //
-// chat-vgui2 branch: SBO's chat rules are replaced. Every message (say and say_team alike, say_team is kept only so
-// old binds work) goes to every player in every game mode, whatever their state (dead, alive, observer, round or
+// chat-vgui2 branch: SBO's chat rules are replaced. Every message goes to every player in every game mode, whatever
+// their state (dead, alive, observer, round or
 // vote state). The text starts with \x02 so the client colours the sender's name (BugfixedHL-Rebased format); there
 // is no "(TEAM)" prefix and no trailing short any more; the "*DEAD*"-style tag is now the scoreboard category's.
-// Player-typed colour codes (^0-^9, ^xRGB, ^#RRGGBB, \x01-\x08) pass through; other control characters are replaced by spaces. Flood
+// Player-typed colour codes (^0-^9, ^xRGB, ^#RRGGBB, \x01-\x08) are removed; other control characters are replaced by spaces. Flood
 // protection is BugfixedHL-Rebased's.
 //
 void Host_Say( edict_t *pEntity, int teamonly )
@@ -812,14 +823,19 @@ void Host_Say( edict_t *pEntity, int teamonly )
 	szTemp[ sizeof(szTemp) - 1 ] = 0;
 	p = szTemp;
 
-	// Keep the message protocol intact: \x00 can't arrive here (it ends the string); the colour codes \x01-\x08
-	// stay; every other control character (tab, newline, carriage return, ..., DEL) becomes a space.
+	// Keep the message protocol intact: \x00 can't arrive here (it ends the string); the colour markup \x01-\x08 is
+	// removed below; every other control character (tab, newline, carriage return, ..., DEL) becomes a space.
 	for ( pc = p; *pc != 0; pc++ )
 	{
 		unsigned char c = (unsigned char)*pc;
 		if ( ( c >= 0x09 && c < 0x20 ) || c == 0x7f )
 			*pc = ' ';
 	}
+
+	// SBO 2.0: players colour their chat with their chat colour (userinfo hud_chat_color), not with codes: the colour
+	// codes (^0..^9, ^xRGB, ^#RRGGBB) and markup bytes they typed are removed. Plugins hooking say / say_team read
+	// the command's arguments before this; lines the server or plugins send keep theirs.
+	UTIL_RemoveColorCodes( p, NULL );
 
 	// remove empty spaces at the end
 	for ( pc = p + (int)strlen( p ) - 1; pc >= p && *pc == ' '; pc-- )
@@ -1037,12 +1053,6 @@ void ClientCommand( edict_t *pEntity )
 	{
 		VGuiScreen_ClientCommand( GetClassPtr((CBasePlayer *)pev) );
 	}
-	else if ( FStrEq(pcmd, "say_team" ) )
-	{
-		// chat-vgui2: say_team (unhandled in 1.38: "Unknown command") now behaves exactly like say, so old binds
-		// work; Host_Say's teamonly only selects the "say_team" log keyword
-		Host_Say( pEntity, 1 );
-	}
 	else if ( MsgBox_BlocksWeaponCommand( GetClassPtr((CBasePlayer *)pev), pcmd ) )
 	{
 		// game_messagebox: no weapon change while a box is open
@@ -1143,6 +1153,139 @@ void ClientCommand( edict_t *pEntity )
 }
 
 
+//=========================================================
+// Player names carry no colour codes (^0..^9, ^xRGB, ^#RRGGBB) or markup bytes: a player colours his name with his
+// name colour (userinfo namecolor). The engine has checked the name (SV_ExtractFromUserinfo: '%' / '&', a leading
+// '#', spaces, "unnamed", duplicates) and copies it after this callback, so the cleaned name gets the same rules here
+// and is set in the userinfo. A name whose first code is a colour gives the player that name colour while he has none.
+// Setting the name makes the engine pass the userinfo on again, which calls ClientUserInfoChanged once more with
+// the cleaned name: nothing to remove, so no loop and no extra "changed name to" line.
+//=========================================================
+//=========================================================
+// Name colour through a rename. Valve's engine matches userinfo keys by prefix when it removes one (Info_RemoveKey
+// compares strlen( key ) bytes), so a new "name" (the client's setinfo, a plugin's set_user_info, the server's own)
+// removes "namecolor" when that key comes first, as it does after any earlier rename (the new name goes to the
+// end): the other clients would lose the player's name colour until he reconnects. The last
+// namecolor each player had is kept; when a userinfo pass brings a new name and no namecolor key at all, it is put
+// back. "0" (the player chose none) is a value and is kept like any other; a namecolor the player empties without
+// a rename stays empty. Cleared when the client leaves the slot.
+//=========================================================
+#define NAMECOLOR_MAX_CLIENTS 32
+static char s_szNameColor[ NAMECOLOR_MAX_CLIENTS + 1 ][ 32 ];	// by player index (the engine has at most 32)
+
+static void NameColor_ClientDisconnect( edict_t *pEntity )
+{
+	const int i = ENTINDEX( pEntity );
+	if ( i >= 1 && i <= NAMECOLOR_MAX_CLIENTS )
+		s_szNameColor[i][0] = 0;
+}
+
+static void NameColor_KeepThroughRename( edict_t *pEntity, char *infobuffer )
+{
+	const int i = ENTINDEX( pEntity );
+	if ( i < 1 || i > NAMECOLOR_MAX_CLIENTS )
+		return;
+
+	const char *pszValue = g_engfuncs.pfnInfoKeyValue( infobuffer, "namecolor" );
+	if ( pszValue && pszValue[0] )
+	{
+		strncpy( s_szNameColor[i], pszValue, sizeof(s_szNameColor[i]) - 1 );
+		s_szNameColor[i][ sizeof(s_szNameColor[i]) - 1 ] = 0;
+		return;
+	}
+
+	// the key is missing: put it back only when this pass brings a new name (the engine's prefix removal)
+	const char *pszName = g_engfuncs.pfnInfoKeyValue( infobuffer, "name" );
+	const char *pszNetName = pEntity->v.netname ? STRING( pEntity->v.netname ) : "";
+	if ( s_szNameColor[i][0] && pszName && strcmp( pszName, pszNetName ) )
+		g_engfuncs.pfnSetClientKeyValue( i, infobuffer, "namecolor", s_szNameColor[i] );
+	else
+		s_szNameColor[i][0] = 0;
+}
+
+static void StripPlayerNameColorCodes( edict_t *pEntity, char *infobuffer )
+{
+	const char *pszName = g_engfuncs.pfnInfoKeyValue( infobuffer, "name" );
+	if ( !pszName || !pszName[0] )
+		return;
+
+	char szName[64];
+	strncpy( szName, pszName, sizeof(szName) - 1 );
+	szName[ sizeof(szName) - 1 ] = 0;
+
+	char szFirstCode[12];
+	if ( UTIL_RemoveColorCodes( szName, szFirstCode ) == 0 )
+		return;
+
+	// the engine's name rules for what is left: no leading '#' (a userid), no surrounding spaces, not empty or
+	// "console"
+	char *p;
+	for ( p = szName; *p == '#' || *p == ' '; p++ )
+		;
+	memmove( szName, p, strlen( p ) + 1 );
+	for ( size_t n = strlen( szName ); n > 0 && szName[n - 1] == ' '; n-- )
+		szName[n - 1] = 0;
+	if ( !szName[0] || !stricmp( szName, "console" ) )
+		strcpy( szName, "unnamed" );
+
+	// another player with this name: "(1)name", "(2)name", ... as SV_CheckForDuplicateNames
+	char szUnique[64];
+	strcpy( szUnique, szName );
+	for ( int iDup = 1; iDup < 100; iDup++ )
+	{
+		BOOL bTaken = FALSE;
+		for ( int i = 1; i <= gpGlobals->maxClients && !bTaken; i++ )
+		{
+			edict_t *pOther = INDEXENT( i );
+			if ( !pOther || pOther == pEntity || pOther->free || !pOther->v.netname )
+				continue;
+			if ( !stricmp( STRING( pOther->v.netname ), szUnique ) )
+				bTaken = TRUE;
+		}
+		if ( !bTaken )
+			break;
+		// at most 31 bytes like every engine name, not cut inside a UTF-8 character
+		int iKeep = (int)strlen( szName );
+		if ( iKeep > 27 )
+		{
+			iKeep = 27;
+			while ( iKeep > 0 && ( (unsigned char)szName[iKeep] & 0xC0 ) == 0x80 )
+				iKeep--;
+		}
+		_snprintf( szUnique, sizeof(szUnique), "(%d)%.*s", iDup, iKeep, szName );
+		szUnique[ sizeof(szUnique) - 1 ] = 0;
+	}
+
+	// Valve's engine removes a key by its prefix (Info_RemoveKey compares strlen( key ) bytes), so setting "name"
+	// also removes "namecolor": it is put back
+	char szNameColor[32];
+	strncpy( szNameColor, g_engfuncs.pfnInfoKeyValue( infobuffer, "namecolor" ), sizeof(szNameColor) - 1 );
+	szNameColor[ sizeof(szNameColor) - 1 ] = 0;
+
+	g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pEntity ), infobuffer, "name", szUnique );
+
+	// the player's own name colour stays; else the first code is the name colour: ^1..^8 = "1".."8",
+	// ^xRGB = "xRGB", ^#RRGGBB = "xRRGGBB", ^0 / ^9 = none
+	char szValue[32] = "";
+	char szCurrent[12];
+	if ( UTIL_NameColorValueCode( szNameColor, szCurrent ) == 0 )
+	{
+		const size_t iCodeLen = strlen( szFirstCode );
+		if ( iCodeLen == 2 && szFirstCode[1] >= '1' && szFirstCode[1] <= '8' )
+			_snprintf( szValue, sizeof(szValue), "%c", szFirstCode[1] );
+		else if ( iCodeLen == 5 )
+			_snprintf( szValue, sizeof(szValue), "x%.3s", szFirstCode + 2 );
+		else if ( iCodeLen == 8 )
+			_snprintf( szValue, sizeof(szValue), "x%.6s", szFirstCode + 2 );
+	}
+	szValue[ sizeof(szValue) - 1 ] = 0;
+	if ( !szValue[0] )
+		strcpy( szValue, szNameColor );
+
+	if ( szValue[0] && strcmp( g_engfuncs.pfnInfoKeyValue( infobuffer, "namecolor" ), szValue ) )
+		g_engfuncs.pfnSetClientKeyValue( ENTINDEX( pEntity ), infobuffer, "namecolor", szValue );
+}
+
 /*
 ========================
 ClientUserInfoChanged
@@ -1154,6 +1297,10 @@ it gets sent into the rest of the engine.
 */
 void ClientUserInfoChanged( edict_t *pEntity, char *infobuffer )
 {
+	// before the spawn check: the connect-time userinfo comes here before the player exists
+	NameColor_KeepThroughRename( pEntity, infobuffer );
+	StripPlayerNameColorCodes( pEntity, infobuffer );
+
 	// Is the client spawned yet?
 	if ( !pEntity->pvPrivateData )
 		return;
@@ -1236,6 +1383,7 @@ void ServerDeactivate( void )
 	RenderFade_Reset();		// SBO 2.0: env_render fades of the map
 	EnvStatic_Reset();		// SBO 2.0: env_static props of the map
 	memset( g_bAlwaysSend, 0, sizeof( g_bAlwaysSend ) );	// SBO 2.0: env_model "Always send" of the map
+	EntityGlow_ServerDeactivate();	// SBO 2.1: env_entity_glow: its share of "Always send"
 	EnvSky_ClearEntities();	// SBO 2.0: the entities of the map's 3D sky (effects.cpp)
 	Semiclip_ServerDeactivate();	// SBO 2.0 semiclip
 	KillFeedIcons_Reset();	// SBO 2.0: plugins' killfeed icons (killfeed_icons.cpp): set again on the next map
@@ -1888,8 +2036,9 @@ int AddToFullPack( struct entity_state_s *state, int e, edict_t *ent, edict_t *h
 		{
 			bSkyEntity = EnvSky_IsSkyEntity( e, ent );
 
+			// SBO 2.1: env_entity_glow "Only the activator sees it": its targets go to its player whatever his PVS
 			if ( !bSkyEntity && !ScaledUpStudioModel( ent, player ) && !g_bAlwaysSend[ e ]
-				&& !GmMode_PipSend( ent, host ) )
+				&& !GmMode_PipSend( ent, host ) && !EntityGlow_SendsTo( e, host ) )
 				return 0;
 		}
 		else if ( !pSet )

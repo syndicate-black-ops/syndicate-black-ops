@@ -1,5 +1,5 @@
 """game_player_equip in Bounty Killer: without Use Only every player gets its items at each spawn, as in the other
-modes, instead of the Wong (dm.cpp CDm::PlayerSpawn); with Use Only only the player who fires it."""
+modes, beside the fists (dm.cpp CDm::PlayerSpawn); with Use Only only the player who fires it."""
 
 from etest import Suite
 
@@ -16,7 +16,7 @@ def has(t, name, weapon):
     t.point('info_target', targetname=name + '_no')
 
 
-@S.test('Bounty Killer: a game_player_equip without Use Only gives its sword to each player at spawn, and no Wong; '
+@S.test('Bounty Killer: a game_player_equip without Use Only gives its sword to each player at spawn, beside the fists; '
         'one with Use Only (its pm66) gives nothing at spawn', players=2, doc=DOC, size=(512, 512, 256),
         covers=('game_player_equip:1',))
 def bk_equip_spawn(t):
@@ -35,4 +35,4 @@ def bk_equip_spawn(t):
     for p in ('1', '2'):
         t.expect.fired('sw%s_yes' % p, count=1, after='check')
         t.expect.fired('pm%s_no' % p, count=1, after='check')
-        t.expect.fired('wo%s_no' % p, count=1, after='check')
+        t.expect.fired('wo%s_yes' % p, count=1, after='check')

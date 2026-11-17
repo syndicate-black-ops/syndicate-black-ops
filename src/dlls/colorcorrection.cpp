@@ -8,7 +8,7 @@
 //     falloff from it and gone from the max falloff.
 //   * color_correction_volume: a brush. A player's view inside the brush fades its weight up to "maxweight" over
 //     "fadeDuration", outside down to 0 (each client works it out for its own view).
-//   * Both: a lookup table file (Source .raw, or .cube) under gfx/colorcorrection/, precached as a generic resource so
+//   * Both: a lookup table file (Source .raw) under gfx/colorcorrection/, precached as a generic resource so
 //     clients download it, and / or the simple keys (saturation, contrast, brightness, gamma, tint). Targetname
 //     toggles (on / off / toggle), "master" switches it off while the master is not active, "StartDisabled",
 //     "exclusive" (while it has weight it takes that share from the others).
@@ -108,7 +108,7 @@ protected:
 	float	FadeInTime( void ) { return IsVolume() ? m_flFadeDuration : m_flFadeIn; }
 	float	FadeOutTime( void ) { return IsVolume() ? m_flFadeDuration : m_flFadeOut; }
 
-	string_t	m_iszFile;			// "filename": gfx/colorcorrection/<name>.raw or .cube ("" = none)
+	string_t	m_iszFile;			// "filename": gfx/colorcorrection/<name>.raw ("" = none)
 	string_t	m_iszMaster;		// "master"
 	float		m_flMaxWeight;		// "maxweight" 0 .. 1
 	float		m_flFadeIn;			// "fadeInDuration" (point)
@@ -274,7 +274,7 @@ void CColorCorrectionBase::Precache( void )
 	m_bUsable = FStringNull( m_iszFile ) || ColorCorr_ValidPath( STRING( m_iszFile ) );
 	if ( !m_bUsable )
 	{
-		ALERT( at_error, "%s \"%s\": bad file \"%s\" (a .raw or .cube in %s, at most %d characters)\n",
+		ALERT( at_error, "%s \"%s\": bad file \"%s\" (a .raw in %s, at most %d characters)\n",
 			STRING( pev->classname ), STRING( pev->targetname ), STRING( m_iszFile ), COLORCORR_FOLDER,
 			COLORCORR_MAX_PATH - 1 );
 		return;

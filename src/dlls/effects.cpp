@@ -774,9 +774,17 @@ void CBeam::BeamDamage( TraceResult *ptr, entvars_t *pevAttacker, entvars_t *pev
 		if ( pHit )
 		{
 			const Vector vecPunch = pHit->pev->punchangle;
+			// TakeDamage can free the entity at once (a TakeDamage hook that removes it with REMOVE_ENTITY)
+			EHANDLE hHit;
+			hHit = pHit;
 			ClearMultiDamage();
 			pHit->TraceAttack( pevAttacker, pev->dmg * (gpGlobals->time - pev->dmgtime), (ptr->vecEndPos - pev->origin).Normalize(), ptr, DMG_ENERGYBEAM );
 			ApplyMultiDamage( pevInflictor, pevAttacker );
+			if ( ( pHit = hHit ) == NULL )
+			{
+				pev->dmgtime = gpGlobals->time;
+				return;
+			}
 			// SBO 2.0, from Featureful: "No Camera Punch" (env_beam, env_laser): a hit player's view is not kicked
 			if ( ( pev->spawnflags & SF_BEAM_NO_PUNCH ) && pHit->IsPlayer() )
 				pHit->pev->punchangle = vecPunch;
@@ -2796,6 +2804,9 @@ void CItemSoda::CanTouch ( CBaseEntity *pOther )
 // player's first update; SBO keeps its own list (s_iSkyEntitySerial), made by the env_sky that is on when it comes
 // on and again every second (entities that a monstermaker or a shooter puts there later), and cleared when no
 // env_sky is on. Players and beams are never on it.
+// SBO 2.1 (Source's sky_camera fog): each env_sky may have a fog of its own for the sky room, with the keys of env_fog
+// ("rendercolor", "density", in sky-room units); density 0, the default, is no fog, as before. It travels with SetSky,
+// and the client draws the sky pass with it (cl_dll/tri.cpp RenderSkyFog).
 //=========================================================
 #define SF_ENVSKY_START_OFF		0x0001
 #define ENVSKY_RESCAN_INTERVAL	1.0f	// how often the env_sky that is on lists the entities of its sky room again
@@ -2816,10 +2827,14 @@ public:
 
 	void	SendState( CBasePlayer *pPlayer );	// NULL: to all
 	void	EXPORT SkyEntitiesThink( void );
+	void	KeyValue( KeyValueData *pkvd );
+	CKeyValue GetKeyValue( const char *keyName );		// SBO 2.1
 	void	RuntimeKeyValueChanged( const char *keyName );	// SBO 2.1
 	void	SetActive( BOOL fActive );
 
 	BOOL	m_fActive;
+	float	m_flFogDensity;	// SBO 2.1: the sky room's fog ("density", 0-0.01 like env_fog; 0 none), color rendercolor
+	int		m_iSkyboxFog;	// SBO 2.1: "fogskybox", how much the sky fog covers the 2D skybox: 0 none, 1 partial, 2 full
 };
 
 LINK_ENTITY_TO_CLASS( env_sky, CEnvSky );
@@ -2827,6 +2842,8 @@ LINK_ENTITY_TO_CLASS( env_sky, CEnvSky );
 TYPEDESCRIPTION	CEnvSky::m_SaveData[] =
 {
 	DEFINE_FIELD( CEnvSky, m_fActive, FIELD_BOOLEAN ),
+	DEFINE_FIELD( CEnvSky, m_flFogDensity, FIELD_FLOAT ),
+	DEFINE_FIELD( CEnvSky, m_iSkyboxFog, FIELD_INTEGER ),
 };
 
 IMPLEMENT_SAVERESTORE( CEnvSky, CPointEntity );
@@ -2958,7 +2975,55 @@ void CEnvSky :: Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE use
 	SendState( NULL );
 }
 
-// SBO 2.1: a key changed at run time (trigger_changevalue / trigger_copyvalue: "origin", the scale "frags"): the sky
+// SBO 2.1: the sky room's fog density, kept as env_fog keeps its own (CClientFog::KeyValue): outside 0-0.01 is no fog
+void CEnvSky :: KeyValue( KeyValueData *pkvd )
+{
+	if ( FStrEq( pkvd->szKeyName, "density" ) )
+	{
+		m_flFogDensity = atof( pkvd->szValue );
+
+		if ( !( m_flFogDensity >= 0 && m_flFogDensity <= 0.01 ) )
+			m_flFogDensity = 0;
+
+		pkvd->fHandled = TRUE;
+	}
+	else if ( FStrEq( pkvd->szKeyName, "fogskybox" ) )
+	{
+		// Skybox fog: 0 none, 1 partial (the FGD default, cbase.cpp s_FgdDefaults), 2 full; anything else is partial
+		m_iSkyboxFog = atoi( pkvd->szValue );
+		if ( m_iSkyboxFog < 0 || m_iSkyboxFog > 2 )
+			m_iSkyboxFog = 1;
+		pkvd->fHandled = TRUE;
+	}
+	else
+	{
+		CPointEntity::KeyValue( pkvd );
+	}
+}
+
+CKeyValue CEnvSky :: GetKeyValue( const char *keyName )
+{
+	if ( FStrEq( keyName, "density" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		keyvalue.keyType = KEY_TYPE_FLOAT;
+		keyvalue.keyName = "density";
+		keyvalue.fVal = m_flFogDensity;
+		return keyvalue;
+	}
+	if ( FStrEq( keyName, "fogskybox" ) )
+	{
+		CKeyValue keyvalue = g_emptyKeyValue;
+		keyvalue.keyType = KEY_TYPE_INT;
+		keyvalue.keyName = "fogskybox";
+		keyvalue.iVal = m_iSkyboxFog;
+		return keyvalue;
+	}
+	return CPointEntity::GetKeyValue( keyName );
+}
+
+// SBO 2.1: a key changed at run time (trigger_changevalue / trigger_copyvalue: "origin", the scale "frags", the fog
+// "rendercolor" / "density" / "fogskybox"): the sky
 // that is on goes to every client again, and a moved camera lists the entities of its new sky room. One that is off
 // sends its keys when it comes on.
 void CEnvSky :: RuntimeKeyValueChanged( const char *keyName )
@@ -2984,7 +3049,9 @@ void CEnvSky :: UpdateOnRemove( void )
 }
 
 // SoHL "SetSky": byte mode (1 on, 0 off), coord x y z (the sky camera), byte scale (SoHL 1.8 AJH: 0 = no parallax,
-// else the camera moves 1/scale of the view's offset from the map origin; the "frags" key)
+// else the camera moves 1/scale of the view's offset from the map origin; the "frags" key). SBO 2.1: then the sky
+// room's fog as the Fog message has it (CBasePlayer::SendFog): bytes r g b, the density float as 4 bytes (0: none),
+// then a byte Skybox fog (0 none, 1 partial, 2 full).
 void CEnvSky :: SendState( CBasePlayer *pPlayer )
 {
 	if ( pPlayer )
@@ -2997,6 +3064,22 @@ void CEnvSky :: SendState( CBasePlayer *pPlayer )
 		WRITE_COORD( pev->origin.y );
 		WRITE_COORD( pev->origin.z );
 		WRITE_BYTE( pev->frags < 0 ? 0 : ( pev->frags > 255 ? 255 : (int)pev->frags ) );
+
+		// SBO 2.1: the sky room's fog
+		for ( int i = 0; i < 3; i++ )
+			WRITE_BYTE( pev->rendercolor[i] < 0 ? 0 : ( pev->rendercolor[i] > 255 ? 255 : (int)pev->rendercolor[i] ) );
+
+		union
+		{
+			float f;
+			unsigned char b[4];
+		} density;
+
+		density.f = m_flFogDensity;
+		for ( int i = 0; i < 4; i++ )
+			WRITE_BYTE( density.b[i] );
+
+		WRITE_BYTE( m_iSkyboxFog );	// SBO 2.1: Skybox fog, 0 none, 1 partial, 2 full
 	MESSAGE_END();
 }
 

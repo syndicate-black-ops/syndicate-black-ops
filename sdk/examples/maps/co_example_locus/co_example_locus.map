@@ -1,0 +1,1042 @@
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"wad" "halflife.wad;anzymut.wad;roux.wad;co_escape.wad;sbo_tools.wad"
+"message" "SBO example: locus keys"
+"skyname" "citynight"
+"MaxRange" "100000"
+{
+( -848 -336 0 ) ( -848 -336 -16 ) ( -848 336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 0 ) ( 848 336 -16 ) ( 848 -336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 0 ) ( -848 336 0 ) ( 848 336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 -16 ) ( -848 -336 -16 ) ( 848 -336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 0 ) ( -848 -336 0 ) ( 848 336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 848 336 -16 ) ( -848 336 -16 ) ( 848 -336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -848 -336 272 ) ( -848 -336 256 ) ( -848 336 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 272 ) ( 848 336 256 ) ( 848 -336 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 272 ) ( -848 336 272 ) ( 848 336 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 256 ) ( -848 -336 256 ) ( 848 -336 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 272 ) ( -848 -336 272 ) ( 848 336 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 848 336 256 ) ( -848 336 256 ) ( 848 -336 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -832 320 256 ) ( -832 320 0 ) ( -832 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 336 256 ) ( 832 336 0 ) ( 832 320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 336 256 ) ( -832 336 256 ) ( 832 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 320 0 ) ( -832 320 0 ) ( 832 320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 320 256 ) ( -832 320 256 ) ( 832 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 832 336 0 ) ( -832 336 0 ) ( 832 320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -832 -336 256 ) ( -832 -336 0 ) ( -832 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -320 256 ) ( -480 -320 0 ) ( -480 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -320 256 ) ( -832 -320 256 ) ( -480 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -336 0 ) ( -832 -336 0 ) ( -480 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -336 256 ) ( -832 -336 256 ) ( -480 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -480 -320 0 ) ( -832 -320 0 ) ( -480 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -480 -336 40 ) ( -480 -336 0 ) ( -480 -320 40 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -320 40 ) ( -160 -320 0 ) ( -160 -336 40 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -320 40 ) ( -480 -320 40 ) ( -160 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 0 ) ( -480 -336 0 ) ( -160 -336 40 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 40 ) ( -480 -336 40 ) ( -160 -320 40 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -160 -320 0 ) ( -480 -320 0 ) ( -160 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -480 -336 256 ) ( -480 -336 120 ) ( -480 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -320 256 ) ( -160 -320 120 ) ( -160 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -320 256 ) ( -480 -320 256 ) ( -160 -320 120 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 120 ) ( -480 -336 120 ) ( -160 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 256 ) ( -480 -336 256 ) ( -160 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -160 -320 120 ) ( -480 -320 120 ) ( -160 -336 120 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -160 -336 256 ) ( -160 -336 0 ) ( -160 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -320 256 ) ( -16 -320 0 ) ( -16 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -320 256 ) ( -160 -320 256 ) ( -16 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -336 0 ) ( -160 -336 0 ) ( -16 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -336 256 ) ( -160 -336 256 ) ( -16 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 -320 0 ) ( -160 -320 0 ) ( -16 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -16 -336 256 ) ( -16 -336 112 ) ( -16 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -320 256 ) ( 144 -320 112 ) ( 144 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -320 256 ) ( -16 -320 256 ) ( 144 -320 112 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -336 112 ) ( -16 -336 112 ) ( 144 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -336 256 ) ( -16 -336 256 ) ( 144 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 144 -320 112 ) ( -16 -320 112 ) ( 144 -336 112 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 144 -336 256 ) ( 144 -336 0 ) ( 144 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 -320 256 ) ( 832 -320 0 ) ( 832 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 -320 256 ) ( 144 -320 256 ) ( 832 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 -336 0 ) ( 144 -336 0 ) ( 832 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 832 -336 256 ) ( 144 -336 256 ) ( 832 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 832 -320 0 ) ( 144 -320 0 ) ( 832 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 832 -336 256 ) ( 832 -336 0 ) ( 832 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 256 ) ( 848 336 0 ) ( 848 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 336 256 ) ( 832 336 256 ) ( 848 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 0 ) ( 832 -336 0 ) ( 848 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 848 -336 256 ) ( 832 -336 256 ) ( 848 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 848 336 0 ) ( 832 336 0 ) ( 848 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -848 -336 256 ) ( -848 -336 0 ) ( -848 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -832 336 256 ) ( -832 336 0 ) ( -832 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -832 336 256 ) ( -848 336 256 ) ( -832 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -832 -336 0 ) ( -848 -336 0 ) ( -832 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -832 -336 256 ) ( -848 -336 256 ) ( -832 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -832 336 0 ) ( -848 336 0 ) ( -832 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -560 -752 0 ) ( -560 -752 -16 ) ( -560 -336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 0 ) ( -80 -336 -16 ) ( -80 -752 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 0 ) ( -560 -336 0 ) ( -80 -336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 -16 ) ( -560 -752 -16 ) ( -80 -752 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 0 ) ( -560 -752 0 ) ( -80 -336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -80 -336 -16 ) ( -560 -336 -16 ) ( -80 -752 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -560 -752 272 ) ( -560 -752 256 ) ( -560 -336 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 272 ) ( -80 -336 256 ) ( -80 -752 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 272 ) ( -560 -336 272 ) ( -80 -336 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 256 ) ( -560 -752 256 ) ( -80 -752 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 272 ) ( -560 -752 272 ) ( -80 -336 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -80 -336 256 ) ( -560 -336 256 ) ( -80 -752 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -544 -352 256 ) ( -544 -352 0 ) ( -544 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -336 256 ) ( -480 -336 0 ) ( -480 -352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -336 256 ) ( -544 -336 256 ) ( -480 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -352 0 ) ( -544 -352 0 ) ( -480 -352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -480 -352 256 ) ( -544 -352 256 ) ( -480 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -480 -336 0 ) ( -544 -336 0 ) ( -480 -352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -480 -352 40 ) ( -480 -352 0 ) ( -480 -336 40 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 40 ) ( -160 -336 0 ) ( -160 -352 40 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 40 ) ( -480 -336 40 ) ( -160 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -352 0 ) ( -480 -352 0 ) ( -160 -352 40 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -352 40 ) ( -480 -352 40 ) ( -160 -336 40 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -160 -336 0 ) ( -480 -336 0 ) ( -160 -352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -480 -352 256 ) ( -480 -352 120 ) ( -480 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 256 ) ( -160 -336 120 ) ( -160 -352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -336 256 ) ( -480 -336 256 ) ( -160 -336 120 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -352 120 ) ( -480 -352 120 ) ( -160 -352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -160 -352 256 ) ( -480 -352 256 ) ( -160 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -160 -336 120 ) ( -480 -336 120 ) ( -160 -352 120 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -160 -352 256 ) ( -160 -352 0 ) ( -160 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -336 256 ) ( -96 -336 0 ) ( -96 -352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -336 256 ) ( -160 -336 256 ) ( -96 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -352 0 ) ( -160 -352 0 ) ( -96 -352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -352 256 ) ( -160 -352 256 ) ( -96 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -96 -336 0 ) ( -160 -336 0 ) ( -96 -352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -544 -752 256 ) ( -544 -752 0 ) ( -544 -736 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -736 256 ) ( -96 -736 0 ) ( -96 -752 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -736 256 ) ( -544 -736 256 ) ( -96 -736 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -752 0 ) ( -544 -752 0 ) ( -96 -752 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -96 -752 256 ) ( -544 -752 256 ) ( -96 -736 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -96 -736 0 ) ( -544 -736 0 ) ( -96 -752 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -96 -752 256 ) ( -96 -752 0 ) ( -96 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 256 ) ( -80 -336 0 ) ( -80 -752 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -336 256 ) ( -96 -336 256 ) ( -80 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 0 ) ( -96 -752 0 ) ( -80 -752 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 -752 256 ) ( -96 -752 256 ) ( -80 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -80 -336 0 ) ( -96 -336 0 ) ( -80 -752 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -560 -752 256 ) ( -560 -752 0 ) ( -560 -336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -544 -336 256 ) ( -544 -336 0 ) ( -544 -752 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -544 -336 256 ) ( -560 -336 256 ) ( -544 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -544 -752 0 ) ( -560 -752 0 ) ( -544 -752 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -544 -752 256 ) ( -560 -752 256 ) ( -544 -336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -544 -336 0 ) ( -560 -336 0 ) ( -544 -752 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -48 -496 0 ) ( -48 -496 -16 ) ( -48 -336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 0 ) ( 176 -336 -16 ) ( 176 -496 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 0 ) ( -48 -336 0 ) ( 176 -336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 -16 ) ( -48 -496 -16 ) ( 176 -496 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 0 ) ( -48 -496 0 ) ( 176 -336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 176 -336 -16 ) ( -48 -336 -16 ) ( 176 -496 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -48 -496 144 ) ( -48 -496 128 ) ( -48 -336 144 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 144 ) ( 176 -336 128 ) ( 176 -496 144 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 144 ) ( -48 -336 144 ) ( 176 -336 128 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 128 ) ( -48 -496 128 ) ( 176 -496 144 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 144 ) ( -48 -496 144 ) ( 176 -336 144 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 176 -336 128 ) ( -48 -336 128 ) ( 176 -496 128 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -32 -352 128 ) ( -32 -352 0 ) ( -32 -336 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -336 128 ) ( -16 -336 0 ) ( -16 -352 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -336 128 ) ( -32 -336 128 ) ( -16 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -352 0 ) ( -32 -352 0 ) ( -16 -352 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -16 -352 128 ) ( -32 -352 128 ) ( -16 -336 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -16 -336 0 ) ( -32 -336 0 ) ( -16 -352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -16 -352 128 ) ( -16 -352 112 ) ( -16 -336 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -336 128 ) ( 144 -336 112 ) ( 144 -352 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -336 128 ) ( -16 -336 128 ) ( 144 -336 112 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -352 112 ) ( -16 -352 112 ) ( 144 -352 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -352 128 ) ( -16 -352 128 ) ( 144 -336 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 144 -336 112 ) ( -16 -336 112 ) ( 144 -352 112 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 144 -352 128 ) ( 144 -352 0 ) ( 144 -336 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -336 128 ) ( 160 -336 0 ) ( 160 -352 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -336 128 ) ( 144 -336 128 ) ( 160 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -352 0 ) ( 144 -352 0 ) ( 160 -352 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -352 128 ) ( 144 -352 128 ) ( 160 -336 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 160 -336 0 ) ( 144 -336 0 ) ( 160 -352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -32 -496 128 ) ( -32 -496 0 ) ( -32 -480 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -480 128 ) ( 160 -480 0 ) ( 160 -496 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -480 128 ) ( -32 -480 128 ) ( 160 -480 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -496 0 ) ( -32 -496 0 ) ( 160 -496 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 160 -496 128 ) ( -32 -496 128 ) ( 160 -480 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 160 -480 0 ) ( -32 -480 0 ) ( 160 -496 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 160 -496 128 ) ( 160 -496 0 ) ( 160 -336 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 128 ) ( 176 -336 0 ) ( 176 -496 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -336 128 ) ( 160 -336 128 ) ( 176 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 0 ) ( 160 -496 0 ) ( 176 -496 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 176 -496 128 ) ( 160 -496 128 ) ( 176 -336 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 176 -336 0 ) ( 160 -336 0 ) ( 176 -496 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -48 -496 128 ) ( -48 -496 0 ) ( -48 -336 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 -336 128 ) ( -32 -336 0 ) ( -32 -496 128 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 -336 128 ) ( -48 -336 128 ) ( -32 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 -496 0 ) ( -48 -496 0 ) ( -32 -496 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -32 -496 128 ) ( -48 -496 128 ) ( -32 -336 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -32 -336 0 ) ( -48 -336 0 ) ( -32 -496 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -752 160 1 ) ( -752 160 0 ) ( -752 320 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -496 320 1 ) ( -496 320 0 ) ( -496 160 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -496 320 1 ) ( -752 320 1 ) ( -496 320 0 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -496 160 0 ) ( -752 160 0 ) ( -496 160 1 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -496 160 1 ) ( -752 160 1 ) ( -496 320 1 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -496 320 0 ) ( -752 320 0 ) ( -496 160 0 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -336 160 1 ) ( -336 160 0 ) ( -336 320 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 320 1 ) ( -80 320 0 ) ( -80 160 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 320 1 ) ( -336 320 1 ) ( -80 320 0 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 160 0 ) ( -336 160 0 ) ( -80 160 1 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -80 160 1 ) ( -336 160 1 ) ( -80 320 1 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -80 320 0 ) ( -336 320 0 ) ( -80 160 0 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 80 160 1 ) ( 80 160 0 ) ( 80 320 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 336 320 1 ) ( 336 320 0 ) ( 336 160 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 336 320 1 ) ( 80 320 1 ) ( 336 320 0 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 336 160 0 ) ( 80 160 0 ) ( 336 160 1 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 336 160 1 ) ( 80 160 1 ) ( 336 320 1 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 336 320 0 ) ( 80 320 0 ) ( 336 160 0 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 496 160 1 ) ( 496 160 0 ) ( 496 320 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 320 1 ) ( 752 320 0 ) ( 752 160 1 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 320 1 ) ( 496 320 1 ) ( 752 320 0 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 160 0 ) ( 496 160 0 ) ( 752 160 1 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 752 160 1 ) ( 496 160 1 ) ( 752 320 1 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 752 320 0 ) ( 496 320 0 ) ( 752 160 0 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 96 48 1 ) ( 96 48 0 ) ( 96 144 1 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 144 1 ) ( 192 144 0 ) ( 192 48 1 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 144 1 ) ( 96 144 1 ) ( 192 144 0 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 48 0 ) ( 96 48 0 ) ( 192 48 1 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 48 1 ) ( 96 48 1 ) ( 192 144 1 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 192 144 0 ) ( 96 144 0 ) ( 192 48 0 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 544 -176 256 ) ( 544 -176 250 ) ( 544 -144 256 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 576 -144 256 ) ( 576 -144 250 ) ( 576 -176 256 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 576 -144 256 ) ( 544 -144 256 ) ( 576 -144 250 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 576 -176 250 ) ( 544 -176 250 ) ( 576 -176 256 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 576 -176 256 ) ( 544 -176 256 ) ( 576 -144 256 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 576 -144 250 ) ( 544 -144 250 ) ( 576 -176 250 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "light"
+"origin" "-624 -160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "-624 160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "-208 -160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "-208 160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "208 -160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "208 160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "624 -160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "624 160 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-32 0 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "32 0 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-32 -64 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "32 -64 37"
+"angles" "0 90 0"
+}
+{
+"classname" "info_player_start"
+"origin" "0 0 37"
+"angles" "0 90 0"
+}
+{
+"classname" "point_worldtext"
+"origin" "831 0 196"
+"message" "LOCUS: ONE ENTITY ASKS ANOTHER FOR A VALUE"
+"textsize" "11"
+"color" "255 255 255 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "831 0 172"
+"message" "Each bay is one setup of the Locus guide, with the same names.\nSetups 1-4 on the north wall, 5 and 6 on the south wall.\nThe explosions have No Damage on, so they never hurt you."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-624 319 200"
+"message" "1  WHERE YOU STAND"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-624 319 176"
+"message" "Press the button: the explosion\ngoes off at your feet."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup1"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -534 318 62 ) ( -534 318 50 ) ( -534 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -522 320 62 ) ( -522 320 50 ) ( -522 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -522 320 62 ) ( -534 320 62 ) ( -522 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -522 318 50 ) ( -534 318 50 ) ( -522 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -522 318 62 ) ( -534 318 62 ) ( -522 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -522 320 50 ) ( -534 320 50 ) ( -522 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "-528 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-808 -296 232"
+"targetname" "info_setup1"
+"title" "Setup 1: an explosion where you stand"
+"message" "The button targets boom, an env_explosion whose Position is !activator.\n\nThe button passes you on as the activator, and the explosion asks you for your position."
+}
+{
+"classname" "func_button"
+"target" "boom1"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -630 318 62 ) ( -630 318 50 ) ( -630 320 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -618 320 62 ) ( -618 320 50 ) ( -618 318 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -618 320 62 ) ( -630 320 62 ) ( -618 320 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -618 318 50 ) ( -630 318 50 ) ( -618 318 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -618 318 62 ) ( -630 318 62 ) ( -618 320 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -618 320 50 ) ( -630 320 50 ) ( -618 318 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "env_explosion"
+"origin" "-792 -296 232"
+"targetname" "boom1"
+"target" "!activator"
+"iMagnitude" "60"
+"spawnflags" "3"
+}
+{
+"classname" "point_worldtext"
+"origin" "-208 319 200"
+"message" "2  ABOVE YOUR HEAD"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-208 319 176"
+"message" "Press the button: the explosion\ngoes off 50 units above your eyes."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup2"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -118 318 62 ) ( -118 318 50 ) ( -118 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -106 320 62 ) ( -106 320 50 ) ( -106 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -106 320 62 ) ( -118 320 62 ) ( -106 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -106 318 50 ) ( -118 318 50 ) ( -106 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -106 318 62 ) ( -118 318 62 ) ( -106 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -106 320 50 ) ( -118 320 50 ) ( -106 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "-112 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-776 -296 232"
+"targetname" "info_setup2"
+"title" "Setup 2: an explosion above your head"
+"message" "The button targets boom2, an env_explosion whose Position is overhead.\n\noverhead is a calc_position: Entity to use *locus (the activator), Position to calculate Eyes, Add offset 0 0 50. It asks you where your eyes are and adds 50 units on top."
+}
+{
+"classname" "func_button"
+"target" "boom2"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -214 318 62 ) ( -214 318 50 ) ( -214 320 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -202 320 62 ) ( -202 320 50 ) ( -202 318 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -202 320 62 ) ( -214 320 62 ) ( -202 320 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -202 318 50 ) ( -214 318 50 ) ( -202 318 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -202 318 62 ) ( -214 318 62 ) ( -202 320 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -202 320 50 ) ( -214 320 50 ) ( -202 318 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "calc_position"
+"origin" "-760 -296 232"
+"targetname" "overhead"
+"netname" "*locus"
+"impulse" "1"
+"message" "0 0 50"
+}
+{
+"classname" "env_explosion"
+"origin" "-744 -296 232"
+"targetname" "boom2"
+"target" "overhead"
+"iMagnitude" "60"
+"spawnflags" "3"
+}
+{
+"classname" "point_worldtext"
+"origin" "208 319 200"
+"message" "3  REMEMBER WHERE YOU WERE"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "208 319 176"
+"message" "Walk over the yellow square, step off,\nthen press the button."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup3"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 298 318 62 ) ( 298 318 50 ) ( 298 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 310 320 62 ) ( 310 320 50 ) ( 310 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 310 320 62 ) ( 298 320 62 ) ( 310 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 310 318 50 ) ( 298 318 50 ) ( 310 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 310 318 62 ) ( 298 318 62 ) ( 310 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 310 320 50 ) ( 298 320 50 ) ( 310 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "304 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-728 -296 232"
+"targetname" "info_setup3"
+"title" "Setup 3: remember where you were"
+"message" "The yellow square is a trigger_multiple with Target spot. spot is a locus_variable with its editor defaults: each time the trigger fires it, it records the position of the player who stepped in.\n\nThe button targets boom3, an env_explosion whose Position is spot, so it goes off where the last player came in, no matter who presses the button."
+}
+{
+"classname" "func_button"
+"target" "boom3"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 202 318 62 ) ( 202 318 50 ) ( 202 320 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 214 320 62 ) ( 214 320 50 ) ( 214 318 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 214 320 62 ) ( 202 320 62 ) ( 214 320 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 214 318 50 ) ( 202 318 50 ) ( 214 318 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 214 318 62 ) ( 202 318 62 ) ( 214 320 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 214 320 50 ) ( 202 320 50 ) ( 214 318 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "144 96 2"
+"message" "STEP HERE"
+"textsize" "10"
+"color" "255 220 60 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "trigger_multiple"
+"target" "spot"
+"wait" "0.2"
+{
+( 96 48 72 ) ( 96 48 0 ) ( 96 144 72 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 144 72 ) ( 192 144 0 ) ( 192 48 72 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 144 72 ) ( 96 144 72 ) ( 192 144 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 48 0 ) ( 96 48 0 ) ( 192 48 72 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 192 48 72 ) ( 96 48 72 ) ( 192 144 72 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 192 144 0 ) ( 96 144 0 ) ( 192 48 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "locus_variable"
+"origin" "-712 -296 232"
+"targetname" "spot"
+"m_iszPosition" "*locus"
+}
+{
+"classname" "env_explosion"
+"origin" "-696 -296 232"
+"targetname" "boom3"
+"target" "spot"
+"iMagnitude" "60"
+"spawnflags" "3"
+}
+{
+"classname" "point_worldtext"
+"origin" "624 319 200"
+"message" "4  HEAL ONLY WHEN HURT"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "624 319 176"
+"message" "Red: lose 60 health. Green: get 25 back,\nbut only below 50 health."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup4"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 714 318 62 ) ( 714 318 50 ) ( 714 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 726 320 62 ) ( 726 320 50 ) ( 726 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 726 320 62 ) ( 714 320 62 ) ( 726 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 726 318 50 ) ( 714 318 50 ) ( 726 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 726 318 62 ) ( 714 318 62 ) ( 726 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 726 320 50 ) ( 714 320 50 ) ( 726 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "720 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-680 -296 232"
+"targetname" "info_setup4"
+"title" "Setup 4: heal only when hurt"
+"message" "The green button targets check, a trigger_compare: Base value !activator (your health divided by 100), Compare value 0.5, Comparison to pass Less, Fire on comparison pass heal.\n\nheal is a game_player_hurt with Damage To Apply -25. Below 50 health you get 25 back, above it nothing happens.\n\nThe red button is a game_player_hurt with Damage To Apply 60, so you can try it."
+}
+{
+"classname" "func_button"
+"target" "hurt"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 586 318 62 ) ( 586 318 50 ) ( 586 320 62 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 598 320 62 ) ( 598 320 50 ) ( 598 318 62 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 598 320 62 ) ( 586 320 62 ) ( 598 320 50 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 598 318 50 ) ( 586 318 50 ) ( 598 318 62 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 598 318 62 ) ( 586 318 62 ) ( 598 320 62 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 598 320 50 ) ( 586 320 50 ) ( 598 318 50 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "check"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 634 318 62 ) ( 634 318 50 ) ( 634 320 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 646 320 62 ) ( 646 320 50 ) ( 646 318 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 646 320 62 ) ( 634 320 62 ) ( 646 320 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 646 318 50 ) ( 634 318 50 ) ( 646 318 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 646 318 62 ) ( 634 318 62 ) ( 646 320 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 646 320 50 ) ( 634 320 50 ) ( 646 318 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "592 319 70"
+"message" "HURT"
+"textsize" "5"
+"color" "255 120 120 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "640 319 70"
+"message" "HEAL"
+"textsize" "5"
+"color" "120 255 120 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_player_hurt"
+"origin" "-664 -296 232"
+"targetname" "hurt"
+"dmg" "60"
+}
+{
+"classname" "trigger_compare"
+"origin" "-648 -296 232"
+"targetname" "check"
+"initial_value" "!activator"
+"compare_value" "0.5"
+"testtype" "4"
+"pass_target" "heal"
+}
+{
+"classname" "game_player_hurt"
+"origin" "-632 -296 232"
+"targetname" "heal"
+"dmg" "-25"
+}
+{
+"classname" "point_worldtext"
+"origin" "-320 -319 236"
+"message" "5  OPEN A DOOR AFTER FIVE KILLS"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-320 -319 214"
+"message" "Shoot the five zombies behind the window. The fifth kill opens the door."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "monster_zombie"
+"origin" "-480 -600 0"
+"angles" "0 90 0"
+"TriggerTarget" "count"
+"TriggerCondition" "4"
+}
+{
+"classname" "monster_zombie"
+"origin" "-400 -536 0"
+"angles" "0 90 0"
+"TriggerTarget" "count"
+"TriggerCondition" "4"
+}
+{
+"classname" "monster_zombie"
+"origin" "-320 -600 0"
+"angles" "0 90 0"
+"TriggerTarget" "count"
+"TriggerCondition" "4"
+}
+{
+"classname" "monster_zombie"
+"origin" "-240 -536 0"
+"angles" "0 90 0"
+"TriggerTarget" "count"
+"TriggerCondition" "4"
+}
+{
+"classname" "monster_zombie"
+"origin" "-160 -600 0"
+"angles" "0 90 0"
+"TriggerTarget" "count"
+"TriggerCondition" "4"
+}
+{
+"classname" "light"
+"origin" "-320 -640 232"
+"_light" "255 245 230 180"
+}
+{
+"classname" "light"
+"origin" "-320 -448 232"
+"_light" "255 245 230 180"
+}
+{
+"classname" "game_number"
+"origin" "-616 -296 232"
+"targetname" "kills"
+}
+{
+"classname" "calc_eval_number"
+"origin" "-600 -296 232"
+"targetname" "count"
+"left_operand" "kills"
+"right_operand" "1"
+"operation" "0"
+"store_result" "kills"
+"target" "check5"
+}
+{
+"classname" "trigger_compare"
+"origin" "-584 -296 232"
+"targetname" "check5"
+"initial_value" "kills"
+"compare_value" "5"
+"testtype" "1"
+"pass_target" "gate"
+}
+{
+"classname" "func_door"
+"targetname" "gate"
+"angles" "-90 0 0"
+"speed" "60"
+"wait" "-1"
+"lip" "8"
+{
+( -16 -350 112 ) ( -16 -350 0 ) ( -16 -322 112 ) mtldoor [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -322 112 ) ( 144 -322 0 ) ( 144 -350 112 ) mtldoor [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -322 112 ) ( -16 -322 112 ) ( 144 -322 0 ) mtldoor [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -350 0 ) ( -16 -350 0 ) ( 144 -350 112 ) mtldoor [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 144 -350 112 ) ( -16 -350 112 ) ( 144 -322 112 ) mtldoor [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 144 -322 0 ) ( -16 -322 0 ) ( 144 -350 0 ) mtldoor [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "64 -479 56"
+"message" "OPEN"
+"textsize" "16"
+"color" "120 255 120 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup5"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 250 -320 62 ) ( 250 -320 50 ) ( 250 -318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 262 -318 62 ) ( 262 -318 50 ) ( 262 -320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 262 -318 62 ) ( 250 -318 62 ) ( 262 -318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 262 -320 50 ) ( 250 -320 50 ) ( 262 -320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 262 -320 62 ) ( 250 -320 62 ) ( 262 -318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 262 -318 50 ) ( 250 -318 50 ) ( 262 -320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "256 -319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-568 -296 232"
+"targetname" "info_setup5"
+"title" "Setup 5: open a door after five kills"
+"message" "Each zombie has TriggerTarget count and Trigger Condition Death.\n\ncount is a calc_eval_number: First operand kills, Second operand 1, Operation Add, Store result in kills, Trigger after operation check5. kills is a game_number.\n\ncheck5 is a trigger_compare: Base value kills, Compare value 5, Comparison to pass Greater or equal, Fire on comparison pass gate. The fifth death opens the door gate."
+}
+{
+"classname" "point_worldtext"
+"origin" "560 -319 200"
+"message" "6  A BEAM THAT FOLLOWS YOU"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "560 -319 176"
+"message" "Press the button and walk away: the beam\nfollows you for 3 seconds."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "tether"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 554 -320 62 ) ( 554 -320 50 ) ( 554 -318 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 566 -318 62 ) ( 566 -318 50 ) ( 566 -320 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 566 -318 62 ) ( 554 -318 62 ) ( 566 -318 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 566 -320 50 ) ( 554 -320 50 ) ( 566 -320 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 566 -320 62 ) ( 554 -320 62 ) ( 566 -318 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 566 -318 50 ) ( 554 -318 50 ) ( 566 -320 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "info_setup6"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 650 -320 62 ) ( 650 -320 50 ) ( 650 -318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 662 -318 62 ) ( 662 -318 50 ) ( 662 -320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 662 -318 62 ) ( 650 -318 62 ) ( 662 -318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 662 -320 50 ) ( 650 -320 50 ) ( 662 -320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 662 -320 62 ) ( 650 -320 62 ) ( 662 -318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 662 -318 50 ) ( 650 -318 50 ) ( 662 -320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "656 -319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-552 -296 232"
+"targetname" "info_setup6"
+"title" "Setup 6: a beam that follows you"
+"message" "zapper is an info_target in the ceiling (above the dark square). tether is a locus_beam: Start & End are Position & Entity, Start at zapper, End at *locus (the player who pressed), Brightness 255, Color 0 128 255, Width 20, Duration 3, flag End sparks."
+}
+{
+"classname" "info_target"
+"origin" "560 -160 248"
+"targetname" "zapper"
+}
+{
+"classname" "locus_beam"
+"origin" "-536 -296 232"
+"targetname" "tether"
+"impulse" "1"
+"m_iszStart" "zapper"
+"m_iszEnd" "*locus"
+"renderamt" "255"
+"rendercolor" "0 128 255"
+"m_iWidth" "20"
+"m_fDuration" "3"
+"spawnflags" "32"
+}

@@ -799,6 +799,7 @@ static void Shim_Setup( void )
 	gEngfuncs.pfnRandomFloat = Shim_RandomFloat;
 	gEngfuncs.pfnRandomLong = Shim_RandomLong;
 	gEngfuncs.Con_Printf = Shim_Con_Printf;
+	gEngfuncs.Con_DPrintf = Shim_Con_Printf;	// the editor shows every script problem
 	gEngfuncs.COM_ParseFile = Shim_COM_ParseFile;
 	gEngfuncs.COM_LoadFile = Shim_COM_LoadFile;
 	gEngfuncs.COM_FreeFile = Shim_COM_FreeFile;

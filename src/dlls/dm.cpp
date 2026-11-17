@@ -383,15 +383,9 @@ BOOL CDm::ClientCommand( CBasePlayer *pPlayer, const char *pcmd )
 		return TRUE;
 	}
 
+	// SBO 2.0: the radio is Co-op's (coop.cpp); Bounty Killer has no teammates, so its radio key does nothing
 	if ( FStrEq( pcmd, "radio" ) )
-	{
-		if ( !pPlayer->m_bOutOfPlay )
-		{
-			pPlayer->m_iTextMenu = 0;
-			pPlayer->ShowMenu( 0x3ff, 0, FALSE, "#Radio" );
-		}
 		return TRUE;
-	}
 
 	if ( FStrEq( pcmd, "malefemale" ) )
 	{
@@ -592,12 +586,11 @@ void CDm::PlayerSpawn( CBasePlayer *pPlayer )
 
 	pPlayer->pev->weapons |= (1<<WEAPON_SUIT);
 
-	// SBO 2.0: game_player_equip without Use Only equips at each spawn, as in the other modes (instead of the Wong)
+	// SBO 2.0: game_player_equip without Use Only equips at each spawn, as in the other modes
 	CBaseEntity *pWeaponEntity = NULL;
 	while ( ( pWeaponEntity = UTIL_FindEntityByClassname( pWeaponEntity, "game_player_equip" ) ) != NULL )
 	{
 		pWeaponEntity->Touch( pPlayer );
-		addDefault = FALSE;
 	}
 
 	pPlayer->StopObserver();
@@ -614,10 +607,13 @@ void CDm::PlayerSpawn( CBasePlayer *pPlayer )
 	}
 	else
 	{
-		ClientPrint( pPlayer->pev, HUD_PRINTCENTER, "you are a bounty killer!" );
+		ClientPrint( pPlayer->pev, HUD_PRINTCENTER, "you are a Bounty Killer!" );
 	}
 
-	if ( addDefault )
+	// SBO 2.1: the fists at every spawn in play, whatever game_player_equip entities the map has (an equip only adds
+	// items; player_weaponstrip takes them away). Not a second pair when an equip gave them: the game rules refuse it
+	// (CGameRules::CanHavePlayerItem) and the new entity would stay in the world
+	if ( addDefault && !pPlayer->HasNamedPlayerItem( "weapon_wong" ) )
 		pPlayer->GiveNamedItem( "weapon_wong" );
 
 	pPlayer->m_iSpawnProtectTime = gpGlobals->time + 1;
@@ -729,7 +725,7 @@ void CDm::PlayerSpawn( CBasePlayer *pPlayer )
 		pPlayer->GiveNamedItem( "weapon_handgrenade" );
 		break;
 	case 2:
-		// SBO 2.0: no speed penalty, as #SBO_Item_tripmine says ("Speed malus : 0"; 1.38 took 6 = 2%)
+		pPlayer->m_iSboMaxSpeed -= 6;	// #SBO_Item_tripmine: "Speed malus :-2%"
 		pPlayer->GiveNamedItem( "weapon_tripmine" );
 		break;
 	case 3:

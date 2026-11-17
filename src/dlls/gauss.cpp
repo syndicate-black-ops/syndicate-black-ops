@@ -425,9 +425,15 @@ void CGauss::Fire( Vector vecOrigSrc, Vector vecDir, float flDamage )
 		
 		if (pEntity->pev->takedamage)
 		{
+			// TakeDamage can free the entity at once (a TakeDamage hook that removes it with REMOVE_ENTITY): the
+			// beam then ends there instead of reading freed memory
+			EHANDLE hEntity;
+			hEntity = pEntity;
 			ClearMultiDamage();
 			pEntity->TraceAttack( m_pPlayer->pev, flDamage, vecDir, &tr, DMG_BULLET );
 			ApplyMultiDamage(m_pPlayer->pev, m_pPlayer->pev);
+			if ( ( pEntity = hEntity ) == NULL )
+				break;
 		}
 
 		if ( pEntity->ReflectGauss() )

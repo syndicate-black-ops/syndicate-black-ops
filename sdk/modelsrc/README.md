@@ -289,8 +289,9 @@ the mesh lies on Half-Life's grenade (same skeleton, bone `Line02`), with Half-L
 sequences (`idle`, `roll1` and `roll2` for the grenade rolling on the floor, `toss` to `toss4` for
 the thrown grenade tumbling; the code picks them by number). The placed tripmine
 (`monster_tripmine`) still uses `v_tripmine.mdl`. Not changed: `weapon_wong` (bare fists, no
-world model), `weapon_satchel` (`w_weaponbox`, the backpack, also the thrown charge),
-`weapon_snark` (`w_sqknest`; `w_squeak` is the live Pitbull).
+world model), `weapon_satchel` (`w_weaponbox`, the backpack, also the thrown charge).
+`weapon_snark` lies on the floor as the Pitbull itself (`w_squeak`, the thrown Pitbull's model,
+idle sequence) in place of Half-Life's snark nest `w_sqknest`.
 
 ## Open points
 

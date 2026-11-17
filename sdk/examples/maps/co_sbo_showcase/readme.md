@@ -10,8 +10,18 @@ does it, and copy what you need into your own map.
 | File | Where it goes | What it is |
 |---|---|---|
 | `co_sbo_showcase.map` | your editor (Valve 220 format) | the map source |
-| `co_sbo_showcase.seq` | `syndicate/sequences/` | the courtyard's lightning strike (`trigger_sequence` `lt_seq` runs `%lightning`; SBO docs: Sequence files): seen and heard only in or near the courtyard |
-| `co_sbo_showcase.txt` | `syndicate/maps/` | the map's briefing |
+| `syndicate/maps/co_sbo_showcase.bsp` | `syndicate/maps/` | the compiled map |
+| `syndicate/maps/co_sbo_showcase.txt` | `syndicate/maps/` | the map's briefing |
+| `syndicate/maps/co_sbo_showcase.htm`, `co_sbo_showcase_plan.jpg` | `syndicate/maps/` | the web page briefing and its site plan (SBO docs: Briefing) |
+| `syndicate/maps/co_sbo_showcase.res` | `syndicate/maps/` | the files players download with the map: the briefing page and its picture |
+| `syndicate/sequences/co_sbo_showcase.seq` | `syndicate/sequences/` | the courtyard's lightning strike (`trigger_sequence` `lt_seq` runs `%lightning`; SBO docs: Sequence files): seen and heard only in or near the courtyard |
+| `syndicate/overviews/co_sbo_showcase.txt`, `co_sbo_showcase.tga` | `syndicate/overviews/` | the spectator overview |
+| `syndicate/gfx/mapimages/co_sbo_showcase.jpg` | `syndicate/gfx/mapimages/` | the map's picture (SBO docs: Map picture) |
+
+## Playing the map
+
+To play it, copy the contents of this folder's `syndicate/` folder into your game's `syndicate` folder, then type
+`map co_sbo_showcase` in the console.
 
 ## The route
 
@@ -43,9 +53,8 @@ editor's textures:
 
 - `halflife.wad`: in `valve/` (stock Half-Life): `sky`, `!waterblue`, `AAATRIGGER`, `CLIP`.
 - `anzymut.wad`, `roux.wad`, `co_escape.wad`: in `syndicate/`.
-- `sbo_tools.wad`: in `syndicate/`: `{screen` (the lounge screens; SBO docs: World screens).
-- `env_sky` (the courtyard's sky brushes): the tool texture is not in any shipped WAD. Any 16 x 16 texture named
-  `env_sky` in a WAD the editor loads does (SBO docs: env_sky); its picture is never drawn.
+- `sbo_tools.wad`: in `syndicate/`: `{screen` (the lounge screens; SBO docs: World screens) and `env_sky` (the
+  courtyard's sky brushes; SBO docs: 3D sky).
 
 ## Compiling
 
@@ -63,6 +72,5 @@ sdHLRAD -fast -bounce 2 -chart co_sbo_showcase
   lights them. With ReSDHLT v0.21.0, check the courtyard's lighting after compiling (SBO docs: Map compiler bugs).
 - The original Valve tools do not know `env_sky` and draw it as an ordinary texture.
 
-Put the `.bsp` and `co_sbo_showcase.txt` in `syndicate/maps/` and `co_sbo_showcase.seq` in `syndicate/sequences/`.
-The models, sprites, sounds, Aurora scripts, the sky and the screen layout `ui/scripts/screens/example_screen.res`
-the map uses ship with the game.
+The compiled map in `syndicate/` is this source compiled this way. The models, sprites, sounds, Aurora scripts, the
+sky and the screen layout `ui/scripts/screens/example_screen.res` the map uses ship with the game.

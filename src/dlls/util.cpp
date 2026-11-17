@@ -1009,6 +1009,54 @@ int UTIL_ColorCodeLength( const char *psz )
 
 
 //=========================================================
+// UTIL_RemoveColorCodes - removes the chat's colour codes
+// (^0..^9, ^xRGB, ^#RRGGBB: UTIL_ColorCodeLength) and the
+// markup bytes \x01..\x08 from psz, in place. Text that is
+// no code stays ("^xZZ", a trailing "^"). pszFirstCode (10
+// chars, may be NULL) gets the first ^ code, "" if none.
+// Returns how many codes and markup bytes were removed.
+//=========================================================
+int UTIL_RemoveColorCodes( char *psz, char *pszFirstCode )
+{
+	if ( pszFirstCode )
+		pszFirstCode[0] = 0;
+
+	if ( !psz )
+		return 0;
+
+	int iRemoved = 0;
+	char *out = psz;
+	for ( const char *in = psz; *in; )
+	{
+		const int iCodeLen = UTIL_ColorCodeLength( in );
+		if ( iCodeLen > 0 )
+		{
+			if ( pszFirstCode && !pszFirstCode[0] )
+			{
+				memcpy( pszFirstCode, in, iCodeLen );
+				pszFirstCode[iCodeLen] = 0;
+			}
+			in += iCodeLen;
+			iRemoved++;
+			continue;
+		}
+
+		if ( *in >= 1 && *in <= 8 )
+		{
+			in++;
+			iRemoved++;
+			continue;
+		}
+
+		*out++ = *in++;
+	}
+	*out = 0;
+
+	return iRemoved;
+}
+
+
+//=========================================================
 // UTIL_NameColorCode - the chat colour code of a player's
 // name colour: the "namecolor" key of his userinfo (client
 // cvar namecolor, FCVAR_USERINFO), read on demand like
@@ -1019,6 +1067,7 @@ int UTIL_ColorCodeLength( const char *psz )
 // leading '^' are read too), "0" and anything invalid =
 // none. pszCode (10 chars) gets "^N", "^xRGB", "^#RRGGBB"
 // or "". Returns its length.
+// UTIL_NameColorValueCode: the same for a namecolor value.
 //=========================================================
 int UTIL_NameColorCode( edict_t *pPlayer, char *pszCode )
 {
@@ -1028,7 +1077,13 @@ int UTIL_NameColorCode( edict_t *pPlayer, char *pszCode )
 		return 0;
 
 	char *pszInfo = g_engfuncs.pfnGetInfoKeyBuffer( pPlayer );
-	const char *pszValue = pszInfo ? g_engfuncs.pfnInfoKeyValue( pszInfo, "namecolor" ) : NULL;
+	return UTIL_NameColorValueCode( pszInfo ? g_engfuncs.pfnInfoKeyValue( pszInfo, "namecolor" ) : NULL, pszCode );
+}
+
+int UTIL_NameColorValueCode( const char *pszValue, char *pszCode )
+{
+	pszCode[0] = 0;
+
 	if ( !pszValue )
 		return 0;
 

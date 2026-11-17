@@ -168,6 +168,16 @@ CSboGeneralOptions::CSboGeneralOptions(vgui2::Panel *parent)
 	m_pIngameHelp->SetWrap(true);
 	m_pIngameHelp->SetContentAlignment(vgui2::Label::a_northwest);
 	WatchControl(m_pIngame);
+	// cl_check_for_updates (sbo_update_window.cpp, docs/UPDATER.md): the automatic check when the game starts
+	m_pUpdatesTitle = new vgui2::Label(this, "UpdatesTitle", "Updates");
+	m_pCheckUpdates =
+	    new CSboCvarCheckButton(this, "CheckUpdatesCheck", "Check for updates at start", "cl_check_for_updates");
+	// the new window's tooltip text as this page's help line (a VGUI2 tooltip draws an empty box over GameUI)
+	m_pCheckUpdatesHelp = new vgui2::Label(this, "CheckUpdatesHelp",
+	    "Looks for a new version when the game starts and offers to install it");
+	m_pCheckUpdatesHelp->SetWrap(true);
+	m_pCheckUpdatesHelp->SetContentAlignment(vgui2::Label::a_northwest);
+	WatchControl(m_pCheckUpdates);
 }
 
 namespace
@@ -236,6 +246,7 @@ void CSboGeneralOptions::PerformLayout()
 	section(m_pHudTitle, m_pObjectives, nullptr);
 	section(m_pMenusTitle, m_pMenus, m_pMenusHelp);
 	section(nullptr, m_pIngame, m_pIngameHelp);
+	section(m_pUpdatesTitle, m_pCheckUpdates, m_pCheckUpdatesHelp);
 	m_iContentTall = y;
 }
 
@@ -246,6 +257,7 @@ void CSboGeneralOptions::OnResetData()
 	m_pObjectives->ResetData();
 	m_pMenus->ResetData();
 	m_pIngame->ResetData();
+	m_pCheckUpdates->ResetData();
 }
 
 void CSboGeneralOptions::OnApplyChanges()
@@ -255,13 +267,13 @@ void CSboGeneralOptions::OnApplyChanges()
 	m_pObjectives->ApplyChanges();
 	m_pMenus->ApplyChanges();
 	m_pIngame->ApplyChanges();
+	m_pCheckUpdates->ApplyChanges();
 }
 
 bool CSboGeneralOptions::HasChanges()
 {
 	return m_pDiscord->HasBeenModified() || m_pLeftHanded->HasBeenModified() || m_pObjectives->HasBeenModified() ||
-	       m_pMenus->HasBeenModified() ||
-	       m_pIngame->HasBeenModified();
+	       m_pMenus->HasBeenModified() || m_pIngame->HasBeenModified() || m_pCheckUpdates->HasBeenModified();
 }
 
 //-----------------------------------------------------------------------------
@@ -569,7 +581,7 @@ void CSboOptionsDialog::ApplySchemeSettings(vgui2::IScheme *pScheme)
 }
 #endif
 
-// The dialog is DIALOG_TALL high; the General page's rows (three sections, fonts that grow with the resolution) can
+// The dialog is DIALOG_TALL high; the General page's rows (five sections, fonts that grow with the resolution) can
 // need more: the dialog is made as tall as those rows plus the frame around the page (title, tabs, buttons). The
 // sheet is laid out here first, so the page has the height of this pass (it sizes its pages in its own layout, after
 // the dialog's). Never smaller than DIALOG_TALL: the other pages fit in it.

@@ -7,7 +7,7 @@
 //   MODEL    BYTE model id, STRING model file name (maps the id; sent before the first prop using it)
 //   PROP     SHORT prop id, BYTE model id, 3 LONG origin (1/8 unit), 3 ANGLE angles, BYTE rendermode,
 //            BYTE renderfx, 3 BYTE rendercolor, BYTE renderamt, BYTE body, BYTE skin, SHORT sequence,
-//            SHORT scale (1/256), SHORT framerate (1/256), BYTE visible
+//            SHORT scale (1/256), SHORT framerate (1/256), BYTE flags (STATICPROP_F_*)
 //   VISIBLE  SHORT prop id, BYTE visible
 //   LIGHTORIGIN  SHORT prop id, 3 LONG origin (1/8 unit): SBO 2.0 info_light_origin, the point the prop is lit from
 //            (sent right after its PROP)
@@ -21,6 +21,10 @@
 #define STATICPROP_PROP		2
 #define STATICPROP_VISIBLE	3
 #define STATICPROP_LIGHTORIGIN	4	// SBO 2.0: info_light_origin
+
+// the PROP message's flags byte
+#define STATICPROP_F_VISIBLE	1	// shown (VISIBLE changes it)
+#define STATICPROP_F_SKY		2	// SBO 2.1: "In the 3D sky": drawn only in the env_sky pass, from the sky camera
 
 #define STATICPROP_MAX_PROPS	1024	// props per map
 #define STATICPROP_MAX_MODELS	256		// distinct model files per map

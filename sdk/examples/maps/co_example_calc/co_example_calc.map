@@ -1,0 +1,896 @@
+{
+"classname" "worldspawn"
+"mapversion" "220"
+"wad" "halflife.wad;anzymut.wad;roux.wad;co_escape.wad;sbo_tools.wad"
+"message" "SBO example: calc entities"
+"skyname" "citynight"
+"MaxRange" "100000"
+{
+( -656 -400 0 ) ( -656 -400 -16 ) ( -656 336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 0 ) ( 656 336 -16 ) ( 656 -400 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 0 ) ( -656 336 0 ) ( 656 336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 -16 ) ( -656 -400 -16 ) ( 656 -400 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 0 ) ( -656 -400 0 ) ( 656 336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 656 336 -16 ) ( -656 336 -16 ) ( 656 -400 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -656 -400 272 ) ( -656 -400 256 ) ( -656 336 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 272 ) ( 656 336 256 ) ( 656 -400 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 272 ) ( -656 336 272 ) ( 656 336 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 256 ) ( -656 -400 256 ) ( 656 -400 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 272 ) ( -656 -400 272 ) ( 656 336 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 656 336 256 ) ( -656 336 256 ) ( 656 -400 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -640 320 256 ) ( -640 320 0 ) ( -640 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 336 256 ) ( -128 336 0 ) ( -128 320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 336 256 ) ( -640 336 256 ) ( -128 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 320 0 ) ( -640 320 0 ) ( -128 320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 320 256 ) ( -640 320 256 ) ( -128 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -128 336 0 ) ( -640 336 0 ) ( -128 320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -128 320 256 ) ( -128 320 160 ) ( -128 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 336 256 ) ( 128 336 160 ) ( 128 320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 336 256 ) ( -128 336 256 ) ( 128 336 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 320 160 ) ( -128 320 160 ) ( 128 320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 320 256 ) ( -128 320 256 ) ( 128 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 128 336 160 ) ( -128 336 160 ) ( 128 320 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 128 320 256 ) ( 128 320 0 ) ( 128 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 336 256 ) ( 640 336 0 ) ( 640 320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 336 256 ) ( 128 336 256 ) ( 640 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 320 0 ) ( 128 320 0 ) ( 640 320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 320 256 ) ( 128 320 256 ) ( 640 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 640 336 0 ) ( 128 336 0 ) ( 640 320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -640 -400 256 ) ( -640 -400 0 ) ( -640 -384 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -384 256 ) ( 640 -384 0 ) ( 640 -400 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -384 256 ) ( -640 -384 256 ) ( 640 -384 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -400 0 ) ( -640 -400 0 ) ( 640 -400 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -400 256 ) ( -640 -400 256 ) ( 640 -384 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 640 -384 0 ) ( -640 -384 0 ) ( 640 -400 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 640 -400 256 ) ( 640 -400 0 ) ( 640 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -320 256 ) ( 656 -320 0 ) ( 656 -400 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -320 256 ) ( 640 -320 256 ) ( 656 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 0 ) ( 640 -400 0 ) ( 656 -400 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -400 256 ) ( 640 -400 256 ) ( 656 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 656 -320 0 ) ( 640 -320 0 ) ( 656 -400 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 640 -320 256 ) ( 640 -320 128 ) ( 640 -192 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -192 256 ) ( 656 -192 128 ) ( 656 -320 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -192 256 ) ( 640 -192 256 ) ( 656 -192 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -320 128 ) ( 640 -320 128 ) ( 656 -320 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -320 256 ) ( 640 -320 256 ) ( 656 -192 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 656 -192 128 ) ( 640 -192 128 ) ( 656 -320 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 640 -192 256 ) ( 640 -192 0 ) ( 640 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 256 ) ( 656 336 0 ) ( 656 -192 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 336 256 ) ( 640 336 256 ) ( 656 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -192 0 ) ( 640 -192 0 ) ( 656 -192 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 656 -192 256 ) ( 640 -192 256 ) ( 656 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 656 336 0 ) ( 640 336 0 ) ( 656 -192 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -656 -400 256 ) ( -656 -400 0 ) ( -656 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -640 336 256 ) ( -640 336 0 ) ( -640 -400 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -640 336 256 ) ( -656 336 256 ) ( -640 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -640 -400 0 ) ( -656 -400 0 ) ( -640 -400 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -640 -400 256 ) ( -656 -400 256 ) ( -640 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -640 336 0 ) ( -656 336 0 ) ( -640 -400 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -400 336 0 ) ( -400 336 -16 ) ( -400 1136 0 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 0 ) ( 400 1136 -16 ) ( 400 336 0 ) 666sol02 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 0 ) ( -400 1136 0 ) ( 400 1136 -16 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 -16 ) ( -400 336 -16 ) ( 400 336 0 ) 666sol02 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 0 ) ( -400 336 0 ) ( 400 1136 0 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 400 1136 -16 ) ( -400 1136 -16 ) ( 400 336 -16 ) 666sol02 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -400 336 272 ) ( -400 336 256 ) ( -400 1136 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 272 ) ( 400 1136 256 ) ( 400 336 272 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 272 ) ( -400 1136 272 ) ( 400 1136 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 256 ) ( -400 336 256 ) ( 400 336 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 272 ) ( -400 336 272 ) ( 400 1136 272 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 400 1136 256 ) ( -400 1136 256 ) ( 400 336 256 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -384 1120 256 ) ( -384 1120 0 ) ( -384 1136 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1136 256 ) ( 384 1136 0 ) ( 384 1120 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1136 256 ) ( -384 1136 256 ) ( 384 1136 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1120 0 ) ( -384 1120 0 ) ( 384 1120 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1120 256 ) ( -384 1120 256 ) ( 384 1136 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 384 1136 0 ) ( -384 1136 0 ) ( 384 1120 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -384 336 256 ) ( -384 336 0 ) ( -384 352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 352 256 ) ( -128 352 0 ) ( -128 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 352 256 ) ( -384 352 256 ) ( -128 352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 336 0 ) ( -384 336 0 ) ( -128 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -128 336 256 ) ( -384 336 256 ) ( -128 352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -128 352 0 ) ( -384 352 0 ) ( -128 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -128 336 256 ) ( -128 336 160 ) ( -128 352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 352 256 ) ( 128 352 160 ) ( 128 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 352 256 ) ( -128 352 256 ) ( 128 352 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 336 160 ) ( -128 336 160 ) ( 128 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 128 336 256 ) ( -128 336 256 ) ( 128 352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 128 352 160 ) ( -128 352 160 ) ( 128 336 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 128 336 256 ) ( 128 336 0 ) ( 128 352 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 352 256 ) ( 384 352 0 ) ( 384 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 352 256 ) ( 128 352 256 ) ( 384 352 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 336 0 ) ( 128 336 0 ) ( 384 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 336 256 ) ( 128 336 256 ) ( 384 352 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 384 352 0 ) ( 128 352 0 ) ( 384 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 384 336 256 ) ( 384 336 0 ) ( 384 1136 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 256 ) ( 400 1136 0 ) ( 400 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 1136 256 ) ( 384 1136 256 ) ( 400 1136 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 0 ) ( 384 336 0 ) ( 400 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 400 336 256 ) ( 384 336 256 ) ( 400 1136 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 400 1136 0 ) ( 384 1136 0 ) ( 400 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -400 336 256 ) ( -400 336 0 ) ( -400 1136 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -384 1136 256 ) ( -384 1136 0 ) ( -384 336 256 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -384 1136 256 ) ( -400 1136 256 ) ( -384 1136 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -384 336 0 ) ( -400 336 0 ) ( -384 336 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -384 336 256 ) ( -400 336 256 ) ( -384 1136 256 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -384 1136 0 ) ( -400 1136 0 ) ( -384 336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 656 -336 0 ) ( 656 -336 -16 ) ( 656 -176 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 0 ) ( 1840 -176 -16 ) ( 1840 -336 0 ) 666SOLCARREAUX1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 0 ) ( 656 -176 0 ) ( 1840 -176 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 -16 ) ( 656 -336 -16 ) ( 1840 -336 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 0 ) ( 656 -336 0 ) ( 1840 -176 0 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1840 -176 -16 ) ( 656 -176 -16 ) ( 1840 -336 -16 ) 666SOLCARREAUX1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 656 -336 176 ) ( 656 -336 160 ) ( 656 -176 176 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 176 ) ( 1840 -176 160 ) ( 1840 -336 176 ) e6tileceiling [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 176 ) ( 656 -176 176 ) ( 1840 -176 160 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 160 ) ( 656 -336 160 ) ( 1840 -336 176 ) e6tileceiling [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 176 ) ( 656 -336 176 ) ( 1840 -176 176 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1840 -176 160 ) ( 656 -176 160 ) ( 1840 -336 160 ) e6tileceiling [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 672 -192 160 ) ( 672 -192 0 ) ( 672 -176 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -176 160 ) ( 1824 -176 0 ) ( 1824 -192 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -176 160 ) ( 672 -176 160 ) ( 1824 -176 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -192 0 ) ( 672 -192 0 ) ( 1824 -192 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -192 160 ) ( 672 -192 160 ) ( 1824 -176 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1824 -176 0 ) ( 672 -176 0 ) ( 1824 -192 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 672 -336 160 ) ( 672 -336 0 ) ( 672 -320 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -320 160 ) ( 1824 -320 0 ) ( 1824 -336 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -320 160 ) ( 672 -320 160 ) ( 1824 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -336 0 ) ( 672 -336 0 ) ( 1824 -336 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1824 -336 160 ) ( 672 -336 160 ) ( 1824 -320 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1824 -320 0 ) ( 672 -320 0 ) ( 1824 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 1824 -336 160 ) ( 1824 -336 0 ) ( 1824 -176 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 160 ) ( 1840 -176 0 ) ( 1840 -336 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -176 160 ) ( 1824 -176 160 ) ( 1840 -176 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 0 ) ( 1824 -336 0 ) ( 1840 -336 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1840 -336 160 ) ( 1824 -336 160 ) ( 1840 -176 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1840 -176 0 ) ( 1824 -176 0 ) ( 1840 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 656 -336 160 ) ( 656 -336 0 ) ( 656 -320 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -320 160 ) ( 672 -320 0 ) ( 672 -336 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -320 160 ) ( 656 -320 160 ) ( 672 -320 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -336 0 ) ( 656 -336 0 ) ( 672 -336 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -336 160 ) ( 656 -336 160 ) ( 672 -320 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 672 -320 0 ) ( 656 -320 0 ) ( 672 -336 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 656 -320 160 ) ( 656 -320 128 ) ( 656 -192 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -192 160 ) ( 672 -192 128 ) ( 672 -320 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -192 160 ) ( 656 -192 160 ) ( 672 -192 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -320 128 ) ( 656 -320 128 ) ( 672 -320 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -320 160 ) ( 656 -320 160 ) ( 672 -192 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 672 -192 128 ) ( 656 -192 128 ) ( 672 -320 128 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 656 -192 160 ) ( 656 -192 0 ) ( 656 -176 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -176 160 ) ( 672 -176 0 ) ( 672 -192 160 ) 666mur_station1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -176 160 ) ( 656 -176 160 ) ( 672 -176 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -192 0 ) ( 656 -192 0 ) ( 672 -192 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 672 -192 160 ) ( 656 -192 160 ) ( 672 -176 160 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 672 -176 0 ) ( 656 -176 0 ) ( 672 -192 0 ) 666mur_station1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -64 730 1 ) ( -64 730 0 ) ( -64 742 1 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 742 1 ) ( 64 742 0 ) ( 64 730 1 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 742 1 ) ( -64 742 1 ) ( 64 742 0 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 730 0 ) ( -64 730 0 ) ( 64 730 1 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 64 730 1 ) ( -64 730 1 ) ( 64 742 1 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 64 742 0 ) ( -64 742 0 ) ( 64 730 0 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( -6 672 1 ) ( -6 672 0 ) ( -6 800 1 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 6 800 1 ) ( 6 800 0 ) ( 6 672 1 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 6 800 1 ) ( -6 800 1 ) ( 6 800 0 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 6 672 0 ) ( -6 672 0 ) ( 6 672 1 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 6 672 1 ) ( -6 672 1 ) ( 6 800 1 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 6 800 0 ) ( -6 800 0 ) ( 6 672 0 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 1240 -320 1 ) ( 1240 -320 0 ) ( 1240 -192 1 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1256 -192 1 ) ( 1256 -192 0 ) ( 1256 -320 1 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1256 -192 1 ) ( 1240 -192 1 ) ( 1256 -192 0 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1256 -320 0 ) ( 1240 -320 0 ) ( 1256 -320 1 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1256 -320 1 ) ( 1240 -320 1 ) ( 1256 -192 1 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1256 -192 0 ) ( 1240 -192 0 ) ( 1256 -320 0 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 16 -384 192 ) ( 16 -384 64 ) ( 16 -380 192 ) 666ROSE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 240 -380 192 ) ( 240 -380 64 ) ( 240 -384 192 ) 666ROSE [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 240 -380 192 ) ( 16 -380 192 ) ( 240 -380 64 ) 666ROSE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 240 -384 64 ) ( 16 -384 64 ) ( 240 -384 192 ) 666ROSE [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 240 -384 192 ) ( 16 -384 192 ) ( 240 -380 192 ) 666ROSE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 240 -380 64 ) ( 16 -380 64 ) ( 240 -384 64 ) 666ROSE [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+{
+( 448 64 16 ) ( 448 64 0 ) ( 448 224 16 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 224 16 ) ( 608 224 0 ) ( 608 64 16 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 224 16 ) ( 448 224 16 ) ( 608 224 0 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 64 0 ) ( 448 64 0 ) ( 608 64 16 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 64 16 ) ( 448 64 16 ) ( 608 224 16 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 608 224 0 ) ( 448 224 0 ) ( 608 64 0 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "light"
+"origin" "-427 -208 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "-427 144 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "0 -208 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "0 144 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "426 -208 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "426 144 232"
+"_light" "255 245 230 230"
+}
+{
+"classname" "light"
+"origin" "-192 544 232"
+"_light" "180 220 255 200"
+}
+{
+"classname" "light"
+"origin" "-192 928 232"
+"_light" "180 220 255 200"
+}
+{
+"classname" "light"
+"origin" "192 544 232"
+"_light" "180 220 255 200"
+}
+{
+"classname" "light"
+"origin" "192 928 232"
+"_light" "180 220 255 200"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-160 -64 37"
+"angles" "0 180 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-160 0 37"
+"angles" "0 180 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-224 -64 37"
+"angles" "0 180 0"
+}
+{
+"classname" "info_player_deathmatch"
+"origin" "-224 0 37"
+"angles" "0 180 0"
+}
+{
+"classname" "info_player_start"
+"origin" "-160 -32 37"
+"angles" "0 180 0"
+}
+{
+"classname" "point_worldtext"
+"origin" "-639 0 200"
+"message" "1  AN EXPLOSION IN FRONT OF YOU"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 180 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "-639 0 176"
+"message" "Press the button, turn, and look anywhere:\nwhere you look, 200 units ahead, it goes off."
+"textsize" "5"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 180 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "boom"
+"angles" "0 180 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -640 -6 62 ) ( -640 -6 50 ) ( -640 6 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 6 62 ) ( -638 6 50 ) ( -638 -6 62 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 6 62 ) ( -640 6 62 ) ( -638 6 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -6 50 ) ( -640 -6 50 ) ( -638 -6 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -6 62 ) ( -640 -6 62 ) ( -638 6 62 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -638 6 50 ) ( -640 6 50 ) ( -638 -6 50 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "info_setup1"
+"angles" "0 180 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( -640 -102 62 ) ( -640 -102 50 ) ( -640 -90 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -90 62 ) ( -638 -90 50 ) ( -638 -102 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -90 62 ) ( -640 -90 62 ) ( -638 -90 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -102 50 ) ( -640 -102 50 ) ( -638 -102 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( -638 -102 62 ) ( -640 -102 62 ) ( -638 -90 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( -638 -90 50 ) ( -640 -90 50 ) ( -638 -102 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "-639 -96 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 180 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-616 -360 232"
+"targetname" "info_setup1"
+"title" "Setup 1: an explosion in front of you"
+"message" "The button targets boom, an env_explosion with Position spot (No Damage and Repeatable on).\n\nspot is a calc_position: Entity to use *locus, Position to calculate Eyes, Add offset ahead.\n\nahead is a calc_subvelocity: Entity to use *locus, Value to calculate from View angles, Scale factor 200. It gives the direction you look in, made 200 units long, so spot is 200 units in front of your eyes."
+}
+{
+"classname" "calc_subvelocity"
+"origin" "-600 -64 200"
+"targetname" "ahead"
+"netname" "*locus"
+"impulse" "2"
+"noise" "200"
+}
+{
+"classname" "calc_position"
+"origin" "-600 -32 200"
+"targetname" "spot"
+"netname" "*locus"
+"impulse" "1"
+"message" "ahead"
+}
+{
+"classname" "env_explosion"
+"origin" "-600 0 200"
+"targetname" "boom"
+"target" "spot"
+"iMagnitude" "60"
+"spawnflags" "3"
+}
+{
+"classname" "point_worldtext"
+"origin" "0 319 200"
+"message" "2  A FIELD THAT PUSHES YOU AWAY"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "0 319 176"
+"message" "Walk through the doorway: the room\npushes you away from its center."
+"textsize" "5"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup2"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 186 318 62 ) ( 186 318 50 ) ( 186 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 320 62 ) ( 198 320 50 ) ( 198 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 320 62 ) ( 186 320 62 ) ( 198 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 318 50 ) ( 186 318 50 ) ( 198 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 198 318 62 ) ( 186 318 62 ) ( 198 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 198 320 50 ) ( 186 320 50 ) ( 198 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "192 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-600 -360 232"
+"targetname" "info_setup2"
+"title" "Setup 2: a field that pushes you away"
+"message" "An info_target named center stands in the middle of the room (the yellow cross).\n\naway is a calc_velocity_path: Start position center, Destination *locus, Destination is Position, Length calculation Normalize. It gives the direction from center to whoever touches the field, 1 unit long.\n\nThe trigger_push fills the room: Push direction away, Speed of push 400. A trigger_push works out its locus keys for each entity that touches it, so *locus is the player being pushed."
+}
+{
+"classname" "info_target"
+"origin" "0 736 40"
+"targetname" "center"
+}
+{
+"classname" "point_worldtext"
+"origin" "0 640 2"
+"message" "CENTER"
+"textsize" "12"
+"color" "255 220 60 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "calc_velocity_path"
+"origin" "64 736 200"
+"targetname" "away"
+"target" "center"
+"netname" "*locus"
+"armorvalue" "0"
+"health" "1"
+}
+{
+"classname" "trigger_push"
+"m_iszPushVel" "away"
+"speed" "400"
+{
+( -384 416 256 ) ( -384 416 0 ) ( -384 1120 256 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1120 256 ) ( 384 1120 0 ) ( 384 416 256 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 1120 256 ) ( -384 1120 256 ) ( 384 1120 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 416 0 ) ( -384 416 0 ) ( 384 416 256 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 384 416 256 ) ( -384 416 256 ) ( 384 1120 256 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 384 1120 0 ) ( -384 1120 0 ) ( 384 416 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "light"
+"origin" "864 -256 136"
+"_light" "255 245 230 200"
+}
+{
+"classname" "light"
+"origin" "1248 -256 136"
+"_light" "255 245 230 200"
+}
+{
+"classname" "light"
+"origin" "1632 -256 136"
+"_light" "255 245 230 200"
+}
+{
+"classname" "point_worldtext"
+"origin" "639 -256 200"
+"message" "3  A SPEED TRAP"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "639 -256 176"
+"message" "Run down the corridor: faster than 350\nunits a second, a warning shows."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup3"
+"angles" "0 0 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 638 -134 62 ) ( 638 -134 50 ) ( 638 -122 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -122 62 ) ( 640 -122 50 ) ( 640 -134 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -122 62 ) ( 638 -122 62 ) ( 640 -122 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -134 50 ) ( 638 -134 50 ) ( 640 -134 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 640 -134 62 ) ( 638 -134 62 ) ( 640 -122 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 640 -122 50 ) ( 638 -122 50 ) ( 640 -134 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "639 -128 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-584 -360 232"
+"targetname" "info_setup3"
+"title" "Setup 3: a speed trap"
+"message" "The trigger_multiple across the corridor (the yellow line) has Target check3 and Delay before reset 1.\n\nspeed is a calc_numfromvec: Vector to use *locus, Vector value is Velocity, Number to get Length.\n\ncheck3 is a trigger_compare: Base value speed, Compare value 350, Comparison to pass Greater, Fire on comparison pass warn, a game_text with the text Slow down!"
+}
+{
+"classname" "point_worldtext"
+"origin" "1200 -256 2"
+"message" "SPEED TRAP"
+"textsize" "10"
+"color" "255 220 60 255"
+"font" "0"
+"orientation" "0"
+"angles" "90 0 0"
+"spawnflags" "2"
+}
+{
+"classname" "trigger_multiple"
+"target" "check3"
+"wait" "1"
+{
+( 1232 -320 128 ) ( 1232 -320 0 ) ( 1232 -192 128 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1264 -192 128 ) ( 1264 -192 0 ) ( 1264 -320 128 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1264 -192 128 ) ( 1232 -192 128 ) ( 1264 -192 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1264 -320 0 ) ( 1232 -320 0 ) ( 1264 -320 128 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 1264 -320 128 ) ( 1232 -320 128 ) ( 1264 -192 128 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 1264 -192 0 ) ( 1232 -192 0 ) ( 1264 -320 0 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "calc_numfromvec"
+"origin" "1150 -256 130"
+"targetname" "speed"
+"target" "*locus"
+"vector_type" "0"
+"impulse" "3"
+}
+{
+"classname" "trigger_compare"
+"origin" "1118 -256 130"
+"targetname" "check3"
+"initial_value" "speed"
+"compare_value" "350"
+"testtype" "2"
+"pass_target" "warn"
+}
+{
+"classname" "game_text"
+"origin" "1086 -256 130"
+"targetname" "warn"
+"message" "Slow down!"
+"x" "-1"
+"y" "0.35"
+"color" "255 80 60"
+"color2" "255 255 255"
+"fadein" "0.1"
+"fadeout" "0.5"
+"holdtime" "1.5"
+"channel" "3"
+}
+{
+"classname" "point_worldtext"
+"origin" "128 -383 236"
+"message" "4  A WINDOW THAT GETS MORE SOLID AS YOU GET HURT"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "128 -383 214"
+"message" "Red: lose 30 health. Green: the window turns as solid as you are hurt."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "func_wall"
+"targetname" "glass"
+"rendermode" "2"
+"renderamt" "40"
+{
+( 8 -372 200 ) ( 8 -372 56 ) ( 8 -370 200 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 248 -370 200 ) ( 248 -370 56 ) ( 248 -372 200 ) mtlb [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 248 -370 200 ) ( 8 -370 200 ) ( 248 -370 56 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 248 -372 56 ) ( 8 -372 56 ) ( 248 -372 200 ) mtlb [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 248 -372 200 ) ( 8 -372 200 ) ( 248 -370 200 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 248 -370 56 ) ( 8 -370 56 ) ( 248 -372 56 ) mtlb [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "hurt4"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 290 -384 126 ) ( 290 -384 114 ) ( 290 -382 126 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -382 126 ) ( 302 -382 114 ) ( 302 -384 126 ) +0~ANZYR1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -382 126 ) ( 290 -382 126 ) ( 302 -382 114 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -384 114 ) ( 290 -384 114 ) ( 302 -384 126 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -384 126 ) ( 290 -384 126 ) ( 302 -382 126 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 302 -382 114 ) ( 290 -382 114 ) ( 302 -384 114 ) +0~ANZYR1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "func_button"
+"target" "shade"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 290 -384 94 ) ( 290 -384 82 ) ( 290 -382 94 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -382 94 ) ( 302 -382 82 ) ( 302 -384 94 ) +0~ANZYG1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -382 94 ) ( 290 -382 94 ) ( 302 -382 82 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -384 82 ) ( 290 -384 82 ) ( 302 -384 94 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 302 -384 94 ) ( 290 -384 94 ) ( 302 -382 94 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 302 -382 82 ) ( 290 -382 82 ) ( 302 -384 82 ) +0~ANZYG1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "game_player_hurt"
+"origin" "48 -336 224"
+"targetname" "hurt4"
+"dmg" "30"
+}
+{
+"classname" "calc_ratio"
+"origin" "80 -336 224"
+"targetname" "hurt"
+"target" "*locus"
+"impulse" "1"
+}
+{
+"classname" "env_render"
+"origin" "112 -336 224"
+"targetname" "shade"
+"target" "glass"
+"rendermode" "2"
+"renderamt" "255"
+"message" "hurt"
+}
+{
+"classname" "func_button"
+"target" "info_setup4"
+"angles" "0 270 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 354 -384 110 ) ( 354 -384 98 ) ( 354 -382 110 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 366 -382 110 ) ( 366 -382 98 ) ( 366 -384 110 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 366 -382 110 ) ( 354 -382 110 ) ( 366 -382 98 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 366 -384 98 ) ( 354 -384 98 ) ( 366 -384 110 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 366 -384 110 ) ( 354 -384 110 ) ( 366 -382 110 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 366 -382 98 ) ( 354 -382 98 ) ( 366 -384 98 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "360 -383 118"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 270 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-568 -360 232"
+"targetname" "info_setup4"
+"title" "Setup 4: a window that gets more solid as you get hurt"
+"message" "glass is a func_wall with Render Mode Texture and FX Amount 40. The green button targets shade, an env_render: Target glass, Render Mode Texture, FX Amount 255, FX Amount factor hurt.\n\nhurt is a calc_ratio: Based on number *locus (your health divided by 100), Transformation Reversed (1-X). At full health the factor is 0, so the glass turns clear; at 25 health it is 0.75 of 255.\n\nThe red button is a game_player_hurt with Damage To Apply 30."
+}
+{
+"classname" "point_worldtext"
+"origin" "528 319 200"
+"message" "5  AN EXPLOSION WHERE YOU LOOK"
+"textsize" "9"
+"color" "255 210 90 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "point_worldtext"
+"origin" "528 319 176"
+"message" "Step onto the platform and look at the far wall."
+"textsize" "6"
+"color" "210 210 210 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "trigger_multiple"
+"target" "boom5"
+"wait" "2"
+{
+( 448 64 96 ) ( 448 64 16 ) ( 448 224 96 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 224 96 ) ( 608 224 16 ) ( 608 64 96 ) AAATRIGGER [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 224 96 ) ( 448 224 96 ) ( 608 224 16 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 64 16 ) ( 448 64 16 ) ( 608 64 96 ) AAATRIGGER [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 608 64 96 ) ( 448 64 96 ) ( 608 224 96 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 608 224 16 ) ( 448 224 16 ) ( 608 64 16 ) AAATRIGGER [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "calc_position"
+"origin" "464 144 128"
+"targetname" "eyes"
+"netname" "*locus"
+"impulse" "1"
+}
+{
+"classname" "calc_subvelocity"
+"origin" "496 144 128"
+"targetname" "aim"
+"netname" "*locus"
+"impulse" "2"
+"noise" "4000"
+}
+{
+"classname" "calc_velocity_path"
+"origin" "528 144 128"
+"targetname" "ray"
+"target" "eyes"
+"netname" "aim"
+"armorvalue" "1"
+"frags" "1"
+}
+{
+"classname" "calc_position"
+"origin" "560 144 128"
+"targetname" "hit"
+"netname" "eyes"
+"impulse" "10"
+"message" "ray"
+}
+{
+"classname" "env_explosion"
+"origin" "592 144 128"
+"targetname" "boom5"
+"target" "hit"
+"iMagnitude" "100"
+"spawnflags" "2"
+}
+{
+"classname" "func_button"
+"target" "info_setup5"
+"angles" "0 90 0"
+"speed" "5"
+"lip" "1"
+"wait" "1"
+"sounds" "14"
+"spawnflags" "1"
+{
+( 394 318 62 ) ( 394 318 50 ) ( 394 320 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 406 320 62 ) ( 406 320 50 ) ( 406 318 62 ) +0~ANZYW1 [ 0 1 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 406 320 62 ) ( 394 320 62 ) ( 406 320 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 406 318 50 ) ( 394 318 50 ) ( 406 318 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 0 -1 0 ] 0 1 1
+( 406 318 62 ) ( 394 318 62 ) ( 406 320 62 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+( 406 320 50 ) ( 394 320 50 ) ( 406 318 50 ) +0~ANZYW1 [ 1 0 0 0 ] [ 0 -1 0 0 ] 0 1 1
+}
+}
+{
+"classname" "point_worldtext"
+"origin" "400 319 70"
+"message" "INFO"
+"textsize" "5"
+"color" "200 200 200 255"
+"font" "0"
+"orientation" "0"
+"angles" "0 90 0"
+"spawnflags" "2"
+}
+{
+"classname" "game_messagebox"
+"origin" "-552 -360 232"
+"targetname" "info_setup5"
+"title" "Setup 5: an explosion where you look"
+"message" "The platform is a trigger_multiple with Target boom5 and Delay before reset 2.\n\neyes: calc_position, Entity to use *locus, Position to calculate Eyes. aim: calc_subvelocity, Value to calculate from View angles, Scale factor 4000. ray: calc_velocity_path, Start position eyes, Destination aim, Destination is Offset, Line is blocked by Walls. hit: calc_position, Entity to use eyes, Position to calculate Calc Position of the entity, Add offset ray.\n\nboom5 is an env_explosion with Position hit and Repeatable: it goes off where your view meets a wall."
+}

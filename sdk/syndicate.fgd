@@ -19,7 +19,7 @@
 	sounds(integer) : "CD track to play" : 1
 	WaveHeight(string) : "Default Wave Height"
 	MaxRange(string) : "Max viewable distance" : "4096"
-	chaptertitle(string) : "Chapter Title Message" : : "Text, or a titles.txt name, shown once to each player on this map when they first enter the game, whether they spawn, spectate or play Game Master. Players who join later see it too."
+	chaptertitle(string) : "Chapter Title Message" : : "Text, or a titles.txt name, shown once to each player when they first enter the game on this map, whether they spawn, spectate or play Game Master."
 	startdark(choices) : "Level Fade In" : 0 : "With Yes, the screen fades in from black when the map starts. Only the player hosting a listen server sees it." =
 	[
 		0 : "No"
@@ -41,9 +41,9 @@
 		0 : "Fewest Players"
 		1 : "First Team"
 	]
-	grassDensity(integer) : "Grass: density" : 0 : "How many grass pieces are drawn around the player on grass textures, which are material A. If left empty or set to 0, there is no grass. Try 100 to 400, and at most 1000."
+	grassDensity(integer) : "Grass: density" : 0 : "How many grass pieces are drawn around the player on textures of material A, at most 1000. If left empty or set to 0, there is no grass."
 	grassSprite(sprite) : "Grass: sprite" : "" : "The sprite the grass pieces use, which can be one that ships with the map. If left empty, the grass uses sprites/grass_01.spr and sprites/grass_03.spr."
-	grassFadeDist(integer) : "Grass: fade distance" : 800 : "Grass fades out towards this distance from the player (128-4096)."
+	grassFadeDist(integer) : "Grass: fade distance" : 800 : "Grass fades out toward this distance from the player (128-4096)."
 	grassMinHeight(integer) : "Grass: minimum height" : 16 : "Height of a grass piece, at least (4-256)."
 	grassMaxHeight(integer) : "Grass: maximum height" : 32 : "Height of a grass piece, at most (4-256)."
 	freeroam(choices) : "Monsters freeroam" : 0 : "With Yes, idle monsters whose Freeroam is Map default walk from node to node." =
@@ -51,7 +51,7 @@
 		0 : "No"
 		1 : "Yes"
 	]
-	materials_file(string) : "Materials file" : : "The map's own texture materials file, which sets the footsteps, hit sounds and impact effects, e.g. materials/maps/mymap.txt. If left empty, the game uses materials/maps/<map name>.txt if that file exists."
+	materials_file(string) : "Materials file" : : "A texture materials file for this map. It sets the footsteps, hit sounds and impact effects. If left empty, the game uses materials/maps/<map name>.txt if that file exists."
 ]
 
 
@@ -105,13 +105,6 @@
 	]
 ]
 
-@BaseClass = Appearflags
-[
-	spawnflags(flags) =
-	[
-		2048 : "Not in multiplayer (never spawns)" : 0
-	]
-]
 @BaseClass = Angles
 [
 	angles(choices) : "Pitch Yaw Roll (Y Z X)" : "0 0 0" =
@@ -130,7 +123,7 @@
 ]
 @BaseClass = Target
 [
-	target(target_destination) : "Target" : : "The name of the entities to trigger. A name ending in * triggers every other entity whose name starts with the rest, such as room1_*. With !activator, it triggers the entity that started the chain, which is usually the player, but a trigger_relay passes itself unless Forward activator is set."
+	target(target_destination) : "Target" : : "The name of the entities to trigger. A name ending in * triggers every other entity whose name starts with the rest, such as room1_*. With !activator, it triggers the entity that started the chain. A trigger_relay passes itself as the activator unless Forward activator is set."
 ]
 @BaseClass = Global
 [
@@ -142,21 +135,20 @@
 ]
 @BaseClass = CustomObjectHint
 [
-	objecthint(choices) : "Object Hint Template" : "" : "Marks the object for nearby players with faint brackets within Hint Distance, and then a color when +use would use it. With Hidden, there is no mark." =
+	objecthint(choices) : "Object Hint Template" : "" : "Marks the object for nearby players with faint brackets within Hint Distance, and then a color when +use would use it. With None, there is no mark." =
 	[
 		"" : "None"
 		"button" : "button"
 		"charger" : "charger"
 		"eyescanner" : "eyescanner"
 		"pickup" : "pickup"
-		"hidden" : "hidden"
 	]
 	objecthint_distance(integer) : "Hint Distance" : : "How close the player must be to see the brackets, at most 4096. If left empty or set to 0, it is 512."
 ]
 @BaseClass = MoveWith
 [
-	movewith(target_destination) : "Move with (parent)" : "" : "Optional. The name of an entity this one moves and turns with, keeping the offset and turn it has from the parent as placed in the editor. Any entity can be a parent, e.g. func_train, func_tracktrain, func_door, func_door_rotating, func_plat, func_rotating, func_pendulum or another child. With name.N, where N is 1 to 4, a sprite or non-solid model sits on attachment N of a studio model. Solid brushes are pushed along and carry players, and sprites and non-solid models are placed on the parent by each client, with no network traffic. The key 'parent' (XashXT) works the same. See docs/MOVEWITH.md. A solid brush on a parent that turns needs an origin brush at the point it turns around. Without one, it turns around the map's origin, so things it bumps into are pushed along a wide arc, though players standing on it still ride correctly. With developer 1 set in the console, the console warns about it at map start."
-	parentflags(integer) : "Axis locks (sum)" : 0 : "Optional, with 'Move with'. Keeps this entity's own value of an axis instead of following the parent, where 2 is the X position, 4 the Y position, 8 the Z position, 16 the pitch, 32 the yaw and 64 the roll. Add them up, so 112 keeps it level and unturned, like a gondola on a wheel or a lantern on a drawbridge. With 0, it follows everything."
+	movewith(target_destination) : "Move with (parent)" : "" : "The name of an entity this one moves and turns with, keeping the place and angles it has next to that parent in the editor. Any entity can be a parent, including another child. With name.N (N is 1 to 4), a sprite or non-solid model sits on attachment N of the parent's model. A solid brush on a turning parent needs an origin brush, or it turns around the map's origin."
+	parentflags(integer) : "Axis locks (sum)" : 0 : "With Move with, keeps this entity's own position or angle on the axes you add up instead of following the parent: 2 X, 4 Y, 8 Z, 16 pitch, 32 yaw and 64 roll. 112 keeps its angles while the parent turns, so it follows only the parent's position. Setting it to 0 turns the locks off."
 ]
 @BaseClass base(Target) = Targetx
 [
@@ -172,12 +164,12 @@
 // A placed model lit from an info_light_origin instead of the floor under it.
 @BaseClass = LightOrigin
 [
-	lightorigin(target_destination) : "Light origin (info_light_origin)" : : "The name of an info_light_origin, and the model is lit as if it stood there. This fixes a model that is dark under a ledge or in a wall. If left empty, the model is lit from the floor under it."
+	lightorigin(target_destination) : "Light origin (info_light_origin)" : : "The name of an info_light_origin, and the model is lit as if it stood there. If left empty, the model is lit from the floor under it."
 ]
 
 @BaseClass = ModelScale
 [
-	scale(string) : "Model scale" : "" : "Draws the model this many times its size, so 0.5 is half and 2 is double. If left empty or set to 1, it is its normal size. Its hitboxes and its solid and pick-up box scale with it, and so do a monster's attack and follow distances, but a monster still walks with its normal-size box."
+	scale(string) : "Model scale" : "" : "Draws the model this many times its size, so 0.5 is half and 2 is double. If left empty or set to 1, it is its normal size. Its hitboxes, solid box and a monster's attack reach scale with it, but a monster still walks with its normal-size box."
 ]
 
 @BaseClass = RenderFxChoices
@@ -389,8 +381,8 @@
 	]
 ]
 
-@BaseClass base(Targetname, Targetx, RenderFields, Appearflags, Angles, BodySkin, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 32) color(0 0 200) = Weapon []
-@BaseClass base(Targetname, Target, RenderFields, Appearflags, Angles, BodySkin, ModelScale, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 36) = ItemBase []
+@BaseClass base(Targetname, Targetx, RenderFields, Angles, BodySkin, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 32) color(0 0 200) = Weapon []
+@BaseClass base(Targetname, Target, RenderFields, Angles, BodySkin, ModelScale, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 36) = ItemBase []
 @BaseClass = ItemPickupFlags
 [
 	spawnflags(flags) =
@@ -399,7 +391,7 @@
 		256 : "USE only" : 0
 	]
 ]
-@BaseClass base(Appearflags, Angles, MoveWith) size(-16 -16 -36, 16 16 36) color(0 255 0) studio("models/player.mdl") = PlayerClass []
+@BaseClass base(Angles, MoveWith) size(-16 -16 -36, 16 16 36) color(0 255 0) studio("models/player.mdl") = PlayerClass []
 
 
 // The Monster keys in groups: Monster has them all; a class whose code can't use a group leaves it out
@@ -476,7 +468,7 @@
 ]
 @BaseClass = MonsterUnkillable
 [
-	unkillable(choices) : "Unkillable" : 0 : "With Yes, damage never takes it below 1 health, so it can't be killed. It can be changed while the map runs with trigger_changevalue. It doesn't work on the Apache, turrets or sentry guns." =
+	unkillable(choices) : "Unkillable" : 0 : "With Yes, damage never takes it below 1 health, so it can't be killed. It can be changed while the map runs with trigger_changevalue." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -574,7 +566,7 @@
 		244 : "Green"
 	]
 	gibmodel(studio) : "Custom gib model" : "" : "When gibbed, it throws 4 gibs of this model (random submodels)."
-	gib_policy(choices) : "Gibbing policy" : 0 : "A kill that always or never gibs still wins." =
+	gib_policy(choices) : "Gibbing policy" : 0 : "Whether a kill gibs it. Prefer gibbing gibs it on every kill and Prefer not to gib keeps the body, except for damage that always or never gibs." =
 	[
 		0 : "Default"
 		1 : "Prefer gibbing"
@@ -623,13 +615,13 @@
 	UseSentence(string) : "Use Sentence"
 	UnUseSentence(string) : "Un-Use Sentence"
 	voicepitch(integer) : "Voice pitch" : 0 : "The pitch of its voice, where 100 is normal. With 0, it keeps its own."
-	followage_policy(choices) : "Followage policy" : "" : "Who can make it follow a player. If left empty, scientists follow a player who presses use on them, and Cops never follow. With Regular, a Cop that is a player ally follows on use too, and with Scripted only, only a scripted_following can make it follow. A Cop only ever follows as a player ally." =
+	followage_policy(choices) : "Followage policy" : "" : "Who can make it follow a player. If left empty, scientists follow a player who uses them and Cops never follow. With Regular, a Cop that is a player ally follows on use too. With either Scripted only choice, only a scripted_following can make it follow, and with decline use it says no when a player uses it. A Cop only follows as a player ally." =
 	[
 		0 : "Regular"
 		1 : "Scripted only"
 		2 : "Scripted only, decline use"
 	]
-	followfailpolicy(choices) : "Follow failure policy" : 0 : "What it does when it can't reach the player it follows. With Default, scientists stop following and others keep trying. With a Scripted only followage policy, Stop following keeps trying." =
+	followfailpolicy(choices) : "Follow failure policy" : 0 : "What it does when it can't reach the player it follows. With Default, scientists stop following and others keep trying. With a Scripted only Followage policy, Stop following works like Keep trying." =
 	[
 		0 : "Default"
 		1 : "Keep trying"
@@ -748,7 +740,7 @@
 [
 	m_iGibs(integer) : "Number of Gibs" : 3 : "How many gibs it shoots each time it's triggered. If left empty, it shoots one."
 	delay(string) : "Delay between shots" : "0" : "Seconds between gibs. With 0, it is 0.1 seconds."
-	m_flVelocity(string) : "Gib Velocity [LR]" : "200" : "How fast the gibs fly. If left empty, the gibs just drop, unless Direction and speed is set, in which case its length alone sets their speed."
+	m_flVelocity(string) : "Gib Velocity [LR]" : "200" : "How fast the gibs fly. If left empty, the gibs just drop, but with Direction and speed set, its length alone sets their speed."
 	m_iszPosition(string) : "Position [LP] (blank = here)" : "" : "Where the gibs appear, given as x y z, an entity name or !activator."
 	m_iszVelocity(string) : "Direction and speed [LV] (blank = angles)" : "" : "The direction the gibs fly; its length times Gib Velocity is their speed."
 	m_flVariance(string) : "Course Variance" : "0.15" : "How much the gibs spread from the direction they're shot in. If left empty, they all fly exactly the same way."
@@ -803,7 +795,7 @@
 		512 : "Explosives Only" : 0
 	]
 	m_iGibs(integer) : "Custom number of gibs" : 0 : "How many gibs it breaks into. With 0, the game decides, and with -1, there are no gibs."
-	gibscale(string) : "Custom gib scale" : "" : "The gibs' model scale, e.g. 0.5 for half and 2 for double. If left empty or set to 0, they are their normal size."
+	gibscale(string) : "Custom gib scale" : "" : "The gibs' model scale, so 0.5 is half and 2 is double. If left empty or set to 0, they are their normal size."
 	whenhit(string) : "Trigger when hit (locus = position)" : "" : "Fired at each hit; the activator is a point at the hit."
 	target_activator(choices) : "Target's Activator" : 0 =
 	[
@@ -826,7 +818,7 @@
 @BaseClass = Light
 [
 	_light(color255) : "Brightness" : "255 255 128 200"
-	style(choices) : "Appearance" : 0 : "For unnamed lights only. A named light uses Custom Appearance instead, which is normal when left empty." =
+	style(choices) : "Appearance" : 0 : "Used by unnamed lights only. A named light uses Custom Appearance instead, and is normal if that is left empty." =
 	[
 		0 : "Normal"
 		10 : "Fluorescent flicker"
@@ -969,7 +961,7 @@
 	]
 ]
 
-@BaseClass base(Targetname, Targetx, Master, Appearflags, RenderFields, Effects, ZHLT, Global, Angles, LockedSounds, CustomObjectHint, MoveWith) = Door
+@BaseClass base(Targetname, Targetx, Master, RenderFields, Effects, ZHLT, Global, Angles, LockedSounds, CustomObjectHint, MoveWith) = Door
 [
 	speed(integer) : "Speed" : 100 : "Units per second, or degrees per second for a rotating door. With 0, it is 100."
 	wait(integer) : "delay before close (-1 stay open)" : 4 : "Seconds it stays open before it closes, and -1 keeps it open. If left empty or set to 0, it closes as soon as it is fully open."
@@ -1076,7 +1068,7 @@
 	healthvalue(integer) : "Health to give on open"
 ]
 
-@BaseClass base(Targetname, Global, Angles, Appearflags, RenderFields, Effects, CustomObjectHint, MoveWith) = MomentaryDoor
+@BaseClass base(Targetname, Global, Angles, RenderFields, Effects, CustomObjectHint, MoveWith) = MomentaryDoor
 [
 	lip(integer) : "Lip"
 	movesnd(choices) : "Move Sound" : 0 =
@@ -1171,7 +1163,7 @@
 	]
 	player_weapon_volume(integer) : "Player weapon volume" : 0 : "How loud a player's shots with it are to monsters. With 0, they are loud, at 1000, and with -1, they are silent."
 
-	master(string) : "(Team) Master" : : "While the master is off, players can't take the controls. An Active tank still fires, so use Fire Master to stop that."
+	master(string) : "(Team) Master" : : "While the master is off, players can't take the controls. An Active tank still fires, and Fire Master stops that."
 	firemaster(string) : "Fire Master" : "" : "It fires only while this master is on (it still aims and turns)."
 
 	yawrate(string) : "Yaw rate" : "30" : "Degrees per second it turns left and right. If left empty, it doesn't turn."
@@ -1192,7 +1184,7 @@
 	minRange(string) : "Minimum target range" : "0"
 	maxRange(string) : "Maximum target range" : "0"
 	bulletCount(integer) : "Bullet count" : 0 : "How many shots it has, where 0 or less means no limit. When it runs out, it clicks instead of firing."
-	m_iClass(choices) : "Behavior/Classification" : 0 : "Who an Active tank shoots at. With Attack only players, it shoots the nearest player in view, and a Maximum target range of 0 means no limit. With another class, it shoots players and monsters that class hates within Maximum target range, and a range of 0 means 512. Monsters see it as this class." =
+	m_iClass(choices) : "Behavior/Classification" : 0 : "Who an Active tank shoots at, and the class monsters see it as. With Attack only players, it shoots the nearest player in view, and a Maximum target range of 0 means no limit. With a class, it shoots the players and monsters that class hates, and a range of 0 means 512." =
 	[
 		0 : "Attack only players"
 		4 : "Human Military"
@@ -1316,7 +1308,7 @@
 	]
 ]
 
-@BaseClass base(Targetname, Targetx, Master, Appearflags, MoveWith) = Trigger
+@BaseClass base(Targetname, Targetx, Master, MoveWith) = Trigger
 [
 	message(string) : "Message"
 	spawnflags(flags) =
@@ -1344,7 +1336,7 @@
 
 
 //
-// Mission (co-op rules and spawn zones)
+// Mission (Co-op rules and spawn zones)
 //
 
 @PointClass size(-16 -16 0, 16 16 72) studio("models/gman.mdl") = change_touch : "Mission Complete: a player who touches it wins the mission"
@@ -1370,7 +1362,7 @@
 @PointClass base(Targetname) iconsprite("sprites/editor/multispawn.spr") = multispawn : "Multi-Spawn Manager: each trigger moves the player spawns to the next zone, or to a named spawn set, from the next round. Co-op maps only."
 [
 	master(string) : "Master"
-	spawnset(target_destination) : "Spawn set" : : "The name of a spawn set, which is the Player Start 1 to 5 points with this name. When this fires, players spawn only at those points until another multispawn fires, and you can switch between sets in any order. If left empty, it moves players on to the next zone, from Player Start 2 on to 3, 4 and 5, and ends any named set. If no spawn point has the name, players spawn as if no set were active, and with developer 1 set in the console, a message says so."
+	spawnset(target_destination) : "Spawn set" : : "The name of a spawn set: the Player Start 1 to 5 points with this name. When this fires, players spawn only at those points until another multispawn fires. If left empty, it ends any named set and moves the spawns on to the next zone, from Player Start 1 up to 5, where they stay. If no spawn point has the name, players spawn in the active zone."
 ]
 
 // Without a Limitator the loadout weapon comes with this reserve ammo (weap1-weap11 order): 120, 140, 180, 150, 250,
@@ -1379,23 +1371,23 @@
 // with each ammo_reserve pickup; the defaults below are those values.
 @PointClass size(0 -0 -0, 16 16 36) color(255 0 120) iconsprite("sprites/editor/limitator.spr") = Limitator : "Ammo Limiter: the reserve ammo the loadout and the ammo_reserve box give per weapon"
 [
-	weap1(integer) : "Croon RC 28 reserve ammo (weapon_rc28)" : 120 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap2(integer) : ".444k Bear Killer reserve ammo (weapon_k444)" : 140 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap3(integer) : "Canon of Terror reserve ammo (weapon_canon)" : 180 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap4(integer) : "Croon PM 66 reserve ammo (weapon_pm66)" : 150 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap5(integer) : "Croon FA 18 reserve ammo (weapon_fa18)" : 250 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap6(integer) : "Vindico Federal reserve ammo (weapon_federal)" : 210 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap7(integer) : "Saan Auto-Shotgun reserve ammo (weapon_spa)" : 160 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap8(integer) : "Benelli reserve ammo (weapon_ben)" : 120 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap9(integer) : "Vindico Plasma Sniper Rifle reserve ammo (weapon_sw)" : 50 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap10(integer) : "Croon NM 33 Sniper Rifle reserve ammo (weapon_nm33)" : 150 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
-	weap11(integer) : "Vindico Avenger Minigun reserve ammo (weapon_chaingun)" : 100 : "Reserve ammo given with the loadout weapon, whose magazine comes full as usual, and added by each ammo_reserve pickup. If left empty or set to 0 or less, there is no reserve ammo, and above 900 it gives 900, the most a player carries."
+	weap1(integer) : "Croon RC 28 reserve ammo (weapon_rc28)" : 120 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap2(integer) : ".444k Bear Killer reserve ammo (weapon_k444)" : 140 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap3(integer) : "Canon of Terror reserve ammo (weapon_canon)" : 180 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap4(integer) : "Croon PM 66 reserve ammo (weapon_pm66)" : 150 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap5(integer) : "Croon FA 18 reserve ammo (weapon_fa18)" : 250 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap6(integer) : "Vindico Federal reserve ammo (weapon_federal)" : 210 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap7(integer) : "Saan Auto-Shotgun reserve ammo (weapon_spa)" : 160 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap8(integer) : "Benelli reserve ammo (weapon_ben)" : 120 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap9(integer) : "Vindico Plasma Sniper Rifle reserve ammo (weapon_sw)" : 50 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap10(integer) : "Croon NM 33 Sniper Rifle reserve ammo (weapon_nm33)" : 150 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
+	weap11(integer) : "Vindico Avenger Minigun reserve ammo (weapon_chaingun)" : 100 : "Reserve ammo for this weapon, given with the loadout and by each ammo_reserve pickup, at most 900. Setting it to 0 or less gives none. If left empty, it is the amount a map without a Limitator gives."
 ]
 
-@PointClass base(Targetname, RenderFields, Appearflags, Angles, BodySkin, CustomObjectHint, Colormap, ModelScale) size(-16 -16 0, 16 16 32) color(0 0 200) studio("models/ammobox.mdl") = ammo_reserve : "Ammo Reserve: an ammo box players can pick up"
+@PointClass base(Targetname, RenderFields, Angles, BodySkin, CustomObjectHint, Colormap, ModelScale) size(-16 -16 0, 16 16 32) color(0 0 200) studio("models/ammobox.mdl") = ammo_reserve : "Ammo Reserve: an ammo box players can pick up"
 []
 
-@PointClass base(PlayerClass) studio("models/editor/info_player_deathmatch.mdl") = info_player_deathmatch : "Player Start 1: the first spawn zone. Place 8, away from walls and each other"
+@PointClass base(PlayerClass) studio("models/editor/info_player_deathmatch.mdl") = info_player_deathmatch : "Player Start 1: the first spawn zone"
 [
 	targetname(target_source) : "Name" : : "Puts this point in a spawn set, so a multispawn with this name as its Spawn set makes players spawn here. A named Player Start 1 is used only by its set, unless every Player Start 1 has a name."
 	target(target_destination) : "Target"
@@ -1466,7 +1458,7 @@
 @PointClass iconsprite("sprites/editor/ambient_generic.spr") base(Targetname, MoveWith) = ambient_generic : "Plays Sounds/Sentences"
 [
 	message(sound) : "WAV Name" : : "A .wav, a !sentence or an .mp3. An .mp3 plays as music, which is heard everywhere and has no pitch or radius."
-	health(integer) : "Volume (10 = loudest)" : 10 : "How loud the sound is, from 0 for silent up to 10 for the loudest. If left empty, the sound is silent, unless you pick a Dynamic Preset or play an .mp3, which ignore Volume."
+	health(integer) : "Volume (10 = loudest)" : 10 : "How loud the sound is, from 0 for silent up to 10 for the loudest. If left empty, it is silent. A Dynamic Preset or an .mp3 ignores Volume."
 	preset(choices) : "Dynamic Presets" : 0 =
 	[
 		0 : "None"
@@ -1501,7 +1493,7 @@
 	volstart(integer) : "Start Volume" : 0
 	fadein(integer) : "Fade in time (0-100)" : 0
 	fadeout(integer) : "Fade out time (0-100)" : 0
-	pitch(integer) : "Pitch (> 100 = higher)" : 100 : "The pitch of the sound, where 100 is normal and higher numbers play it higher. If left empty or set to 0, it plays at the normal pitch. With Spin up, an empty Pitch stops the sound as soon as it starts, unless Start Pitch is empty too, which plays it at the lowest pitch. With Spin down, it plays at the normal pitch and spins down from there when you turn it off."
+	pitch(integer) : "Pitch (> 100 = higher)" : 100 : "The pitch of the sound, where 100 is normal and higher plays it higher. If left empty or set to 0, it plays at the normal pitch. With Spin up, an empty Pitch stops the sound at once, or plays it at the lowest pitch if Start Pitch is empty too."
 	pitchstart(integer) : "Start Pitch" : 100 : "The pitch Spin up starts from and Spin down ends at. If left empty, Spin up starts from the normal pitch, 100, and Spin down slides all the way to the lowest pitch before the sound stops."
 	spinup(integer) : "Spin up time (0-100)" : 0
 	spindown(integer) : "Spin down time (0-100)" : 0
@@ -1535,7 +1527,7 @@
 // One track plays at a time; starting another ambient_music replaces it.
 @PointClass iconsprite("sprites/editor/ambient_music.spr") base(Targetname) color(220 30 220) = ambient_music : "Map Music (MP3, heard everywhere)"
 [
-	message(sound) : "MP3 file (under sound/)" : : "Path under sound/, e.g. mymap/theme.mp3 (at most 57 characters). The game adds it to the map's downloads."
+	message(sound) : "MP3 file (under sound/)" : : "A path under sound/, at most 57 characters. Players download it."
 	spawnflags(flags) =
 	[
 		1 : "Start Silent" : 0
@@ -1771,8 +1763,8 @@
 		214 : "Darker Blue"
 		43 : "Bluish"
 	]
-	target(string) : "Initial position [LP] (blank = here)" : "" : "x y z, an entity name or !activator. Not used with On Player."
-	netname(string) : "Direction [LV] (blank = angles)" : "" : "x y z, or an entity's velocity. Not used with Random Direction."
+	target(string) : "Initial position [LP] (blank = here)" : "" : "Where the blood appears, given as x y z, an entity name or !activator. On Player ignores it."
+	netname(string) : "Direction [LV] (blank = angles)" : "" : "The direction of the blood, given as x y z or an entity's velocity. Random Direction ignores it."
 	amount(string) : "Amount of blood (damage to simulate)" : "100" : "How much blood it makes, as if from this much damage. If left empty, it makes no blood drops and no decal, and a Blood Stream still comes out, but with no force."
 	spawnflags(flags) =
 	[
@@ -1787,7 +1779,7 @@
 [
 	density(integer) : "Bubble density" : 2 : "How many bubbles come up at a time. If left empty, it makes the fewest, one at a time."
 	frequency(integer) : "Bubble frequency" : 2 : "How often bubbles come up, where higher is more often, up to twice a second at 20 or more. If left empty, they come up every 2.5 seconds."
-	current(integer) : "Speed of Current" : 0 : "Pushes the bubbles sideways toward the yaw of Pitch Yaw Roll, which is the compass angle. With 0, they rise straight up."
+	current(integer) : "Speed of Current" : 0 : "Pushes the bubbles sideways in the direction of the Yaw angle. With 0, they rise straight up."
 	bubble_model(sprite) : "Custom Bubble Sprite" : "" : "The sprite the bubbles use. If left empty, they use sprites/bubble.spr."
 	spawnflags(flags) =
 	[
@@ -1822,7 +1814,7 @@
 // A dynamic light that lights the world and models around it.
 @PointClass base(Targetname) color(255 255 128) iconsprite("sprites/editor/env_dlight.spr") = env_dlight : "Dynamic Light"
 [
-	message(string) : "Position (blank = here) [LP], [LE]" : : "A position or an entity name. With Position is Locus Entity, the light moves with that entity when it has a visible model; on one without (an info_target) it stays where the entity was when it turned on, unless Track position updates is set."
+	message(string) : "Position (blank = here) [LP], [LE]" : : "A point (x y z), an entity name or !activator. With Position is Locus Entity, the light moves with that entity if it has a visible model, and otherwise stays where the entity was unless Track position updates is set."
 	rendercolor(color255) : "Light color (R G B)" : "255 255 255"
 	renderamt(integer) : "Radius" : 80 : "How far the light reaches, in units (0-1023)."
 	health(string) : "Duration (0 = until triggered)" : "0.0" : "Seconds the light stays on after it turns on. With 0, it stays on until it is triggered off."
@@ -1847,9 +1839,9 @@
 		3 : "3"
 		4 : "4"
 	]
-	message(string) : "Position (blank = here) [LP], [LE]" : : "Where the light is when it follows no entity. With Position is Locus Entity, the light moves with that entity when it has a visible model; on one without (an info_target) it stays where the entity was when it turned on, unless Track position updates is set."
+	message(string) : "Position (blank = here) [LP], [LE]" : : "Where the light is when it follows no entity, given as x y z, an entity name or !activator. With Position is Locus Entity, the light moves with that entity if it has a visible model, and otherwise stays where the entity was unless Track position updates is set."
 	rendercolor(color255) : "Light color (R G B)" : "255 255 255"
-	renderamt(integer) : "Radius" : 64 : "The radius, from 0 to 1023. It is at full brightness up to this distance and then fades with the square of the distance, so in a dark place it still shows at 6 to 7 times the radius. It shines through walls."
+	renderamt(integer) : "Radius" : 64 : "How far, in units from 0 to 1023, the light has full brightness. Past it, the light fades with the square of the distance, so in the dark it shows well beyond the radius. It shines through walls."
 	health(string) : "Duration (0 = until triggered)" : "0.0" : "Seconds the light stays on after it turns on. With 0, it stays on until it is triggered off."
 	spawnflags(flags) =
 	[
@@ -1863,7 +1855,7 @@
 @PointClass base(Targetname) size(-16 -16 -16, 16 16 16) iconsprite("sprites/editor/env_explosion.spr") = env_explosion : "Explosion"
 [
 	target(target_destination) : "Position [LP] (blank = here)" : "" : "Where it explodes, given as x y z, an entity name, !activator or *player."
-	iMagnitude(integer) : "Magnitude" : 100 : "How big the blast is and how much damage it does. If left empty, it makes a small fireball that does no damage."
+	iMagnitude(integer) : "Magnitude" : 100 : "The damage at the center of the blast and the size of the fireball. If left empty, it makes a small fireball that does no damage."
 	spawnflags(flags) =
 	[
 		1 : "No Damage" : 0
@@ -1875,7 +1867,7 @@
 		64 : "No Sound" : 0
 		128 : "Activator is attacker" : 0
 	]
-	iradius(integer) : "Damage radius" : 0 : "How far the damage reaches. With 0, it reaches 2.5 times the Magnitude."
+	iradius(integer) : "Damage radius" : 0 : "How far the damage reaches, in units. With 0, it reaches 2.5 times the Magnitude."
 	model(sprite) : "Custom Fireball Sprite" : "" : "The fireball sprite. If left empty, it uses the stock fireball."
 	smokesprite(sprite) : "Custom Smoke Sprite" : "" : "The smoke sprite. If left empty, it uses the stock smoke."
 	scale(string) : "Custom sprite scale" : "" : "The fireball and smoke scale, where 1 is the sprite's own size. If left empty or set to 0, the Magnitude sets it."
@@ -1942,7 +1934,7 @@
 		1 : "Reverse" : 0
 		2 : "Repeatable" : 0
 	]
-	message(string) : "Position [LP] (blank = here)" : "" : "x y z, an entity name or !activator."
+	message(string) : "Position [LP] (blank = here)" : "" : "Where the funnel appears, given as x y z, an entity name or !activator."
 	netname(sprite) : "Particle sprite" : "" : "The sprite of the particles. If left empty, they use sprites/flare6.spr."
 ]
 
@@ -1991,7 +1983,7 @@
 		1 : "Y: a wall facing north / south"
 		2 : "Z: a shiny floor"
 	]
-	side(choices) : "Reflecting side" : 0 : "A floor (axis Z) left on Both reflects on its top face only." =
+	side(choices) : "Reflecting side" : 0 : "Which side of the mirror reflects. A floor mirror (axis Z) set to Both reflects on its top face only." =
 	[
 		0 : "Both (the viewer's side; plane in the brush's middle)"
 		1 : "Positive only (east / north / top face)"
@@ -2006,6 +1998,66 @@
 	]
 	renderamt(integer) : "FX Amount (1 - 255; mirror's opacity)" : 100
 	rendercolor(color255) : "FX Color (R G B)" : "0 0 0"
+]
+
+// Entity glow: an outline or a soft halo around the entities named in Target (models and brush entities), seen by
+// every player. Always and Only when occluded show through walls and floors, so a glow on another floor can mark an
+// objective. Trigger: On, Off or Toggle. trigger_changevalue can change GlowColor, Mode, Style and target.
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/env_entity_glow.spr") = env_entity_glow : "Entity Glow (outline or halo)"
+[
+	spawnflags(flags) =
+	[
+		1 : "Only the activator sees it" : 0
+	]
+	target(target_destination) : "Target Entity" : : "The name of the entities that glow, up to 32. With !all, the nearest 64 alive monsters and other alive players glow. Sprites don't glow."
+	GlowColor(color255) : "Glow Color (R G B A)" : "255 255 255 255" : "The color of the glow. The fourth number (0-255) is its strength."
+	PlayerColor(color255) : "Player Color (R G B A)" : "" : "With Target Entity !all, the color of the players' glow. If empty, players glow in the Glow Color."
+	duration(string) : "Duration (seconds)" : "0" : "How many seconds it stays on each time it turns on. With 0, it stays on until you turn it off."
+	Mode(choices) : "Glow Visibility Mode" : 0 : "When the glow shows. Always and Only when occluded show through walls and floors." =
+	[
+		0 : "Always"
+		1 : "Only when occluded"
+		2 : "Only when visible"
+	]
+	Style(choices) : "Glow Style" : 0 : "Outline draws a sharp edge around the shape, and Halo a soft glow around it." =
+	[
+		0 : "Outline"
+		1 : "Halo"
+	]
+	StartDisabled(choices) : "Start Disabled" : 0 =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
+]
+
+// A marker on the HUD that leads players to a spot: an icon, an optional label and an optional distance, in a color.
+// It shows through walls; while the spot is off the screen it sits on the screen's edge with an arrow toward it.
+// Trigger: On, Off or Toggle. Pairs with trigger_objective: turn both on together, and let the objective's target
+// turn the marker off when it is completed. trigger_changevalue can change the label, the color and Follow Entity.
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/info_waypoint.spr") = info_waypoint : "Waypoint (HUD marker)"
+[
+	spawnflags(flags) =
+	[
+		1 : "Only the activator sees it" : 0
+		2 : "Start on" : 0
+		4 : "Show distance" : 0
+		8 : "No edge arrow" : 0
+	]
+	model(sprite) : "Icon Sprite" : "" : "The marker's icon. If empty, the marker is a diamond. A white sprite takes the color best."
+	message(string) : "Label" : "" : "Text under the icon, up to 63 characters. If empty, the marker has no text."
+	rendercolor(color255) : "Color (R G B)" : "255 200 40" : "The color of the icon, the arrow and the text."
+	target(target_destination) : "Follow Entity" : "" : "The marker moves with this entity, keeping the distance it has from it. If empty, the marker stays where you placed it."
+	radius(integer) : "Reached Radius" : 0 : "How close, in units, a living player must come to turn the marker off. It turns off for everyone, or only for that player with Only the activator sees it. With 0, it never turns off this way."
+	netname(target_destination) : "Target When Reached" : "" : "The entities to trigger when a player reaches the marker, with that player as the activator."
+	min_range(integer) : "Hide Closer Than" : 0 : "Hides the marker from a player closer than this many units. With 0, there is no limit."
+	max_range(integer) : "Hide Farther Than" : 0 : "Hides the marker and its edge arrow from a player farther than this many units. With 0, there is no limit."
+	duration(string) : "Duration (seconds)" : "0" : "How many seconds it stays on each time it turns on. With 0, it stays on until you turn it off."
+	round_reset(choices) : "Reset at round start" : 0 : "With Yes, it goes back to its state at map load at each round start." =
+	[
+		0 : "No"
+		1 : "Yes"
+	]
 ]
 
 // Half-Life's model cycler, for looking at a model's animations: it plays its sequences in a loop; each hit
@@ -2042,7 +2094,7 @@
 		2 : "Change state when sequence ends"
 	]
 	m_flFramerate_Off(string) : "Framerate when off (1 is default)"
-	material(choices) : "Material (Solid (model hitboxes))" : 4 : "The hit sound and effects of bullets on the hitboxes. Only with Solid (model hitboxes)." =
+	material(choices) : "Material (Solid (model hitboxes))" : 4 : "The sound and effects of bullet hits on the model's hitboxes. Only used with the Solid (model hitboxes) flag." =
 	[
 		0 : "Glass"
 		1 : "Wood"
@@ -2101,7 +2153,7 @@
 	]
 ]
 
-// A picture or a color on the screens of players in play, under the HUD: hints, logos, tints and flashes.
+// A picture or a color on the screens of alive players, under the HUD: hints, logos, tints and flashes.
 // docs/ENV_OVERLAY.md
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/env_overlay.spr") = env_overlay : "Screen Overlay (picture or color on the screen)"
 [
@@ -2112,10 +2164,10 @@
 		4 : "Start On (for all players)" : 0
 		8 : "Loop" : 0
 	]
-	sprite(sprite) : "Picture (.spr or .tga)" : "" : "A sprite, animated or not, or a 24-bit or 32-bit .tga, e.g. sprites/hint.spr or gfx/hint.tga. If left empty, the overlay is a plain color, which needs Full Screen. Without Full Screen it shows nothing, and the console reports an error."
-	x(string) : "X (0 - 1.0 = left to right) (-1 centers)" : "-1" : "Placed as with game_text. A negative number puts the right edge that far from the right."
-	y(string) : "Y (0 - 1.0 = top to bottom) (-1 centers)" : "-1" : "Placed as with game_text. A negative number puts the bottom edge that far from the bottom."
-	scale(string) : "Scale" : "1" : "With 1, the picture shows at its own size in pixels, which grows with the HUD (hud_scale). It isn't used with Full Screen."
+	sprite(sprite) : "Picture (.spr or .tga)" : "" : "A sprite, animated or not, or a 24-bit or 32-bit .tga. If left empty, the overlay is a plain color, which needs Full Screen, and without Full Screen it shows nothing."
+	x(string) : "X (0 - 1.0 = left to right) (-1 centers)" : "-1" : "Where the picture sits across the screen, from 0 at the left to 1 at the right, and -1 centers it. Another negative number puts its right edge that far from the right side."
+	y(string) : "Y (0 - 1.0 = top to bottom) (-1 centers)" : "-1" : "Where the picture sits down the screen, from 0 at the top to 1 at the bottom, and -1 centers it. Another negative number puts its bottom edge that far from the bottom."
+	scale(string) : "Scale" : "1" : "The size of the picture, where 1 is its own size in pixels, and it grows with the HUD scale. Full Screen ignores it."
 	rendermode(choices) : "Render Mode" : 0 : "With Normal, the picture is blended by its own transparency. With Additive, it adds light, so black is see-through." =
 	[
 		0 : "Normal"
@@ -2126,7 +2178,7 @@
 	framerate(string) : "Frame Rate" : "10" : "Frames per second of an animated sprite. With 0, it shows only the first frame."
 	fadein(string) : "Fade In Time" : "0.5"
 	holdtime(string) : "Hold Time" : "0" : "How long it stays on screen. With 0, it stays until it is turned off. With Loop, it is the time between the fades."
-	fadeout(string) : "Fade Out Time" : "0.5" : "Also used when it is turned off."
+	fadeout(string) : "Fade Out Time" : "0.5" : "Seconds the overlay takes to fade out, also when it is turned off."
 	channel(choices) : "Channel" : 1 : "A player sees one overlay per channel, so a new one replaces the one on its channel. Channel 8 is drawn on top." =
 	[
 		1 : "Channel 1"
@@ -2144,31 +2196,31 @@
 // file. The HUD keeps its colors. docs/COLOR_CORRECTION.md
 @BaseClass base(Targetname, Master) = ColorCorrection
 [
-	StartDisabled(choices) : "Start Disabled" : 0 : "With Disabled, it is off until it is triggered. A name toggles it with On, Off or Toggle." =
+	StartDisabled(choices) : "Start Disabled" : 0 : "With Disabled, it stays off until it is triggered on." =
 	[
 		0 : "No"
 		1 : "Yes"
 	]
-	filename(string) : "Lookup Table File" : "" : "Optional. A Source .raw (32x32x32) or .cube table in gfx/colorcorrection/, e.g. tealorange.cube. Players download it. The simple keys below are applied after it."
-	maxweight(string) : "Maximum Weight (0 - 1)" : "1" : "How strong the look is at full, where 1 is the full look and 0.5 is half way between the normal picture and the look."
+	filename(string) : "Lookup Table File" : "" : "A Source .raw lookup table (32x32x32) in gfx/colorcorrection/. Players download it. The simple keys below are applied after it."
+	maxweight(string) : "Maximum Weight (0 - 1)" : "1" : "How strong the look is at most, where 1 is the full look and 0.5 is halfway between the normal picture and the look."
 	exclusive(choices) : "Exclusive" : 0 : "With Yes, while it is on, it takes its share from every other color correction, and the others fade under it." =
 	[
 		0 : "No"
 		1 : "Yes"
 	]
 	saturation(string) : "Saturation" : "1" : "How strong the colors are, where 1 gives normal colors, 0 black and white, and above 1 stronger colors."
-	contrast(string) : "Contrast" : "1" : "Where 1 is normal, above 1 is harder, with darker darks and brighter lights, and below 1 is flatter."
+	contrast(string) : "Contrast" : "1" : "Sets the contrast, where 1 is normal, above 1 gives darker darks and brighter lights, and below 1 a flatter picture."
 	brightness(string) : "Brightness" : "0" : "Added to every color, where 0 is normal, 0.1 is brighter and -0.1 is darker."
-	gamma(string) : "Gamma" : "1" : "Where 1 is normal, above 1 gives brighter mid tones and below 1 darker mid tones."
-	tintcolor(color255) : "Tint Color (R G B)" : "255 255 255" : "The picture is multiplied by this color, by Tint Amount, and 255 200 140 gives sepia."
+	gamma(string) : "Gamma" : "1" : "Sets the gamma, where 1 is normal, above 1 gives brighter mid tones and below 1 darker ones."
+	tintcolor(color255) : "Tint Color (R G B)" : "255 255 255" : "Multiplies the picture by this color, as strongly as Tint Amount sets."
 	tintamount(string) : "Tint Amount (0 - 1)" : "0" : "How strong the tint is, from 0 for no tint up to 1 for the full tint."
 ]
 
 // A color grade around a point: everywhere, or stronger the nearer the player is.
 @PointClass base(ColorCorrection) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/color_correction.spr") = color_correction : "Color Correction (color grade of the view)"
 [
-	minfalloff(string) : "Full Strength Distance" : "-1" : "Units from this point where the look is at full strength. With -1, and Fade-Out Distance -1, the look is the same everywhere on the map."
-	maxfalloff(string) : "Fade-Out Distance" : "-1" : "Units from this point where the look is gone; it fades in between."
+	minfalloff(string) : "Full Strength Distance" : "-1" : "How far from this point, in units, the look stays at full strength. If either distance is -1, or both are the same, the look is the same everywhere on the map."
+	maxfalloff(string) : "Fade-Out Distance" : "-1" : "How far from this point, in units, the look is gone. Between the two distances it fades."
 	fadeInDuration(string) : "Fade In Time" : "0" : "Seconds to fade in when it is turned on."
 	fadeOutDuration(string) : "Fade Out Time" : "0" : "Seconds to fade out when it is turned off."
 ]
@@ -2180,15 +2232,15 @@
 ]
 
 // Particle effect from an Aurora script (.aur). Every player sees it, including players who join later.
-@PointClass base(Targetname, Angles) size(-8 -8 -8, 8 8 8) color(255 160 40) iconsprite("sprites/editor/env_particle.spr") particles("aurora/steamvent.aur") = env_particle : "Aurora Particle System: without a name it is always on; with a name, trigger it to toggle"
+@PointClass base(Targetname, Angles) size(-8 -8 -8, 8 8 8) color(255 160 40) iconsprite("sprites/editor/env_particle.spr") = env_particle : "Aurora Particle System: without a name it is always on; with a name, trigger it to toggle"
 [
 	spawnflags(flags) =
 	[
 		1 : "Start On (only with a Name)" : 0
 		2 : "Spawn Use (one-shot copy at the activator)" : 0
 	]
-	message(string) : "Particle script" : "aurora/steamvent.aur" : "The .aur file, e.g. aurora/steamvent.aur (at most 63 characters). It is added to the downloads."
-	target(target_destination) : "Move with entity" : "" : "An entity the effect moves and turns with, keeping its offset. Hidden while that entity is not visible."
+	message(string) : "Particle script" : "aurora/steamvent.aur" : "The .aur script file, at most 63 characters. Players download it."
+	target(target_destination) : "Move with entity" : "" : "The effect moves and turns with this entity, keeping its offset from it. It is hidden while that entity can't be seen."
 	attachment(choices) : "Attachment point" : -1 : "With Move with on a model, it puts the effect on this attachment point of the model." =
 	[
 		-1 : "None (the entity's origin plus the offset)"
@@ -2239,17 +2291,17 @@
 		256 : "Raindrops go through brush entities" : 0
 		512 : "Don't stop at the water surface" : 0
 	]
-	intensity(integer) : "Raindrops per update" : 150 : "Spread within 400 units around each player's view. At most 1000."
+	intensity(integer) : "Raindrops per update" : 150 : "How many raindrops fall each update, spread within 400 units around each player's view, at most 1000."
 	update_period(string) : "Update period (seconds)" : "0.3" : "Seconds between batches of raindrops."
 	raindrop_width(integer) : "Raindrop width (units)" : 2
 	raindrop_height(integer) : "Raindrop tallness (units)" : 80
 	raindrop_min_speed(integer) : "Raindrop min falling speed" : 500
 	raindrop_max_speed(integer) : "Raindrop max falling speed" : 1800
 	raindrop_life(string) : "Raindrop max life (seconds)" : "1.0"
-	wind_x(integer) : "Wind X" : : "Sideways speed of every raindrop along the map's X axis, in units per second, and they fall at 500 to 1800. If you set Wind X or Wind Y, this rain blows with that fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, it uses the random wind."
+	wind_x(integer) : "Wind X" : : "Sideways speed of the raindrops along the map's X axis, in units per second. Setting Wind X or Wind Y gives a fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, the wind is random."
 	wind_y(integer) : "Wind Y" : : "Sideways speed of every raindrop along the map's Y axis, in units per second. See Wind X."
-	wind_rand_x(integer) : "Wind spread X" : : "Each raindrop gets a random extra sideways speed along X, from minus this to this, in units per second, on the fixed or the random wind. If left empty or set to 0, there is none."
-	wind_rand_y(integer) : "Wind spread Y" : : "Each raindrop gets a random extra sideways speed along Y, from minus this to this, in units per second. If left empty or set to 0, there is none."
+	wind_rand_x(integer) : "Wind spread X" : : "A random extra sideways speed along X, from minus this to this value in units per second, added to each raindrop. If left empty or set to 0, there is none."
+	wind_rand_y(integer) : "Wind spread Y" : : "A random extra sideways speed along Y, from minus this to this value in units per second, added to each raindrop. If left empty or set to 0, there is none."
 ]
 
 // Copies its render settings to its targets, at once or as a smooth fade.
@@ -2258,7 +2310,7 @@
 	message(string) : "FX Amount factor [LR]" : "" : "Multiplies the FX Amount given to the targets (a number, a..b, or a calc entity)."
 	m_fScale(string) : "Scale (0 = no change)" : "0" : "Model or sprite scale given to the targets. Their hitboxes and solid box change with it, step by step during a fade."
 	frags(string) : "Fade Time (seconds, 0 = at once)" : "0" : "FX Amount, color and scale change smoothly over this time. Mode and FX change at once."
-	netname(target_destination) : "Trigger after fading" : "" : "Fired once when the change is done; the activator is the first target."
+	netname(target_destination) : "Trigger after fading" : "" : "Fired once when the change is done, with the first target as the activator."
 	spawnflags(flags) =
 	[
 		1 : "No Renderfx" : 0
@@ -2359,6 +2411,7 @@
 // 3D sky: place it in a small sky room. Faces with the env_sky tool texture show that room as seen from this point.
 // Entities in the sky room (func_conveyor clouds, sprites, func_rotating, models) are drawn in the sky too.
 // One env_sky is on at a time: triggering another switches to it, Off turns the 3D sky off.
+// Sky fog: each env_sky can fog its own sky room (OpenGL only), measured in sky room units; the map's fog stays out of it.
 @PointClass base(Targetname) size(-16 -16 -16, 16 16 16) color(128 192 255) iconsprite("sprites/editor/env_sky.spr") = env_sky : "3D sky camera"
 [
 	spawnflags(flags) =
@@ -2366,11 +2419,19 @@
 		1 : "Start off" : 0
 	]
 	frags(integer) : "Parallax scale (0 = none)" : 0 : "For a sky room built at 1/N scale, set N from 1 to 255, and the sky camera moves 1/N of the player's movement. If left empty or set to 0, the sky stays put like a skybox."
+	rendercolor(color255) : "Sky fog color (R G B)" : "128 128 128" : "The color of the sky fog. Only used when Sky fog density is above 0."
+	density(string) : "Sky fog density (0 = none; up to 0.01)" : "0" : "Fog in the sky room, like env_fog's density but over sky room distances, so a sky room built at 1/16 scale needs about 16 times the map's density. If left empty, set to 0 or above 0.01, the sky room has no fog."
+	fogskybox(choices) : "Skybox fog" : 1 : "How much the sky fog covers the 2D skybox behind the sky room, so far scenery blends into the sky. Only used when Sky fog density is above 0." =
+	[
+		0 : "None (the skybox stays clear)"
+		1 : "Partial (a tint, the skybox picture shows through)"
+		2 : "Full (as if the skybox were 2048 units away)"
+	]
 ]
 
 @PointClass base(Targetname) iconsprite("sprites/editor/env_smoker.spr") = env_smoker : "Smoke emitter: puffs from map start (can't be triggered), then removes itself"
 [
-	health(integer) : "Puffs" : 2 : "How many smoke puffs, one every 0.1-0.2 s; then it removes itself."
+	health(integer) : "Puffs" : 2 : "How many smoke puffs it makes, one every 0.1 to 0.2 seconds."
 	scale(string) : "Smoke sprite scale (x 0.1; 10 = normal)" : "1.0"
 	dmg(string) : "Dispersion of smoke particles" : "0.0"
 ]
@@ -2386,22 +2447,22 @@
 		256 : "Snowflakes go through brush entities" : 0
 		512 : "Don't dissolve in water" : 0
 	]
-	intensity(integer) : "Snowflakes per update" : 512 : "Spread within 1024 units around each player's view. At most 1000."
+	intensity(integer) : "Snowflakes per update" : 512 : "How many snowflakes fall each update, spread within 1024 units around each player's view, at most 1000."
 	update_period(string) : "Update period (seconds)" : "0.5" : "Seconds between batches of snowflakes."
 	snowflake_min_size(string) : "Snowflake min size (units)" : "2.1"
 	snowflake_max_size(string) : "Snowflake max size (units)" : "2.6"
 	snowflake_min_speed(integer) : "Snowflake min falling speed" : 131
 	snowflake_max_speed(integer) : "Snowflake max falling speed" : 210
 	snowflake_life(string) : "Snowflake max life (seconds)" : "3.0"
-	wind_x(integer) : "Wind X" : : "Sideways speed of every snowflake along the map's X axis, in units per second, and they fall at 131 to 210. If you set Wind X or Wind Y, this snow drifts with that fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, it uses the random wind."
+	wind_x(integer) : "Wind X" : : "Sideways speed of the snowflakes along the map's X axis, in units per second. Setting Wind X or Wind Y gives a fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, the wind is random."
 	wind_y(integer) : "Wind Y" : : "Sideways speed of every snowflake along the map's Y axis, in units per second. See Wind X."
-	wind_rand_x(integer) : "Wind spread X" : : "Each snowflake gets a random extra sideways speed along X, from minus this to this, in units per second, on the fixed or the random wind. If left empty or set to 0, there is none."
-	wind_rand_y(integer) : "Wind spread Y" : : "Each snowflake gets a random extra sideways speed along Y, from minus this to this, in units per second. If left empty or set to 0, there is none."
+	wind_rand_x(integer) : "Wind spread X" : : "A random extra sideways speed along X, from minus this to this value in units per second, added to each snowflake. If left empty or set to 0, there is none."
+	wind_rand_y(integer) : "Wind spread Y" : : "A random extra sideways speed along Y, from minus this to this value in units per second, added to each snowflake. If left empty or set to 0, there is none."
 ]
 
 @PointClass base(Targetname, Angles, MoveWith) size(-16 -16 -16, 16 16 16) iconsprite("sprites/editor/env_spark.spr") = env_spark : "Spark"
 [
-	MaxDelay(string) : "Max Delay" : "0" : "The longest wait between sparks. With 0, it is 1.5 seconds. With Cyclic, it is the shortest time between two sparks."
+	MaxDelay(string) : "Max Delay" : "0" : "The longest wait between two sparks, in seconds, and each wait is random up to it. With 0, it is 1.5. With Cyclic, it is how long after a spark the next trigger has to wait, and 0 means no wait."
 	spawnflags(flags) =
 	[
 		16 : "Cyclic (one spark per trigger)" : 0
@@ -2472,7 +2533,8 @@
 ]
 
 // A decorative model drawn by the clients only: it costs no model precache or network traffic.
-// It is not solid: add clip brushes where needed. With a name: On shows, Off hides.
+// It is not solid: add clip brushes where needed. Fixed at map start: with a name, On shows, Off hides and killtarget
+// removes it for good; trigger_changevalue and parents do nothing. "In the 3D sky": a prop in the env_sky sky room.
 @PointClass base(Targetname, Angles, RenderFields, LightOrigin) size(-16 -16 0, 16 16 72) studio() = env_static : "Static Prop (client-only model)"
 [
 	model(studio) : "Model (.mdl)" : "models/editor/env_static.mdl" : "The model to show. The default is an editor placeholder, so replace it, or the entity is removed at map start."
@@ -2484,6 +2546,7 @@
 	spawnflags(flags) =
 	[
 		2 : "Start invisible" : 0
+		4 : "In the 3D sky (in the env_sky sky room)" : 0
 	]
 ]
 
@@ -2519,7 +2582,7 @@
 		32 : "Danger"
 	]
 	aisound_duration(string) : "AI Sound duration" : "0.3"
-	model2(sprite) : "Sprite 2 Name" : : "A second sprite played with the first, e.g. sprites/xflare1.spr. Can't be changed while the map runs."
+	model2(sprite) : "Sprite 2 Name" : : "A second sprite played with the first. It can't be changed while the map runs."
 	rendercolor2(color255) : "Sprite 2 color" : : "The color of the second sprite. If left empty, it uses the first sprite's color."
 	renderamt2(integer) : "Sprite 2 brightness"
 	scale2(string) : "Sprite 2 scale"
@@ -2547,10 +2610,10 @@
 	raindrop_min_speed(integer) : "Raindrop min falling speed" : 500
 	raindrop_max_speed(integer) : "Raindrop max falling speed" : 1800
 	raindrop_life(string) : "Raindrop max life (seconds)" : "1.0"
-	wind_x(integer) : "Wind X" : : "Sideways speed of every raindrop along the map's X axis, in units per second, and they fall at 500 to 1800. If you set Wind X or Wind Y, this rain blows with that fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, it uses the random wind."
+	wind_x(integer) : "Wind X" : : "Sideways speed of the raindrops along the map's X axis, in units per second. Setting Wind X or Wind Y gives a fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, the wind is random."
 	wind_y(integer) : "Wind Y" : : "Sideways speed of every raindrop along the map's Y axis, in units per second. See Wind X."
-	wind_rand_x(integer) : "Wind spread X" : : "Each raindrop gets a random extra sideways speed along X, from minus this to this, in units per second, on the fixed or the random wind. If left empty or set to 0, there is none."
-	wind_rand_y(integer) : "Wind spread Y" : : "Each raindrop gets a random extra sideways speed along Y, from minus this to this, in units per second. If left empty or set to 0, there is none."
+	wind_rand_x(integer) : "Wind spread X" : : "A random extra sideways speed along X, from minus this to this value in units per second, added to each raindrop. If left empty or set to 0, there is none."
+	wind_rand_y(integer) : "Wind spread Y" : : "A random extra sideways speed along Y, from minus this to this value in units per second, added to each raindrop. If left empty or set to 0, there is none."
 ]
 
 @SolidClass base(Targetname) color(255 255 255) = func_snowvolume : "Snow inside the brush"
@@ -2570,10 +2633,10 @@
 	snowflake_min_speed(integer) : "Snowflake min falling speed" : 131
 	snowflake_max_speed(integer) : "Snowflake max falling speed" : 210
 	snowflake_life(string) : "Snowflake max life (seconds)" : "3.0"
-	wind_x(integer) : "Wind X" : : "Sideways speed of every snowflake along the map's X axis, in units per second, and they fall at 131 to 210. If you set Wind X or Wind Y, this snow drifts with that fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, it uses the random wind."
+	wind_x(integer) : "Wind X" : : "Sideways speed of the snowflakes along the map's X axis, in units per second. Setting Wind X or Wind Y gives a fixed wind instead of the random wind that changes every 15 to 30 seconds. If both are left empty, the wind is random."
 	wind_y(integer) : "Wind Y" : : "Sideways speed of every snowflake along the map's Y axis, in units per second. See Wind X."
-	wind_rand_x(integer) : "Wind spread X" : : "Each snowflake gets a random extra sideways speed along X, from minus this to this, in units per second, on the fixed or the random wind. If left empty or set to 0, there is none."
-	wind_rand_y(integer) : "Wind spread Y" : : "Each snowflake gets a random extra sideways speed along Y, from minus this to this, in units per second. If left empty or set to 0, there is none."
+	wind_rand_x(integer) : "Wind spread X" : : "A random extra sideways speed along X, from minus this to this value in units per second, added to each snowflake. If left empty or set to 0, there is none."
+	wind_rand_y(integer) : "Wind spread Y" : : "A random extra sideways speed along Y, from minus this to this value in units per second, added to each snowflake. If left empty or set to 0, there is none."
 ]
 
 @PointClass base(GibshooterBase) iconsprite("sprites/editor/gibshooter.spr") = gibshooter : "Gib Shooter" []
@@ -2623,7 +2686,7 @@
 	]
 ]
 
-// Tutor window message for players in play (or the activator only). Trigger on to show, off to close.
+// Tutor window message for alive players (or the activator only). Trigger on to show, off to close.
 // Messages queue one at a time per player. Target fires when a player sees the message.
 @PointClass base(Targetname, Target, Master) iconsprite("sprites/editor/env_tutor.spr") = env_tutor : "Tutor Message (CZ tutor window)"
 [
@@ -2633,7 +2696,7 @@
 		4 : "Show on player spawn" : 0
 		8 : "Repeatable (see Max shows)" : 0
 	]
-	message(string) : "Text (\n = new line)" : : "The text, where %n becomes the player's name, %+reload% becomes the player's key for a command, and a #Token gives localized text. At most 1023 bytes."
+	message(string) : "Text (\n = new line)" : : "The text, at most 1023 bytes. %n becomes the player's name, %+command% the key bound to that command, and a #Token gives localized text."
 	type(choices) : "Type (color, default icon/sound)" : 1 =
 	[
 		1 : "Default (green)"
@@ -2696,7 +2759,7 @@
 	closetarget(target_destination) : "Target when closed"
 ]
 
-// A text box in the middle of the screen for the activator, or every player in play. The player closes it with
+// A text box in the middle of the screen for the activator, or every alive player. The player closes it with
 // Close, Enter or primary attack.
 @PointClass base(Targetname) iconsprite("sprites/editor/game_messagebox.spr") = game_messagebox : "Message Box"
 [
@@ -2705,8 +2768,8 @@
 		1 : "All Players" : 0
 	]
 	title(string) : "Title" : : "One line shown in a title bar. If left empty, the box has no title bar."
-	message(string) : "Text (\n = new line)" : : "The text, and a #Token gives localized text. At most 1023 bytes."
-	distance(string) : "Autoclose distance (0 = none)" : "0" : "Players farther than this when it is triggered don't get the box. It closes when the player moves farther than this from the position."
+	message(string) : "Text (\n = new line)" : : "The text, at most 1023 bytes. A #Token gives localized text."
+	distance(string) : "Autoclose distance (0 = none)" : "0" : "Players farther than this from the Autoclose position when it is triggered don't get the box, and the box closes when a player moves farther away."
 	position(target_destination) : "Autoclose position (entity name or x y z; empty = here)"
 ]
 
@@ -2717,7 +2780,7 @@
 	[
 		1 : "All Players" : 0
 	]
-	video(string) : "Video file (.ogv, in video/)" : : "Ogg Theora file under video/, e.g. mymap/intro.ogv (at most 57 characters, one dot). Added to the downloads."
+	video(string) : "Video file (.ogv, in video/)" : : "An Ogg Theora file, as a path under video/ with one dot and at most 57 characters. Players download it."
 	audio(string) : "Sound file (.ogg, in video/; empty = the video's own)"
 ]
 
@@ -2789,7 +2852,7 @@
 	progress_bar_override(integer) : "Progress Bar Override (segments shown; -1 = timer progress)" : -1
 	x(string) : "HUD X Override (0 - 1.0 = left to right) (-1 = centered)" : "-1"
 	y(string) : "HUD Y Override (0 - 1.0 = top to bottom) (-1 = default top position)" : "-1"
-	timer_caption(string) : "Timer Caption (\n = new line)" : : "The caption, and a #Token gives localized text."
+	timer_caption(string) : "Timer Caption (\n = new line)" : : "The caption text. A #Token gives localized text."
 	caption_width(integer) : "Caption Width (pixels at 1080p before wrapping; 0 = no wrapping)" : 260
 	caption_lines(integer) : "Caption Lines (1 - 4)" : 2
 	target(target_destination) : "Target when finished (time is up)"
@@ -2804,7 +2867,7 @@
 // all its parts are. At most 32 per map.
 @PointClass base(Targetname, Master) color(220 30 220) iconsprite("sprites/editor/trigger_objective.spr") = trigger_objective : "Objective (HUD list)"
 [
-	message(string) : "Objective text" : : "Up to 127 characters, or #NAME for the titles.txt message NAME."
+	message(string) : "Objective text" : : "The objective's text, up to 127 characters, or #NAME for the message NAME in titles.txt."
 	state(choices) : "State at map start" : 0 =
 	[
 		0 : "Hidden (first trigger: active, next: completed)"
@@ -2812,7 +2875,7 @@
 		2 : "Completed"
 	]
 	order(integer) : "List position (0 = after the numbered ones)" : 0
-	partof(target_destination) : "Part of (group objective)" : : "Listed under that trigger_objective. The group shows its done parts (1/3) and is completed when all are."
+	partof(target_destination) : "Part of (group objective)" : : "The name of the trigger_objective this one is listed under. The group shows how many of its parts are done, such as 1/3, and is completed when all of them are."
 	count(integer) : "Counter target (0 = none; shows 2/3)" : 0
 	target(target_destination) : "Target when completed"
 	spawnflags(flags) =
@@ -2884,8 +2947,8 @@
 // Movie File: shows an Ogg Theora video instead of the panel; keep Width : Height equal to the video's.
 @PointClass base(Targetname, Target, Angles, MoveWith) size(-4 -4 -4, 4 4 4) color(80 255 120) studio("models/editor/vgui_screen.mdl") = vgui_screen : "World Screen (VGUI2 panel)"
 [
-	panelname(string) : "Panel Name (ui/scripts/screens/<name>.res)" : "example_screen" : "The panel it shows, which isn't used with a Movie File. If left empty, the entity is removed, unless it has a Movie File."
-	moviefilename(string) : "Movie File (.ogv in video/)" : : "If set, the screen shows this video instead of the panel."
+	panelname(string) : "Panel Name (ui/scripts/screens/<name>.res)" : "example_screen" : "The panel the screen shows when it has no Movie File. If left empty and there is no Movie File, the entity is removed."
+	moviefilename(string) : "Movie File (.ogv in video/)" : : "The video the screen shows instead of the panel."
 	looping(choices) : "Movie Looping" : 0 =
 	[
 		0 : "No (stops on its last frame)"
@@ -2959,7 +3022,7 @@
 	]
 	gibmodel(studio) : "Gib Model (blank = the material's)"
 	m_iGibs(integer) : "Custom number of gibs (0 = the game decides, -1 = none)" : 0
-	position(string) : "At position [LP] (blank = here)" : : "Where the gibs come out; the sound stays at the brush."
+	position(string) : "At position [LP] (blank = here)" : : "Where the gibs come out. The sound still plays at the brush."
 	spawnflags(flags) =
 	[
 		1 : "Repeatable" : 0
@@ -3012,7 +3075,7 @@
 		3 : "Off/On (Toggle buttons: Off in, On out)"
 	]
 	wait_toggle(string) : "Wait before toggling again" : "" : "For toggle buttons, the seconds before it can be used again."
-	noise(sound) : "Custom sound" : "" : "A sound file instead of the Sounds choice."
+	noise(sound) : "Custom sound" : "" : "Plays this sound file instead of the Sounds choice."
 	directuse(choices) : "Player use policy" : 0 : "How the player must look at it to use it." =
 	[
 		0 : "Default"
@@ -3028,7 +3091,7 @@
 		1 : "No Push" : 0
 		2 : "Not Solid" : 0
 	]
-	speed(string) : "Conveyor Speed" : "100" : "Units per second. With 0, it is 100."
+	speed(string) : "Conveyor Speed" : "100" : "How fast the belt carries things, in units per second. If set to 0, it is 100."
 	useset_policy(choices) : "Use Set Policy" : 0 : "What a trigger of type Set does." =
 	[
 		0 : "Reverse speed"
@@ -3051,16 +3114,16 @@
 	distance(integer) : "Distance (deg)" : 90 : "Degrees it turns. If left empty or set to 0, it doesn't turn."
 ]
 
-@SolidClass base(Appearflags, RenderFields, ZHLT) = func_friction : "Surface with a change in friction"
+@SolidClass base(RenderFields, ZHLT) = func_friction : "Surface with a change in friction"
 [
-	modifier(integer) : "Percentage of standard (0 - 100)" : 15 : "Friction on it, in percent of normal, so 100 is normal and 15 is slippery. If left empty, there is no friction at all, like ice."
+	modifier(integer) : "Percentage of standard (0 - 100)" : 15 : "The friction on it, in percent of normal friction: 100 is normal and lower numbers are more slippery. If left empty, there is no friction at all."
 ]
 
-@SolidClass base(Targetname, RenderFields, Global, ZHLT) = func_guntarget : "Moving platform"
+@SolidClass base(Targetname, RenderFields, Global, ZHLT) = func_guntarget : "Moving target"
 [
-	speed(integer) : "Speed (units per second)" : 100 : "How fast it moves. With 0, it moves at 100."
+	speed(integer) : "Speed (units per second)" : 100 : "How fast it moves, in units per second. If set to 0, it moves at 100."
 	target(target_destination) : "First stop target"
-	message(target_destination) : "Fire when shot down" : : "Fired when it has taken Damage to Take; it stops there."
+	message(target_destination) : "Fire when shot down" : : "Fired when it has taken its Damage to Take and stops."
 	health(integer) : "Damage to Take" : 0 : "How much damage it takes before it goes down. With 0, it can't be shot down."
 	spawnflags(flags) =
 	[
@@ -3110,7 +3173,7 @@
 	m_iszYController(target_destination) : "Y Controller"
 ]
 
-@SolidClass base(Global, Appearflags, Targetname, RenderFields, Angles, ZHLT) = func_pendulum : "Swings back and forth"
+@SolidClass base(Global, Targetname, RenderFields, Angles, ZHLT) = func_pendulum : "Swings back and forth"
 [
 	speed(integer) : "Speed" : 100 : "How fast it swings, in degrees per second. If left empty or set to 0, it swings at 100 degrees per second."
 	distance(integer) : "Distance (deg)" : 90 : "Degrees it swings. If left empty or set to 0, it never swings."
@@ -3173,7 +3236,7 @@
 		64 : "X Axis" : 0
 		128 : "Y Axis" : 0
 	]
-	speed(integer) : "Speed" : 50 : "Travel speed in units per second, and the spin takes the same time. If left empty or set to 0, it moves at 150 units per second."
+	speed(integer) : "Speed" : 50 : "How fast it moves, in units per second. It turns in the same time as it travels. If left empty or set to 0, it moves at 150 units per second."
 	height(integer) : "Travel altitude (can be negative)" : 0 : "How far it travels down. With 0, it travels the brush's height minus 8."
 	rotation(integer) : "Spin amount" : 0
 	fireonopening(target_destination) : "Fire On Open Start" : "" : "Fired when it starts moving up (to its top)."
@@ -3266,7 +3329,7 @@
 		3 : "Off/On (Toggle buttons: Off in, On out)"
 	]
 	wait_toggle(string) : "Wait before toggling again" : "" : "For toggle buttons, the seconds before it can be used again."
-	noise(sound) : "Custom sound" : "" : "A sound file instead of the Sounds choice."
+	noise(sound) : "Custom sound" : "" : "Plays this sound file instead of the Sounds choice."
 	directuse(choices) : "Player use policy" : 0 : "How the player must look at it to use it." =
 	[
 		0 : "Default"
@@ -3400,7 +3463,7 @@
 	height(integer) : "Height above track" : 4 : "How far above the path_track points the train's origin rides. If left empty, it rides on the path."
 	startspeed(integer) : "Initial speed" : 0
 	speed(integer) : "Speed (units per second)" : 64 : "Its top speed in units per second. If left empty or set to 0, its top speed is 100."
-	dmg(integer) : "Damage on crush" : 0 : "Damage each frame something blocks it, and the speed the blocker is pushed away at. Riders are not hurt. With 0, it does no damage."
+	dmg(integer) : "Damage on crush" : 0 : "Damage done each frame something blocks it, and the speed the blocker is pushed away at. Riders aren't hurt. If set to 0, it does no damage."
 	volume(integer) : "Volume (10 = loudest)" : 10 : "How loud it is. With 0, it plays at 10, the loudest. For no sound, set Sound to None."
 	bank(string) : "Bank angle on turns" : "0"
 	soundradius(choices) : "Sound radius" : 0 =
@@ -3412,7 +3475,7 @@
 		2 : "Enormous"
 		3 : "Play Everywhere"
 	]
-	custommovesnd(sound) : "Custom move sound" : "" : "A sound file instead of the Sound choice (pitched by speed)."
+	custommovesnd(sound) : "Custom move sound" : "" : "Plays this sound file instead of the Sound choice, pitched by speed."
 	customstopsnd(sound) : "Custom brake sound" : "" : "The sound it plays when it brakes. If left empty, it plays plats/ttrain_brake1.wav."
 ]
 
@@ -3423,8 +3486,8 @@
 	target(target_destination) : "First stop target"
 	speed(integer) : "Speed (units per second)" : 64 : "How fast it moves, in units per second. If left empty or set to 0, it moves at 100 units per second."
 	avelocity(string) : "Angular Velocity (y z x)"
-	dmg(integer) : "Damage on crush" : 0 : "Damage to what blocks it, at most every 0.5 seconds. With 0, it does 2, or none with No default damage."
-	skin(integer) : "Contents" : 0 : "Only with Not solid (8), what it is filled with, where -3 is water, -4 slime and -5 lava."
+	dmg(integer) : "Damage on crush" : 0 : "Damage to what blocks it, at most every 0.5 seconds. If set to 0, it does 2, or none with the No default damage flag."
+	skin(integer) : "Contents" : 0 : "What it is filled with: -3 is water, -4 slime and -5 lava. Works only with the Not solid flag."
 	m_iObeyTriggerMode(choices) : "Obey Trigger Mode" : 0 : "With No, any trigger starts or stops it. With Yes, On starts it, Off stops it and Toggle toggles it." =
 	[
 		0 : "No"
@@ -3479,7 +3542,7 @@
 	]
 	brake_sound(sound) : "Custom brake sound" : "" : "Plays when the engine starts. If left empty, it plays plats/vehicle_brake1.wav, but only with the Sound choices Vehicle 1 to Vehicle 4."
 	ignition_sound(sound) : "Custom ignition sound" : "" : "Plays when a player takes the wheel. If left empty, it plays plats/vehicle_ignition.wav."
-	touch_proxy_name(string) : "Touch proxy name" : "" : "A vehicle touches no triggers. Set a name to have an entity of that name ride with it and touch triggers that accept other entities."
+	touch_proxy_name(string) : "Touch proxy name" : "" : "The vehicle itself touches no triggers. With a name here, an invisible point with that name rides with the vehicle and touches the triggers that accept other entities."
 	_minlight(string) : "Minimum light level" : "0"
 ]
 
@@ -3492,7 +3555,7 @@
 	]
 ]
 
-@SolidClass base(Targetname, Appearflags, Angles, RenderFields, Effects, Global, ZHLT, MoveWith) = func_wall : "Wall"
+@SolidClass base(Targetname, Angles, RenderFields, Effects, Global, ZHLT, MoveWith) = func_wall : "Wall"
 [
 	spawnflags(flags) =
 	[
@@ -3523,7 +3586,7 @@
 		-5 : "Lava"
 	]
 	WaveHeight(string) : "Wave Height" : "3.2" : "How high the waves on its surface are. If left empty, the surface is flat."
-	directuse(choices) : "Player use policy" : 0 : "With Use Only, how the player must look at it to use it. A liquid isn't solid, so a look never meets it, and with Direct only nobody can use it." =
+	directuse(choices) : "Player use policy" : 0 : "How the player must look at it to use it, with Use Only. A liquid isn't solid, so with Direct only nobody can use it." =
 	[
 		0 : "Default"
 		1 : "Direct only (look straight at it)"
@@ -3541,7 +3604,7 @@
 
 @SolidClass base(Targetname, Target, Angles, RenderFields, ZHLT, CustomObjectHint, MoveWith) = momentary_rot_button : "Direct wheel control"
 [
-	target(target_destination) : "Target" : : "The entities it moves, such as a momentary_door. It needs a target, and without one it doesn't turn. Wheels with the same target turn together."
+	target(target_destination) : "Target" : : "The entities it moves. Without a target, it doesn't turn. Wheels with the same target turn together."
 	speed(integer) : "Speed" : 50 : "How fast it turns, in degrees per second. If left empty or set to 0, it turns at 100 degrees per second."
 	master(string) : "Master"
 	sounds(choices) : "Sounds" : 0 =
@@ -3562,7 +3625,7 @@
 		24 : "Clean Ratchet"
 		25 : "Gas Clunk"
 	]
-	noise(sound) : "Custom sound" : "" : "A sound file instead of the Sounds choice."
+	noise(sound) : "Custom sound" : "" : "Plays this sound file instead of the Sounds choice."
 	distance(integer) : "Distance (deg)" : 90 : "Degrees it turns from start to end, and a negative number turns it the other way. If left empty or set to 0, it doesn't turn."
 	returnspeed(integer) : "Auto-return speed" : 0 : "Degrees per second it turns back at with Auto Return. With 0, it doesn't turn back."
 	spawnflags(flags) =
@@ -3589,7 +3652,7 @@
 	]
 	master(string) : "Master"
 	frags(integer) : "Initial Value" : 0
-	health(integer) : "Limit Value" : 10 : "It fires its target when the count reaches this. If left empty, the limit is 0, so a count that starts at 0 and goes up never fires it, and with Fire if over limit, every count fires it."
+	health(integer) : "Limit Value" : 10 : "The count that fires its target. If left empty, it is 0. Counting up from 0 then never fires it, and with Fire if over limit every count does."
 ]
 
 @PointClass base(Targetname, Target) iconsprite("sprites/editor/game_counter_set.spr") = game_counter_set : "Sets a game_counter"
@@ -3648,7 +3711,7 @@
 
 // Gives or takes weapons and ammo, and sets health, max health and armor of the player who fires it.
 // Values may start with = set, + add, - subtract, < set if higher, > set if lower. Ammo: negative takes.
-@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/game_player_settings.spr") = game_player_settings : "Player settings (weapons, ammo, health, armor, co-op level and XP)"
+@PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/game_player_settings.spr") = game_player_settings : "Player settings (weapons, ammo, health, armor, Co-op level and XP)"
 [
 	target(target_destination) : "Fire on equip"
 	master(string) : "Master"
@@ -3671,8 +3734,8 @@
 		0 : "No change"
 		1 : "Give"
 	]
-	level(string) : "Set co-op level" : "" : "The player's co-op level. =5 sets it to 5 and =-3 to -3, +2 adds two levels and -2 takes two away, <10 keeps it at most 10 and >0 at least 0, and a number with no prefix sets it. Speed, spawn health and the scoreboard follow, as for a level gained in play."
-	xp(string) : "Set co-op XP" : "" : "XP toward the next level, with the same prefixes as the level. Each full 5000 is a level up (when mp_XP is 1). Taking XP never takes a level; it stops at 0."
+	level(string) : "Set Co-op level" : "" : "Sets the player's Co-op level. A number or =N sets it, +N adds N levels, -N takes N away, <N keeps it at most N and >N at least N. A negative level needs =, as in =-3. Speed, spawn health and the scoreboard follow, as for a normal level-up."
+	xp(string) : "Set Co-op XP" : "" : "Sets the player's XP toward the next level, with the same prefixes as Set Co-op level. Every full 5000 XP is a level-up. Taking XP away never takes a level, and XP stops at 0."
 	ARgrenades(integer) : "Grenade launcher grenades"
 	Hand_Grenade(integer) : "Hand grenades"
 	Satchel_Charge(integer) : "Satchels"
@@ -3911,7 +3974,7 @@
 
 @PointClass size(-24 -24 -4, 24 24 4) color(255 255 0) studio("models/editor/info_node.mdl") = info_node : "AI node" []
 
-@PointClass base(Targetname, Appearflags) iconsprite("sprites/editor/info_null.spr") = info_null : "info_null (spotlight target)" []
+@PointClass base(Targetname) iconsprite("sprites/editor/info_null.spr") = info_null : "info_null (spotlight target)" []
 
 @PointClass base(PlayerClass) studio("models/player.mdl") = info_player_start : "Fallback start (when the active spawn zone has none)" []
 
@@ -3920,7 +3983,7 @@
 
 @PointClass base(Targetname, MoveWith) size(-4 -4 -4, 4 4 4) color(200 100 50) iconsprite("sprites/editor/info_target.spr") = info_target : "Beam Target" []
 
-@PointClass size(-16 -16 0, 16 16 72) base(Appearflags, Angles, Targetname) color(255 128 240) studio("models/editor/info_teleport_destination.mdl") = info_teleport_destination : "Teleport destination"
+@PointClass size(-16 -16 0, 16 16 72) base(Angles, Targetname) color(255 128 240) studio("models/editor/info_teleport_destination.mdl") = info_teleport_destination : "Teleport destination"
 [
 	target(target_destination) : "Target" : "" : "With Trigger on arrival, fired each time something arrives, with what arrived as the activator."
 	spawnflags(flags) =
@@ -3930,7 +3993,7 @@
 ]
 
 // Unnamed: on the wall from the map start, for everyone. Named: sprayed once when triggered; players who join later don't see it.
-@PointClass decal() base(Targetname, Appearflags) = infodecal : "Decal"
+@PointClass decal() base(Targetname) = infodecal : "Decal"
 [
 	texture(decal)
 ]
@@ -3953,8 +4016,8 @@
 // Shared: the whole team holds it (any player can use it, and the world too); it stays across rounds.
 @PointClass base(ItemBase, ItemPickupFlags) studio() = item_pickup : "Inventory item (keycard, key)"
 [
-	model(studio) : "Model" : "models/w_security.mdl" : "Leave empty for the security card."
-	item_name(string) : "Item name" : : "Up to 31 characters. Every check and player_inventory names the item by this, e.g. keycard_red."
+	model(studio) : "Model" : "models/w_security.mdl" : "The world model of the item. If left empty, it is the security card."
+	item_name(string) : "Item name" : : "The name every player_inventory check uses for this item, up to 31 characters."
 	item_icon(choices) : "HUD icon" : "inv_key" : "Its icon in the inventory row, as a name from sprites/hud.txt." =
 	[
 		"inv_key" : "Key"
@@ -3963,9 +4026,9 @@
 		"inv_card_yellow" : "Yellow keycard"
 	]
 	count(integer) : "Count" : 1 : "How many the item counts for (1 to 32767)."
-	collect_limit(integer) : "Collect limit" : 0 : "A player, or the team when Shared, can't take it if that would make them hold more than this of the item. With 0, there is no limit."
+	collect_limit(integer) : "Collect limit" : 0 : "The most of this item a player can hold, or the whole team when Shared. Setting it to 0 turns the limit off."
 	return_timelimit(string) : "Return time" : "45" : "Seconds a dropped item lies untouched before it goes back to its placed spot. With 0, it goes straight back."
-	holder_keep_on_death(choices) : "Keep on death" : 0 : "With Yes, the holder keeps it when they die or are stripped, so Bounty Killer and Battle Royale players respawn with it. It still goes back at a round restart or when they leave." =
+	holder_keep_on_death(choices) : "Keep on death" : 0 : "With Yes, the holder keeps it when they die or are stripped, and respawns with it. It still goes back to its spot at a round restart or when they leave the game." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -4003,7 +4066,7 @@
 
 @PointClass iconsprite("sprites/editor/light.spr") base(Targetname, Light, ZHLT_point) = light : "Invisible lightsource"
 [
-	target(target_destination) : "Target" : "" : "Used only at compile time, when the compiler turns this light into a spotlight aimed at the target, with the cone _cone, which is 10 by default. The game never fires it."
+	target(target_destination) : "Target" : "" : "For the compiler only: the light becomes a spotlight with a 10 degree cone, aimed at the target. Use light_spot for another cone. The game never fires it."
 	spawnflags(flags) =
 	[
 		1 : "Initially dark (named lights)" : 0
@@ -4029,13 +4092,13 @@
 	_light(color255) : "Brightness" : "255 255 128 200" : "Sun color (R G B) and brightness. Also the in-game model lighting (sv_skycolor), which stays on when a named sun is dark."
 	_spread(integer) : "Sun Spread Angle [0-10]" : 0 : "For the compiler, the spread angle in degrees for soft sun shadows, where 0 gives hard shadows. ZHLT doesn't have this key."
 	_diffuse_light(color255) : "Ambient Color (Diffuse Light)" : "" : "For the compiler, the color and brightness of the sky's ambient light. If left empty, it uses the sun's."
-	_diffuse_light2(color255) : "Sun Diffuse (bounced sunlight)" : "" : "For the compiler, the diffuse color of bounced sunlight only. If left empty, it uses the Ambient Color. ZHLT doesn't have this key."
+	_diffuse_light2(color255) : "Sun Diffuse" : "" : "For the compiler, the color and brightness of the sky light on the side of the sky away from the sun. The compiler blends from the Ambient Color near the sun to this one. If left empty, it uses the Ambient Color. ZHLT doesn't have this key."
 	_fake(choices) : "Only Dynamic (only affects models)" : "" : "For the compiler. With Yes, it only sets the model lighting and adds no lightmap light. ZHLT doesn't have this key." =
 	[
 		"" : "No"
 		1 : "Yes"
 	]
-	style(choices) : "Appearance" : 0 : "For unnamed lights only. A named light uses Custom Appearance instead, which is normal when left empty." =
+	style(choices) : "Appearance" : 0 : "Used by unnamed lights only. A named light uses Custom Appearance instead, and is normal if that is left empty." =
 	[
 		0 : "Normal"
 		10 : "Fluorescent flicker"
@@ -4234,8 +4297,8 @@
 	target(target_destination) : "Fire on state change (On / Off)" : "" : "Fired with On when it turns on, Off when it turns off. After a turn-on or turn-off time, the env_state is the activator."
 	noise1(target_destination) : "Fire when turned on (toggle)"
 	noise2(target_destination) : "Fire when turned off (toggle)"
-	turnontime(string) : "Time taken to turn on (seconds)" : "" : "As a master it is off until the time is over."
-	turnofftime(string) : "Time taken to turn off (seconds)" : "" : "As a master it is off from the moment it is triggered to turn off, for the whole time."
+	turnontime(string) : "Time taken to turn on (seconds)" : "" : "Seconds it takes to turn on. As a master, it counts as off until that time is over."
+	turnofftime(string) : "Time taken to turn off (seconds)" : "" : "Seconds it takes to turn off. As a master, it counts as off for that whole time, from the moment it is told to turn off."
 	master(string) : "Master"
 	spawnflags(flags) =
 	[
@@ -4321,7 +4384,7 @@
 		22 : "Arctan (= arctan(new))"
 		24 : "Arccot (= arccot(new))"
 	]
-	m_trigonometricBehaviour(choices) : "Trigonometric funcs. behavior" : 0 : "With Degrees, Sin, Cos, Tan and Cot take the new value in degrees, so sin(30) is 0.5, and Arcsin, Arccos, Arctan and Arccot give degrees, so arcsin(0.5) is 30. With Radians, both are in radians." =
+	m_trigonometricBehaviour(choices) : "Trigonometric funcs. behavior" : 0 : "With Degrees, Sin, Cos, Tan and Cot take degrees, and Arcsin, Arccos, Arctan and Arccot give degrees. With Radians, both use radians." =
 	[
 		0 : "Degrees"
 		1 : "Radians"
@@ -4390,7 +4453,7 @@
 	]
 	netname(target_destination) : "Target for 'true'-case"
 	message(target_destination) : "Target for 'false'-case"
-	m_iCheckBehaviour(choices) : "In constant mode fire when" : 0 : "When it turns on, the last result counts as true, so with Result has changed, or keeps being false, a first true result fires nothing." =
+	m_iCheckBehaviour(choices) : "In constant mode fire when" : 0 : "When it turns on, the last result counts as true. So with Result has changed, or with it keeps being false, a first true result fires nothing." =
 	[
 		0 : "Result has changed"
 		1 : "Result has changed or it keeps being true"
@@ -4422,7 +4485,7 @@
 	netname(target_destination) : "Source entity"
 	m_iszSrcValueName(string) : "Source key"
 	target(target_destination) : "Destination entity"
-	m_iszDstValueName(string) : "Destination key" : "" : "classname, model, sprite and sound keys can't be changed. monstermaker Monster Type and a new game_player_equip item only take a class the map already loads."
+	m_iszDstValueName(string) : "Destination key" : "" : "The key to write to. classname, model, sprite and sound keys can't be changed. monstermaker Monster Type and a new game_player_equip item only take a class the map already loads."
 	m_iFloatConversion(choices) : "Float conversion (to string/integer)" : 0 =
 	[
 		0 : "6 decimal places (default)"
@@ -4466,7 +4529,7 @@
 		22 : "Arctan (= arctan(new))"
 		24 : "Arccot (= arccot(new))"
 	]
-	m_trigonometricBehaviour(choices) : "Trigonometric funcs. behavior" : 0 : "With Degrees, Sin, Cos, Tan and Cot take the new value in degrees, so sin(30) is 0.5, and Arcsin, Arccos, Arctan and Arccot give degrees, so arcsin(0.5) is 30. With Radians, both are in radians." =
+	m_trigonometricBehaviour(choices) : "Trigonometric funcs. behavior" : 0 : "With Degrees, Sin, Cos, Tan and Cot take degrees, and Arcsin, Arccos, Arctan and Arccot give degrees. With Radians, both use radians." =
 	[
 		0 : "Degrees"
 		1 : "Radians"
@@ -4476,7 +4539,7 @@
 ]
 
 // Fires its target once for each entity that matches the filters, with that entity as !activator.
-// Only players in play count.
+// Only alive players count.
 @PointClass base(Targetname) color(180 120 255) iconsprite("sprites/editor/trigger_entity_iterator.spr") = trigger_entity_iterator : "Trigger Entity Iterator"
 [
 	name_filter(target_destination) : "Filter entities by name"
@@ -4592,7 +4655,7 @@
 ]
 
 // When triggered, fires its target for each entity within Radius that passes the filters (or the closest or
-// farthest), with that entity as !activator. Only players in play count.
+// farthest), with that entity as !activator. Only alive players count.
 @PointClass base(Targetname) color(180 120 255) iconsprite("sprites/editor/trigger_sensor.spr") = trigger_sensor : "Trigger Sensor"
 [
 	radius(string) : "Radius" : 192 : "Detects entities within this radius."
@@ -4634,7 +4697,7 @@
 	]
 	sensed_master(string) : "Trigger Master (activator is detected entity)"
 	sensed_classname(string) : "Required classname"
-	classify(choices) : "Act as Classify" : 0 : "For relationship checks" =
+	classify(choices) : "Act as Classify" : 0 : "The monster class it acts as for relationship checks." =
 	[
 		0 : "None"
 		1 : "Machine"
@@ -4874,7 +4937,7 @@
 	]
 	store_result(target_destination) : "Store result in" : "" : "When it is triggered, the result goes to this game_number or game_counter, with the use type Set."
 	target(target_destination) : "Trigger after operation"
-	trigger_on_fail(target_destination) : "Trigger on calculation fail" : "" : "A missing operand, a division by zero, an overflow."
+	trigger_on_fail(target_destination) : "Trigger on calculation fail" : "" : "Fired when the calculation fails: a missing operand, a division by zero or an overflow."
 	min_value(string) : "Min (blank = none) [LR]"
 	max_value(string) : "Max (blank = none) [LR]"
 	clamp_policy(choices) : "If outside range" : 0 =
@@ -4926,12 +4989,12 @@
 
 @PointClass base(Targetname) color(170 221 85) size(-12 -12 -12, 12 12 12) iconsprite("sprites/editor/locus_variable.spr") = locus_variable : "Locus Variable (stores values)"
 [
-	m_iszPosition(string) : "Position to record [LP]" : "*locus" : "If one of the three values can't be worked out, the trigger stores, makes and fires nothing."
+	m_iszPosition(string) : "Position to record [LP]" : "*locus" : "The position it stores. If the position, the vector or the number can't be worked out, nothing is stored, made or fired."
 	m_iszVelocity(string) : "Vector to record [LV]" : "*locus"
 	m_iszRatio(string) : "Number to record [LR]" : "*locus"
-	m_iszTargetName(string) : "Child's name (blank = no child)" : "" : "If set, each trigger makes a marker entity with this name that holds the values, and each one is an edict."
+	m_iszTargetName(string) : "Child's name (blank = no child)" : "" : "If set, each trigger makes a marker entity with this name that holds the values. Each marker counts toward the map's entity limit."
 	m_iszFireOnSpawn(target_destination) : "Fire on spawn (activator = the child, or this entity without one)"
-	m_fDuration(string) : "Child removed after (seconds)" : "0" : "With a Child's name, 0 removes the child on the next frame, so it lasts only for Fire on spawn. Set a time to keep it."
+	m_fDuration(string) : "Child removed after (seconds)" : "0" : "How many seconds each child lasts. 0 removes it on the next frame, so it lasts only for Fire on spawn."
 	round_reset(choices) : "Reset at round start" : 0 : "With Yes, it goes back to its state at map load at each round start." =
 	[
 		0 : "No"
@@ -4942,9 +5005,9 @@
 // Each trigger makes a beam between two Locus points or entities.
 @PointClass base(Targetname) color(170 179 43) size(-12 -12 -12, 12 12 12) iconsprite("sprites/editor/locus_beam.spr") = locus_beam : "Locus Beam"
 [
-	m_iszStart(string) : "Start at" : "" : "An entity name or a position [LP], as 'Start & End are' says, and !activator is whoever triggered it. If left empty, no beam is made."
-	m_iszEnd(string) : "End at" : "*locus" : "An entity name, a position [LP] or a direction [LV], as 'Start & End are' says. With *locus, or if left empty, it is whoever triggered it."
-	impulse(choices) : "Start & End are" : 0 : "Entity ends follow their entities while they move." =
+	m_iszStart(string) : "Start at" : "" : "An entity name or a position, as Start & End are says. !activator is whoever triggered it. If left empty, no beam is made."
+	m_iszEnd(string) : "End at" : "*locus" : "An entity name, a position or a direction, as Start & End are says. With *locus, or if left empty, it is whoever triggered it."
+	impulse(choices) : "Start & End are" : 0 : "An entity end follows its entity while it moves." =
 	[
 		0 : "Entity & Entity [LE LE]"
 		1 : "Position & Entity [LP LE]"
@@ -4952,14 +5015,14 @@
 		3 : "Position & Direction [LP LV] (end = start + direction)"
 	]
 	m_iszSprite(sprite) : "Sprite name" : "sprites/laserbeam.spr"
-	renderamt(integer) : "Brightness (1 - 255)" : 0 : "If left at 0, the beam doesn't show, so set it."
-	rendercolor(color255) : "Color (R G B)" : "0 0 0" : "If left at 0 0 0, the beam doesn't show, or is black with Draw solid, so set it."
-	m_iWidth(integer) : "Width" : 0 : "If left at 0, the beam doesn't show, so set it."
-	m_iDistortion(integer) : "Distortion (noise)" : 0 : "How much the beam wobbles, and 0 keeps it straight. With Draw sine, it is the height of the wave."
+	renderamt(integer) : "Brightness (1 - 255)" : 0 : "Set it above 0, or the beam doesn't show."
+	rendercolor(color255) : "Color (R G B)" : "0 0 0" : "Set a color, or the beam doesn't show. With Draw solid, 0 0 0 is black."
+	m_iWidth(integer) : "Width" : 0 : "Set it above 0, or the beam doesn't show."
+	m_iDistortion(integer) : "Distortion (noise)" : 0 : "How much the beam wobbles. 0 keeps it straight, and with Draw sine, it is the height of the wave."
 	m_fFrame(integer) : "Start frame" : 0
 	m_iScrollRate(integer) : "Scroll rate" : 0 : "How fast the texture moves along the beam."
-	m_fDuration(string) : "Duration (0 = unlimited)" : 0 : "Seconds before the beam is removed. With 0, it stays until it is killed by its name."
-	m_fDamage(string) : "Damage per second" : 0 : "Damage to anything the beam touches. Whoever triggered it gets the kill, except when a player's beam hits another player, and then the beam does."
+	m_fDuration(string) : "Duration (0 = unlimited)" : 0 : "Seconds before the beam is removed. With 0, it stays until it is removed by its name."
+	m_fDamage(string) : "Damage per second" : 0 : "Damage per second to anything the beam touches. Whoever triggered it gets the kill, but when a player's beam hits another player, the beam gets it."
 	m_iDamageType(choices) : "Damage type" : 0 =
 	[
 		0 : "Generic"
@@ -4979,10 +5042,10 @@
 		262144 : "Radiation"
 		1048576 : "Chemical"
 	]
-	m_iszTargetName(target_source) : "Name of the beams" : : "Each beam gets this name (killtarget it to remove the beams)."
+	m_iszTargetName(target_source) : "Name of the beams" : : "Each beam gets this name, so a killtarget with it removes the beams."
 	target(target_destination) : "Fire on spawn (activator = the beam)"
-	m_iStartAttachment(integer) : "Start attachment [1-4]" : : "Start at this attachment of the start entity's model (entity starts only)."
-	m_iEndAttachment(integer) : "End attachment [1-4]" : : "End at this attachment of the end entity's model (entity ends only)."
+	m_iStartAttachment(integer) : "Start attachment [1-4]" : : "The beam starts at this attachment of the start entity's model. Entity starts only."
+	m_iEndAttachment(integer) : "End attachment [1-4]" : : "The beam ends at this attachment of the end entity's model. Entity ends only."
 	spawnflags(flags) =
 	[
 		16 : "Start sparks" : 0
@@ -4998,7 +5061,7 @@
 // A number [LR] read from the player who triggered the chain.
 @PointClass base(Targetname) color(170 221 85) size(-12 -12 -12, 12 12 12) iconsprite("sprites/editor/player_calc_ratio.spr") = player_calc_ratio : "Player Number (health, armor, ammo, speed)"
 [
-	calc_param(choices) : "Value" : 0 : "What is read from the player who triggered the chain. Fails (no number) when that is not a player in play." =
+	calc_param(choices) : "Value" : 0 : "What it reads from the player who triggered the chain. It gives no number when that isn't an alive player." =
 	[
 		0 : "Health"
 		1 : "Armor"
@@ -5007,14 +5070,14 @@
 		4 : "Inventory item count"
 		5 : "Maximum speed"
 	]
-	item_name(string) : "Inventory item" : : "For Inventory item count, the item's name. With Fraction, it is 1 while the player has any, and 0 otherwise."
+	item_name(string) : "Inventory item" : : "The item's name, for Inventory item count. With Fraction, it is 1 while the player has any, and 0 otherwise."
 
-	value_notion(choices) : "Number as" : 0 : "With Fraction, the value is a share of its maximum, so health is a share of the player's max health, armor of 100, ammo of the carry limit plus the clip sizes with the loaded clips, and speed of the player's normal speed." =
+	value_notion(choices) : "Number as" : 0 : "With Fraction, the value is a share of its maximum: health of the player's max health, armor of 100, ammo of the carry limit (plus the clip sizes with loaded clips) and speed of the player's base speed." =
 	[
 		0 : "Absolute"
 		1 : "Fraction [0..1]"
 	]
-	ammo_name(choices) : "Ammo type" : "" : "For Ammo, which ammo is counted." =
+	ammo_name(choices) : "Ammo type" : "" : "Which ammo is counted, for Ammo." =
 	[
 		"" : ""
 		"ARgrenades" : "Grenades (Vindico Grenade Launcher, MP5)"
@@ -5065,7 +5128,7 @@
 
 @PointClass base(Monster) size(-16 -16 0, 16 16 72) studio("models/islave.mdl") = monster_alien_slave : "Demon Slave"
 [
-	netname(string) : "Squad Name" : : "Demon Slaves form no squad. When one sees an enemy, every monster with this name within 512 units is provoked and attacks it."
+	netname(string) : "Squad Name" : : "When it sees an enemy, every monster with this name within 512 units is provoked and attacks that enemy. Demon Slaves don't form squads."
 	spawnflags(flags) =
 	[
 		64 : "Wait until provoked" : 0
@@ -5121,7 +5184,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once)." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once." =
 	[
 		0 : "No Trigger"
 		1 : "See Player, Mad at Player"
@@ -5135,7 +5198,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	target(target_destination) : "Target" : : "The path_corner it flies to first; from there it follows the path."
+	target(target_destination) : "Target" : : "The path_corner it flies to first. From there, it follows the path."
 	// Wait For Trigger / Start Inactive: hovers until triggered, then hunts. Fire Rockets: rockets as well as the chaingun.
 	// Explode sooner: a shot-down apache explodes when it hits something, or after 15 s in the air (4 s with this flag). No Wreckage: the crash leaves no burning wreck or debris.
 	spawnflags(flags) =
@@ -5238,7 +5301,7 @@
 	]
 ]
 
-@PointClass base(RenderFields, Appearflags, Angles, Skin, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/barney.mdl") = monster_barney_dead : "Dead Cop"
+@PointClass base(RenderFields, Angles, Skin, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/barney.mdl") = monster_barney_dead : "Dead Cop"
 [
 	pose(choices) : "Pose" : 0 =
 	[
@@ -5367,7 +5430,7 @@
 	]
 ]
 
-@PointClass base(Appearflags, RenderFields, Angles, Skin, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/player.mdl") = monster_hevsuit_dead : "Dead HEV Suit"
+@PointClass base(RenderFields, Angles, Skin, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/player.mdl") = monster_hevsuit_dead : "Dead HEV Suit"
 [
 	pose(choices) : "Pose" : 0 =
 	[
@@ -5385,7 +5448,7 @@
 	]
 ]
 
-@PointClass base(Appearflags, RenderFields, Angles, Body, ModelScale, Colormap, EntityEffects) studio("models/hgrunt.mdl") size(-16 -16 0, 16 16 72) = monster_hgrunt_dead : "Dead Fed"
+@PointClass base(RenderFields, Angles, Body, ModelScale, Colormap, EntityEffects) studio("models/hgrunt.mdl") size(-16 -16 0, 16 16 72) = monster_hgrunt_dead : "Dead Fed"
 [
 	pose(choices) : "Pose" : 0 =
 	[
@@ -5556,7 +5619,7 @@
 
 @PointClass base(MonsterCore, Target, MonsterUnkillable, MonsterFlags, MonsterClip, MonsterFadeCorpse, MonsterNonSolidCorpse, MonsterActOutOfPVS, MonsterGag, MonsterTriggers, MonsterBody, MonsterSound, Body) size(-32 -32 0, 32 32 64) studio("models/icky.mdl") = monster_ichthyosaur : "Ichthyosaur"
 [
-	target(target_destination) : "Target" : : "The path_corner it swims to first; from there it follows the path while idle."
+	target(target_destination) : "Target" : : "The path_corner it swims to first. From there, it follows the path while idle."
 	sequence(choices) : "Preview Sequence" : 0 =
 	[
 		0 : "idle"
@@ -5584,7 +5647,7 @@
 @PointClass base(Monster) size(-16 -16 0, 16 16 72) studio("models/imp.mdl") = monster_imp_hunter : "Imp Hunter: melee and ranged attacks, hunts players across the map"
 []
 
-@PointClass base(MonsterCore, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-16 -16 -32, 16 16 32) studio("models/miniturret.mdl") = monster_miniturret : "Mini Auto Turret"
+@PointClass base(MonsterCore, MonsterUnkillable, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-16 -16 -32, 16 16 32) studio("models/miniturret.mdl") = monster_miniturret : "Mini Auto Turret"
 [
 	TriggerCondition(choices) : "Trigger Condition" : 0 =
 	[
@@ -5597,7 +5660,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once)." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once." =
 	[
 		0 : "No Trigger"
 		1 : "See Player, Mad at Player"
@@ -5610,7 +5673,7 @@
 	]
 	target(target_destination) : "Target" : : "Fired On when it switches on and when it dies, Off when it switches off."
 	maxsleep(string) : "Custom Search Time (before deactivate)" : "" : "Seconds it keeps searching after it lost its enemy, before it retires. If left empty or set to 0, it searches for 15 seconds."
-	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second, and far off target it speeds up to 10 times this. With 0, it is 30."
+	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second. Far off target, it speeds up to 10 times this. With 0, it is 30."
 	orientation(choices) : "Orientation" : 0 =
 	[
 		0 : "Floor Mount"
@@ -5653,7 +5716,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once)." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once." =
 	[
 		0 : "No Trigger"
 		1 : "See Player, Mad at Player"
@@ -5667,17 +5730,17 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	target(target_destination) : "Target" : : "The path_corner it flies to first; from there it follows the path."
-	num(integer) : "Number of Feds per deploy [1-4]" : 0 : "At most this many Feds per stop, only to replace dead ones. With 0, it drops four."
+	target(target_destination) : "Target" : : "The path_corner it flies to first. From there, it follows the path."
+	num(integer) : "Number of Feds per deploy [1-4]" : 0 : "The most Feds it drops at each stop, and only to replace dead ones. With 0, it drops four."
 	trigger_on_deploy(target_destination) : "Trigger on deploy (activator is Osprey)" : "" : "Fired each time it starts dropping Feds."
-	trigger_on_deploy_grunt(target_destination) : "Trigger on deploy (activator is Fed)" : "" : "Fired for each Fed it drops; the Fed is the activator."
+	trigger_on_deploy_grunt(target_destination) : "Trigger on deploy (activator is Fed)" : "" : "Fired for each Fed it drops, with the Fed as the activator."
 	spawnflags(flags) =
 	[
 		64 : "Start Inactive" : 0
 	]
 ]
 
-@PointClass base(Targetname, RenderFields, Appearflags, Angles, BodySkin, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 32) color(0 0 200) studio("models/w_weaponbox.mdl") = monster_satchel : "Live Satchel Charge" []
+@PointClass base(Targetname, RenderFields, Angles, BodySkin, CustomObjectHint, Colormap) size(-16 -16 0, 16 16 32) color(0 0 200) studio("models/w_weaponbox.mdl") = monster_satchel : "Live Satchel Charge" []
 
 @PointClass base(Monster, TalkMonster) size(-16 -16 0, 16 16 72) studio("models/scientist.mdl") = monster_scientist : "Scientist"
 [
@@ -5691,7 +5754,7 @@
 	]
 ]
 
-@PointClass base(Appearflags, RenderFields, Angles, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/scientist.mdl") = monster_scientist_dead : "Dead Scientist"
+@PointClass base(RenderFields, Angles, ModelScale, Colormap, EntityEffects) size(-16 -16 0, 16 16 72) studio("models/scientist.mdl") = monster_scientist_dead : "Dead Scientist"
 [
 	body(choices) : "Body" : -1 : "Which head it has. If left empty, it always has the Glasses head." =
 	[
@@ -5722,7 +5785,7 @@
 	]
 ]
 
-@PointClass base(MonsterCore, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-16 -16 0, 16 16 72) studio("models/sentry.mdl") = monster_sentry : "Sentry Gun: a touch or a hit wakes it; it does not switch off by itself"
+@PointClass base(MonsterCore, MonsterUnkillable, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-16 -16 0, 16 16 72) studio("models/sentry.mdl") = monster_sentry : "Sentry Gun: a touch or a hit wakes it; it does not switch off by itself"
 [
 	TriggerCondition(choices) : "Trigger Condition" : 0 =
 	[
@@ -5735,7 +5798,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once)." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once." =
 	[
 		0 : "No Trigger"
 		1 : "See Player, Mad at Player"
@@ -5747,7 +5810,7 @@
 		13 : "Got healed"
 	]
 	target(target_destination) : "Target" : : "Fired On when it switches on and when it dies, Off when it switches off."
-	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second, and far off target it speeds up to 10 times this. With 0, it is 30."
+	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second. Far off target, it speeds up to 10 times this. With 0, it is 30."
 	spawnflags(flags) =
 	[
 		32 : "Autostart" : 0
@@ -5762,7 +5825,7 @@
 
 @PointClass base(Targetname, RenderFields, Angles, ModelScale) size(-14 -14 22, 14 14 72) studio("models/scientist.mdl") = monster_sitting_scientist : "Sitting Scientist: a seated scientist who talks; can't be hurt or used"
 [
-	classify(choices) : "Classification" : "" : "The side a trigger_sensor with a relationship filter sees it on, and no monster sees it. If left empty or set to 0, it is Human military." =
+	classify(choices) : "Classification" : "" : "The side a trigger_sensor with a relationship filter sees it on. No monster sees it. If left empty or set to 0, it is Human military." =
 	[
 		-1 : "None"
 		0 : "Default"
@@ -5785,7 +5848,7 @@
 		1 : "Yes"
 	]
 	voicepitch(integer) : "Voice pitch" : 0 : "The pitch of its voice, where 100 is normal. With 0, it keeps its own."
-	SpeakAs(string) : "Speech Prefix" : "" : "Speak another voice's lines (BA Cop, SC scientist). Lines that voice lacks stay silent."
+	SpeakAs(string) : "Speech Prefix" : "" : "Speaks the lines of another voice, such as BA for the Cop or SC for the Scientist. Lines that voice doesn't have stay silent."
 	spawnflags(flags) =
 	[
 		2 : "Gag" : 0
@@ -5940,7 +6003,7 @@
 		2 : "Take Damage"
 		4 : "Death"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once); checked when the Pitbull dies, as Trigger Condition." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once. Like Trigger Condition, it is checked only when the Pitbull dies." =
 	[
 		0 : "No Trigger"
 		2 : "Take Damage"
@@ -5950,7 +6013,7 @@
 
 @PointClass base(Targetname, MonsterUnkillable, RenderFields, Angles, ModelScale, Skin) size(-8 -8 8, 8 8 8) studio("models/w_tripmine.mdl") = monster_tripmine : "Active Tripmine: place it on a wall, facing away from it; the beam goes out the way it faces"
 [
-	classify(choices) : "Classification" : "" : "The side a trigger_sensor with a relationship filter sees it on, and whose friendly fire rule the blast follows, for Feds and turrets that ignore friendly damage. If left empty or set to 0, it has none." =
+	classify(choices) : "Classification" : "" : "The side it is on. A trigger_sensor with a relationship filter sees it on this side, and Feds and turrets that ignore friendly damage take none from its blast when they are its allies. If left empty or set to 0, it has no side." =
 	[
 		0 : "Default"
 		1 : "Machine"
@@ -5972,7 +6035,7 @@
 	]
 ]
 
-@PointClass base(MonsterCore, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-32 -32 -32, 32 32 32) studio("models/turret.mdl") = monster_turret : "Auto Turret"
+@PointClass base(MonsterCore, MonsterUnkillable, MonsterFlags, MonsterFadeCorpse, Target, MonsterTriggers, BodySkin) size(-32 -32 -32, 32 32 32) studio("models/turret.mdl") = monster_turret : "Auto Turret"
 [
 	TriggerCondition(choices) : "Trigger Condition" : 0 =
 	[
@@ -5985,7 +6048,7 @@
 		11 : "See Player, Not In Combat"
 		13 : "Got healed"
 	]
-	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition that fires TriggerTarget (whichever comes first, once)." =
+	TriggerAltCondition(choices) : "Trigger Alternative Condition" : 0 : "A second condition for TriggerTarget. Whichever condition comes first fires it, once." =
 	[
 		0 : "No Trigger"
 		1 : "See Player, Mad at Player"
@@ -5998,7 +6061,7 @@
 	]
 	target(target_destination) : "Target" : : "Fired On when it switches on and when it dies, Off when it switches off."
 	maxsleep(string) : "Custom Search Time (before deactivate)" : "" : "Seconds it keeps searching after it lost its enemy, before it retires. If left empty or set to 0, it searches for 15 seconds."
-	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second, and far off target it speeds up to 10 times this. With 0, it is 30."
+	turnrate(integer) : "Custom Turning Rate (degrees per second)" : 0 : "How fast it starts turning, in degrees per second. Far off target, it speeds up to 10 times this. With 0, it is 30."
 	orientation(choices) : "Orientation" : 0 =
 	[
 		0 : "Floor Mount"
@@ -6061,7 +6124,7 @@
 	target(string) : "Target On Release"
 	netname(string) : "Children's Name"
 	squadname(string) : "Children's squad name" : : "The squad name every child gets."
-	weapons(choices) : "Children's weapons" : 0 : "Weapons every Fed child gets, and for Fed (Heavy Weapons), 1 is the chaingun and 8 the sniper. With 0, each child keeps the monster's own." =
+	weapons(choices) : "Children's weapons" : 0 : "The weapons every Fed child gets. For Fed (Heavy Weapons), 1 is the chaingun and 8 the sniper. With 0, each child keeps its own." =
 	[
 		0 : "The monster's own"
 		1 : "Federal"
@@ -6070,7 +6133,7 @@
 		8 : "Saan Auto-Shotgun"
 		10 : "Saan Auto-Shotgun + HG"
 	]
-	Ff(choices) : "Children's Ignore Friendly Damage" : 0 : "For Feds, assassins and turrets only, every such child ignores damage from its allies. If left empty, the children take that damage, as with No." =
+	Ff(choices) : "Children's Ignore Friendly Damage" : 0 : "With Yes, every Fed, Assassin and turret child ignores damage from its allies. If left empty, it works like No." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -6090,9 +6153,9 @@
 		10 : "See Player Unconditional"
 		11 : "See Player, Not In Combat"
 	]
-	childspawnflags(integer) : "Children's spawnflags" : 0 : "Spawnflags every child gets, as the sum of the monster's flag values, e.g. 32 for Apache Fire Rockets."
+	childspawnflags(integer) : "Children's spawnflags" : 0 : "The spawnflags every child gets, as the sum of the monster's flag values."
 
-	monstertype(choices) : "Monster Type" : "monster_apache" : "The class it makes. If left empty, the maker is removed when the map starts, and the server console says so. Rappelling Fed and Rappelling Fed Hunter make a rope spot, and you fire the Children's Name to send a Fed down. Each spot counts as a live child for good, and the children's keys don't reach the Fed. While the map runs, it can only change to a class the map already loads, which is one it places, one a maker makes or a morph monster, and not on a maker with # keys." =
+	monstertype(choices) : "Monster Type" : "monster_apache" : "The monster class it makes. If left empty, the maker is removed when the map starts. Rappelling Fed and Rappelling Fed Hunter make a rope spot, and firing the Children's Name sends a Fed down. Each spot counts as a live child for good, and the children's keys don't reach the Fed. While the map runs, it can only change to a class the map already loads, and never on a maker with # keys." =
 	[
 		"monster_apache" : "Apache"
 		"monster_barney" : "Cop"
@@ -6137,25 +6200,25 @@
 		1048576 : "Act out of PVS" : 0
 	]
 
-	monstercount(integer) : "Number of Monsters" : -1 : "How many monsters it makes in all, and -1 means no limit. The server's mp_makermon scales this and Max live children, and mp_speedmon scales the Frequency. If left empty, there is no limit."
+	monstercount(integer) : "Number of Monsters" : -1 : "How many monsters it makes in all, where -1 means no limit. The server setting mp_makermon scales this and Max live children. If left empty, there is no limit."
 
-	body(integer) : "Children's body" : 0 : "Body every child gets, for scientists, monster_dark and zombies. With 0, each child keeps the monster's own."
+	body(integer) : "Children's body" : 0 : "The body every child gets. Feds and Zombie Grunts keep their own. With 0, each child keeps its own."
 	scale(string) : "Children's scale" : "" : "The model scale every child gets. If left empty, each child keeps its own size."
 
-	delay(string) : "Frequency" : "5" : "Seconds between monsters. For a new one only when the last one dies, set Max live children to 1. If left empty or set to 0, it makes them as fast as it can, with no wait."
+	delay(string) : "Frequency" : "5" : "Seconds between two monsters, scaled by the server setting mp_speedmon. To make a new one only when the last one dies, set Max live children to 1. If left empty or set to 0, it makes them as fast as it can."
 	m_imaxlivechildren(integer) : "Max live children" : 5 : "It makes no new monster while this many of its monsters are alive, and 0 or less counts as 1. If left empty, there is no limit."
-	spawnorigin(string) : "Spawn position [LP] (blank = here)" : "" : "Where each child appears, given as x y z, an entity name or !activator."
-	face_position(string) : "Face position [LP]" : "" : "Each child faces this point, and *player is the nearest player in play."
+	spawnorigin(string) : "Spawn position [LP] (blank = here)" : "" : "Where each child appears: x y z, an entity name or !activator, worked out for each child."
+	face_position(string) : "Face position [LP]" : "" : "The point each child faces when it appears. *player is the nearest alive player."
 	warpball(target_destination) : "Warpball (an env_warpball)" : "" : "An env_warpball that plays where each child appears."
-	impulse(choices) : "Warp at monster's..." : 0 : "Where the warpball plays on the new monster." =
+	impulse(choices) : "Warp at monster's..." : 0 : "Where on the new monster the warpball plays." =
 	[
 		-1 : "Origin"
 		0 : "Default (Center)"
 		1 : "Center"
 	]
 	spawndelay(string) : "Delay before spawn" : "" : "Seconds between the warpball and the monster appearing. If left empty or set to 0, it appears at once."
-	delay_after_blocked(string) : "Delay after blocked" : "" : "Seconds before the next try when the spot was taken. If left empty, it waits as long as the Frequency."
-	target_activator(choices) : "Target's Activator" : 0 : "The activator of Target On Release." =
+	delay_after_blocked(string) : "Delay after blocked" : "" : "Seconds before the next try when something stood on the spot. If left empty, it waits the Frequency."
+	target_activator(choices) : "Target's Activator" : 0 : "The activator that Target On Release gets." =
 	[
 		-1 : "Don't pass activator"
 		0 : "Default (Monstermaker, before the monster spawns)"
@@ -6163,7 +6226,7 @@
 		2 : "Spawned monster"
 		3 : "Forward my activator"
 	]
-	yawdeviation(integer) : "Max yaw deviation" : 0 : "Each child turns a random amount up to this many degrees left or right."
+	yawdeviation(integer) : "Max yaw deviation" : 0 : "Turns each child a random amount, up to this many degrees left or right."
 	trigger_on_death_notice(target_destination) : "Trigger on death notice" : "" : "Fired each time one of its children dies."
 	classify(choices) : "Children's classification" : "" : "The class every child fights as. If left empty or set to 0, each child keeps its own." =
 	[
@@ -6188,13 +6251,13 @@
 		0 : "No"
 		1 : "Yes"
 	]
-	make_blocker_move_away(choices) : "Make blocker move away" : 0 : "When a monster stands on the spot, ask it to move away." =
+	make_blocker_move_away(choices) : "Make blocker move away" : 0 : "Asks a monster that stands on the spot to move away." =
 	[
 		0 : "No"
 		1 : "Yes, walking"
 		2 : "Yes, running"
 	]
-	gag(choices) : "Gag" : 0 : "With Yes, every child is Gagged and has no idle chatter." =
+	gag(choices) : "Gag" : 0 : "With Yes, every child gets Gag, so it makes no idle sounds." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -6223,7 +6286,7 @@
 	message(target_destination) : "Fire On Pass"
 	wait(integer) : "Wait here (secs)" : 0
 	speed(integer) : "New Train Speed" : 0
-	yaw_speed(integer) : "New Train rot. Speed" : 0 : "From this corner on, a passing train such as func_train or env_modeltrain turns around its vertical axis at this many degrees a second while it moves, and a negative number turns it the other way. It doesn't turn while stopped. With 0, nothing changes. A func_train turns around its origin brush."
+	yaw_speed(integer) : "New Train rot. Speed" : 0 : "From this corner on, a passing train turns around its vertical axis at this many degrees per second while it moves. A negative number turns it the other way, and it doesn't turn while stopped. With 0, nothing changes. A func_train turns around its origin brush."
 ]
 
 @PointClass base(Targetname, Angles) size(16 16 16) studio("models/editor/path_track.mdl") = path_track : "Train Track Path"
@@ -6310,8 +6373,8 @@
 // item_pickup or Shared.
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/player_inventory.spr") = player_inventory : "Player inventory (give / take / set an item)"
 [
-	item_name(string) : "Item name" : : "Up to 31 characters. If left empty with Remove or Set and a Count of 0, it takes every item."
-	item_icon(choices) : "HUD icon" : "inv_key" : "When this gives a new item, its icon from sprites/hud.txt." =
+	item_name(string) : "Item name" : : "The item's name, up to 31 characters. If left empty, Remove or Set with a Count of 0 takes every item."
+	item_icon(choices) : "HUD icon" : "inv_key" : "The icon from sprites/hud.txt that a new item gets." =
 	[
 		"inv_key" : "Key"
 		"inv_card_red" : "Red keycard"
@@ -6325,13 +6388,13 @@
 		1 : "Give"
 		2 : "Set"
 	]
-	count(integer) : "Count" : 1 : "For Give and Remove, 0 or less counts as 1. For Set, the new count, or with Use type, the value it is fired with."
-	collect_limit(integer) : "Maximum" : 0 : "The most of the item a Give or Set gives, and above it, On Max Count Limit fires, or On Count Overflow when it goes over. With 0, the only limit is 32767."
-	on_count_change(target_destination) : "On Count Change" : : "Fired when the count changed."
+	count(integer) : "Count" : 1 : "For Give and Remove, how many, and 0 or less counts as 1. For Set, the new count, or with Use type, the value it is fired with."
+	collect_limit(integer) : "Maximum" : 0 : "The most of the item a player can get from Give or Set. A Give at the Maximum fires On Max Count Limit, and a Give or Set that goes over it fires On Count Overflow. With 0, the only limit is 32767."
+	on_count_change(target_destination) : "On Count Change" : : "Fired when the count changes."
 	on_item_limit(target_destination) : "On Item Limit" : : "Fired when no new item fits (16 different items)."
 	on_max_count_limit(target_destination) : "On Max Count Limit" : : "Fired when the item is at its Maximum already."
-	on_count_overflow(target_destination) : "On Count Overflow" : : "Fired when the count went over the Maximum."
-	round_reset(choices) : "Reset at round start" : 0 : "With Yes, Remove On Fire turns it off until the next round instead of removing it. With Shared, at each round start the team's count of this item goes back to what it holds from item_pickups." =
+	on_count_overflow(target_destination) : "On Count Overflow" : : "Fired when the count goes over the Maximum."
+	round_reset(choices) : "Reset at round start" : 0 : "With Yes, Remove On Fire turns it off until the next round instead of removing it. With Yes and Shared, each round start also sets the team's count of this item back to what its item_pickups hold." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -6361,7 +6424,7 @@
 // As a master, it passes while the activator has the weapon.
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) iconsprite("sprites/editor/player_hasweapon.spr") = player_hasweapon : "Player has weapon"
 [
-	weapon_name(string) : "Weapon classname (blank = any weapon, fists too)" : : "e.g. weapon_sword, weapon_rpg"
+	weapon_name(string) : "Weapon classname (blank = any weapon, fists too)" : : "The weapon's class name, such as weapon_sword."
 	pass_target(target_destination) : "Pass Target"
 	fail_target(target_destination) : "Fail Target"
 ]
@@ -6387,7 +6450,7 @@
 @PointClass base(Scripted) size(-16 -16 0, 16 16 72) color(255 0 255) studio("models/editor/aiscripted_sequence.mdl") = aiscripted_sequence : "AI Scripted Sequence"
 [
 	m_iszPlay(string) : "Action Animation" : ""
-	m_iszIdle(string) : "Idle Animation" : "" : "The animation the monster plays once it reaches the script, until the script is triggered. With it, a named script takes its monster when the map starts. If left empty, a named script doesn't take its monster until it's triggered."
+	m_iszIdle(string) : "Idle Animation" : "" : "The animation the monster plays from the moment it reaches the script until the script is triggered. With it, a named script takes its monster when the map starts. If left empty, a named script doesn't take its monster until it's triggered."
 	m_iFinishSchedule(choices) : "AI Schedule when done" : 0 =
 	[
 		0 : "Default AI"
@@ -6458,16 +6521,16 @@
 		4 : "Larger Radius"
 		5 : "Huge Radius"
 	]
-	follow_action(choices) : "Follow action" : 0 : "What the speaker does when it starts the sentence. With Start following, it follows the nearest player, though a Cop only does as a player ally with a Followage policy set. A monster that was attacked never follows." =
+	follow_action(choices) : "Follow action" : 0 : "What the speaker does when it starts the sentence. With Start following, it follows the nearest player. A Cop follows only as a player ally with a Followage policy set, and a monster that was attacked never follows." =
 	[
 		0 : "Nothing"
 		1 : "Start following"
 		2 : "Stop following"
 	]
-	fire_after(target_destination) : "Fire after speaking" : "" : "Fired Sentence Time seconds after the sentence starts (plus Delay before fire after)."
-	fire_after_delay(string) : "Delay before fire after" : "" : "Seconds after the sentence before Fire after speaking."
+	fire_after(target_destination) : "Fire after speaking" : "" : "Fired Sentence Time seconds after the sentence starts, plus Delay before fire after."
+	fire_after_delay(string) : "Delay before fire after" : "" : "Seconds to wait after the sentence before Fire after speaking."
 	listener_radius(string) : "Listener search radius" : "" : "How far the listener is looked for. If left empty or set to 0, it uses the Search Radius."
-	allow_use(choices) : "Allow use" : 0 : "With Yes, +use on the speaker works while it says this." =
+	allow_use(choices) : "Allow use" : 0 : "With Yes, players can use the speaker while it says this sentence." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -6480,7 +6543,7 @@
 [
 	m_iszAttack(string) : "Entity to attack (blank = this; name, !activator or classname)"
 	m_iszIdle(string) : "Idle Animation" : "" : "The animation the monster plays while it waits at the script for the trigger. With it, a named script takes its monster when the map starts. If left empty, a named script doesn't take its monster until it's triggered."
-	m_fAction(choices) : "Action to perform" : 0 : "Most monsters have only some actions; without the action the script ends at once." =
+	m_fAction(choices) : "Action to perform" : 0 : "Most monsters have only some of these actions. If the monster doesn't have the action, the script ends at once." =
 	[
 		0 : "Ranged Attack"
 		1 : "Ranged Attack 2"
@@ -6525,7 +6588,7 @@
 		1 : "Walk"
 		2 : "Run"
 	]
-	spot_preference(choices) : "Spot preference (SBO: the spot is taken where it is when fired)" : 0 =
+	spot_preference(choices) : "Spot preference (the spot is taken where it is when fired)" : 0 =
 	[
 		0 : "Auto"
 		1 : "Position (taken once)"
@@ -6536,7 +6599,7 @@
 // Makes a talking monster start or stop following the player who fires it.
 @PointClass base(Targetname) size(-8 -8 -8, 8 8 8) color(255 0 255) iconsprite("sprites/editor/scripted_following.spr") = scripted_following : "Scripted Following"
 [
-	entity(string) : "Affected monster name" : : "The name of the talking monster. Only the first living one with this name is affected."
+	entity(string) : "Affected monster name" : : "The name of the talking monster. Only the first living monster with this name is affected."
 	on_start_following(target_destination) : "Fire on start following (only when it changed)"
 	on_stop_following(target_destination) : "Fire on stop following (only when it changed)"
 	spawnflags(flags) =
@@ -6738,15 +6801,15 @@
 
 @PointClass base(Targetname, Targetx, MoveWith) studio("models/editor/trigger_camera.mdl") = trigger_camera : "Trigger Camera"
 [
-	target(target_destination) : "Look target" : : "What the camera looks at, which is the first entity with this name. It is also fired when the camera ends, unless Don't fire look target is set. If left empty without Follow Player, the camera does nothing."
-	wait(integer) : "Hold time" : 10 : "Seconds the camera keeps the player's view, which isn't used with Ignore Hold Time. If left empty or set to 0, the view ends at once."
+	target(target_destination) : "Look target" : : "What the camera looks at: the first entity with this name. It also fires when the camera ends, unless Don't fire look target is set. If left empty without Follow Player, the camera does nothing."
+	wait(integer) : "Hold time" : 10 : "Seconds the camera keeps the player's view. Ignore Hold Time ignores it. If left empty or set to 0, the view ends at once."
 	moveto(string) : "Path Corner"
 	spawnflags(flags) =
 	[
 		1 : "Start At Player" : 1
 		2 : "Follow Player" : 1
 		4 : "Freeze Player" : 0
-		8 : "All Players (those in play when it starts)" : 0
+		8 : "All Players (alive when it starts)" : 0
 		64 : "Instant Move (no smoothing)" : 0
 		256 : "Player Invulnerable" : 0
 		512 : "Ignore Hold Time" : 0
@@ -6761,19 +6824,19 @@
 	speed(string) : "Initial Speed" : "0"
 	acceleration(string) : "Acceleration units/sec^2" : "500"
 	deceleration(string) : "Stop Deceleration units/sec^2" : "500"
-	turnspeed(string) : "Camera Rotation Speed" : "40" : "How fast the camera turns to its target, which is ignored with Instant Follow Turn. If left empty or set to 0, it turns at 40."
-	stop_by_player_input(choices) : "Stop by player input" : 0 : "With USE input, the player ends the camera with the use key." =
+	turnspeed(string) : "Camera Rotation Speed" : "40" : "How fast the camera turns to its target. Instant Follow Turn ignores it. If left empty or set to 0, it turns at 40."
+	stop_by_player_input(choices) : "Stop by player input" : 0 : "With USE input, the player can end the camera with the use key." =
 	[
 		0 : "No"
 		1 : "USE input"
 	]
-	m_iszTurnedOffTarget(target_destination) : "Target when turned off" : "" : "Fired when the camera ends; the activator is the player."
+	m_iszTurnedOffTarget(target_destination) : "Target when turned off" : "" : "Fired when the camera ends, with the player as the activator."
 ]
 
 // Plays a CD track (or stops the music) for every player, once: then it removes itself.
 @SolidClass base(Targetname) = trigger_cdaudio : "Trigger CD Audio"
 [
-	health(choices) : "Track #" : -1 : "The track every player hears. It plays once, and then the entity removes itself. If left empty, no track plays." =
+	health(choices) : "Track #" : -1 : "The track every player hears. It plays once, then the entity removes itself. If left empty, no track plays." =
 	[
 		-1 : "Stop"
 		1 : "Track 1"
@@ -6822,7 +6885,7 @@
 [
 	target(target_destination) : "Reference while On"
 	netname(target_destination) : "Reference while Off"
-	mode(choices) : "Use Mode" : 0 : "In List mode, add one key per name with SmartEdit off, with the name as the key and its place in the list, 1 to 16, as the value." =
+	mode(choices) : "Use Mode" : 0 : "In List mode, add one key per name with SmartEdit off: the name as the key and its place in the list, 1 to 16, as the value." =
 	[
 		0 : "On/Off"
 		1 : "List"
@@ -6849,7 +6912,7 @@
 @PointClass base(Targetname) color(180 120 255) iconsprite("sprites/editor/trigger_changealias.spr") = trigger_changealias : "Trigger Change Alias"
 [
 	target(target_destination) : "Alias to affect"
-	netname(target_destination) : "String to Set" : : "A name, which can be *alias, group.member or name*, or !activator or *locus for the entity that triggered it, or !caller."
+	netname(target_destination) : "String to Set" : : "The name to set: a name, *alias, group.member or name*. !activator or *locus is the entity that triggered it, and !caller the entity that fired it."
 	spawnflags(flags) =
 	[
 		1 : "Resolve references" : 0
@@ -6871,7 +6934,7 @@
 
 @PointClass base(Targetname, Targetx) iconsprite("sprites/editor/trigger_changetarget.spr") = trigger_changetarget : "Trigger Change Target"
 [
-	target(target_destination) : "Target" : : "The entity whose target changes, which is the first entity with this name, or with a name ending in *, the first whose name starts with the rest."
+	target(target_destination) : "Target" : : "The entity whose target changes: the first entity with this name. A name ending in * means the first entity whose name starts with the rest."
 	m_iszNewTarget(string) : "New Target"
 ]
 
@@ -6879,18 +6942,18 @@
 // parent (XashXT's entity).
 @PointClass base(Targetname) iconsprite("sprites/editor/trigger_changeparent.spr") = trigger_changeparent : "Trigger Change Parent"
 [
-	target(target_destination) : "Entity to re-parent" : "" : "All entities of this name."
+	target(target_destination) : "Entity to re-parent" : "" : "Every entity with this name gets the new parent."
 	m_iszNewParent(target_destination) : "New parent" : "" : "The new parent's name, or name.N for attachment N of a studio model. If left empty, the entities lose their parent and stay where they are."
 ]
 
-@SolidClass base(Targetname, Targetx, Master, Appearflags) = trigger_counter : "Trigger counter"
+@SolidClass base(Targetname, Targetx, Master) = trigger_counter : "Trigger counter"
 [
 	spawnflags(flags) =
 	[
 		1 : "No console messages" : 0
 	]
 	message(string) : "Message"
-	count(integer) : "Count before activation" : 2 : "Fires its target after this many triggers. game_counter does more."
+	count(integer) : "Count before activation" : 2 : "Fires its target after this many triggers. game_counter has more options."
 ]
 
 // A player touching it gets its gravity (players only). Fired by name: On turns it on, Off turns it off, Toggle
@@ -6903,7 +6966,7 @@
 		2 : "Start Off" : 0
 		4 : "Reset on leave" : 0
 	]
-	gravity(string) : "Gravity Multiplier (1.0 default)" : "1.0" : "A multiplier of sv_gravity, so 0.5 is half and 2 is double, and 0.01 gives almost no gravity. If left empty or set to 0, gravity is normal. Without Reset on leave, a player keeps it after leaving, until they touch another trigger_gravity or respawn."
+	gravity(string) : "Gravity Multiplier (1.0 default)" : "1.0" : "A multiplier of sv_gravity: 0.5 is half, 2 is double and 0.01 almost none. If left empty or set to 0, gravity is normal. Without Reset on leave, a player keeps it after leaving, until they touch another trigger_gravity or respawn."
 ]
 
 @SolidClass base(Targetname, Targetx, Master, MoveWith) = trigger_hurt : "Trigger player hurt"
@@ -6920,8 +6983,8 @@
 		256 : "Ignore Armor" : 0
 		512 : "No Camera Punch" : 0
 	]
-	dmg(integer) : "Damage" : 10 : "Damage per second, dealt as half of it every 0.5 seconds, or all of it every 0.5 seconds with Full dmg every 0.5 seconds. A negative number heals. If left empty, it does no damage."
-	untouchable_ent_name(string) : "Untouchable entity name" : "" : "Nothing with this class name or name is hurt."
+	dmg(integer) : "Damage" : 10 : "Damage per second, dealt as half of it every 0.5 seconds, or all of it with Full dmg every 0.5 seconds. A negative number heals. If left empty, it does no damage."
+	untouchable_ent_name(string) : "Untouchable entity name" : "" : "Nothing with this class name or name gets hurt."
 	min_health(string) : "Minimum health threshold" : "" : "Damage never takes health below this. If left empty or set to 0, there is no minimum."
 	gib_policy(choices) : "Gibbing policy" : 0 : "What happens to a body killed by this trigger." =
 	[
@@ -6974,9 +7037,9 @@
 		256 : "Ignore armor" : 0
 		512 : "No camera punch" : 0
 	]
-	target(target_destination) : "Target [LE]" : : "The entities with this name are hurt, and !activator is whoever triggered it."
-	targetclass(string) : "Target class name" : : "Every entity of this class is hurt too, and player means every player in play."
-	dmg(integer) : "Damage" : 10 : "Damage per trigger, or per Delay with Constant. A negative number heals instead."
+	target(target_destination) : "Target [LE]" : : "Hurts the entities with this name. !activator is whoever triggered it."
+	targetclass(string) : "Target class name" : : "Also hurts every entity of this class, and player means every alive player."
+	dmg(integer) : "Damage" : 10 : "Damage per trigger, or per Delay with Constant. A negative number heals."
 	damagetype(choices) : "Damage type" : 0 =
 	[
 		0 : "GENERIC"
@@ -7033,7 +7096,7 @@
 [
 	target(target_destination) : "Jump target [LP]" : "" : "Where the toucher lands, given as an entity name or x y z."
 	height(string) : "Height [0 = auto]" : "0" : "How high the arc goes above the toucher. With 0, it goes just above the target or the toucher, whichever is higher."
-	trigger_on_jump(target_destination) : "Trigger on jump" : "" : "Fired for every launch; the activator is the toucher."
+	trigger_on_jump(target_destination) : "Trigger on jump" : "" : "Fired for every launch, with the toucher as the activator."
 	netname(string) : "Triggered only by entity (class name or name)"
 	spawnflags(flags) =
 	[
@@ -7053,7 +7116,7 @@
 		16 : "Always gib" : 0
 	]
 	target(target_destination) : "Monster's name" : : "Kills living monsters with this name. Every filter that is set must match."
-	message(string) : "Monster's class name" : : "Kills living monsters of this class, e.g. monster_zombie. Every filter that is set must match."
+	message(string) : "Monster's class name" : : "Kills living monsters of this class. Every filter that is set must match."
 	netname(string) : "Monster's squad name" : : "Kills living monsters with this squad name. Every filter that is set must match."
 ]
 
@@ -7064,9 +7127,9 @@
 	[
 		1 : "Remove on fire (works once)" : 1
 	]
-	netname(target_destination) : "Look target" : : "The entity the player must look at (its origin)."
+	netname(target_destination) : "Look target" : : "The entity whose origin the player must look at."
 	look_time(string) : "Look time" : "1" : "Seconds the player must keep looking. Looking away starts it over."
-	field_of_view(string) : "Field of view" : "0.7" : "How exactly the player must look, where 1.0 is dead center, 0.7 about 45 degrees, 0 is 90 degrees and -1 any direction."
+	field_of_view(string) : "Field of view" : "0.7" : "How exactly the player must look: 1.0 is dead center, 0.7 about 45 degrees, 0 is 90 degrees and -1 any direction."
 	target(target_destination) : "Target (fired on look)" : : "Fired with the looking player as !activator."
 	killtarget(target_destination) : "Kill target"
 	delay(string) : "Delay before trigger" : "0"
@@ -7075,9 +7138,9 @@
 // Throws a monster that touches it forward and up, then turns itself off: an unnamed one throws once, a named one must be turned on again.
 @SolidClass base(Targetname, Angles, Master) = trigger_monsterjump : "Trigger monster jump"
 [
-	speed(integer) : "Jump Speed" : 200 : "Speed the monster jumps with, in the trigger's direction. With 0, it is 200."
+	speed(integer) : "Jump Speed" : 200 : "How fast the monster is thrown in the trigger's direction. With 0, it is 200."
 	height(integer) : "Jump Height" : 150 : "Upward speed added to the throw. With 0, it is 150."
-	m_iObeyTriggerMode(choices) : "Obey Trigger Mode" : 0 : "With a Name, it starts off. With No, any trigger turns it on or off. With Yes, On turns it on, Off turns it off and Toggle toggles it." =
+	m_iObeyTriggerMode(choices) : "Obey Trigger Mode" : 0 : "A named one starts off. With No, any trigger turns it on or off. With Yes, On turns it on, Off turns it off and Toggle toggles it." =
 	[
 		0 : "No (always toggle)"
 		1 : "Yes"
@@ -7086,7 +7149,7 @@
 
 @SolidClass base(Trigger) = trigger_multiple : "Trigger: Activate multiple"
 [
-	wait(integer) : "Delay before reset" : 10 : "Seconds before it can fire again, and a negative number makes it fire once and then remove itself. If left empty or set to 0, it can fire again after 0.2 seconds."
+	wait(integer) : "Delay before reset" : 10 : "Seconds before it can fire again. A negative number makes it fire once and then remove itself. If left empty or set to 0, it can fire again after 0.2 seconds."
 	noise(sound) : "Sound to play" : "" : "Played at the trigger each time it fires."
 	spawnflags(flags) =
 	[
@@ -7106,7 +7169,7 @@
 // Freezes players in place: they can look around but not move, shoot or use.
 @PointClass base(Targetname) color(180 120 255) iconsprite("sprites/editor/trigger_playerfreeze.spr") = trigger_playerfreeze : "Trigger Player Freeze"
 [
-	use_type(choices) : "Use type" : 0 : "What a trigger does. Players stay frozen until unfrozen, until they die, or until a new round." =
+	use_type(choices) : "Use type" : 0 : "What a trigger does. Players stay frozen until unfrozen or until they respawn." =
 	[
 		-1 : "Unfreeze"
 		0 : "Toggle freeze (each player: frozen if free, free if frozen)"
@@ -7119,7 +7182,7 @@
 	]
 ]
 
-@SolidClass base(Targetname, Master, Appearflags, Angles) = trigger_push : "Trigger player push"
+@SolidClass base(Targetname, Master, Angles) = trigger_push : "Trigger player push"
 [
 	spawnflags(flags) =
 	[
@@ -7129,8 +7192,8 @@
 		16 : "No monsters" : 0
 	]
 	speed(integer) : "Speed of push" : 40 : "How fast it pushes, in units per second. If left empty or set to 0, it pushes at 100 units per second."
-	m_iszPushSpeed(string) : "Speed factor [LR]" : "" : "Multiplies the push for each toucher (!activator is the toucher)."
-	m_iszPushVel(string) : "Push direction [LV] (blank = angles)" : "" : "The push direction instead of the angles (times Speed of push)."
+	m_iszPushSpeed(string) : "Speed factor [LR]" : "" : "Multiplies the push for each toucher, and !activator is the toucher."
+	m_iszPushVel(string) : "Push direction [LV] (blank = angles)" : "" : "A push direction that replaces the angles, times Speed of push."
 	m_iObeyTriggerMode(choices) : "Obey Trigger Mode" : 0 : "With No, any trigger turns it on or off. With Yes, On turns it on, Off turns it off and Toggle toggles it." =
 	[
 		0 : "No (always toggle)"
@@ -7155,7 +7218,7 @@
 		128 : "Pass caller as activator" : 0
 	]
 	m_flDelayBeforeReset(string) : "Delay Before Reset" : "" : "After it fires, it ignores every trigger for this many seconds."
-	master(string) : "Master" : : "While this master (a multisource or another master) is locked, the relay does not fire."
+	master(string) : "Master" : : "While this master is locked, the relay doesn't fire. It can be a multisource or another master."
 ]
 
 // A player falling through it takes no fall damage on landing.
@@ -7175,7 +7238,7 @@
 @SolidClass base(Targetname, Target, Master) = trigger_teleport : "Trigger teleport"
 [
 	target(target_destination) : "Target" : "" : "The info_teleport_destination it sends anything that touches it to. If left empty, it does nothing."
-	message(target_destination) : "Landmark (seamless)" : "" : "A point entity at the trigger, for a seamless teleport, so the toucher keeps its place relative to Target, its speed and its view."
+	message(target_destination) : "Landmark (seamless)" : "" : "A point entity in the trigger for a seamless teleport: the toucher keeps its place relative to Target, its speed and its view."
 	spawnflags(flags) =
 	[
 		1 : "Monsters" : 0
@@ -7186,7 +7249,7 @@
 		512 : "Keep velocity (no landmark)" : 0
 		1024 : "Grenades, items (landmark)" : 0
 	]
-	teleport_start_inactive(choices) : "Start Inactive" : 0 : "With Yes, it does nothing until it is triggered on, and it needs a name." =
+	teleport_start_inactive(choices) : "Start Inactive" : 0 : "With Yes, it does nothing until it is triggered on. It needs a name." =
 	[
 		0 : "No"
 		1 : "Yes"
@@ -7203,7 +7266,7 @@
 		0 : "At once"
 		1 : "Step by step over the time"
 	]
-	time(string) : "Time (seconds)" : "10" : "With step by step, how long the change takes, in steps of 0.1 seconds."
+	time(string) : "Time (seconds)" : "10" : "How long the change takes with step by step, in steps of 0.1 seconds."
 	target(target_destination) : "Fire when the speed is reached"
 ]
 
@@ -7265,7 +7328,7 @@
 // A mine players can pick up and place on a wall. Taking it fires Target.
 @PointClass base(Weapon) studio("models/v_tripmine.mdl") body(3) sequence(8) size(-16 -16 -5, 16 16 27) = weapon_tripmine : "Mine" []
 // Three Pitbulls players can pick up and set loose to fight at their side. Taking them fires Target.
-@PointClass base(Weapon) studio("models/w_sqknest.mdl") = weapon_snark : "Pitbull" []
+@PointClass base(Weapon) studio("models/w_squeak.mdl") = weapon_snark : "Pitbull" []
 // A satchel charge players can pick up, set down and set off from afar. Shows the weapon box model on the floor.
 // Taking it fires Target.
 @PointClass base(Weapon) studio("models/w_weaponbox.mdl") = weapon_satchel : "Satchel" []

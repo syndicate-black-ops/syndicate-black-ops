@@ -379,7 +379,7 @@ void CEnvParticle::Use( CBaseEntity *pActivator, CBaseEntity *pCaller, USE_TYPE 
 }
 
 // Spirit made a new env_particle (an edict, never removed) at the activator for each Use; SBO sends a one-shot
-// system that the clients run for its main type's "lifetime" and then drop. Clients that join later don't get it.
+// system that the clients run for the script's "lifetime" (or its main type's) and then drop. Clients that join later don't get it.
 void CEnvParticle::SpawnCopy( CBaseEntity *pActivator )
 {
 	if ( gpGlobals->time - m_flCopyWindow >= 1.0f )

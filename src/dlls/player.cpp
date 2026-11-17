@@ -42,6 +42,7 @@
 #include "env_overlay.h"	// SBO 2.0: env_overlay
 #include "overlay_shared.h"
 #include "objective_shared.h"	// SBO 2.0: trigger_objective
+#include "waypoint_shared.h"	// SBO 2.1: info_waypoint
 #include "colorcorrection.h"	// SBO 2.0: color_correction
 #include "colorcorrection_shared.h"
 #include "game_timer.h"
@@ -180,6 +181,8 @@ TYPEDESCRIPTION	CBasePlayer::m_playerSaveData[] =
 	//DEFINE_FIELD( CBasePlayer, m_nCustomSprayFrames, FIELD_INTEGER ), // Don't restore, depends on server message after spawning and only matters in multiplayer
 	//DEFINE_FIELD( CBasePlayer, m_vecAutoAim, FIELD_VECTOR ), // Don't save/restore - this is recomputed
 	//DEFINE_ARRAY( CBasePlayer, m_rgAmmoLast, FIELD_INTEGER, MAX_AMMO_SLOTS ), // Don't need to restore
+	//DEFINE_FIELD( CBasePlayer, m_flCloakHurtTime, FIELD_TIME ), // SBO 2.1: Don't need to restore (the cloak, m_iCloak, isn't either)
+	//DEFINE_FIELD( CBasePlayer, m_flCloakLastUpdate, FIELD_TIME ), // SBO 2.1: Don't need to restore
 	//DEFINE_FIELD( CBasePlayer, m_fOnTarget, FIELD_BOOLEAN ), // Don't need to restore
 	//DEFINE_FIELD( CBasePlayer, m_nCustomSprayFrames, FIELD_INTEGER ), // Don't need to restore
 	
@@ -262,6 +265,8 @@ int gmsgFog = 0;		// ReGameDLL_CS: env_fog
 int gmsgFogZone = 0;	// PROTOTYPE: the env_fogzone list for the client (triggers.cpp FogZone_Send)
 int gmsgGameTimer = 0;	// SBO 2.0: game_timer (game_timer.cpp)
 int gmsgMirror = 0;		// SBO 2.0: env_mirror (env_mirror.cpp)
+int gmsgEntGlow = 0;	// SBO 2.1: env_entity_glow (env_entity_glow.cpp)
+int gmsgWaypoint = 0;	// SBO 2.1: info_waypoint (info_waypoint.cpp)
 int gmsgObjective = 0;	// SBO 2.0: trigger_objective (trigger_objective.cpp; game_shared/objective_shared.h)
 int gmsgOverlay = 0;	// SBO 2.0: env_overlay (env_overlay.cpp; plugins may send it: docs/ENV_OVERLAY.md)
 int gmsgColorCorr = 0;	// SBO 2.0: color_correction / color_correction_volume (colorcorrection.cpp)
@@ -271,6 +276,7 @@ int gmsgSetSky = 0;		// SoHL: env_sky (effects.cpp)
 int gmsgWorldText = 0;	// SBO 2.0: point_worldtext (point_worldtext.cpp, game_shared/worldtext_shared.h)
 int gmsgWorldTextP = 0;
 int gmsgMatFile = 0;	// SBO 2.0: the map's materials file (sound.cpp, docs/MATERIALS.md)
+int gmsgWaterHit = 0;	// SBO 2.1: water splashes of server-fired bullets (water_hit.cpp)
 int gmsgGrassInfo = 0;	// SBO 2.0: CS:CZ Deleted Scenes' grass (sound.cpp, docs/MATERIALS.md)
 int gmsgViewModel = 0;	// SBO 2.0: halflife issue #199, the view model's render properties (SetViewModelRender)
 int gmsgRenderFade = 0;	// SBO 2.0: env_render fades drawn by the clients (render_fade.cpp)
@@ -371,6 +377,8 @@ void LinkUserMessages( void )
 	gmsgFog = REG_USER_MSG( "Fog", 7 );		// ReGameDLL_CS (client.cpp): env_fog colour (3 bytes) and density (float)
 	gmsgGameTimer = REG_USER_MSG( "GameTimer", -1 );	// SBO 2.0: game_timer state (game_timer.cpp SendState)
 	gmsgMirror = REG_USER_MSG( "Mirror", -1 );	// SBO 2.0: env_mirror state (env_mirror.cpp SendState)
+	gmsgEntGlow = REG_USER_MSG( "EntGlow", -1 );	// SBO 2.1: env_entity_glow state (env_entity_glow.cpp SendState)
+	gmsgWaypoint = REG_USER_MSG( WAYPOINT_MSG_NAME, -1 );	// SBO 2.1: info_waypoint markers (game_shared/waypoint_shared.h)
 	gmsgObjective = REG_USER_MSG( OBJECTIVE_MSG_NAME, -1 );	// SBO 2.0: trigger_objective (game_shared/objective_shared.h)
 	gmsgOverlay = REG_USER_MSG( OVERLAY_MSG_NAME, -1 );	// SBO 2.0: env_overlay (game_shared/overlay_shared.h)
 	gmsgColorCorr = REG_USER_MSG( COLORCORR_MSG_NAME, -1 );	// SBO 2.0: color correction (game_shared/colorcorrection_shared.h)
@@ -384,8 +392,9 @@ void LinkUserMessages( void )
 	gmsgPlayVideo = REG_USER_MSG( "PlayVideo", -1 );	// SBO 2.0: two names in video/, at most 116 bytes (game_shared/video_shared.h)
 	gmsgLightOrigin = REG_USER_MSG( "LightOrigin", 10 );	// SBO 2.0: info_light_origin (game_shared/light_origin_shared.h)
 	gmsgObjectHint = REG_USER_MSG( "ObjectHint", -1 );	// SBO 2.0: object hint, at most 84 bytes (game_shared/objecthint_shared.h)
-	gmsgSetSky = REG_USER_MSG( "SetSky", 8 );	// SoHL 1.8 (LRC, AJH): env_sky mode, sky camera (3 coords), scale
+	gmsgSetSky = REG_USER_MSG( "SetSky", 16 );	// SoHL 1.8 (LRC, AJH): env_sky mode, sky camera (3 coords), scale; SBO 2.1: the sky room's fog (color, density, skybox fog)
 	gmsgMatFile = REG_USER_MSG( "MatFile", -1 );	// SBO 2.0: string, the map's materials file ("" none), < 64 bytes
+	gmsgWaterHit = REG_USER_MSG( "WaterHit", -1 );	// SBO 2.1: byte count (at most MAT_WATERHIT_MAX), count x (3 coords, byte player hit)
 	gmsgGrassInfo = REG_USER_MSG( "GrassInfo", -1 );	// CS:CZ DS: string sprite, 3 coords, long density
 	gmsgAurora = REG_USER_MSG( "Aurora", -1 );	// SBO 2.0: env_particle state, at most 88 bytes (game_shared/aurora_shared.h)
 	// SBO 2.0: point_worldtext: a text's state, and the pieces of a long text before it (game_shared/worldtext_shared.h)
@@ -1021,6 +1030,10 @@ int CBasePlayer :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker, 
 	// as an int (zero) and think the player is dead! (this will incite a clientside screentilt, etc)
 	fTookDamage = CBaseMonster::TakeDamage(pevInflictor, pevAttacker, (int)flDamage, bitsDamageType);
 
+	// SBO 2.1: a hit shows a cloaked player for a moment (CloakUpdate)
+	if ( fTookDamage && m_iCloak == 1 )
+		m_flCloakHurtTime = gpGlobals->time + CLOAK_HURT_TIME;
+
 	// reset damage time countdown for each type of time based damage player just sustained
 
 	{
@@ -1407,6 +1420,15 @@ void CBasePlayer::RemoveAllItems( BOOL removeSuit )
 	for ( i = 0; i < MAX_AMMO_SLOTS;i++)
 		m_rgAmmo[i] = 0;
 
+	// SBO 2.0: a strip of a living player (player_weaponstrip, a round reset, a plugin) ends a sniper rifle's zoom
+	// and its slowdown, as the next weapon's Deploy (DefaultDeploy) does on a switch; UpdateClientData below sends
+	// the FOV. The dead and observers are left to Killed / StartObserver.
+	if ( IsAlive() && !IsObserver() && !( m_afPhysicsFlags & PFLAG_OBSERVER ) )
+	{
+		pev->fov = m_iFOV = 0;
+		g_engfuncs.pfnSetClientMaxspeed( ENT(pev), m_iSboMaxSpeed );
+	}
+
 	UpdateClientData();
 	// send Selected Weapon Message to our client
 	MESSAGE_BEGIN( MSG_ONE, gmsgCurWeapon, NULL, pev );
@@ -1500,6 +1522,12 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	// UNDONE: Put this in, but add FFADE_PERMANENT and make fade time 8.8 instead of 4.12
 	// UTIL_ScreenFade( edict(), Vector(128,0,0), 6, 15, 255, FFADE_OUT | FFADE_MODULATE );
 
+	// SBO: drop the cloak, before the gib check so a gibbed player loses it too
+	if ( m_iCloak == 1 )
+		Cloak();
+	else
+		m_iCloak = 0;
+
 	if ( ( pev->health < -40 && iGib != GIB_NEVER ) || iGib == GIB_ALWAYS )
 	{
 		pev->solid			= SOLID_NOT;
@@ -1511,12 +1539,7 @@ void CBasePlayer::Killed( entvars_t *pevAttacker, int iGib )
 	DeathSound();
 	FlashlightTurnOff();
 
-	// SBO: drop the morph powers
-	if ( m_iCloak == 1 )
-		Cloak();
-	else
-		m_iCloak = 0;
-
+	// SBO: drop the cybereye
 	if ( m_iCybereye == 1 )
 		Cybereye();
 	else
@@ -2406,6 +2429,10 @@ void CBasePlayer::PreThink(void)
 	if ( m_iSuppressedCaps & PLAYER_SUPPRESS_ATTACK )
 		pev->button &= ~( IN_ATTACK | IN_ATTACK2 );
 	ApplySpeedOverride();
+
+	// SBO 2.1: the cloak's render amount follows what the player does
+	if ( m_iCloak == 1 && IsAlive() )
+		CloakUpdate( FALSE );
 
 	// SBO 2.0 (Featureful player_flicker): a flickering flashlight turns its light off and on at random
 	if ( m_bFlashlightFlicker && FlashlightIsOn() && gpGlobals->time >= m_flNextFlashlightFlick )
@@ -4613,6 +4640,8 @@ void CBasePlayer::GiveNamedItem( const char *pszName )
 		return;
 	}
 
+	// halflife-updated PR #231: not drawn, so the item doesn't flash in the player's view for a frame before it's picked up
+	VARS( pent )->effects |= EF_NODRAW;
 	VARS( pent )->origin = pev->origin;
 	pent->v.spawnflags |= SF_NORESPAWN;
 
@@ -5495,6 +5524,7 @@ void CBasePlayer :: UpdateClientData( void )
 		// above on a client's first HUD of the map) cleared it: sent here, a player who joins later has it too.
 		EnvSky_SendState( this );
 		Mirror_SendAll( this );	// SBO 2.0: the map's active env_mirror entities (env_mirror.cpp)
+		EntityGlow_SendAll( this );	// SBO 2.1: the map's env_entity_glow entities that are on (env_entity_glow.cpp)
 	}
 
 	// SBO 2.0: the map's chapter title (worldspawn "chaptertitle", world.cpp), once per player and map, when the
@@ -6484,7 +6514,7 @@ void CBasePlayer::Cloak( void )
 			pev->rendermode = kRenderNormal;
 			m_iCloak = 0;
 		}
-		else
+		else if ( IsAlive() )	// SBO 2.0: a dead or dying player can't cloak (turning it off always works)
 		{
 			if ( m_iCloakSoundTime < gpGlobals->time )
 			{
@@ -6517,11 +6547,228 @@ void CBasePlayer::Cloak( void )
 				m_iCloakSoundTime = gpGlobals->time + 1;
 			}
 			ClientPrint( pev, HUD_PRINTCENTER, "Cloak" );
-			pev->renderamt = 90;
 			pev->rendermode = kRenderTransAlpha;
 			m_iCloak = 1;
+			m_flCloakHurtTime = 0;
+			CloakUpdate( TRUE );	// SBO 2.1: the render amount of what the player is doing (1.38: always 90)
 		}
 	}
+}
+
+//=========================================================
+// SBO 2.1 cloak stealth. While cloaked, the render amount (what everybody sees, and what the monsters go by) follows
+// what the player does: crouched CLOAK_AMT_CROUCH, standing still CLOAK_AMT_STILL, walking (up to half his max
+// speed) CLOAK_AMT_WALK, running CLOAK_AMT_RUN (1.38's fixed 90), in the air CLOAK_AMT_AIR, CLOAK_AMT_HURT for
+// CLOAK_HURT_TIME after a hit, and firing 60 + the weapon's sound volume / 5 (m_iWeaponVolume, the stock HL sound
+// the monsters hear, which fades by 250 a second: a silenced shot shows less and for less long than a loud one).
+// The amount rises at once and falls by CLOAK_FALL_RATE a second. Bounty Killer: never below CLOAK_AMT_MIN_BK, so
+// a still Assassin stays a faint shape to the other players. Battle Royale has no cloak.
+// Monsters, turrets and func_tank see a cloaked player only within CLOAK_SIGHT_RANGE * ( renderamt / 255 ) ^ 1.5
+// (standing still or crouched: only CLOAK_SIGHT_MIN, walking about 150, running about 430, in the air or hurt about
+// 1000, a normal shot about 1200, a loud one 2048), always within CLOAK_SIGHT_MIN, and a monster that saw him as
+// its enemy less than CLOAK_LOSE_TIME ago at twice that (Cloak_HidesFrom). A monster that spotted him keeps him, at
+// any range, while it has him in view and he stays within CLOAK_TRACK_MOVE of where it last saw him in range
+// (tracking, Cloak_HidesFrom); freezing in plain view doesn't shake it off. A cloaked enemy it has not seen for
+// CLOAK_FORGET_TIME is forgotten (Cloak_AfterLook): no enemy, back to alert. He is never remembered in the old-enemy
+// list (PopEnemy) nor tracked unseen up close (CheckEnemy's 256-unit rule). In the dark that
+// range shrinks, down to half: the player's light (Illumination: GETENTITYILLUM, for a player the light his client
+// reports at his view in each move, pev->light_level, from the map's lightmaps; plus his muzzle flash) at
+// CLOAK_LIGHT_BRIGHT or more counts in full, at CLOAK_LIGHT_DARK or less half, in between linearly. A flashlight that
+// is on gives him away (no darkness bonus): the lightmap value doesn't include it. Typical values: an unlit corner
+// 0-10, a dim corridor 15-40, a lit room 60-120, daylight 150-255.
+//=========================================================
+#define CLOAK_AMT_CROUCH	15
+#define CLOAK_AMT_STILL		30
+#define CLOAK_AMT_WALK		45
+#define CLOAK_AMT_RUN		90
+#define CLOAK_AMT_AIR		160
+#define CLOAK_AMT_HURT		160
+#define CLOAK_AMT_FIRE_BASE	60		// + m_iWeaponVolume / CLOAK_FIRE_VOLUME_DIV while the shot's sound lasts
+#define CLOAK_FIRE_VOLUME_DIV	5
+#define CLOAK_AMT_MIN_BK	50
+#define CLOAK_FALL_RATE		150.0f	// render amount per second
+#define CLOAK_STILL_SPEED	10.0f	// below this (units per second) the player stands still
+#define CLOAK_SIGHT_RANGE	2048.0f	// the HL look distance (SBO's monsters look up to 16000 or 12000)
+#define CLOAK_SIGHT_MIN		96.0f
+#define CLOAK_LIGHT_BRIGHT	64		// this light or more: the full sight range
+#define CLOAK_LIGHT_DARK	16		// this light or less: half the sight range
+#define CLOAK_DARK_FACTOR	0.5f
+#define CLOAK_LOSE_TIME		3.0f	// a chasing monster sees him at twice the range until this long without sight
+#define CLOAK_FORGET_TIME	8.0f	// then it forgets him after this long without sight
+#define CLOAK_TRACK_GAP		0.5f	// a monster that saw him this recently (each Look) still has him in view
+#define CLOAK_TRACK_MOVE	256.0f	// tracking ends when he is this far from where it last saw him within range
+
+void CBasePlayer::CloakUpdate( BOOL bSnap )
+{
+	const float flSpeed = pev->velocity.Length2D();
+	const BOOL bOnGround = FBitSet( pev->flags, FL_ONGROUND ) || pev->movetype == MOVETYPE_FLY || pev->waterlevel >= 2;
+
+	int iTarget;
+	if ( !bOnGround )
+		iTarget = CLOAK_AMT_AIR;
+	else if ( FBitSet( pev->flags, FL_DUCKING ) || ( pev->button & IN_DUCK ) )	// crouched, moving or not (also while ducking)
+		iTarget = CLOAK_AMT_CROUCH;
+	else if ( flSpeed < CLOAK_STILL_SPEED )
+		iTarget = CLOAK_AMT_STILL;
+	else if ( pev->maxspeed > 0 && flSpeed <= pev->maxspeed * 0.5f )
+		iTarget = CLOAK_AMT_WALK;
+	else
+		iTarget = CLOAK_AMT_RUN;
+
+	if ( gpGlobals->time < m_flCloakHurtTime && iTarget < CLOAK_AMT_HURT )
+		iTarget = CLOAK_AMT_HURT;
+
+	if ( m_iWeaponVolume > 0 )
+	{
+		const int iFire = CLOAK_AMT_FIRE_BASE + m_iWeaponVolume / CLOAK_FIRE_VOLUME_DIV;
+		if ( iFire > iTarget )
+			iTarget = iFire;
+	}
+
+	if ( m_Mode == MODE_DM && iTarget < CLOAK_AMT_MIN_BK )	// Bounty Killer
+		iTarget = CLOAK_AMT_MIN_BK;
+	if ( iTarget > 255 )
+		iTarget = 255;
+
+	float flDelta = gpGlobals->time - m_flCloakLastUpdate;
+	if ( flDelta < 0 || flDelta > 1.0f )
+		flDelta = 0;	// a new map or a long gap: no fall this frame
+	m_flCloakLastUpdate = gpGlobals->time;
+
+	float flAmount = pev->renderamt;
+	if ( bSnap || iTarget >= flAmount )
+		flAmount = iTarget;
+	else
+	{
+		flAmount -= CLOAK_FALL_RATE * flDelta;
+		if ( flAmount < iTarget )
+			flAmount = iTarget;
+	}
+	pev->renderamt = flAmount;
+}
+
+// The range at which pLooker sees the cloaked player pPlayer (the table, darkness, x 2 for a monster after him)
+static float Cloak_SightRange( CBaseEntity *pLooker, CBasePlayer *pPlayer )
+{
+	const float flAmount = pPlayer->pev->renderamt / 255.0f;
+	float flRange = CLOAK_SIGHT_RANGE * flAmount * sqrtf( flAmount );
+
+	// in the dark, down to half (not with the flashlight on)
+	if ( !pPlayer->FlashlightIsOn() )
+	{
+		const int iLight = pPlayer->Illumination();
+		if ( iLight <= CLOAK_LIGHT_DARK )
+			flRange *= CLOAK_DARK_FACTOR;
+		else if ( iLight < CLOAK_LIGHT_BRIGHT )
+			flRange *= CLOAK_DARK_FACTOR + ( 1.0f - CLOAK_DARK_FACTOR ) * ( iLight - CLOAK_LIGHT_DARK ) / (float)( CLOAK_LIGHT_BRIGHT - CLOAK_LIGHT_DARK );
+	}
+
+	// a monster that is after him and saw him lately keeps track of him better
+	CBaseMonster *pMonster = pLooker->MyMonsterPointer();
+	if ( pMonster && (CBaseEntity *)pMonster->m_hEnemy == pPlayer
+		&& gpGlobals->time - pMonster->m_flCloakEnemySeen < CLOAK_LOSE_TIME )
+		flRange *= 2.0f;
+
+	if ( flRange < CLOAK_SIGHT_MIN )
+		flRange = CLOAK_SIGHT_MIN;
+	return flRange;
+}
+
+static BOOL Cloak_InRange( CBaseEntity *pLooker, CBasePlayer *pPlayer )
+{
+	return ( pPlayer->pev->origin - pLooker->pev->origin ).Length() <= Cloak_SightRange( pLooker, pPlayer );
+}
+
+// Tracking: a monster that spotted its cloaked enemy keeps seeing him, whatever the range, while it keeps him in view
+// (it saw him at its last Look; Look still needs the view cone and a clear line of sight) and he stays within
+// CLOAK_TRACK_MOVE of where it last saw him within range. Breaking the line of sight, or moving that far away while
+// out of range, starts the 3 s / 8 s losing rules. Standing still in plain view does not shake a monster off.
+BOOL Cloak_HidesFrom( CBaseEntity *pLooker, CBaseEntity *pTarget )
+{
+	if ( !pLooker || !pTarget || !pTarget->IsPlayer() )
+		return FALSE;
+
+	CBasePlayer *pPlayer = (CBasePlayer *)pTarget;
+	if ( pPlayer->m_iCloak != 1 )
+		return FALSE;
+
+	CBaseMonster *pMonster = pLooker->MyMonsterPointer();
+	if ( pMonster && (CBaseEntity *)pMonster->m_hEnemy == pTarget
+		&& gpGlobals->time - pMonster->m_flCloakEnemySeen <= CLOAK_TRACK_GAP
+		&& ( pTarget->pev->origin - pMonster->m_vecCloakSeenPos ).Length() < CLOAK_TRACK_MOVE
+		&& pLooker->FVisible( pTarget ) )	// also for the SBO Looks that see through walls: a wall breaks it
+		return FALSE;
+
+	return !Cloak_InRange( pLooker, pPlayer );
+}
+
+// CheckEnemy: its enemy is a cloaked player that Look did not see this think: out of sight (ENEMY_OCCLUDED) and not
+// attacked. Monsters whose FCanCheckAttacks doesn't ask for sight (the grunts: line of fire only) would otherwise
+// shoot at an enemy a squad mate shared or that they still remember wherever he is.
+BOOL Cloak_EnemyHidden( CBaseMonster *pMonster )
+{
+	return Cloak_IsCloaked( pMonster->m_hEnemy ) && !pMonster->HasConditions( bits_COND_SEE_ENEMY );
+}
+
+// SquadMakeEnemy: a squad mate made a cloaked player this member's enemy: it knows where he was, has not seen him
+// itself (no twice the range), and forgets him like any lost cloaked enemy
+void Cloak_EnemyShared( CBaseMonster *pMember )
+{
+	if ( Cloak_IsCloaked( pMember->m_hEnemy ) )
+		pMember->m_flCloakEnemySeen = gpGlobals->time - CLOAK_LOSE_TIME;
+}
+
+// CBaseMonster::TakeDamage: hurt by a cloaked player while it has no enemy: he becomes its enemy, unseen, at the place
+// of the shot (TakeDamage set m_vecEnemyLKP): the monster turns to it and searches there (combat with the enemy out of
+// sight), attacks only when it sees him (the shot and the hit make him visible far: CloakUpdate), and forgets him
+// after CLOAK_FORGET_TIME without sight. 1.38's alert monsters only took cover from a hit they did not see.
+void Cloak_HurtBy( CBaseMonster *pMonster, CBaseEntity *pAttacker )
+{
+	if ( !Cloak_IsCloaked( pAttacker ) || pMonster->m_hEnemy != NULL || !pMonster->IsAlive()
+		|| pMonster->IRelationship( pAttacker ) <= R_NO )
+		return;
+
+	pMonster->m_hEnemy = pAttacker;
+	pMonster->m_flCloakEnemySeen = gpGlobals->time - CLOAK_LOSE_TIME;
+	pMonster->SetConditions( bits_COND_NEW_ENEMY );
+}
+
+BOOL Cloak_IsCloaked( CBaseEntity *pEntity )
+{
+	return pEntity && pEntity->IsPlayer() && ( (CBasePlayer *)pEntity )->m_iCloak == 1;
+}
+
+// The end of every Look (CBaseMonster's and the SBO monsters' own): the time the monster last saw its enemy, then
+// Cloak_ForgetCheck
+void Cloak_AfterLook( CBaseMonster *pMonster )
+{
+	CBaseEntity *pEnemy = pMonster->m_hEnemy;
+	if ( !pEnemy || pMonster->HasConditions( bits_COND_SEE_ENEMY ) || !Cloak_IsCloaked( pEnemy ) )
+	{
+		pMonster->m_flCloakEnemySeen = gpGlobals->time;
+		// where it saw him within range: the place tracking measures his moves from (Cloak_HidesFrom)
+		if ( pEnemy && Cloak_IsCloaked( pEnemy ) && Cloak_InRange( pMonster, (CBasePlayer *)pEnemy ) )
+			pMonster->m_vecCloakSeenPos = pEnemy->pev->origin;
+	}
+	else
+		Cloak_ForgetCheck( pMonster );
+}
+
+// A cloaked enemy the monster has not seen for CLOAK_FORGET_TIME is forgotten: no enemy, combat over (MaintainSchedule
+// picks an alert schedule: GetIdealState goes from combat without an enemy to alert). Also from RunAI, which skips
+// Look while no client is in the monster's PVS outside combat.
+void Cloak_ForgetCheck( CBaseMonster *pMonster )
+{
+	CBaseEntity *pEnemy = pMonster->m_hEnemy;
+	if ( !pEnemy || !Cloak_IsCloaked( pEnemy ) || gpGlobals->time - pMonster->m_flCloakEnemySeen < CLOAK_FORGET_TIME )
+		return;
+
+	pMonster->m_hEnemy = NULL;
+	pMonster->ClearConditions( bits_COND_SEE_ENEMY | bits_COND_ENEMY_OCCLUDED | bits_COND_ENEMY_TOOFAR | bits_COND_ENEMY_FACING_ME
+		| bits_COND_CAN_RANGE_ATTACK1 | bits_COND_CAN_RANGE_ATTACK2 | bits_COND_CAN_MELEE_ATTACK1 | bits_COND_CAN_MELEE_ATTACK2 );
+	if ( pMonster->m_MonsterState == MONSTERSTATE_COMBAT )
+		pMonster->m_IdealMonsterState = MONSTERSTATE_ALERT;
+	pMonster->m_flCloakEnemySeen = gpGlobals->time;
 }
 
 void CBasePlayer::Cybereye( void )

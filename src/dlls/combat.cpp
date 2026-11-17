@@ -33,6 +33,7 @@
 #include "sbo_test.h"	// SBO_TEST_COMMANDS builds: test_shotluck (docs/dev/ENTITY_TESTS.md)
 #include "gamerules.h"
 #include "scripted.h"	// SBO 2.0: the scripted_sequence damage policies
+#include "water_hit.h"	// SBO 2.1: water splashes of server-fired bullets
 
 extern DLL_GLOBAL short m_blastglow;	// SBO effect sprites (weapons.cpp)
 extern DLL_GLOBAL short m_blastballs;
@@ -1124,6 +1125,11 @@ int CBaseMonster :: TakeDamage( entvars_t *pevInflictor, entvars_t *pevAttacker,
 
 			MakeIdealYaw( m_vecEnemyLKP );
 
+			// SBO 2.1: hurt by a cloaked player it has no enemy for: he becomes its enemy, unseen, so it turns to and
+			// searches the place of the shot (and attacks only if it sees him: Cloak_HidesFrom); 1.38's alert monsters
+			// only took cover from a hit
+			Cloak_HurtBy( this, CBaseEntity::Instance( pevAttacker ) );
+
 			// add pain to the conditions 
 			// !!!HACKHACK - fudged for now. Do we want to have a virtual function to determine what is light and 
 			// heavy damage per monster class?
@@ -1232,9 +1238,14 @@ void RadiusDamage( Vector vecSrc, entvars_t *pevInflictor, entvars_t *pevAttacke
 	if ( !pevAttacker )
 		pevAttacker = pevInflictor;
 
-	// iterate on all entities in the vicinity.
-	while ((pEntity = UTIL_FindEntityInSphere( pEntity, vecSrc, flRadius )) != NULL)
+	// iterate on all entities in the vicinity. The search goes on from the edict, not the entity: TakeDamage can
+	// free the entity at once (a TakeDamage hook that removes it with REMOVE_ENTITY), its edict stays valid. The
+	// search still ends at an edict without an entity, as UTIL_FindEntityInSphere does.
+	edict_t *pentFind = NULL;
+	while ( !FNullEnt( pentFind = FIND_ENTITY_IN_SPHERE( pentFind, vecSrc, flRadius ) ) )
 	{
+		if ( ( pEntity = CBaseEntity::Instance( pentFind ) ) == NULL )
+			break;
 		if ( pEntity->pev->takedamage != DAMAGE_NO )
 		{
 			// UNDONE: this should check a damage mask, not an ignore
@@ -1575,6 +1586,10 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 	// a Normal hit gibs by the health it leaves (GIB_NORMAL), as in Featureful; the NEVERGIB start made it never gib
 	gMultiDamage.type = DMG_BULLET | ( bitsGib >= 0 ? 0 : DMG_NEVERGIB );
 
+	// SBO 2.1: the water splashes of these bullets, one message for the call; a player's own shots get theirs from
+	// the client's weapon event
+	CWaterHits waterHits( vecSrc, !IsPlayer() );
+
 	for (ULONG iShot = 1; iShot <= cShots; iShot++)
 	{
 		// get circular gaussian spread
@@ -1592,6 +1607,7 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 
 		vecEnd = vecSrc + vecDir * flDistance;
 		UTIL_TraceLine(vecSrc, vecEnd, dont_ignore_monsters, ENT(pev)/*pentIgnore*/, &tr);
+		waterHits.Add( tr.vecEndPos, tr.pHit );
 
 		tracer = 0;
 		if (iTracerFreq != 0 && (tracerCount++ % iTracerFreq) == 0)
@@ -1606,7 +1622,7 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 			{
 				vecTracerSrc = vecSrc;
 			}
-			
+
 			if ( iTracerFreq != 1 )		// guns that always trace also always decal
 				tracer = 1;
 			switch( iBulletType )
@@ -1796,6 +1812,7 @@ void CBaseEntity::FireBullets(ULONG cShots, Vector vecSrc, Vector vecDirShooting
 		// make bullet trails
 		UTIL_BubbleTrail( vecSrc, tr.vecEndPos, (flDistance * tr.flFraction) / 64.0 );
 	}
+	waterHits.Send();
 	ApplyMultiDamage(pev, pevAttacker);
 }
 
@@ -2183,6 +2200,11 @@ void CPlasma::Touch( CBaseEntity *pOther )
 	if ( !pev->owner )
 		pevOwner = pev;
 
+	// case 1 falls through into case 2, which reads the victim again: TakeDamage can free it at once (a TakeDamage
+	// hook that removes it with REMOVE_ENTITY), so the handle is read again after the case 1 hit
+	EHANDLE hOther;
+	hOther = pOther;
+
 	switch ( m_iType )
 	{
 	case 1:
@@ -2319,6 +2341,12 @@ void CPlasma::Touch( CBaseEntity *pOther )
 		}
 
 	case 2:
+		if ( ( pOther = hOther ) == NULL )
+		{// freed by the case 1 hit: only the plasma goes
+			SetThink( &CPlasma::SUB_Remove );
+			pev->nextthink = gpGlobals->time;
+			break;
+		}
 		if ( pOther->pev->takedamage == DAMAGE_NO )
 		{
 			UTIL_TraceLine( pev->origin, pev->origin + pev->velocity * 10, dont_ignore_monsters, ENT(pev), &tr );

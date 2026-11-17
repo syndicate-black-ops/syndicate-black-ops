@@ -49,7 +49,6 @@ namespace
 constexpr int LUT_SIZE = colorcorr::RAW_SIZE; // Source's .raw: 32 x 32 x 32
 constexpr int PREVIEW_WIDE = 200;             // the Selected HSV picture
 constexpr int LOOKUP_VIEW_COLUMNS = 4;        // Source's lookup view: 4 slices across, 8 down
-constexpr unsigned MAX_TABLE_BYTES = 4u << 20;
 
 class CCcMainWindow;
 class CCcOpWindow;
@@ -183,44 +182,39 @@ bool LoadTable(const char *path, colorcorr::Lut &out, char *err, int errLen)
 		snprintf(err, errLen, "can't open it");
 		return false;
 	}
+	// a .raw is exactly RAW_BYTES; a file of another size isn't read, and ReadTable says what is wrong with it
 	const unsigned size = g_pFullFileSystem->Size(fh);
-	std::vector<unsigned char> data;
-	if (size > 0 && size <= MAX_TABLE_BYTES)
-	{
-		data.resize(size);
-		if (g_pFullFileSystem->Read(data.data(), (int)size, fh) != (int)size)
-			data.clear();
-	}
+	std::vector<unsigned char> data(size == (unsigned)colorcorr::RAW_BYTES ? size : 0);
+	const bool read = !data.empty() && g_pFullFileSystem->Read(data.data(), (int)size, fh) == (int)size;
 	g_pFullFileSystem->Close(fh);
-	if (data.empty())
+	if (!data.empty() && !read)
 	{
-		snprintf(err, errLen, size > MAX_TABLE_BYTES ? "too big" : "can't read it");
+		snprintf(err, errLen, "can't read it");
 		return false;
 	}
-	return colorcorr::ReadTable(path, data.data(), (int)data.size(), out, err, errLen);
+	return colorcorr::ReadTable(path, read ? data.data() : nullptr, (int)std::min(size, 0x7fffffffu), out, err, errLen);
 }
 
-//! The table files players can use: gfx/colorcorrection/*.raw and *.cube (names only), sorted, once each
+//! The table files players can use: gfx/colorcorrection/*.raw (names only), sorted, once each
 std::vector<std::string> ListTables()
 {
 	std::vector<std::string> files;
 	for (const char *pathID : { "GAME", "GAMEDOWNLOAD" })
-		for (const char *pattern : { "gfx/colorcorrection/*.raw", "gfx/colorcorrection/*.cube" })
+	{
+		FileFindHandle_t fh;
+		const char *fn = g_pFullFileSystem->FindFirst("gfx/colorcorrection/*.raw", &fh, pathID);
+		while (fn && files.size() < 512)
 		{
-			FileFindHandle_t fh;
-			const char *fn = g_pFullFileSystem->FindFirst(pattern, &fh, pathID);
-			while (fn && files.size() < 512)
-			{
-				std::string s = fn;
-				bool dup = false;
-				for (const std::string &f : files)
-					dup = dup || !Q_stricmp(f.c_str(), s.c_str());
-				if (!dup && !s.empty() && !g_pFullFileSystem->FindIsDirectory(fh))
-					files.push_back(s);
-				fn = g_pFullFileSystem->FindNext(fh);
-			}
-			g_pFullFileSystem->FindClose(fh);
+			std::string s = fn;
+			bool dup = false;
+			for (const std::string &f : files)
+				dup = dup || !Q_stricmp(f.c_str(), s.c_str());
+			if (!dup && !s.empty() && !g_pFullFileSystem->FindIsDirectory(fh))
+				files.push_back(s);
+			fn = g_pFullFileSystem->FindNext(fh);
 		}
+		g_pFullFileSystem->FindClose(fh);
+	}
 	std::sort(files.begin(), files.end(),
 	    [](const std::string &a, const std::string &b) { return Q_stricmp(a.c_str(), b.c_str()) < 0; });
 	return files;
@@ -772,7 +766,7 @@ private:
 
 //-----------------------------------------------------------------------------
 // Load: the looks in gfx/colorcorrection/. A .raw with its operation file (<name>.ccops) brings back the whole list;
-// any other table is added as one Lookup operation.
+// a .raw without one is added as one Lookup operation.
 //-----------------------------------------------------------------------------
 std::string OpsPathOf(const std::string &file)
 {
@@ -780,9 +774,9 @@ std::string OpsPathOf(const std::string &file)
 	return std::string(COLORCORR_FOLDER) + file.substr(0, dot) + ops::OPS_FILE_EXT;
 }
 
-bool IsRaw(const std::string &file)
+bool HasOps(const std::string &file)
 {
-	return file.size() > 4 && !Q_stricmp(file.c_str() + file.size() - 4, ".raw");
+	return g_pFullFileSystem->FileExists(OpsPathOf(file).c_str());
 }
 
 class CCcLoadWindow : public CSboToolWindow
@@ -807,7 +801,7 @@ public:
 		for (const std::string &f : m_Files)
 		{
 			// a look with its operations says so
-			const bool withOps = IsRaw(f) && g_pFullFileSystem->FileExists(OpsPathOf(f).c_str());
+			const bool withOps = HasOps(f);
 			m_pList->AddRow((f + (withOps ? "  (operations)" : "")).c_str(), 0, true);
 		}
 		m_Status = m_Files.empty() ? "There are no looks in gfx/colorcorrection/ yet" : "Double-click a look to load it";
@@ -852,7 +846,7 @@ void CCcLoadWindow::Load(int index)
 		return;
 	// a look with its operations replaces the list: unsaved changes are asked about first
 	const std::string file = m_Files[index];
-	if (IsRaw(file) && g_pFullFileSystem->FileExists(OpsPathOf(file).c_str()))
+	if (HasOps(file))
 		ConfirmDiscard([this, index]() { DoLoad(index); });
 	else
 		DoLoad(index);
@@ -867,7 +861,7 @@ void CCcLoadWindow::DoLoad(int index)
 	const std::string opsPath = OpsPathOf(file);
 	char err[160] = "", line[200];
 	m_Status2.clear();
-	if (IsRaw(file) && g_pFullFileSystem->FileExists(opsPath.c_str()))
+	if (g_pFullFileSystem->FileExists(opsPath.c_str()))
 	{
 		// the whole list as it was saved
 		std::vector<unsigned char> text;

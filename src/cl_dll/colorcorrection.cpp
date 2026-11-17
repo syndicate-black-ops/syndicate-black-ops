@@ -517,7 +517,7 @@ void ColorCorr_FrameEnd( void )
 void ColorCorr_SetEditorLook( const unsigned char *rgb, int size, float weight, bool entities )
 {
 	EditorLook &e = s_Editor;
-	if ( !rgb || size < colorcorr::CUBE_MIN_SIZE || size > colorcorr::CUBE_MAX_SIZE )
+	if ( !rgb || size < colorcorr::LUT_MIN_SIZE || size > colorcorr::LUT_MAX_SIZE )
 	{
 		e.active = false;
 		e.weight = 0.0f;

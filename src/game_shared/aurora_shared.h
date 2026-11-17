@@ -16,7 +16,7 @@
 #pragma once
 
 #define AURORA_MSG_ON		1	// emitting
-#define AURORA_MSG_ONESHOT	2	// a copy made by Spawn Use: emits for its main type's lifetime, then goes
+#define AURORA_MSG_ONESHOT	2	// a copy made by Spawn Use: emits for the script's (or its main type's) lifetime, then goes
 #define AURORA_MSG_REMOVE	4	// the entity was removed
 #define AURORA_MSG_FOLLOW	8	// placed on another entity
 

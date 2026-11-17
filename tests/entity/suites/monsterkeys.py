@@ -285,11 +285,20 @@ def osprey_closed_slow_path(t):
         t.damage('og%d' % k, 1000)
     t.mark('dead')
     t.wait(25.0)                   # two laps: a drop at each pass over op2 while a slot is free, then flying on
-    t.snap('a', 'osp', 'origin')
-    t.wait(2.0)
-    t.snap('b', 'osp', 'origin')
+    # Flying on = it reaches op3 and op4 again. Not the distance between two snapshots: on this loop the osprey
+    # stops over op2 (speed 0: DeployThink, then HoverThink) and curves through the corners, so a 2 s window can
+    # move it less than 50 units while it flies. One lap with the stop is about 5 s; 10 s of snapshots every
+    # 0.2 s (60 units at 300) pass within 64 of each corner, and the corners are 150 or more apart.
+    labels = []
+    for k in range(50):
+        label = 'f%02d' % k
+        for ent in ('osp', 'op3', 'op4'):
+            t.snap(label, ent, 'origin')
+        labels.append(label)
+        t.wait(0.2)
     t.expect.fired('o_deploy', min=2, activator='@monster_osprey', after='dead')
-    t.expect.moved('a', 'b', 'osp', min_dist=50)
+    t.expect.distance_any(labels, 'osp', 'op3', 0, 64)
+    t.expect.distance_any(labels, 'osp', 'op4', 0, 64)
 
 
 # ---------------------------------------------------------------------------------------------- monstermaker (batch 3)
