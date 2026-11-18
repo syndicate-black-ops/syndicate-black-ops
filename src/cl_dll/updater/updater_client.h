@@ -142,6 +142,7 @@ private:
 	void OnSignature(HttpResult &res);
 	void OnFileData(HttpResult &res);
 	void NextFile();
+	void StageFile(std::string data);
 	void Fail(State st, const std::string &error);
 	HttpRequest Get(const std::string &url, size_t maxBytes, int timeout);
 
@@ -178,7 +179,14 @@ private:
 	std::vector<Download> m_Downloads;
 	std::vector<std::string> m_Removals;
 	std::vector<std::string> m_Kept;
-	size_t m_iNextFile = 0;
+	std::vector<RangeGroup> m_Groups; //!< m_Downloads by zip offset, neighbors in one request each
+	size_t m_iGroup = 0, m_iInGroup = 0;
+	size_t m_iNextFile = 0;           //!< the download being fetched or staged (m_Groups[m_iGroup].files[m_iInGroup])
+	bool m_bPerFile = false;          //!< the group's request failed: its files one request each
+	bool m_bGroupRequest = false;     //!< the request under way is the whole group's
+	uint64_t m_RangeFirst = 0, m_RangeBytes = 0; //!< the request under way
+	std::string m_GroupData;          //!< the group's bytes from m_RangeFirst, its files cut out of it in turn
+	bool m_bHaveGroupData = false;
 	std::shared_ptr<Job> m_pJob;
 	Progress m_Progress;
 };

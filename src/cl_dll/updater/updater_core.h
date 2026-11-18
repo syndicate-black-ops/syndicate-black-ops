@@ -10,6 +10,7 @@
 //            * manifest.json / installed.json: every game file with its size and sha256 (and, in a release, where its
 //              data is in the release zip), files to remove; paths checked (relative, inside the game folder);
 //            * the install plan: what to add, replace, remove or leave (files the player changed);
+//            * the download requests: files next to each other in the release zip fetched with one Range request;
 //            * the release notes' markdown as styled text runs for the dialog.
 //===============================================//
 
@@ -156,6 +157,27 @@ struct PlanItem
 std::vector<PlanItem> MakePlan(const Manifest *installed, const Manifest &next,
     const std::function<DiskFile(const std::string &)> &disk,
     const std::function<bool(const std::string &, const std::string &)> &sameFile = nullptr);
+
+//-----------------------------------------------------------------------------
+// Download requests
+//-----------------------------------------------------------------------------
+constexpr uint64_t RANGE_MAX_GAP = 64 * 1024;           //!< bytes between two files still fetched in one request
+constexpr uint64_t RANGE_MAX_BYTES = 32ull * 1024 * 1024; //!< one request's size at most (a larger file: alone)
+
+//! One HTTP Range request on the release zip: bytes [first, first + bytes) holding the data of files (indexes into
+//! the list given to GroupRanges, by zip offset); the gaps between them are downloaded and dropped. bytes 0: files
+//! of no data (one each), nothing to download.
+struct RangeGroup
+{
+	uint64_t first = 0, bytes = 0;
+	std::vector<size_t> files;
+};
+
+//! ranges: each file's zip data (offset, size). Sorted by offset; a file joins the request before it when it starts at
+//! most maxGap bytes after that request's end and the request stays within maxBytes. Every file is in exactly one
+//! group; the groups in offset order, those of no data last.
+std::vector<RangeGroup> GroupRanges(const std::vector<std::pair<uint64_t, uint64_t>> &ranges,
+    uint64_t maxGap = RANGE_MAX_GAP, uint64_t maxBytes = RANGE_MAX_BYTES);
 
 //-----------------------------------------------------------------------------
 // Release notes (GitHub markdown) as text runs

@@ -565,6 +565,50 @@ std::vector<PlanItem> MakePlan(const Manifest *installed, const Manifest &next,
 }
 
 //-----------------------------------------------------------------------------
+// Download requests
+//-----------------------------------------------------------------------------
+std::vector<RangeGroup> GroupRanges(const std::vector<std::pair<uint64_t, uint64_t>> &ranges, uint64_t maxGap,
+    uint64_t maxBytes)
+{
+	std::vector<size_t> order(ranges.size());
+	for (size_t i = 0; i < order.size(); i++)
+		order[i] = i;
+	std::stable_sort(order.begin(), order.end(),
+	    [&ranges](size_t a, size_t b) { return ranges[a].first < ranges[b].first; });
+	std::vector<RangeGroup> groups, empty;
+	for (size_t i : order)
+	{
+		const uint64_t first = ranges[i].first, size = ranges[i].second;
+		RangeGroup g;
+		g.first = first;
+		g.files.push_back(i);
+		if (size == 0)
+		{
+			// no data: a group of its own that downloads nothing (after the others)
+			empty.push_back(std::move(g));
+			continue;
+		}
+		if (!groups.empty())
+		{
+			RangeGroup &last = groups.back();
+			const uint64_t end = last.first + last.bytes, newEnd = std::max(end, first + size);
+			// a gap within maxGap (or overlapping data, not in a zip we write); the request stays within maxBytes
+			if (first <= end + maxGap && newEnd - last.first <= maxBytes)
+			{
+				last.bytes = newEnd - last.first;
+				last.files.push_back(i);
+				continue;
+			}
+		}
+		g.bytes = size;
+		groups.push_back(std::move(g));
+	}
+	for (RangeGroup &g : empty)
+		groups.push_back(std::move(g));
+	return groups;
+}
+
+//-----------------------------------------------------------------------------
 // Markdown
 //-----------------------------------------------------------------------------
 namespace

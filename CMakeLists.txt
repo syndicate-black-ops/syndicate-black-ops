@@ -21,7 +21,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
 # Game version: shown in the client (Version tab) as <version>+<commit> and by the server's game_version cvar as
 # "<version>+<commit> <branch>", see cmake/sbo_version.cmake
-project(sbo VERSION 2.2.0 LANGUAGES C CXX)
+project(sbo VERSION 2.2.1 LANGUAGES C CXX)
 
 if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
   message(FATAL_ERROR "SBO's binaries must be 32-bit (x86). Got pointer size ${CMAKE_SIZEOF_VOID_P}.")

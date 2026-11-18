@@ -4,6 +4,12 @@ All notable changes to Syndicate Black Ops for players, mappers and server opera
 newest release is first. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and the
 versions follow [Semantic Versioning](https://semver.org/).
 
+## [2.2.1]
+
+### Changed
+
+- Updates download many small files much faster
+
 ## [2.2.0]
 
 ### New

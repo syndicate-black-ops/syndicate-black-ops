@@ -3,9 +3,10 @@
 // Purpose: see updater_client.h.
 //
 // Order of an update: release list -> (dialog, Update) -> manifest.json -> manifest.json.sig (Ed25519 over the
-// manifest's bytes) -> compare with the files on disk (worker) -> for each file to add or replace: one HTTP Range
-// request on the release zip for exactly its compressed data -> inflate, size + sha256 check, write to staging
-// (worker) -> Install: Installer::Apply (worker) -> quit.
+// manifest's bytes) -> compare with the files on disk (worker) -> the files to add or replace by zip offset, neighbors
+// grouped (GroupRanges: gaps up to 64 KB, 32 MB at most): one HTTP Range request on the release zip per group (a
+// failed group: its files one request each) -> for each file, its compressed data cut out -> inflate, size + sha256
+// check, write to staging (worker) -> Install: Installer::Apply (worker) -> quit.
 //================================//
 
 #include "updater_client.h"
@@ -194,13 +195,20 @@ void Updater::Frame()
 				Log("Updater: " + k + " is no longer part of the game but was changed; it stays");
 			m_Progress = Progress();
 			m_Progress.filesTotal = (int)m_Downloads.size();
+			std::vector<std::pair<uint64_t, uint64_t>> ranges;
 			for (const Download &d : m_Downloads)
+			{
 				m_Progress.bytesTotal += d.file.zipSize;
+				ranges.emplace_back(d.file.zipOffset, d.file.zipSize);
+			}
+			m_Groups = GroupRanges(ranges);
 			Log("Updater: " + std::to_string(m_Downloads.size()) + " file(s) to download, " +
 			    std::to_string(m_Removals.size()) + " to remove" +
 			    (job->hadInstalled ? "" : " (no installed.json: compared with every file)"));
+			DevLog("Updater: " + std::to_string(m_Groups.size()) + " download request(s)");
 			m_State = State::Downloading;
-			m_iNextFile = 0;
+			m_iGroup = m_iInGroup = 0;
+			m_bPerFile = m_bHaveGroupData = false;
 			NextFile();
 		}
 		else if (m_State == State::Downloading)
@@ -212,7 +220,13 @@ void Updater::Frame()
 			}
 			m_Progress.filesDone++;
 			m_Progress.bytesDone += m_Downloads[m_iNextFile].file.zipSize;
-			m_iNextFile++;
+			if (++m_iInGroup >= m_Groups[m_iGroup].files.size())
+			{
+				m_iGroup++;
+				m_iInGroup = 0;
+				m_bPerFile = m_bHaveGroupData = false;
+				std::string().swap(m_GroupData);
+			}
 			NextFile();
 		}
 		else if (m_State == State::Installing)
@@ -349,6 +363,9 @@ void Updater::StartUpdate()
 	m_Kept.clear();
 	m_Downloads.clear();
 	m_Removals.clear();
+	m_Groups.clear();
+	std::string().swap(m_GroupData);
+	m_bHaveGroupData = false;
 	m_Progress = Progress();
 	m_ZipResolved.clear();
 	m_Pending = Pending::Manifest;
@@ -448,16 +465,28 @@ void Updater::OnSignature(HttpResult &res)
 
 void Updater::NextFile()
 {
-	if (m_iNextFile >= m_Downloads.size())
+	if (m_iGroup >= m_Groups.size())
 	{
 		m_State = State::ReadyToInstall;
 		m_Progress.current.clear();
 		Log("Updater: " + m_Manifest.version + " downloaded and checked; ready to install");
 		return;
 	}
+	const RangeGroup &g = m_Groups[m_iGroup];
+	m_iNextFile = g.files[m_iInGroup];
 	const FileEntry &f = m_Downloads[m_iNextFile].file;
 	m_Progress.current = f.path;
-	if (f.zipSize == 0)
+	if (m_bHaveGroupData)
+	{
+		// the group's data is here: the next file is cut out of it
+		StageFile(m_GroupData.substr((size_t)(f.zipOffset - m_RangeFirst), (size_t)f.zipSize));
+		return;
+	}
+	// the whole group, or this file alone (a group of one, or the group's request failed)
+	m_bGroupRequest = !m_bPerFile && g.files.size() > 1;
+	m_RangeFirst = m_bGroupRequest ? g.first : f.zipOffset;
+	m_RangeBytes = m_bGroupRequest ? g.bytes : f.zipSize;
+	if (m_RangeBytes == 0)
 	{
 		// an empty file: nothing to download
 		HttpResult res;
@@ -466,11 +495,11 @@ void Updater::NextFile()
 		OnFileData(res);
 		return;
 	}
-	HttpRequest r = Get(m_ZipResolved.empty() ? m_ZipUrl : m_ZipResolved, (size_t)f.zipSize + 64,
-	    30 + (int)(f.zipSize / (64 * 1024))); // at least 64 KB/s
+	HttpRequest r = Get(m_ZipResolved.empty() ? m_ZipUrl : m_ZipResolved, (size_t)m_RangeBytes + 64,
+	    30 + (int)(m_RangeBytes / (64 * 1024))); // at least 64 KB/s
 	r.range = true;
-	r.rangeFirst = f.zipOffset;
-	r.rangeLast = f.zipOffset + f.zipSize - 1;
+	r.rangeFirst = m_RangeFirst;
+	r.rangeLast = m_RangeFirst + m_RangeBytes - 1;
 	m_Pending = Pending::FileData;
 	Request(r);
 }
@@ -486,23 +515,43 @@ void Updater::OnFileData(HttpResult &res)
 		NextFile();
 		return;
 	}
-	if (!res.ok || (res.status != 206 && !(res.status == 200 && f.zipSize == 0)))
+	std::string error;
+	if (!res.ok || (res.status != 206 && !(res.status == 200 && m_RangeBytes == 0)))
+		error = res.ok && res.status == 200 ? "the server sent the whole zip" : HttpError(res);
+	else if (res.body.size() != m_RangeBytes)
+		error = "got " + std::to_string(res.body.size()) + " bytes, expected " + std::to_string(m_RangeBytes);
+	if (!error.empty())
 	{
-		Fail(State::InstallFailed, f.path + ": " + (res.ok && res.status == 200 ? "the server sent the whole zip" : HttpError(res)));
-		return;
-	}
-	if (res.body.size() != f.zipSize)
-	{
-		Fail(State::InstallFailed, f.path + ": got " + std::to_string(res.body.size()) + " bytes, expected " +
-		                               std::to_string(f.zipSize));
+		if (m_bGroupRequest)
+		{
+			// the group's files one request each instead
+			Log("Updater: " + std::to_string(m_Groups[m_iGroup].files.size()) + " files in one request failed (" +
+			    error + "); fetching them one at a time");
+			m_bPerFile = true;
+			NextFile();
+			return;
+		}
+		Fail(State::InstallFailed, f.path + ": " + error);
 		return;
 	}
 	m_iRetries = 0;
+	if (!m_bGroupRequest)
+	{
+		StageFile(std::move(res.body));
+		return;
+	}
+	m_GroupData = std::move(res.body);
+	m_bHaveGroupData = true;
+	StageFile(m_GroupData.substr((size_t)(f.zipOffset - m_RangeFirst), (size_t)f.zipSize));
+}
+
+void Updater::StageFile(std::string data)
+{
 	auto job = std::make_shared<Job>();
 	m_pJob = job;
 	const std::string game = m_Cfg.gameDir;
-	const FileEntry entry = f;
-	std::thread([job, game, entry, data = std::move(res.body)]() {
+	const FileEntry entry = m_Downloads[m_iNextFile].file;
+	std::thread([job, game, entry, data = std::move(data)]() {
 		std::string plain;
 		const std::string *content = &data;
 		if (entry.method == 8)

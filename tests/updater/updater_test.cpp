@@ -304,6 +304,49 @@ static void TestPlan()
 // A file and its folder renamed in case only (ui/resource/UI/TutorTextWindow.res -> ui/resource/ui/tutortextwindow.res):
 // a case-sensitive file system (Linux) must not keep both names, a case-insensitive one (Windows) must not lose the
 // new file (the old name IS the new file there)
+static void TestGroupRanges()
+{
+	typedef std::vector<std::pair<uint64_t, uint64_t>> R;
+	const uint64_t KB = 1024, MB = 1024 * KB;
+	// one file
+	std::vector<RangeGroup> g = GroupRanges(R{{100, 50}});
+	CHECK(g.size() == 1 && g[0].first == 100 && g[0].bytes == 50 && g[0].files == std::vector<size_t>{0});
+	CHECK(GroupRanges(R{}).empty());
+	// back to back, and with the zip's local headers between them: one request
+	g = GroupRanges(R{{0, 10}, {10, 20}, {30, 5}});
+	CHECK(g.size() == 1 && g[0].first == 0 && g[0].bytes == 35 && g[0].files.size() == 3);
+	g = GroupRanges(R{{0, 10}, {60, 20}});
+	CHECK(g.size() == 1 && g[0].bytes == 80);
+	// a gap of exactly 64 KB joins; one byte more does not
+	g = GroupRanges(R{{0, 10}, {10 + 64 * KB, 10}});
+	CHECK(g.size() == 1 && g[0].bytes == 20 + 64 * KB);
+	g = GroupRanges(R{{0, 10}, {11 + 64 * KB, 10}});
+	CHECK(g.size() == 2 && g[1].first == 11 + 64 * KB && g[1].bytes == 10 && g[1].files == std::vector<size_t>{1});
+	// unsorted: sorted by offset, indexes kept
+	g = GroupRanges(R{{1000 * KB, 4}, {20, 5}, {0, 10}, {2000 * KB, 1}, {1000 * KB + 4, 4}});
+	CHECK(g.size() == 3);
+	CHECK(g[0].first == 0 && g[0].bytes == 25 && (g[0].files == std::vector<size_t>{2, 1}));
+	CHECK(g[1].first == 1000 * KB && g[1].bytes == 8 && (g[1].files == std::vector<size_t>{0, 4}));
+	CHECK(g[2].first == 2000 * KB && g[2].files == std::vector<size_t>{3});
+	// the 32 MB cap: a request ends before it would pass it; a larger file goes alone
+	R big;
+	for (uint64_t i = 0; i < 40; i++)
+		big.push_back({i * MB, MB});
+	g = GroupRanges(big);
+	CHECK(g.size() == 2 && g[0].bytes == 32 * MB && g[0].files.size() == 32 && g[1].first == 32 * MB &&
+	      g[1].bytes == 8 * MB && g[1].files.size() == 8);
+	g = GroupRanges(R{{0, 10}, {10, 40 * MB}, {10 + 40 * MB, 10}});
+	CHECK(g.size() == 3 && g[1].bytes == 40 * MB && g[1].files == std::vector<size_t>{1});
+	size_t n = 0;
+	for (const RangeGroup &x : GroupRanges(big, 0, 3 * MB))
+		CHECK(x.bytes <= 3 * MB && (n += x.files.size()) > 0);
+	CHECK(n == 40);
+	// files of no data: one group each, after the others, nothing to download
+	g = GroupRanges(R{{50, 0}, {0, 10}, {10, 10}});
+	CHECK(g.size() == 2 && g[0].bytes == 20 && g[0].files.size() == 2 && g[1].bytes == 0 &&
+	      g[1].files == std::vector<size_t>{0});
+}
+
 static void TestCaseRename(const fs::path &root)
 {
 	const char OLD[] = "ui/resource/UI/TutorTextWindow.res", NEW[] = "ui/resource/ui/tutortextwindow.res";
@@ -459,7 +502,7 @@ static void TestChangelogNotes(const char *path)
 	const std::string plain = RunsToPlain(runs);
 	CHECK(headings == mdHeadings && headings > 0);
 	CHECK(bullets == mdBullets && bullets > 0);
-	CHECK(codes > 0);
+	CHECK(codes > 0 || md.find('`') == std::string::npos); // a short section may have no code at all
 	CHECK(link);
 	CHECK(plain.find("###") == std::string::npos && plain.find("](") == std::string::npos && plain.find('`') == std::string::npos);
 	printf("changelog notes: %zu bytes (%zu groups, %zu entries), %zu bytes under MAX_NOTES_BYTES (%zu)\n", md.size(),
@@ -656,7 +699,9 @@ public:
 	std::map<std::string, std::string> redirects;
 	bool online = true;
 	bool ignoreRange = false;
+	uint64_t failRangeOver = 0; //!< ranges longer than this fail (500); 0: none
 	int requests = 0;
+	int ranges = 0;
 	bool Available() override { return true; }
 	bool Start(const HttpRequest &req, std::string &err) override
 	{
@@ -680,6 +725,13 @@ public:
 		if (f == files.end())
 		{
 			m_Res.status = 404;
+			return true;
+		}
+		if (req.range)
+			ranges++;
+		if (req.range && failRangeOver && req.rangeLast - req.rangeFirst + 1 > failRangeOver)
+		{
+			m_Res.status = 500;
 			return true;
 		}
 		if (req.range && !ignoreRange)
@@ -838,9 +890,11 @@ static void TestUpdaterFlow(const fs::path &root)
 	Pump(u);
 	CHECK(u.GetState() == State::ReadyToInstall);
 	CHECK(u.GetProgress().checkTotal == 0);
-	// keep.txt is unchanged: 3 files fetched (client, map, cfg beside), the zip link resolved once
-	CHECK(u.GetProgress().filesTotal == 3);
-	CHECK(http.requests - before == 2 + 1 + 3);
+	// keep.txt is unchanged: 3 files fetched (client, map, cfg beside) in one request (2 bytes between them), the zip
+	// link resolved once
+	CHECK(u.GetProgress().filesTotal == 3 && u.GetProgress().filesDone == 3);
+	CHECK(u.GetProgress().bytesDone == u.GetProgress().bytesTotal);
+	CHECK(http.requests - before == 2 + 1 + 1);
 	u.Install();
 	Pump(u);
 	CHECK(u.GetState() == State::Installed);
@@ -887,6 +941,28 @@ static void TestUpdaterFlow(const fs::path &root)
 		Pump(m);
 		CHECK(m.GetState() == State::UpdateAvailable && !m.CanInstall());
 	}
+	// the group's request fails: its files one request each, the update goes on
+	{
+		const fs::path g4 = MakeGame(root, "flow4");
+		Config c4 = cfg;
+		c4.gameDir = g4.u8string();
+		FakeHttp h4 = http;
+		h4.failRangeOver = 16;
+		h4.ranges = 0;
+		Updater r(c4, &h4, nullptr);
+		r.Check(false);
+		Pump(r);
+		r.StartUpdate();
+		Pump(r);
+		CHECK(r.GetState() == State::ReadyToInstall);
+		CHECK(r.GetProgress().filesDone == 3);
+		CHECK(h4.ranges == 1 + 3);
+		r.Install();
+		Pump(r);
+		CHECK(r.GetState() == State::Installed);
+		CHECK(ReadFile(g4 / "cl_dlls/client.so") == "client 2.0.1");
+		CHECK(ReadFile(g4 / "maps/new.bsp") == "a new map");
+	}
 	// a server that ignores ranges: refused
 	{
 		const fs::path g2 = MakeGame(root, "flow2");
@@ -927,6 +1003,7 @@ int main(int argc, char **argv)
 	TestPaths();
 	TestManifest();
 	TestPlan();
+	TestGroupRanges();
 	TestCaseRename(root);
 	TestMarkdown();
 	if (argc > 4)
